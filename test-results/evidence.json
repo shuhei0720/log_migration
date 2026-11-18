@@ -6670,12 +6670,18 @@
       ]
     },
     "nextRequestedPhase": {
-      "status": "NOT_STARTED",
+      "status": "AZURE_FIXTURE_PREPARATION_STARTED_MG_READINESS_FIX_PENDING",
       "resourceTypeCount": 56,
       "listPath": "/tmp/log-migration-live/next-resource-types.txt",
-      "startAfter": "Current phase development and cleanup completion",
+      "startAfter": "Old owned assets removed; only known original Network/SubB unregister deferred until all tests end",
       "notIncludedInCurrentPhaseCounts": true,
-      "deliverablesRequested": "Separate deploy/test script with two subscription variables and comprehensive tests"
+      "deliverablesRequested": "Separate deploy/test script with two subscription variables and comprehensive tests",
+      "approvedSelection": {
+        "resourceTypes": 53,
+        "budgetJPY": 6000,
+        "paidHoldingGoalHours": 4,
+        "planningWindowHours": 6
+      }
     }
   },
   "backupDcrCaseCount": 90,
@@ -6736,14 +6742,38 @@
     "all74Source6AndResultsVerified": true,
     "all74Outcomes64Normal5ExpectedNg5Sigterm": true,
     "final351AllPhasesPassed": true,
-    "next56Phase": "NOT_STARTED_AFTER_CURRENT_CLEANUP",
+    "next56Phase": "FIXTURE_PREPARATION_STARTED_MG_READINESS_FIX_PENDING",
     "all74CsvKeysAndOutcomesMatchEvidence": true,
     "all74OutcomeCountsMatch": true,
     "matrixCaseRunAndProofHashesChecked": 109,
-    "next56": "NOT_STARTED"
+    "next56": "MIGRATION_TESTS_NOT_STARTED"
   },
   "detailedLiveExecutionCount": 74,
   "finalPrimaryCasesPassed": 8,
   "verifierComparisonCaseCount": 41,
-  "phaseStatus": "CURRENT_PRODUCT_VALIDATION_COMPLETE_CLEANUP_PENDING"
+  "phaseStatus": "CURRENT_PRODUCT_VALIDATION_COMPLETE_CLEANUP_PENDING",
+  "additionalResourceTypeValidation": {
+    "runId": "rt261118f",
+    "status": "FIXTURE_PREPARATION_STOPPED_FOR_MG_READINESS_FIX",
+    "existingVnetInput": [
+      "ExistingVnetIdA",
+      "ExistingVnetIdB"
+    ],
+    "initializationScriptSha256": "756850496733b104fd750f0f63b0dd89a694b58e057800b1f40d5c559a18a4c4",
+    "currentDistributionInterfaceSha256": "2955bf8788890aec998360f08c9896d3e55098fe06958353cf31ab2573dc2595",
+    "newInterfaceInitializedActualRun": false,
+    "actualProviderRegistrations": 25,
+    "actualAcceptedManagementGroupCreates": 1,
+    "immediateSubscriptionMoveResult": "NotFound",
+    "resourceDeployments": 0,
+    "paidResourcesCreated": 0,
+    "additionalMigrationTestsPassed": 0,
+    "bothSubscriptionParentsConfirmedOriginal": true,
+    "resourceAndGroupInventoriesConfirmedInitial": true,
+    "oldAndNewFixtureResultsCountedSeparately": true,
+    "knownOriginalNetworkRestorationPending": true,
+    "cleanupPending": true,
+    "actualFailureEvidencePath": "/tmp/log-migration-resource-types-live-prepare/fixture-runs/rt261118f/mg-failure-preserved",
+    "rootPreconditionProofPath": "/tmp/log-migration-resource-types-live-prepare/fixture-runs/rt261118f/management-readiness-diagnosis/resume-precondition-proof.json"
+  }
 }
