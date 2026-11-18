@@ -1,7 +1,7 @@
 ﻿#Requires -Version 5.1
-param([string]$Repository=(Split-Path -Parent $PSScriptRoot),[string]$ReportPath,[switch]$PassThru)
+param([string]$Repository=(Join-Path (Split-Path -Parent $PSScriptRoot) 'migration'),[string]$ReportPath,[switch]$PassThru)
 $ErrorActionPreference='Stop'
-. (Join-Path $Repository 'log_migration_common.ps1')
+. (Join-Path $Repository 'common.ps1')
 $script:cutoverChecks=0
 $script:cutoverCases=[Collections.Generic.List[object]]::new()
 $script:sub1='11111111-1111-1111-1111-111111111111';$script:sub2='22222222-2222-2222-2222-222222222222';$script:outside='33333333-3333-3333-3333-333333333333'
@@ -101,10 +101,15 @@ foreach($statement in $fixtureAst.EndBlock.Statements){
     Invoke-Expression $statement.Extent.Text
 }
 $baseArmNode=@($fixtureAst.EndBlock.Statements | Where-Object {$_ -is [Management.Automation.Language.FunctionDefinitionAst] -and $_.Name -eq 'Invoke-ArmRequest'})[0]
-foreach($statement in $fixtureAst.EndBlock.Statements | Where-Object {$_ -is [Management.Automation.Language.FunctionDefinitionAst]}){Invoke-Expression $statement.Extent.Text}
+# ASTから読み込むfixture関数にも、このテストのfixtureディレクトリを渡します。
+$script:cutoverFixtureRoot=$PSScriptRoot
+foreach($statement in $fixtureAst.EndBlock.Statements | Where-Object {$_ -is [Management.Automation.Language.FunctionDefinitionAst]}){
+    $fixtureFunction=$statement.Extent.Text.Replace('$PSScriptRoot','$script:cutoverFixtureRoot')
+    Invoke-Expression $fixtureFunction
+}
 $script:baseFixtureArm=[scriptblock]::Create($baseArmNode.Body.Extent.Text.Substring(1,$baseArmNode.Body.Extent.Text.Length-2))
 $preTokens=$null;$preErrors=$null
-$preAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $Repository 'log_migration_precheck.ps1'),[ref]$preTokens,[ref]$preErrors)
+$preAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $Repository 'step1_precheck.ps1'),[ref]$preTokens,[ref]$preErrors)
 $saveTry=@($preAst.FindAll({param($n) $n -is [Management.Automation.Language.TryStatementAst] -and $n.Body.Extent.Text -match 'FileMode\]::CreateNew'},$true))[0]
 $script:saveBackupCode=$saveTry.Body.Extent.Text.Substring(1,$saveTry.Body.Extent.Text.Length-2)
 $script:oldCutoverRecords=@();$script:oldReadVerified=[Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
@@ -227,7 +232,7 @@ try{
             DiagnosticPlans=[Collections.Generic.List[object]]::new();CurrentSettings=@{}
         }
         $tokens=$null;$parseErrors=$null
-        $ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $Repository 'log_migration_common.ps1'),[ref]$tokens,[ref]$parseErrors)
+        $ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $Repository 'common.ps1'),[ref]$tokens,[ref]$parseErrors)
         $node=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Get-MigrationPlan'},$true))[0]
         $productionPlan=[scriptblock]::Create($node.Body.Extent.Text.Substring(1,$node.Body.Extent.Text.Length-2))
         Reset-Observation
@@ -338,7 +343,8 @@ try{
         Reset-Observation
         Invoke-Entry verify
         Assert-Cutover ($script:fixtureVmssId -in $script:targets[1].Collectors) 'backupからVMSS親を復元'
-        Assert-Cutover ($script:fixtureVmssId -in $script:baselineModes[1].Collectors) '全件基礎確認へVMSSを渡す'
+        $newVmssAssociation=@($script:savedBackup.Targets[1].Associations | Where-Object {$_.ResourceId.StartsWith($script:fixtureVmssId+'/')})[0].ResourceId
+        Assert-Cutover ($newVmssAssociation -in $script:reads) '全件確認でVMSSの新関連を実際にGETする'
         Assert-NoAzureWrites
         Assert-WiredProtected
     }
@@ -445,6 +451,6 @@ try{
         }
     }
 }finally{if(Test-Path -LiteralPath $script:scratch){Remove-Item -LiteralPath $script:scratch -Recurse -Force}}
-$result=[pscustomobject]@{Result='PASS';Checks=$script:cutoverChecks+$script:checks;CaseCount=$script:cutoverCases.Count;Cases=$script:cutoverCases;AzureRequests=0;CommonHash=(Get-FileHash (Join-Path $Repository 'log_migration_common.ps1')).Hash;RollbackHash=(Get-FileHash (Join-Path $Repository 'log_migration_rollback.ps1')).Hash}
+$result=[pscustomobject]@{Result='PASS';Checks=$script:cutoverChecks+$script:checks;CaseCount=$script:cutoverCases.Count;Cases=$script:cutoverCases;AzureRequests=0;CommonHash=(Get-FileHash (Join-Path $Repository 'common.ps1')).Hash;RollbackHash=(Get-FileHash (Join-Path $Repository 'rollback.ps1')).Hash}
 if($ReportPath){$result|ConvertTo-Json -Depth 20|Set-Content -LiteralPath $ReportPath -Encoding UTF8}
 if($PassThru){$result}else{$result|ConvertTo-Json -Depth 20}

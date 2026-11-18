@@ -1,5 +1,5 @@
 ﻿#Requires -Version 5.1
-param([string]$Repository = (Split-Path -Parent $PSScriptRoot))
+param([string]$Repository = (Join-Path (Split-Path -Parent $PSScriptRoot) 'migration'))
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 $checks = 0
@@ -12,7 +12,7 @@ function Assert-True {
 function Read-ProductionAst {
     param([string]$Name)
     $tokens = $null; $errors = $null
-    $sourceName = if (Test-Path (Join-Path $Repository 'log_migration_common.ps1')) { 'log_migration_common.ps1' } else { $Name }
+    $sourceName = if (Test-Path (Join-Path $Repository 'common.ps1')) { 'common.ps1' } else { $Name }
     $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $Repository $sourceName), [ref]$tokens, [ref]$errors)
     if ($errors.Count) { throw "構文エラー: $Name / $($errors.Message -join '; ')" }
     $ast
@@ -23,7 +23,7 @@ function Copy-Setting {
 }
 
 # 共通ファイルと各工程は、実際のファイルを個別に構文確認します。
-$productionFiles=@('log_migration_common.ps1','log_migration_precheck.ps1','log_migration_copy.ps1','log_migration_verify.ps1','log_migration_delete.ps1','log_migration_rollback.ps1')
+$productionFiles=@('common.ps1','step1_precheck.ps1','step2_copy.ps1','step3_verify.ps1','step4_delete.ps1','rollback.ps1')
 foreach ($entryFile in $productionFiles) {
     $tokens = $null; $errors = $null
     $null = [Management.Automation.Language.Parser]::ParseFile((Join-Path $Repository $entryFile),[ref]$tokens,[ref]$errors)
@@ -31,7 +31,7 @@ foreach ($entryFile in $productionFiles) {
 }
 
 # 本体は実行せず、実際に使用する比較関数だけを読み込みます。
-foreach ($name in @('log_migration_copy.ps1', 'log_migration_delete.ps1')) {
+foreach ($name in @('step2_copy.ps1', 'step4_delete.ps1')) {
     $ast = Read-ProductionAst $name
     $node = @($ast.FindAll({ param($item)
         $item -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $item.Name -eq 'Get-DiagnosticSignature'
@@ -73,9 +73,9 @@ foreach ($name in @('log_migration_copy.ps1', 'log_migration_delete.ps1')) {
     Assert-True ((Get-DiagnosticSignature $base) -ceq (Get-DiagnosticSignature $other)) "$name : 配列順に依存しない"
     Assert-True ((Get-DiagnosticSignature @{logs=$null;metrics=$null}) -ceq (Get-DiagnosticSignature @{logs=@();metrics=@()})) "$name : nullと空配列"
 }
-foreach ($name in @('log_migration_copy.ps1')) {
+foreach ($name in @('step2_copy.ps1')) {
     $ast = Read-ProductionAst $name
-    $text = Get-Content (Join-Path $Repository 'log_migration_common.ps1') -Raw
+    $text = Get-Content (Join-Path $Repository 'step1_precheck.ps1') -Raw
     Assert-True ($text -match '"storage"\s*,\s*"sku"\s*,\s*"list"') "$name : 正しいSKUコマンド"
     Assert-True ($text -match 'atScope\(\)' -and $text -match 'policyAssignments\?api-version') "$name : 継承を含む割り当て取得"
     $guards = @($ast.FindAll({ param($item)
@@ -100,7 +100,7 @@ foreach ($name in @('log_migration_copy.ps1')) {
 }
 
 # 変換後の名前と診断設定数も、本体のガードをそのまま呼び出して境界を確認します。
-$copyAst = Read-ProductionAst 'log_migration_copy.ps1'
+$copyAst = Read-ProductionAst 'step2_copy.ps1'
 $convertedNameGuards = @($copyAst.FindAll({ param($item)
     $item -is [Management.Automation.Language.IfStatementAst] -and
     $item.Clauses[0].Item1.Extent.Text -match '^\$(storagePlan\.Name|storageName)\s+-cnotmatch\s+' -and
@@ -189,7 +189,7 @@ esac
     if ($onWindows) { $env:SystemTemp = $scratch.FullName }
     Assert-True (([IO.Path]::GetTempPath()).TrimEnd([char[]]@('/','\')) -eq $scratch.FullName) '一時ファイルの検査先'
     Assert-True ((Get-Command az -ErrorAction Stop).Source -eq $fakePath) '実Azure CLIではなくネイティブ模擬CLIを選択'
-    foreach ($file in @('log_migration_copy.ps1','log_migration_delete.ps1')) {
+    foreach ($file in @('step2_copy.ps1','step4_delete.ps1')) {
         $ast = Read-ProductionAst $file
         $node = $ast.Find({ param($item)
             $item -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $item.Name -eq 'Invoke-AzJson'
@@ -296,7 +296,7 @@ function Invoke-RestMethod {
     [pscustomobject]@{ok=$true}
 }
 
-foreach ($file in @('log_migration_copy.ps1','log_migration_delete.ps1')) {
+foreach ($file in @('step2_copy.ps1','step4_delete.ps1')) {
     $ast = Read-ProductionAst $file
     foreach ($functionName in @('Get-ArmToken','Invoke-ArmRequest','Get-DiagnosticSettings')) {
         $node = @($ast.FindAll({ param($item)
@@ -408,7 +408,7 @@ function Start-Job {
     $script:maxBatchJobs = [Math]::Max($script:maxBatchJobs,$owned.Count)
     $job
 }
-foreach ($file in @('log_migration_copy.ps1','log_migration_delete.ps1')) {
+foreach ($file in @('step2_copy.ps1','step4_delete.ps1')) {
     $ast = Read-ProductionAst $file
     foreach ($functionName in @('Get-ArmToken','Invoke-ArmRequest','Get-DiagnosticSettings','Get-DiagnosticSignature','Invoke-DiagnosticBatch')) {
         $node = @($ast.FindAll({ param($item)
@@ -499,14 +499,14 @@ foreach ($file in @('log_migration_copy.ps1','log_migration_delete.ps1')) {
     try {
 $ErrorActionPreference = 'Stop'
 $directory = $Repository
-. (Join-Path $directory 'log_migration_common.ps1')
+. (Join-Path $directory 'common.ps1')
 $targetWorkspaceId = '/subscriptions/old/resourceGroups/old/providers/Microsoft.OperationalInsights/workspaces/old'
 function Assert([bool]$condition, [string]$reason) { if (-not $condition) { throw $reason }; $script:checks++ }
 $script:store = @{}
 $script:writes = [System.Collections.Generic.List[string]]::new()
 $script:availability = $true
 $script:baselineBadSubscription = ''
-$script:baselineModes = [Collections.Generic.List[bool]]::new()
+$script:destinationReads = [Collections.Generic.List[string]]::new()
 $inputCsvPath = Join-Path ([IO.Path]::GetTempPath()) ('migration-staged-'+[guid]::NewGuid().ToString('N')+'.csv')
 $migrationBackupPath = $inputCsvPath+'.backup.json'
 $script:entryBackup = $null
@@ -514,15 +514,44 @@ $script:entryBackup = $null
     [pscustomobject]@{SubscriptionName='s1';ResourceGroup='rg';StorageAccount='stjpetest1';WorkspaceName='log-new';LogDestination='Storage'},
     [pscustomobject]@{SubscriptionName='s2';ResourceGroup='rg';StorageAccount='stjpetest2';WorkspaceName='log-new';LogDestination='Storage'}
 ) | Export-Csv $inputCsvPath -NoTypeInformation -Encoding UTF8
-function Reset-Report { $script:failures.Clear(); $script:verificationResults.Clear(); $script:writes.Clear(); $script:storageNames.Clear(); $script:initiativeDefinition=$null; $script:baselineModes.Clear() }
+function Reset-Report { $script:failures.Clear(); $script:verificationResults.Clear(); $script:writes.Clear(); $script:storageNames.Clear(); $script:initiativeDefinition=$null; $script:destinationReads.Clear() }
 function Get-ResourceId([string]$subscription) { "/subscriptions/$subscription/resourceGroups/source/providers/Some.Service/resources/example" }
 function New-Fixture {
     $script:store = @{}
+    $script:destinations = @{}
     foreach ($subscription in @('s1','s2')) {
         $resourceId = Get-ResourceId $subscription
         $script:store[$resourceId] = @{
             old = [pscustomobject]@{name='old';workspaceId=$targetWorkspaceId;logs=@([pscustomobject]@{category='日本語';enabled=$false;retentionPolicy=[pscustomobject]@{enabled=$true;days=17}});metrics=@()}
             unrelated = [pscustomobject]@{name='unrelated';workspaceId='/other';logs=@();metrics=@()}
+        }
+        # 保存先は一致した実状態を再現し、本体の作成/確認コードを省略しません。
+        $groupId="/subscriptions/$subscription/resourceGroups/rg"
+        $storageId="$groupId/providers/Microsoft.Storage/storageAccounts/stjpetest$($subscription.Substring(1))"
+        $script:destinations[$groupId]=[pscustomobject]@{id=$groupId;location='japaneast'}
+        $script:destinations[$storageId]=Copy-Setting @{
+            id=$storageId;location='japaneast';kind='StorageV2';sku=@{name='Standard_ZRS'}
+            properties=@{
+                provisioningState='Succeeded';encryption=@{requireInfrastructureEncryption=$true};immutableStorageWithVersioning=@{enabled=$true}
+                publicNetworkAccess='Enabled';allowBlobPublicAccess=$false;allowSharedKeyAccess=$false;supportsHttpsTrafficOnly=$true;minimumTlsVersion='TLS1_2'
+                networkAcls=@{defaultAction='Deny';bypass='AzureServices'}
+            }
+        }
+        $script:destinations["$storageId/blobServices/default"]=Copy-Setting @{properties=@{isVersioningEnabled=$true}}
+        $script:destinations["$storageId/managementPolicies/default"]=Copy-Setting @{properties=@{policy=@{rules=@(@{
+            name='log-append-365';enabled=$true;type='Lifecycle'
+            definition=@{filters=@{blobTypes=@('appendBlob')};actions=@{baseBlob=@{delete=@{daysAfterModificationGreaterThan=365}}}}
+        })}}}
+        $script:destinations["$storageId/providers/Microsoft.Security/defenderForStorageSettings/current"]=Copy-Setting @{properties=@{isEnabled=$false;overrideSubscriptionLevelSettings=$true}}
+        $workspaceId="$groupId/providers/Microsoft.OperationalInsights/workspaces/log-new"
+        $script:destinations[$workspaceId]=Copy-Setting @{
+            location='japaneast';properties=@{retentionInDays=365;publicNetworkAccessForIngestion='Enabled';publicNetworkAccessForQuery='Enabled';features=@{enableLogAccessUsingOnlyResourcePermissions=$true};provisioningState='Succeeded'}
+        }
+        foreach($assignment in $policyAssignments){
+            $properties=@{policyAssignmentId=$assignment.Id;exemptionCategory='Waiver';assignmentScopeValidation='Default'}
+            if($assignment.ReferenceIds.Count -gt 0){$properties.policyDefinitionReferenceIds=@($assignment.ReferenceIds)}
+            $exemptionId="/subscriptions/$subscription/providers/Microsoft.Authorization/policyExemptions/log-migration-$environment-$($assignment.Name)"
+            $script:destinations[$exemptionId]=Copy-Setting @{properties=$properties}
         }
     }
 }
@@ -536,7 +565,8 @@ function Invoke-AzJson {
             return
         }
         'storage/sku' { [pscustomobject]@{name='Standard_ZRS';kind='StorageV2';locations=@('japaneast')}; return }
-        'storage/account' { [pscustomobject]@{nameAvailable=$script:availability;reason='AlreadyExists'}; return }
+        'storage/account' { if($Arguments[2] -ne 'check-name'){throw 'Unexpected storage creation in preset fixture'}; [pscustomobject]@{nameAvailable=$script:availability;reason='AlreadyExists'}; return }
+        'provider/show' { [pscustomobject]@{registrationState='Registered'}; return }
         default { throw "Unexpected CLI: $($Arguments -join ' ')" }
     }
 }
@@ -552,7 +582,13 @@ function Get-DiagnosticSettings {
 }
 function Invoke-ArmRequest {
     param([string]$ResourceId, [string]$Method='Get', [hashtable]$Body, [string]$ApiVersion)
-    if ($ResourceId -match '/policyExemptions/') { throw 'ARM Get 失敗 (404): fixture exemption absent' }
+    if($Method -eq 'Get' -and $script:destinations.ContainsKey($ResourceId)) {
+        $script:destinationReads.Add($ResourceId)
+        $current=Copy-Setting $script:destinations[$ResourceId]
+        if($script:baselineBadSubscription -and $ResourceId -like "/subscriptions/$script:baselineBadSubscription/*/workspaces/*"){$current.properties.retentionInDays=30}
+        return $current
+    }
+    if($ResourceId -match '/dataCollectionRules/[^/]+$' -or $ResourceId -match '/dataCollectionRuleAssociations/[^/]+$'){throw 'ARM Get 失敗 (404): fixture rule absent'}
     if ($ResourceId -match '/policyAssignments\?') {
         [pscustomobject]@{value=@(foreach ($assignment in $policyAssignments) {[pscustomobject]@{id=$assignment.Id;properties=[pscustomobject]@{policyDefinitionId='/providers/Microsoft.Authorization/policySetDefinitions/test'}}})}; return
     }
@@ -571,16 +607,6 @@ function Invoke-ArmRequest {
     }
     throw "Unexpected ARM: $Method $ResourceId"
 }
-function Set-MigrationBaseline {
-    param([object]$Target, [switch]$VerifyOnly)
-    $script:baselineModes.Add([bool]$VerifyOnly)
-    if ($Target.SubscriptionId -eq $script:baselineBadSubscription) {
-        Add-MigrationCheck -Target $Target -ResourceId $Target.WorkspaceId -Stage 'MockBaseline' -Success $false -Message 'Mock mismatch'
-        return $false
-    }
-    Add-MigrationCheck -Target $Target -ResourceId $Target.WorkspaceId -Stage 'MockBaseline' -Success $true -Message 'Match'
-    $true
-}
 function Complete-MigrationStep {
     param([string]$Step, [switch]$IncludeChecks)
     if ($script:failures.Count -gt 0) { throw "TEST_STEP_NG:$Step" }
@@ -590,7 +616,7 @@ function Read-MigrationBackup { param($Path,[switch]$CheckCsv) $script:entryBack
 function Get-OldDcrAssociations {param([object[]]$Targets,[string[]]$DcrIds) @()}
 function Run-Step([string]$Step, [bool]$FailureExpected=$false) {
     if ($Step -eq 'precheck' -and (Test-Path $migrationBackupPath)) { Remove-Item $migrationBackupPath -Force }
-    $text = Get-Content (Join-Path $directory "log_migration_$Step.ps1") -Raw
+    $text = Get-Content (Join-Path $directory (@{ precheck='step1_precheck.ps1'; copy='step2_copy.ps1'; verify='step3_verify.ps1'; delete='step4_delete.ps1'; rollback='rollback.ps1' }[$Step])) -Raw
     $body = ($text -split "`n" | Select-Object -Skip 2) -join "`n"
     $failed = $false
     try { Invoke-Expression $body }
@@ -627,7 +653,7 @@ $script:store[$id1][$newDiagnosticSettingName].logs[0].enabled=$false
 Reset-Report
 Run-Step verify
 Assert ($script:writes.Count -eq 0) 'verify must read only'
-Assert ($script:baselineModes.Count -eq 2 -and @($script:baselineModes | Where-Object { -not $_ }).Count -eq 0) 'verify must request read-only baseline checks'
+Assert (@($script:destinationReads | Where-Object { $_ -match '/workspaces/log-new$' } | Sort-Object -Unique).Count -eq 2 -and @($script:destinationReads | Where-Object { $_ -match '/storageAccounts/stjpetest[12]$' } | Sort-Object -Unique).Count -eq 2) 'verify must read both subscriptions actual destination configurations'
 $script:store[$id2].Remove($newDiagnosticSettingName)
 Reset-Report
 Run-Step delete $true
@@ -659,7 +685,7 @@ try {
 }
 finally { if (Test-Path -LiteralPath $baselineReportPath) { Remove-Item -LiteralPath $baselineReportPath -Force } }
 # 本体のライフサイクル処理からHTTP送信直前のUTF8本文まで通して確認します。
-$lifecycleResult = & (Join-Path $PSScriptRoot 'lifecycle-request-replay.ps1') -SourceCommon (Join-Path $Repository 'log_migration_common.ps1') -PassThru
+$lifecycleResult = & (Join-Path $PSScriptRoot 'lifecycle-request-replay.ps1') -SourceCommon (Join-Path $Repository 'common.ps1') -PassThru
 Assert-True ($lifecycleResult.Result -eq 'PASS' -and $lifecycleResult.AzureRequests -eq 0) 'LifecycleのHTTP送信本文を外部通信なしで確認'
 $script:checks += [int]$lifecycleResult.Assertions
 # バックアップと切戻しの失敗保護・再実行も、外部通信なしで確認します。

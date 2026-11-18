@@ -1,9 +1,60 @@
 ﻿#Requires -Version 5.1
 param([string]$BackupPath, [string[]]$SubscriptionIds)
-. (Join-Path $PSScriptRoot 'log_migration_common.ps1')
+. (Join-Path $PSScriptRoot 'common.ps1')
 if (-not $BackupPath) { $BackupPath = $migrationBackupPath }
 
-# 全体、または指定サブスクリプションの旧設定を復元してから新診断設定を削除します。
+# 必要な場合だけ実行する切戻し用です。通常の移行はstep4で終了します。
+# 旧診断設定は不足分だけ復元し、同名の異なる設定は上書きしません。
+function Invoke-RollbackDiagnostics {
+    param([object]$Target, [object[]]$Diagnostics, [switch]$Restore)
+    $subscriptionId = $Target.SubscriptionId
+    $items = @(foreach ($saved in $Diagnostics) {
+        @{ ResourceId = $saved.ResourceId; OldName = $saved.OldName; Before = $saved.Before; After = $saved.After; Restore = [bool]$Restore }
+    })
+    Invoke-DiagnosticBatch -Items $items -SettingName $newDiagnosticSettingName -Action {
+        param($saved, $newName)
+        $settings = @(Get-DiagnosticSettings -ResourceId $saved.ResourceId)
+        $old = @($settings | Where-Object { $_.name -eq $saved.OldName })
+        $new = @($settings | Where-Object { $_.name -eq $newName })
+        if ($old.Count -gt 1 -or ($old.Count -eq 1 -and (Get-DiagnosticSignature $old[0]) -cne (Get-DiagnosticSignature $saved.Before))) { throw '同名の旧診断設定が前値と異なります。上書きしません。' }
+        if ($new.Count -gt 1 -or ($new.Count -eq 1 -and (Get-DiagnosticSignature $new[0]) -cne (Get-DiagnosticSignature $saved.After))) { throw '新診断設定が移行時の完成形と異なります。削除しません。' }
+        if ($old.Count -eq 0 -and $settings.Count -ge 5) { throw '旧設定を復元する空きがありません。新設定は残します。' }
+        if ($old.Count -eq 0 -and $saved.Restore) {
+            $id = "$($saved.ResourceId)/providers/Microsoft.Insights/diagnosticSettings/$([Uri]::EscapeDataString($saved.OldName))"
+            $null = Invoke-ArmRequest -Method Put -ResourceId $id -ApiVersion '2021-05-01-preview' -Body @{ properties = $saved.Before }
+            $old = @(Get-DiagnosticSettings -ResourceId $saved.ResourceId -Name $saved.OldName)
+            if ($old.Count -ne 1 -or (Get-DiagnosticSignature $old[0]) -cne (Get-DiagnosticSignature $saved.Before)) { throw '旧診断設定の復元後の読み戻しが一致しません。' }
+        }
+        [pscustomobject]@{ OldPresent = $old.Count -eq 1; NewPresent = $new.Count -eq 1 }
+    }
+}
+
+# 新側の完成形か確認します。DCRの収集元・宛先・フローへの外部追加も許可しません。
+function Test-RollbackAfter {
+    param([object]$Current, [object]$After, [object]$Before)
+    if (-not (Test-BaselineValues $Current $After)) { return $false }
+    foreach ($key in @('dataSources','destinations','dataFlows')) {
+        if ($null -ne $After.properties.$key -and -not (Test-BaselineValues $After.properties.$key $Current.properties.$key)) { return $false }
+    }
+    foreach ($key in @('dataCollectionEndpointId','streamDeclarations','description')) {
+        if ($null -eq $After.properties.$key -and $null -ne $Current.properties.$key -and
+            -not ((Test-BaselineValues $Current.properties.$key $Before.properties.$key) -and (Test-BaselineValues $Before.properties.$key $Current.properties.$key))) { return $false }
+    }
+    $true
+}
+
+# この切戻しで復元したDCR・関連だけ、最大30秒の読み戻しを行います。
+function Wait-RollbackResource {
+    param([string]$ResourceId, [switch]$Association)
+    for ($attempt = 0; $attempt -lt 15; $attempt++) {
+        $restored = Get-OptionalArmResource -ResourceId $ResourceId
+        if ($restored -and $restored.properties.provisioningState -notin @('Creating','Updating','Accepted')) { break }
+        Start-Sleep -Seconds 2
+    }
+    Get-RollbackBody $restored -Association:$Association -RequireReady
+}
+
+# 1. 全体または指定Subの前値・現在値を確認します。この段階ではAzureを変更しません。
 $resourceId = $BackupPath
 $expected = $null
 try {
@@ -37,7 +88,7 @@ try {
         }
     }
 
-    # 選択した全対象で旧2本の関連を復元し、全件読み戻してから新側の変更に進みます。
+    # 2. 選択した全Subの旧DCR関連を復元し、全件読み戻してから次へ進みます。
     foreach ($target in $targets) {
         $subscriptionId = $target.SubscriptionId
         foreach ($saved in @($target.OldAssociations | Where-Object { $null -ne $_ })) {
@@ -60,7 +111,7 @@ try {
         }
     }
 
-    # 復元が1件でも失敗した場合、新診断設定の削除は一切始めません。
+    # 3. 旧診断設定と保存済みDCR・関連付けを復元します。失敗時は新診断設定を残します。
     foreach ($target in $targets) {
         $subscriptionId = $target.SubscriptionId
         $missing = @($states[$subscriptionId] | Where-Object { -not $_.Result.OldPresent } | ForEach-Object { $_.Item })
@@ -84,7 +135,7 @@ try {
         }
     }
 
-    # バックアップ内の旧診断設定・DCR・関連付けを、全対象読み戻してから次へ進みます。
+    # 4. 選択した全Subの旧診断設定・DCR・関連付けを読み戻し、復元完了を確認します。
     foreach ($target in $targets) {
         $states[$target.SubscriptionId] = @(Invoke-RollbackDiagnostics -Target $target -Diagnostics @($target.Diagnostics))
         foreach ($result in $states[$target.SubscriptionId]) {
@@ -99,7 +150,7 @@ try {
         if (-not ((Test-BaselineValues $current $item.Saved.Before) -and (Test-BaselineValues $item.Saved.Before $current))) { throw "DCR・関連付けの復元後の読み戻しが一致しません: $($item.Saved.ResourceId)" }
     }
 
-    # 削除直前にも旧設定と新設定を確認します。失敗時は以降の削除を止めます。
+    # 5. 全件の復元確認後、新診断設定を削除します。削除直前の不一致でも後続を止めます。
     foreach ($target in $targets) {
         $subscriptionId = $target.SubscriptionId
         foreach ($result in @($states[$subscriptionId] | Where-Object { $_.Result.NewPresent })) {

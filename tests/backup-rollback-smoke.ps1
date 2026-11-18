@@ -1,13 +1,13 @@
 ﻿#Requires -Version 5.1
 param(
-    [string]$Repository = (Split-Path -Parent $PSScriptRoot),
+    [string]$Repository = (Join-Path (Split-Path -Parent $PSScriptRoot) 'migration'),
     [string]$ReportPath,
     [switch]$PassThru
 )
 $ErrorActionPreference = 'Stop'
-. (Join-Path $Repository 'log_migration_common.ps1')
+. (Join-Path $Repository 'common.ps1')
 $armTokens=$null;$armErrors=$null
-$commonAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $Repository 'log_migration_common.ps1'),[ref]$armTokens,[ref]$armErrors)
+$commonAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $Repository 'common.ps1'),[ref]$armTokens,[ref]$armErrors)
 $armNode=@($commonAst.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Invoke-ArmRequest'},$true))[0]
 $script:productionArm=[scriptblock]::Create($armNode.Body.Extent.Text.Substring(1,$armNode.Body.Extent.Text.Length-2))
 $script:checks = 0
@@ -30,7 +30,7 @@ $script:badReadback = ''
 $script:dcrWriteState = 'Succeeded'
 $script:transitionDcrId = ''
 $script:readyAfterReads = 0
-$script:baselineModes = [System.Collections.Generic.List[object]]::new()
+$script:providerReads = [System.Collections.Generic.List[object]]::new()
 $script:unsafeNewDelete = $false
 $script:selected = $script:subs
 
@@ -117,6 +117,22 @@ function New-TestFixture {
                 policyAssignmentId=$assignment.Id;exemptionCategory='Waiver';assignmentScopeValidation='Default'
             }}
         }
+        # 旧テストの基礎設定mockは使わず、保存済みの実ARM応答で各工程のGETを通します。
+        $script:resources[$groupId]=Copy-TestValue @{id=$groupId;location='japaneast';properties=@{provisioningState='Succeeded'}}
+        foreach ($shape in @(
+            @{Name='storage-account';Id=$storageId},
+            @{Name='storage-blob';Id="$storageId/blobServices/default"},
+            @{Name='storage-lifecycle';Id="$storageId/managementPolicies/default"},
+            @{Name='storage-defender';Id="$storageId/providers/Microsoft.Security/defenderForStorageSettings/current"},
+            @{Name='workspace';Id=$workspaceId},
+            @{Name='table-Event';Id="$workspaceId/tables/Event"},
+            @{Name='table-Syslog';Id="$workspaceId/tables/Syslog"}
+        )) {
+            $shapePath=Join-Path $PSScriptRoot ('fixtures/baseline-shapes/'+$shape.Name+'.json')
+            $resource=Get-Content -LiteralPath $shapePath -Raw -Encoding UTF8 | ConvertFrom-Json
+            $resource.id=$shape.Id
+            $script:resources[$shape.Id]=$resource
+        }
         $script:targets += @($target)
     }
     Write-TestCsv
@@ -125,13 +141,22 @@ function New-TestFixture {
     foreach ($id in $script:diagnostics.Keys) { $script:originalDiagnostics[$id]=Get-DiagnosticSignature $script:diagnostics[$id].old }
 }
 function Reset-Observation {
-    $script:writes.Clear();$script:reads.Clear();$script:diagReads=0;$script:targetReads=0;$script:baselineModes.Clear()
+    $script:writes.Clear();$script:reads.Clear();$script:diagReads=0;$script:targetReads=0;$script:providerReads.Clear()
     $script:failedPut='';$script:failedDelete='';$script:badReadback='';$script:dcrWriteState='Succeeded';$script:transitionDcrId='';$script:readyAfterReads=0;$script:unsafeNewDelete=$false
     $script:failures.Clear();$script:verificationResults.Clear()
 }
 # 全外部接続をメモリ内状態へ置き換えます。想定外のCLIは即停止します。
 function Start-Sleep {param([int]$Seconds,[int]$Milliseconds)}
-function Invoke-AzJson { param([string[]]$Arguments) throw "想定外CLI: $($Arguments -join ' ')" }
+function Invoke-AzJson {
+    param([string[]]$Arguments)
+    if ($Arguments.Count -eq 6 -and $Arguments[0] -eq 'provider' -and $Arguments[1] -eq 'show' -and
+        $Arguments[2] -eq '--subscription' -and $Arguments[3] -in $script:subs -and $Arguments[4] -eq '--namespace' -and
+        $Arguments[5] -in @('Microsoft.OperationalInsights','Microsoft.Insights','Microsoft.Storage','Microsoft.Security')) {
+        $script:providerReads.Add([pscustomobject]@{SubscriptionId=$Arguments[3];Namespace=$Arguments[5]})
+        return [pscustomobject]@{registrationState='Registered'}
+    }
+    throw "想定外CLI: $($Arguments -join ' ')"
+}
 function Get-DiagnosticSettings {
     param([string]$ResourceId,[string]$Name)
     $script:diagReads++
@@ -222,32 +247,14 @@ function Get-MigrationPlan {
     $Target.Collectors=@($Target.OldAssociations.ParentResourceId | Where-Object {$_} | Sort-Object -Unique)
     $true
 }
-function Set-MigrationBaseline {
-    param([object]$Target,[switch]$VerifyOnly)
-    $script:baselineModes.Add([pscustomobject]@{SubscriptionId=$Target.SubscriptionId;VerifyOnly=[bool]$VerifyOnly;Storages=$Target.Storages.Count;Collectors=@($Target.Collectors)})
-    if($VerifyOnly) {
-        $dcrName=$Target.WorkspaceName -replace '^log','dcr'
-        $dcrId="/subscriptions/$($Target.SubscriptionId)/resourceGroups/$($Target.ResourceGroup)/providers/Microsoft.Insights/dataCollectionRules/$dcrName"
-        foreach($parentId in $Target.Collectors) {
-            $id="$parentId/providers/Microsoft.Insights/dataCollectionRuleAssociations/$dcrName"
-            $current=$script:resources[$id]
-            if(-not $current -or $current.properties.dataCollectionRuleId -ne $dcrId -or
-               ($current.properties.provisioningState -and $current.properties.provisioningState -ne 'Succeeded')) {
-                Add-MigrationFailure -Target $Target -ResourceId $id -Stage 'MockAssociation' -Message '新DCR関連が未完了' -Expected @{properties=@{dataCollectionRuleId=$dcrId}}
-                return $false
-            }
-        }
-    }
-    $true
-}
 function Invoke-Entry {
     param([string]$Step,[string[]]$SelectedSubscriptions,[bool]$ExpectFailure=$false)
     $BackupPath=$migrationBackupPath;$SubscriptionIds=$SelectedSubscriptions
     $script:selected=if ($SelectedSubscriptions.Count -gt 0) {$SelectedSubscriptions} else {$script:subs}
     $tokens=$null;$errors=$null
-    $entry=[Management.Automation.Language.Parser]::ParseFile((Join-Path $Repository "log_migration_$Step.ps1"),[ref]$tokens,[ref]$errors)
+    $entry=[Management.Automation.Language.Parser]::ParseFile((Join-Path $Repository (@{ precheck='step1_precheck.ps1'; copy='step2_copy.ps1'; verify='step3_verify.ps1'; delete='step4_delete.ps1'; rollback='rollback.ps1' }[$Step])),[ref]$tokens,[ref]$errors)
     if ($errors.Count) { throw "構文エラー: $Step" }
-    $body=@($entry.EndBlock.Statements | Where-Object {$_.Extent.Text -notmatch '^\.\s+\(Join-Path.*log_migration_common\.ps1'} | ForEach-Object {$_.Extent.Text}) -join "`n"
+    $body=@($entry.EndBlock.Statements | Where-Object {$_.Extent.Text -notmatch '^\.\s+\(Join-Path.*common\.ps1'} | ForEach-Object {$_.Extent.Text}) -join "`n"
     $parameterText=if ($entry.ParamBlock) {$entry.ParamBlock.Extent.Text} else {''}
     $runner=[scriptblock]::Create($parameterText+"`n"+$body)
     $arguments=@{}
@@ -272,7 +279,7 @@ function Invoke-TestCase([string]$Name,[scriptblock]$Action) {
 
 # 単発の保存処理はprecheckに置かれているため、実際の保存try本文をそのまま再利用します。
 $preTokens=$null;$preErrors=$null
-$preAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $Repository 'log_migration_precheck.ps1'),[ref]$preTokens,[ref]$preErrors)
+$preAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $Repository 'step1_precheck.ps1'),[ref]$preTokens,[ref]$preErrors)
 $saveTry=@($preAst.FindAll({param($node) $node -is [Management.Automation.Language.TryStatementAst] -and $node.Body.Extent.Text -match 'FileMode\]::CreateNew'},$true))
 if ($saveTry.Count -ne 1) {throw 'precheckのバックアップ保存本文を一意に取得できません。'}
 $script:saveBackupCode=$saveTry[0].Body.Extent.Text.Substring(1,$saveTry[0].Body.Extent.Text.Length-2)
@@ -492,7 +499,7 @@ try {
         Reset-Observation
         Invoke-Entry verify
         Assert-NoAzureWrites
-        Assert-Rollback ($script:baselineModes.Count -eq 1 -and $script:baselineModes[0].SubscriptionId -eq $script:subs[0]) 'CSV部分集合だけverify'
+        Assert-Rollback ($script:reads.Count -gt 0 -and @($script:reads | Where-Object { $_ -notlike "/subscriptions/$($script:subs[0])/*" }).Count -eq 0 -and $script:providerReads.Count -eq 4 -and @($script:providerReads | Where-Object SubscriptionId -ne $script:subs[0]).Count -eq 0) 'CSV部分集合だけverify'
         $rows[0].SubscriptionName='33333333-3333-3333-3333-333333333333'
         @($rows[0]) | Export-Csv $inputCsvPath -NoTypeInformation -Encoding UTF8
         Reset-Observation
@@ -663,7 +670,7 @@ try {
         Save-TestBackup;Seed-AfterMigration
         Reset-Observation
         Invoke-Entry verify
-        Assert-Rollback ($script:baselineModes.Count -eq 2 -and @($script:baselineModes | Where-Object {$_.Storages -ne 1}).Count -eq 0) 'backup地域のStorageを全てverify'
+        Assert-Rollback (@($script:reads | Where-Object { $_ -match '/storageAccounts/[^/]+$' } | Sort-Object -Unique).Count -eq 2 -and @($script:savedBackup.Targets.Storages | Where-Object { $_.Id -notin $script:reads }).Count -eq 0) 'backup地域のStorageを全てverify'
         Assert-NoAzureWrites
     }
     Invoke-TestCase 'backup後に増えた無関係VMを関連付け対象へ広げない' {
@@ -674,9 +681,9 @@ try {
         Invoke-Entry copy
         Assert-NoAzureWrites
         Assert-Rollback ($unrelatedVm -notin $script:targets[1].Collectors) '旧DCR関連のないVMを追加しない'
-        Assert-Rollback (@($script:baselineModes | Where-Object {$unrelatedVm -in $_.Collectors}).Count -eq 0) '無関係VMを基礎設定対象に渡さない'
+        Assert-Rollback (@($script:reads | Where-Object { $_ -eq $unrelatedVm -or $_.StartsWith($unrelatedVm+'/') }).Count -eq 0) '無関係VMを基礎設定対象に渡さない'
     }
-    $result=[pscustomobject]@{Result='PASS';Cases=$script:cases;CaseCount=$script:cases.Count;Checks=$script:checks;AzureRequests=0;CommonHash=(Get-FileHash (Join-Path $Repository 'log_migration_common.ps1') -Algorithm SHA256).Hash;RollbackHash=(Get-FileHash (Join-Path $Repository 'log_migration_rollback.ps1') -Algorithm SHA256).Hash}
+    $result=[pscustomobject]@{Result='PASS';Cases=$script:cases;CaseCount=$script:cases.Count;Checks=$script:checks;AzureRequests=0;CommonHash=(Get-FileHash (Join-Path $Repository 'common.ps1') -Algorithm SHA256).Hash;RollbackHash=(Get-FileHash (Join-Path $Repository 'rollback.ps1') -Algorithm SHA256).Hash}
     if ($ReportPath) {$result | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $ReportPath -Encoding UTF8}
     if ($PassThru) {$result} else {$result | ConvertTo-Json -Depth 30}
 }

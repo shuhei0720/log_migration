@@ -1,5 +1,5 @@
 ﻿#Requires -Version 5.1
-. (Join-Path $PSScriptRoot "log_migration_common.ps1")
+. (Join-Path $PSScriptRoot "common.ps1")
 
 # 初回だけ実行します。同名ストレージ・同名診断設定はすべて事前停止します。
 # この工程ではAzureの設定を変更しません。
@@ -9,7 +9,44 @@ if (Test-Path -LiteralPath $migrationBackupPath) {
 }
 $targets = @(Get-MigrationTargets)
 foreach ($target in $targets) {
-    try { $null = Get-MigrationPlan -Target $target -Fresh }
+    $subscriptionId = $target.SubscriptionId
+    try {
+        # 指定環境のポリシーと参照IDを先に確認します。
+        $assignmentUrl = "https://management.azure.com/subscriptions/$subscriptionId/providers/Microsoft.Authorization/policyAssignments?api-version=2022-06-01&`$filter=atScope()"
+        $assignments = @()
+        do {
+            $page = Invoke-ArmRequest -ResourceId $assignmentUrl
+            $assignments += @($page.value)
+            $assignmentUrl = $page.nextLink
+        } while ($assignmentUrl)
+        foreach ($assignment in $policyAssignments) {
+            if ($assignment.Id -notin $assignments.id) { throw "指定環境の割り当てが適用されていません: $($assignment.Id)" }
+        }
+        $assignment = $assignments | Where-Object { $_.id -eq $policyAssignments[2].Id } | Select-Object -First 1
+        $definitionId = $assignment.properties.policyDefinitionId
+        if (-not $definitionId -or $definitionId -notmatch '/policySetDefinitions/') { throw "3件目の割り当てからイニシアティブの定義IDを取得できません。" }
+        if (-not $script:initiativeDefinition) { $script:initiativeDefinition = Invoke-ArmRequest -ResourceId $definitionId -ApiVersion "2023-04-01" }
+        foreach ($referenceId in $policyReferenceIds) {
+            if ($referenceId -cnotin $script:initiativeDefinition.properties.policyDefinitions.policyDefinitionReferenceId) { throw "指定の参照IDがイニシアティブに存在しません: $referenceId" }
+        }
+        # 対象の旧設定とリージョン別の保存先を調べ、名前の重複を確認します。
+        $null = Get-MigrationPlan -Target $target -Fresh
+        if ($target.Storages.Count -gt 0) {
+            $skus = @(Invoke-AzJson -Arguments @("storage", "sku", "list", "--subscription", $subscriptionId))
+            foreach ($storage in @($Target.Storages.Values | Sort-Object Name)) {
+                try {
+                    if (-not $script:storageNames.Add($storage.Name)) { throw "変換後のストレージ名が重複しています: $($storage.Name)" }
+                    if (-not ($skus | Where-Object { $_.name -eq "Standard_ZRS" -and $_.kind -eq "StorageV2" -and $storage.Location -in $_.locations })) { throw "Standard_ZRSを利用できないリージョンです: $($storage.Location)" }
+                    $availability = Invoke-AzJson -Arguments @("storage", "account", "check-name", "--subscription", $subscriptionId, "--name", $storage.Name)
+                    if ($availability.nameAvailable -ne $true) { throw "名前を利用できません: $($storage.Name) / $($availability.reason) / $($availability.message)" }
+                    Add-MigrationCheck -Target $Target -ResourceId $storage.Id -Stage "ストレージ名の事前確認" -Success $true -Message "利用可能"
+                }
+                catch {
+                    Add-MigrationFailure -Target $Target -ResourceId $storage.Id -Stage "ストレージ名の事前確認" -Message $_.Exception.Message
+                }
+            }
+        }
+    }
     catch { Add-MigrationFailure -Target $target -Stage "事前チェック" -Message $_.Exception.Message }
 }
 if ($script:failures.Count -eq 0) {

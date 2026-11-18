@@ -1,6 +1,6 @@
 ﻿#Requires -Version 5.1
 param(
-    [string]$SourceCommon = (Join-Path (Split-Path -Parent $PSScriptRoot) 'log_migration_common.ps1'),
+    [string]$SourceCommon = (Join-Path (Join-Path (Split-Path -Parent $PSScriptRoot) 'migration') 'common.ps1'),
     [int]$MissingPolicyNullCount = 0,
     [string]$ResultPath,
     [switch]$PassThru
@@ -16,8 +16,10 @@ foreach ($name in @('Get-OptionalArmResource','Test-BaselineValues')) {
 }
 $arm=$functions | Where-Object Name -eq 'Invoke-ArmRequest'
 $script:actualArmRequest=[scriptblock]::Create($arm.Body.Extent.Text.Substring(1,$arm.Body.Extent.Text.Length-2))
-$baseline=$functions | Where-Object Name -eq 'Set-MigrationBaseline'
-$storageLoop=@($baseline.FindAll({param($n) $n -is [Management.Automation.Language.ForEachStatementAst] -and $n.Variable.VariablePath.UserPath -eq 'storagePlan'},$true))[0]
+$copyPath=Join-Path (Split-Path -Parent $SourceCommon) 'step2_copy.ps1'
+$copyAst=[Management.Automation.Language.Parser]::ParseFile($copyPath,[ref]$tokens,[ref]$errors)
+if($errors.Count){throw 'copyの構文エラーがあります。'}
+$storageLoop=@($copyAst.FindAll({param($n) $n -is [Management.Automation.Language.ForEachStatementAst] -and $n.Variable.VariablePath.UserPath -eq 'storagePlan'},$true))[0]
 $statements=@($storageLoop.Body.Statements)
 $index=-1
 for ($i=0;$i -lt $statements.Count;$i++) { if ($statements[$i].Extent.Text -match '^\$stage = "ライフサイクル"$') { $index=$i;break } }
@@ -88,6 +90,6 @@ $results=@(foreach ($caseName in @('Missing','Empty','OtherRule','ReplaceOwnRule
     }
     [pscustomobject]@{Case=$caseName;RulesCount=$rules.Count;NullCount=$nullCount;Success=$script:checkRecords[0].Success;RequestBody=$script:capturedJson}
 })
-$result=[pscustomobject]@{Result='PASS';Assertions=$script:checks;AzureRequests=0;SourceCommon=$SourceCommon;SourceHash=(Get-FileHash $SourceCommon -Algorithm SHA256).Hash;Cases=$results}
+$result=[pscustomobject]@{Result='PASS';Assertions=$script:checks;AzureRequests=0;SourceCommon=$SourceCommon;SourceHash=(Get-FileHash $SourceCommon -Algorithm SHA256).Hash;SourceCopy=$copyPath;SourceCopyHash=(Get-FileHash $copyPath -Algorithm SHA256).Hash;Cases=$results}
 if ($ResultPath) { $result | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $ResultPath -Encoding UTF8 }
 if ($PassThru) {$result} else {$result | ConvertTo-Json -Depth 30}
