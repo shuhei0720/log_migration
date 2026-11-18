@@ -1,0 +1,113 @@
+﻿{
+    "Kind":  "NativeWindows51OfflineReplay",
+    "Result":  "PASS",
+    "StartedUtc":  "2026-11-18T16:17:37.5025791Z",
+    "Version":  "5.1.20348.5773",
+    "Edition":  "Desktop",
+    "ProcessPath":  "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "VmResourceId":  "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Compute/virtualMachines/vm-fx-v3core261118a",
+    "ComputerName":  "v3native",
+    "ManifestSha256":  "607e39695c328189aae8d39b1bc0dd9d258c8599d4e78d9b1be941a50cc53c7d",
+    "ZipSha256":  "7f534d3b85df22e1daf8079f0b7191304936a9ac38df65e69eecd8ed5fbc8b8e",
+    "BeforeHashes":  {
+                         "migration/step2_verify.ps1":  "DD764C49DF8585864BE012C45FD00E0A34A503459605C34E204CEE471E280353",
+                         "tests/fixtures/baseline-shapes/storage-lifecycle.json":  "136D8F2FBEFACEF10993AB63D9824B1F4A7EF6FEB846D8F51A80CD4A48E81BB3",
+                         "tests/fixtures/baseline-shapes/table-Syslog.json":  "4CF2D466600B49E901EF7A43F37CC10DA45D763F0043E76CAA0068C1A6DDD863",
+                         "tests/fixtures/baseline-shapes/storage-defender.json":  "3C94BB78CF54F458E0DA630EAE703E8AB0355DDD60D118B0251DFEFB9425FFB7",
+                         "tests/fixtures/baseline-shapes/storage-blob.json":  "72788BAE92E1E46F93F8301E061F08436B51A059A9BA147CBE3B387175E51F78",
+                         "tests/lifecycle-request-replay.ps1":  "9C522A37FF50C3FDBF1FF888229CE42B898F8E6A4953B0D0B9B49AE99A7C51E9",
+                         "tests/dcr-cutover-smoke.ps1":  "CC207612BF27029F504B9C7D7C5555EE135942548746A37376306DECB6E53AB7",
+                         "tests/regression.ps1":  "DBB273DFACE3689C2F52FAEB353FCAF17FE304523D37E4A85879C5BD3AD45923",
+                         "tests/backup-rollback-smoke.ps1":  "146AA2083D303172E35E7452F10AFF2878E2656551BCD8D5BD593581C5FC6783",
+                         "tests/baseline-smoke.ps1":  "0717612AF406730A22E287C82CED1C04BA2C344B368761C1A57FF972BC4AF6F6",
+                         "tests/fixtures/baseline-shapes/dcr.json":  "0D6FAD967DF98AADB846F9863B58CAA0CC0026F2458E9F73BBD84F2993334589",
+                         "tests/fixtures/baseline-shapes/table-Event.json":  "02AB149F3FFACE99D67B699FD4F27BD06BFB6D3BF2D20E972D29AD02B13C7DA1",
+                         "migration/common.ps1":  "3DCC368CB6971F36F3DCD4CB9DA79684A7FB3520B2507C77F567B63093A72B2A",
+                         "tests/fixtures/baseline-shapes/workspace.json":  "74D22E3661E410BEB37F1432B0E6C695C5D5145AE7A6959C0CBEAB94E652C60A",
+                         "migration/step1_copy.ps1":  "BCE80E400BEF75983F6E8002D588FC249413A3092035A88BBD86DD0B8EDBB6F6",
+                         "migration/precheck.ps1":  "3D47D77251EE26496E1DB5B031A5634D4620D1A6F2D61CB9928EBDFFF5E8A894",
+                         "tests/fixtures/baseline-shapes/index.json":  "BE73EE5440619A03B7D0B7D6F010C1269B65C7016C0C3C9A55C760729A54A3C1",
+                         "tests/fixtures/baseline-shapes/storage-account.json":  "12E4600D7C39A72C87CA9002A014AD167E22713D0EB24E10D25D8DFD11EC9C0A",
+                         "migration/step3_delete.ps1":  "367648CB937726965F88E279F363B46A5728134FC225D2C7E1BF6667930ED05A",
+                         "migration/rollback.ps1":  "C15F547F45DD4119AA0C16DA75446B70A0D8E81B5773187EBE65A62ADF3D3A2F"
+                     },
+    "AfterHashes":  {
+                        "migration/step2_verify.ps1":  "DD764C49DF8585864BE012C45FD00E0A34A503459605C34E204CEE471E280353",
+                        "tests/fixtures/baseline-shapes/storage-lifecycle.json":  "136D8F2FBEFACEF10993AB63D9824B1F4A7EF6FEB846D8F51A80CD4A48E81BB3",
+                        "tests/fixtures/baseline-shapes/table-Syslog.json":  "4CF2D466600B49E901EF7A43F37CC10DA45D763F0043E76CAA0068C1A6DDD863",
+                        "tests/fixtures/baseline-shapes/storage-defender.json":  "3C94BB78CF54F458E0DA630EAE703E8AB0355DDD60D118B0251DFEFB9425FFB7",
+                        "tests/fixtures/baseline-shapes/storage-blob.json":  "72788BAE92E1E46F93F8301E061F08436B51A059A9BA147CBE3B387175E51F78",
+                        "tests/lifecycle-request-replay.ps1":  "9C522A37FF50C3FDBF1FF888229CE42B898F8E6A4953B0D0B9B49AE99A7C51E9",
+                        "tests/dcr-cutover-smoke.ps1":  "CC207612BF27029F504B9C7D7C5555EE135942548746A37376306DECB6E53AB7",
+                        "tests/regression.ps1":  "DBB273DFACE3689C2F52FAEB353FCAF17FE304523D37E4A85879C5BD3AD45923",
+                        "tests/backup-rollback-smoke.ps1":  "146AA2083D303172E35E7452F10AFF2878E2656551BCD8D5BD593581C5FC6783",
+                        "tests/baseline-smoke.ps1":  "0717612AF406730A22E287C82CED1C04BA2C344B368761C1A57FF972BC4AF6F6",
+                        "tests/fixtures/baseline-shapes/dcr.json":  "0D6FAD967DF98AADB846F9863B58CAA0CC0026F2458E9F73BBD84F2993334589",
+                        "tests/fixtures/baseline-shapes/table-Event.json":  "02AB149F3FFACE99D67B699FD4F27BD06BFB6D3BF2D20E972D29AD02B13C7DA1",
+                        "migration/common.ps1":  "3DCC368CB6971F36F3DCD4CB9DA79684A7FB3520B2507C77F567B63093A72B2A",
+                        "tests/fixtures/baseline-shapes/workspace.json":  "74D22E3661E410BEB37F1432B0E6C695C5D5145AE7A6959C0CBEAB94E652C60A",
+                        "migration/step1_copy.ps1":  "BCE80E400BEF75983F6E8002D588FC249413A3092035A88BBD86DD0B8EDBB6F6",
+                        "migration/precheck.ps1":  "3D47D77251EE26496E1DB5B031A5634D4620D1A6F2D61CB9928EBDFFF5E8A894",
+                        "tests/fixtures/baseline-shapes/index.json":  "BE73EE5440619A03B7D0B7D6F010C1269B65C7016C0C3C9A55C760729A54A3C1",
+                        "tests/fixtures/baseline-shapes/storage-account.json":  "12E4600D7C39A72C87CA9002A014AD167E22713D0EB24E10D25D8DFD11EC9C0A",
+                        "migration/step3_delete.ps1":  "367648CB937726965F88E279F363B46A5728134FC225D2C7E1BF6667930ED05A",
+                        "migration/rollback.ps1":  "C15F547F45DD4119AA0C16DA75446B70A0D8E81B5773187EBE65A62ADF3D3A2F"
+                    },
+    "AstErrors":  {
+                      "migration/rollback.ps1":  [
+
+                                                 ],
+                      "tests/baseline-smoke.ps1":  [
+
+                                                   ],
+                      "migration/step1_copy.ps1":  [
+
+                                                   ],
+                      "migration/step3_delete.ps1":  [
+
+                                                     ],
+                      "tests/backup-rollback-smoke.ps1":  [
+
+                                                          ],
+                      "tests/regression.ps1":  [
+
+                                               ],
+                      "tests/dcr-cutover-smoke.ps1":  [
+
+                                                      ],
+                      "migration/step2_verify.ps1":  [
+
+                                                     ],
+                      "tests/lifecycle-request-replay.ps1":  [
+
+                                                             ],
+                      "migration/precheck.ps1":  [
+
+                                                 ],
+                      "migration/common.ps1":  [
+
+                                               ]
+                  },
+    "AstFiles":  11,
+    "Checks":  1162,
+    "FormalCases":  136,
+    "CoreChecks":  275,
+    "FamilyConnectionChecks":  4,
+    "ManifestFiles":  20,
+    "BeforeMatched":  true,
+    "AfterMatched":  true,
+    "AzureRequests":  0,
+    "NoRealAzureCli":  true,
+    "EmptyAzureConfig":  true,
+    "OutboundBlockActive":  true,
+    "OutboundBlockRemoved":  true,
+    "BaselineCases":  33,
+    "BaselineChecks":  163,
+    "LifecycleCases":  6,
+    "LifecycleChecks":  39,
+    "BackupCases":  50,
+    "BackupChecks":  326,
+    "DcrCases":  47,
+    "DcrChecks":  355,
+    "CompletedUtc":  "2026-11-18T16:20:07.4896978Z"
+}
