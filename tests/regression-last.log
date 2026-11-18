@@ -57,8 +57,8 @@ WARNING: fixture-warning
 既存設定と一致・変更なし: /subscriptions/s2/resourceGroups/source/providers/Some.Service/resources/added-after-precheck / storage-archive
 既存設定と一致・変更なし: /subscriptions/s2/resourceGroups/source/providers/Some.Service/resources/example / storage-archive
 旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
-調査完了: s1 / 対象診断設定=0 / ストレージ=2 / 旧DCR関連=0 / 収集対象=0
-調査完了: s2 / 対象診断設定=0 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
+調査完了: s1 / 対象診断設定=2 / ストレージ=2 / 旧DCR関連=0 / 収集対象=0
+調査完了: s2 / 対象診断設定=2 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
 調査完了: s1 / 対象診断設定=2 / ストレージ=2 / 旧DCR関連=0 / 収集対象=0
 既存設定と一致・変更なし: /subscriptions/s1/resourceGroups/source/providers/Some.Service/resources/added-japanwest / storage-archive
 調査完了: s2 / 対象診断設定=2 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0

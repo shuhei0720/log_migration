@@ -2,16 +2,16 @@
 
 指定したLog Analyticsを宛先にする既存の診断設定を、新しい保存先へ複製します。原本の`log_migration.ps1`と原本CSVは変更していません。
 
-本番で使用する6本は、`migration`フォルダーにまとめています。通常の実行順はstep1〜step4です。`common.ps1`は各工程が読み込むため単独実行は不要です。`rollback.ps1`は切戻しが必要な場合だけ実行します。
+本番で使用する6本は、`migration`フォルダーにまとめています。通常の実行順はstep1〜step3です。`precheck.ps1`は任意の事前確認で、実行しなくてもstep1から処理できます。`common.ps1`は各工程が読み込むため単独実行は不要です。`rollback.ps1`は切戻しが必要な場合だけ実行します。
 
 |ファイル|役割|
 |---|---|
 |[common.ps1](migration/common.ps1)|設定値と繰り返し使う処理|
-|[step1_precheck.ps1](migration/step1_precheck.ps1)|① 名前・入力・追加可能数の事前確認|
-|[step2_copy.ps1](migration/step2_copy.ps1)|② 保存先の準備と診断設定の複製|
-|[step3_verify.ps1](migration/step3_verify.ps1)|③ 全対象の現在値を確認|
-|[step4_delete.ps1](migration/step4_delete.ps1)|④ 全件確認後の旧設定削除|
-|[rollback.ps1](migration/rollback.ps1)|②・④の途中／完了後からの切り戻し|
+|[precheck.ps1](migration/precheck.ps1)|任意：名前・入力・追加可能数の事前確認|
+|[step1_copy.ps1](migration/step1_copy.ps1)|① 保存先の準備と診断設定の複製|
+|[step2_verify.ps1](migration/step2_verify.ps1)|② 全対象の現在値を確認|
+|[step3_delete.ps1](migration/step3_delete.ps1)|③ 全件確認後の旧設定削除|
+|[rollback.ps1](migration/rollback.ps1)|①・③の途中／完了後からの切り戻し|
 
 Windows PowerShell 5.1とAzure CLI 2.54以降を使用します。対象サブスクリプションのOwnerで`az login`済みであることを前提とします。日本語を含むスクリプトはUTF-8 BOM付きで保存してください。
 
@@ -35,59 +35,59 @@ Storageは移行対象のリージョンごとに作成し、名前の`jpe`だ�
 
 DCRの新しい関連付けを作るのは、指定した旧DCR 2本に関連付いていたリソースだけです。VM・VMSSとも、旧関連がないものには追加しません。診断設定の複製とDCRの関連付けは、それぞれの旧設定から対象を判定します。新DCRの収集内容は原本と同じWindowsのApplication／Security／SystemイベントとSyslogです。
 
-## ① 事前チェック
+## 任意：事前チェック
 
 ```powershell
-powershell.exe -NoProfile -File .\migration\step1_precheck.ps1
+powershell.exe -NoProfile -File .\migration\precheck.ps1
 ```
 
-前日などにも単独実行できます。同名Storage・同名診断設定があれば停止します。新DCR・新関連のIDが旧DCR・旧関連と重なる場合も停止します。Azureの設定は変更せず、バックアップも作りません。①の結果ファイルは②以降の入力にしません。
+前日などにも単独実行できます。同名Storage・同名診断設定があれば停止します。新DCR・新関連のIDが旧DCR・旧関連と重なる場合も停止します。Azureの設定は変更せず、バックアップも作りません。事前チェックの結果ファイルは①以降の入力にしません。
 
-①の実行後に対象が追加・変更されても、②は実行時のAzureを調べ直します。既存のバックアップがある場合も、①はそれを読み書きしません。
+事前チェックの実行後に対象が追加・変更されても、①は実行時のAzureを調べ直します。既存のバックアップがある場合も、事前チェックはそれを読み書きしません。
 
-## ② 設定・再実行
+## ① 設定・再実行
 
 ```powershell
-powershell.exe -NoProfile -File .\migration\step2_copy.ps1
+powershell.exe -NoProfile -File .\migration\step1_copy.ps1
 ```
 
-①の実行有無に依存せず、CSVを読みます。サブスクリプションごとに「現在の対象を調査→変更前情報を保存→適用除外→保存先とDCRを準備→診断設定を複製」の順で処理し、次のサブスクリプションへ進みます。
+事前チェックの実行有無に依存せず、CSVを読みます。サブスクリプションごとに「現在の対象を調査→変更前情報を保存→適用除外→保存先とDCRを準備→診断設定を複製」の順で処理し、次のサブスクリプションへ進みます。
 
 変更前情報は `migration/log_migration_backup_<環境名>.json`（形式Version 3）へ保存します。対象の旧診断設定、今回扱うDCR・関連付けの変更前設定、適用除外の既存有無だけで、ログデータは含みません。診断設定は複製のため取得した値を保存し、旧DCR関連付けだけは一覧で省略される項目を個別取得します。保存を完了してから、そのサブスクリプションの変更を始めます。
 
-途中停止後は同じ設定値とバックアップを保持して②を再実行します。保存済みの変更前情報は上書きせず、新たに見つかった対象だけ情報を追加してから処理します。サブスクリプションを絞る場合はCSVの行を減らせますが、記録済みの行の保存先などは変更できません。
+途中停止後は同じ設定値とバックアップを保持して①を再実行します。保存済みの変更前情報は上書きせず、新たに見つかった対象だけ情報を追加してから処理します。サブスクリプションを絞る場合はCSVの行を減らせますが、記録済みの行の保存先などは変更できません。
 
 初めて扱う対象では、同名Storage・同名新診断設定を再利用しません。今回の記録にある作成済みの設定は、内容が一致すればスキップします。不一致は上書きせず手動対応一覧へ出します。保存先はID・リージョン・基礎構成を確認し、不足する設定だけ補完します。旧診断設定と旧DCR 2本への関連付けは残します。
 
 VMログ用のEvent・Syslogテーブルは、テーブル単位の合計保持期間 `totalRetentionInDays` を3年（1,095日）に明示設定します。既存テーブルはその項目だけPATCHし、分析保持期間・スキーマ・プランと、他のテーブルは変更しません。ワークスペース既定の保持期間は365日のままです。StorageのappendBlob削除ルールも1,095日とし、今回の管理対象の旧365日ルールは置き換え、他のルールは保持します。
 
-## ③ 全件確認
+## ② 全件確認
 
 ```powershell
-powershell.exe -NoProfile -File .\migration\step3_verify.ps1
+powershell.exe -NoProfile -File .\migration\step2_verify.ps1
 ```
 
-②のバックアップ・処理記録とAzureの現在値で全件確認します。手動設定後も再実行してください。旧設定・旧DCR関連を削除済みのリソースも、バックアップに記録した全対象の新診断設定・新DCR関連を確認します。この工程ではAzureを変更しません。
+①のバックアップ・処理記録とAzureの現在値で全件確認します。手動設定後も再実行してください。旧設定・旧DCR関連を削除済みのリソースも、バックアップに記録した全対象の新診断設定・新DCR関連を確認します。この工程ではAzureを変更しません。
 
-## ④ 旧設定削除
+## ③ 旧設定削除
 
-人が③の全件成功を確認した後に実行します。
+人が②の全件成功を確認した後に実行します。
 
 ```powershell
-powershell.exe -NoProfile -File .\migration\step4_delete.ps1
+powershell.exe -NoProfile -File .\migration\step3_delete.ps1
 ```
 
 削除版も全CSV対象を再確認し、未完了が1件でもあれば削除を開始しません。旧DCR 2本への関連付け、旧診断設定の順で削除します。各削除の直前にも新旧設定を確認します。失敗した場合は以降の削除をすべて止めます。途中停止後は、全対象の新設定を確認してから残っている旧設定だけを削除します。旧DCR本体は残します。
 
 ## 切り戻し
 
-②・④の途中／完了後とも同じスクリプトを使用します。全体を戻す場合は次を実行します。
+①・③の途中／完了後とも同じスクリプトを使用します。全体を戻す場合は次を実行します。
 
 ```powershell
 powershell.exe -NoProfile -File .\migration\rollback.ps1
 ```
 
-②の変更前に保存した状態へ戻します。①の実行時点の状態は使用しません。
+①の変更前に保存した状態へ戻します。事前チェックの実行時点の状態は使用しません。
 
 一部のサブスクリプションだけを戻す場合は、Windows PowerShellを開いて対象IDを指定します。
 

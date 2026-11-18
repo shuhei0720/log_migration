@@ -23,7 +23,7 @@ function Set-BaselineResource {
     $current
 }
 
-# ①の結果ファイルは使いません。各サブスクリプションを直前に調査し、変更前の状態を保存します。
+# 事前チェックの結果ファイルは使いません。各サブスクリプションを直前に調査し、変更前の状態を保存します。
 $targets = @(Get-MigrationTargets)
 if ($script:failures.Count -gt 0) { Complete-MigrationStep -Step "copy" -IncludeChecks }
 try {

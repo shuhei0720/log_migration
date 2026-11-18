@@ -23,7 +23,7 @@ function Copy-Setting {
 }
 
 # 共通ファイルと各工程は、実際のファイルを個別に構文確認します。
-$productionFiles=@('common.ps1','step1_precheck.ps1','step2_copy.ps1','step3_verify.ps1','step4_delete.ps1','rollback.ps1')
+$productionFiles=@('common.ps1','precheck.ps1','step1_copy.ps1','step2_verify.ps1','step3_delete.ps1','rollback.ps1')
 foreach ($entryFile in $productionFiles) {
     $tokens = $null; $errors = $null
     $null = [Management.Automation.Language.Parser]::ParseFile((Join-Path $Repository $entryFile),[ref]$tokens,[ref]$errors)
@@ -31,7 +31,7 @@ foreach ($entryFile in $productionFiles) {
 }
 
 # 本体は実行せず、実際に使用する比較関数だけを読み込みます。
-foreach ($name in @('step2_copy.ps1', 'step4_delete.ps1')) {
+foreach ($name in @('step1_copy.ps1', 'step3_delete.ps1')) {
     $ast = Read-ProductionAst $name
     $node = @($ast.FindAll({ param($item)
         $item -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $item.Name -eq 'Get-DiagnosticSignature'
@@ -73,9 +73,9 @@ foreach ($name in @('step2_copy.ps1', 'step4_delete.ps1')) {
     Assert-True ((Get-DiagnosticSignature $base) -ceq (Get-DiagnosticSignature $other)) "$name : 配列順に依存しない"
     Assert-True ((Get-DiagnosticSignature @{logs=$null;metrics=$null}) -ceq (Get-DiagnosticSignature @{logs=@();metrics=@()})) "$name : nullと空配列"
 }
-foreach ($name in @('step2_copy.ps1')) {
+foreach ($name in @('step1_copy.ps1')) {
     $ast = Read-ProductionAst $name
-    $text = Get-Content (Join-Path $Repository 'step1_precheck.ps1') -Raw
+    $text = Get-Content (Join-Path $Repository 'precheck.ps1') -Raw
     Assert-True ($text -match '"storage"\s*,\s*"sku"\s*,\s*"list"') "$name : 正しいSKUコマンド"
     Assert-True ($text -match 'atScope\(\)' -and $text -match 'policyAssignments\?api-version') "$name : 継承を含む割り当て取得"
     $guards = @($ast.FindAll({ param($item)
@@ -100,7 +100,7 @@ foreach ($name in @('step2_copy.ps1')) {
 }
 
 # 変換後の名前と診断設定数も、本体のガードをそのまま呼び出して境界を確認します。
-$copyAst = Read-ProductionAst 'step2_copy.ps1'
+$copyAst = Read-ProductionAst 'step1_copy.ps1'
 $convertedNameGuards = @($copyAst.FindAll({ param($item)
     $item -is [Management.Automation.Language.IfStatementAst] -and
     $item.Clauses[0].Item1.Extent.Text -match '^\$(storagePlan\.Name|storageName)\s+-cnotmatch\s+' -and
@@ -189,7 +189,7 @@ esac
     if ($onWindows) { $env:SystemTemp = $scratch.FullName }
     Assert-True (([IO.Path]::GetTempPath()).TrimEnd([char[]]@('/','\')) -eq $scratch.FullName) '一時ファイルの検査先'
     Assert-True ((Get-Command az -ErrorAction Stop).Source -eq $fakePath) '実Azure CLIではなくネイティブ模擬CLIを選択'
-    foreach ($file in @('step2_copy.ps1','step4_delete.ps1')) {
+    foreach ($file in @('step1_copy.ps1','step3_delete.ps1')) {
         $ast = Read-ProductionAst $file
         $node = $ast.Find({ param($item)
             $item -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $item.Name -eq 'Invoke-AzJson'
@@ -296,7 +296,7 @@ function Invoke-RestMethod {
     [pscustomobject]@{ok=$true}
 }
 
-foreach ($file in @('step2_copy.ps1','step4_delete.ps1')) {
+foreach ($file in @('step1_copy.ps1','step3_delete.ps1')) {
     $ast = Read-ProductionAst $file
     foreach ($functionName in @('Get-ArmToken','Invoke-ArmRequest','Get-DiagnosticSettings')) {
         $node = @($ast.FindAll({ param($item)
@@ -408,7 +408,7 @@ function Start-Job {
     $script:maxBatchJobs = [Math]::Max($script:maxBatchJobs,$owned.Count)
     $job
 }
-foreach ($file in @('step2_copy.ps1','step4_delete.ps1')) {
+foreach ($file in @('step1_copy.ps1','step3_delete.ps1')) {
     $ast = Read-ProductionAst $file
     foreach ($functionName in @('Get-ArmToken','Invoke-ArmRequest','Get-DiagnosticSettings','Get-DiagnosticSignature','Invoke-DiagnosticBatch')) {
         $node = @($ast.FindAll({ param($item)
@@ -664,7 +664,7 @@ function Read-MigrationBackup { param($Path,[switch]$CheckCsv) $script:entryBack
 function Get-OldDcrAssociations {param([object[]]$Targets,[string[]]$DcrIds) @()}
 function Run-Step([string]$Step, [bool]$FailureExpected=$false) {
     $script:storageNames.Clear()
-    $text = Get-Content (Join-Path $directory (@{ precheck='step1_precheck.ps1'; copy='step2_copy.ps1'; verify='step3_verify.ps1'; delete='step4_delete.ps1'; rollback='rollback.ps1' }[$Step])) -Raw
+    $text = Get-Content (Join-Path $directory (@{ precheck='precheck.ps1'; copy='step1_copy.ps1'; verify='step2_verify.ps1'; delete='step3_delete.ps1'; rollback='rollback.ps1' }[$Step])) -Raw
     $body = ($text -split "`n" | Select-Object -Skip 2) -join "`n"
     $failed = $false
     try { Invoke-Expression $body }
@@ -673,7 +673,7 @@ function Run-Step([string]$Step, [bool]$FailureExpected=$false) {
     Assert ($failed -eq $FailureExpected) "step outcome $Step"
 }
 New-Fixture
-# ①は既存のⅡバックアップがあっても読み書きせず、単独で確認できます。
+# 事前チェックは既存の①バックアップがあっても読み書きせず、単独で確認できます。
 Set-Content -LiteralPath $migrationBackupPath -Value 'TEST_EXISTING_BACKUP_UNCHANGED' -Encoding UTF8
 $beforeHash=(Get-FileHash -LiteralPath $migrationBackupPath -Algorithm SHA256).Hash
 Reset-Report
@@ -684,7 +684,7 @@ Remove-Item -LiteralPath $migrationBackupPath -Force
 Reset-Report
 Run-Step precheck
 Assert (-not (Test-Path -LiteralPath $migrationBackupPath)) 'precheck must not create a backup for later stages'
-# 前日①の後に増えたリソースも、②が直前に調べて対象に含めます。
+# 前日の事前チェック後に増えたリソースも、①が直前に調べて対象に含めます。
 $lateId='/subscriptions/s2/resourceGroups/source/providers/Some.Service/resources/added-after-precheck'
 $script:store[$lateId]=@{
     old=[pscustomobject]@{name='old';workspaceId=$targetWorkspaceId;logs=@([pscustomobject]@{category='翌日追加';enabled=$true});metrics=@()}

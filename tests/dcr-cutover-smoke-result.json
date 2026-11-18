@@ -179,7 +179,7 @@
       "Assertions": 4
     },
     {
-      "Case": "②再実行は追加旧VMSS関連のBeforeを保存し元のBeforeは維持する",
+      "Case": "①再実行は追加旧VMSS関連のBeforeを保存し元のBeforeは維持する",
       "Result": "PASS",
       "Assertions": 30
     },
@@ -229,7 +229,7 @@
       "Assertions": 4
     },
     {
-      "Case": "①の事前確認後に増えた旧VMSS関連を②が新しく調査して保存する",
+      "Case": "事前チェック後に増えた旧VMSS関連を①が直前に調査して保存する",
       "Result": "PASS",
       "Assertions": 8
     },
@@ -240,6 +240,6 @@
     }
   ],
   "AzureRequests": 0,
-  "CommonHash": "0E8138AD4CDA35165A26163AAA843DC78F636907037025B3614F857E8F670078",
-  "RollbackHash": "8709528EE142B36AACF8F2A0D5C9EC15880CE6025F7CEF0B50243088153583F4"
+  "CommonHash": "3DCC368CB6971F36F3DCD4CB9DA79684A7FB3520B2507C77F567B63093A72B2A",
+  "RollbackHash": "C15F547F45DD4119AA0C16DA75446B70A0D8E81B5773187EBE65A62ADF3D3A2F"
 }

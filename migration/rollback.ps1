@@ -3,7 +3,7 @@ param([string]$BackupPath, [string[]]$SubscriptionIds)
 . (Join-Path $PSScriptRoot 'common.ps1')
 if (-not $BackupPath) { $BackupPath = $migrationBackupPath }
 
-# 必要な場合だけ実行する切戻し用です。通常の移行はstep4で終了します。
+# 必要な場合だけ実行する切戻し用です。通常の移行はstep3で終了します。
 # 旧診断設定は不足分だけ復元し、同名の異なる設定は上書きしません。
 function Invoke-RollbackDiagnostics {
     param([object]$Target, [object[]]$Diagnostics, [switch]$Restore)
@@ -54,7 +54,7 @@ function Wait-RollbackResource {
     Get-RollbackBody $restored -Association:$Association -RequireReady
 }
 
-# 1. ②で保存した変更前情報から、全体または指定Subの現在値を確認します。
+# 1. ①で保存した変更前情報から、全体または指定Subの現在値を確認します。
 $resourceId = $BackupPath
 $expected = $null
 try {

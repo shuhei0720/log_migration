@@ -16,7 +16,7 @@ foreach ($name in @('Get-OptionalArmResource','Test-BaselineValues')) {
 }
 $arm=$functions | Where-Object Name -eq 'Invoke-ArmRequest'
 $script:actualArmRequest=[scriptblock]::Create($arm.Body.Extent.Text.Substring(1,$arm.Body.Extent.Text.Length-2))
-$copyPath=Join-Path (Split-Path -Parent $SourceCommon) 'step2_copy.ps1'
+$copyPath=Join-Path (Split-Path -Parent $SourceCommon) 'step1_copy.ps1'
 $copyAst=[Management.Automation.Language.Parser]::ParseFile($copyPath,[ref]$tokens,[ref]$errors)
 if($errors.Count){throw 'copyの構文エラーがあります。'}
 $storageLoop=@($copyAst.FindAll({param($n) $n -is [Management.Automation.Language.ForEachStatementAst] -and $n.Variable.VariablePath.UserPath -eq 'storagePlan'},$true))[0]

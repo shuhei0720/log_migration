@@ -2,7 +2,7 @@
   "Result": "PASS",
   "Cases": [
     {
-      "Case": "Ⅱが実際の書込みより前に元の最小バックアップを保存",
+      "Case": "①が実際の書込みより前に元の最小バックアップを保存",
       "Result": "PASS",
       "Assertions": 16,
       "Writes": 0
@@ -26,13 +26,13 @@
       "Writes": 19
     },
     {
-      "Case": "Ⅰは既存のⅡバックアップを読まず独立して確認する",
+      "Case": "事前チェックは既存の①バックアップを読まず独立して確認する",
       "Result": "PASS",
       "Assertions": 5,
       "Writes": 0
     },
     {
-      "Case": "Ⅱの再実行は保存済みBeforeとファイルを変更しない",
+      "Case": "①の再実行は保存済みBeforeとファイルを変更しない",
       "Result": "PASS",
       "Assertions": 5,
       "Writes": 14
@@ -44,7 +44,7 @@
       "Writes": 0
     },
     {
-      "Case": "②はバックアップが無い初回にも変更前保存から開始する",
+      "Case": "①はバックアップが無い初回にも変更前保存から開始する",
       "Result": "PASS",
       "Assertions": 3,
       "Writes": 16
@@ -272,13 +272,13 @@
       "Writes": 0
     },
     {
-      "Case": "Ⅱの対象Subバックアップ保存に失敗したら設定書込みを始めない",
+      "Case": "①の対象Subバックアップ保存に失敗したら設定書込みを始めない",
       "Result": "PASS",
       "Assertions": 7,
       "Writes": 0
     },
     {
-      "Case": "Ⅱの途中停止から再開し既存Beforeを維持して未保存Subだけを追加する",
+      "Case": "①の途中停止から再開し既存Beforeを維持して未保存Subだけを追加する",
       "Result": "PASS",
       "Assertions": 9,
       "Writes": 8
@@ -305,6 +305,6 @@
   "CaseCount": 50,
   "Checks": 326,
   "AzureRequests": 0,
-  "CommonHash": "0E8138AD4CDA35165A26163AAA843DC78F636907037025B3614F857E8F670078",
-  "RollbackHash": "8709528EE142B36AACF8F2A0D5C9EC15880CE6025F7CEF0B50243088153583F4"
+  "CommonHash": "3DCC368CB6971F36F3DCD4CB9DA79684A7FB3520B2507C77F567B63093A72B2A",
+  "RollbackHash": "C15F547F45DD4119AA0C16DA75446B70A0D8E81B5773187EBE65A62ADF3D3A2F"
 }

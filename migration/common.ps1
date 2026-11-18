@@ -7,7 +7,7 @@
 $targetWorkspaceId = "/subscriptions/43fc6c39-e53d-449d-9871-6d66f95ed2f3/resourcegroups/rg-hub-sand-resource-01/providers/microsoft.operationalinsights/workspaces/log-hub-sand-collection-01"
 # CSVには、今回指定する環境のサブスクリプションだけを記載してください。
 $environment = "dev" # prod / stg / dev
-# ④で関連付けを解除する旧DCRです。DCR本体は削除しません。
+# ③で関連付けを解除する旧DCRです。DCR本体は削除しません。
 $oldDcrIdsByEnvironment = @{
     prod = @(
         "/subscriptions/7f043232-66a7-4d79-a660-fcb22d1644d0/resourceGroups/rg-hub-prod-resource-01/providers/Microsoft.Insights/dataCollectionRules/dcr-hub-prod-vmInsights-01"
@@ -96,7 +96,6 @@ $migrationBackupPath = Join-Path $PSScriptRoot "log_migration_backup_$environmen
 $script:failures = [System.Collections.Generic.List[object]]::new()
 $script:verificationResults = [System.Collections.Generic.List[object]]::new()
 $script:regionNames = @()
-$script:initiativeDefinition = $null
 $script:storageNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
 
 function Invoke-AzJson {
@@ -405,10 +404,9 @@ function Get-MigrationTargets {
     catch { Add-MigrationFailure -Target $target -ResourceId $inputCsvPath -Stage "CSV・サブスクリプション確認" -Message $_.Exception.Message }
 }
 
-# ①～④で繰り返す対象の探索です。作成・削除は行いません。
-# Freshでは、新しい診断設定名が使われていないことも確認します。
+# 事前チェック・コピー・確認・削除で繰り返す対象の探索です。作成・削除は行いません。
 function Get-MigrationPlan {
-    param([object]$Target, [switch]$Fresh)
+    param([object]$Target)
 
     $subscriptionId = $Target.SubscriptionId
     $Target.CurrentSettings = @{}
@@ -473,7 +471,6 @@ function Get-MigrationPlan {
                 if ($source.logAnalyticsDestinationType) { $expected.logAnalyticsDestinationType = $source.logAnalyticsDestinationType }
             }
             $newSettings = @($settings | Where-Object { $_.name -eq $newDiagnosticSettingName })
-            if ($Fresh -and $newSettings.Count -gt 0) { throw "新しい診断設定名が既存設定と重複しています。初回の事前チェックを停止します。" }
             if ($newSettings.Count -eq 0 -and $settings.Count -ge 5) { throw "診断設定が上限の5件です。旧設定を残して追加する余地がありません。" }
             $Target.DiagnosticPlans.Add([pscustomobject]@{
                 ResourceId = $resourceId
@@ -623,7 +620,7 @@ function Read-MigrationBackup {
     $backup = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json
     if ($backup.Version -ne 3 -or -not $backup.CreatedAtUtc -or $backup.TargetWorkspaceId -ne $targetWorkspaceId -or
         $backup.Environment -ne $environment -or $backup.NewDiagnosticSettingName -ne $newDiagnosticSettingName -or
-        $backup.Targets -isnot [array] -or $backup.Targets.Count -eq 0) { throw '②で作成したバックアップの版・環境・移行元・新設定名が今回の設定と一致しません。' }
+        $backup.Targets -isnot [array] -or $backup.Targets.Count -eq 0) { throw '①で作成したバックアップの版・環境・移行元・新設定名が今回の設定と一致しません。' }
     if ($backup.OldDcrIds -isnot [array] -or $backup.OldDcrIds.Count -ne 2 -or $backup.OldDcrIds[0] -eq $backup.OldDcrIds[1] -or
         @($backup.OldDcrIds | Where-Object { $_ -notmatch '^/subscriptions/[0-9a-f-]{36}/resourceGroups/[^/]+/providers/Microsoft.Insights/dataCollectionRules/[^/]+$' }).Count -gt 0 -or
         (@($backup.OldDcrIds | Sort-Object) -join ',') -ne (@($oldDcrIds | Sort-Object) -join ',')) { throw 'バックアップの旧DCR 2本が今回の設定と一致しません。' }

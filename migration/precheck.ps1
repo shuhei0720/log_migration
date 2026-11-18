@@ -1,8 +1,9 @@
 ﻿#Requires -Version 5.1
 . (Join-Path $PSScriptRoot "common.ps1")
+$script:initiativeDefinition = $null
 
 # 前日などにも単独実行できます。同名ストレージ・同名診断設定はすべて事前停止します。
-# この工程は確認だけです。バックアップは②が変更前に保存します。
+# この工程は確認だけです。バックアップは①が変更前に保存します。
 $targets = @(Get-MigrationTargets)
 foreach ($target in $targets) {
     $subscriptionId = $target.SubscriptionId
@@ -26,7 +27,13 @@ foreach ($target in $targets) {
             if ($referenceId -cnotin $script:initiativeDefinition.properties.policyDefinitions.policyDefinitionReferenceId) { throw "指定の参照IDがイニシアティブに存在しません: $referenceId" }
         }
         # 対象の旧設定とリージョン別の保存先を調べ、名前の重複を確認します。
-        $null = Get-MigrationPlan -Target $target -Fresh
+        $null = Get-MigrationPlan -Target $target
+        foreach ($plan in $target.DiagnosticPlans) {
+            if (@($plan.NewSettings).Count -gt 0) {
+                Add-MigrationFailure -Target $target -ResourceId $plan.ResourceId -Stage "診断設定の事前確認" `
+                    -Message "新しい診断設定名が既存設定と重複しています。初回の事前チェックを停止します。"
+            }
+        }
         if ($target.Storages.Count -gt 0) {
             $skus = @(Invoke-AzJson -Arguments @("storage", "sku", "list", "--subscription", $subscriptionId))
             foreach ($storage in @($Target.Storages.Values | Sort-Object Name)) {

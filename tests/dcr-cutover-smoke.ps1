@@ -267,7 +267,7 @@ try{
         $vmss=@($backup.Targets[1].Associations | Where-Object {$_.ResourceId.StartsWith($script:fixtureVmssId+'/')})
         Assert-Cutover ($vmss.Count -eq 1) 'VMSSの新関連も保存'
         Assert-Cutover (@($script:lastSetupEvidence.Reads | Where-Object {$_ -in $script:oldCutoverRecords.ResourceId}).Count -eq $script:oldCutoverRecords.Count) '旧関連の詳細GETは選択した各IDだけ1回'
-        Assert-Cutover ($script:lastSetupEvidence.BackupWitnesses.Count -eq $script:lastSetupEvidence.Writes.Count -and $script:lastSetupEvidence.Writes.Count -gt 0) '②の全変更より前に実際のBefore保存を確認'
+        Assert-Cutover ($script:lastSetupEvidence.BackupWitnesses.Count -eq $script:lastSetupEvidence.Writes.Count -and $script:lastSetupEvidence.Writes.Count -gt 0) '①の全変更より前に実際のBefore保存を確認'
         Assert-Cutover (@($backup.Targets.OldAssociations | Where-Object {$_.PSObject.Properties.Name -contains 'ParentResourceId'}).Count -eq 0) '旧関連の永続化はIDとBeforeだけ'
         Assert-WiredProtected
     }
@@ -415,14 +415,14 @@ try{
         Assert-NoAzureWrites
         Assert-Cutover ($script:resources[$id].properties.description -eq '外部で変更') '変更された旧関連を保持'
     }
-    Invoke-WiredCase '②再実行は追加旧VMSS関連のBeforeを保存し元のBeforeは維持する' {
+    Invoke-WiredCase '①再実行は追加旧VMSS関連のBeforeを保存し元のBeforeは維持する' {
         Seed-AfterMigration -KeepOld
         $before=Copy-TestValue $script:savedBackup
         $parent="/subscriptions/$($script:subs[0])/resourceGroups/source/providers/Microsoft.Compute/virtualMachineScaleSets/added-later"
         $id="$parent/providers/Microsoft.Insights/dataCollectionRuleAssociations/added-later"
         $oldBody=@{properties=@{description='後から追加した旧関連';dataCollectionRuleId=$script:oldRules[0];dataCollectionEndpointId='/later-dce'}}
         $script:resources[$id]=Copy-TestValue $oldBody
-        # ②で追加対象を保存する前の④は、知らない旧関連を削除しません。
+        # ①で追加対象を保存する前の③は、知らない旧関連を削除しません。
         Reset-Observation
         Invoke-Entry delete -ExpectFailure $true
         Assert-NoAzureWrites
@@ -492,10 +492,10 @@ try{
     }
 
     $before=$script:checks+$script:cutoverChecks
-    Invoke-TestCase '①の事前確認後に増えた旧VMSS関連を②が新しく調査して保存する' {
+    Invoke-TestCase '事前チェック後に増えた旧VMSS関連を①が直前に調査して保存する' {
         $script:oldCutoverRecords=@()
         Invoke-Entry precheck
-        Assert-Cutover (-not (Test-Path -LiteralPath $migrationBackupPath)) '①はBeforeファイルを作らない'
+        Assert-Cutover (-not (Test-Path -LiteralPath $migrationBackupPath)) '事前チェックはBeforeファイルを作らない'
         Assert-NoAzureWrites
         $parent="/subscriptions/$($script:subs[1])/resourceGroups/source/providers/Microsoft.Compute/virtualMachineScaleSets/created-after-precheck"
         $oldId="$parent/providers/Microsoft.Insights/dataCollectionRuleAssociations/old-after-precheck"
@@ -506,13 +506,13 @@ try{
         $backup=Read-MigrationBackup -CheckCsv
         $savedTarget=@($backup.Targets | Where-Object SubscriptionId -eq $script:subs[1])[0]
         $saved=@($savedTarget.OldAssociations | Where-Object ResourceId -eq $oldId)
-        Assert-Cutover ($backup.Version -eq 3 -and $saved.Count -eq 1) '②自身の再調査で追加した旧VMSS関連を保存'
+        Assert-Cutover ($backup.Version -eq 3 -and $saved.Count -eq 1) '①自身の再調査で追加した旧VMSS関連を保存'
         Assert-Cutover ((Test-BaselineValues $saved[0].Before $oldBody) -and (Test-BaselineValues $oldBody $saved[0].Before)) '当日の完全な旧関連をBeforeとして保存'
         $newId="$parent/providers/Microsoft.Insights/dataCollectionRuleAssociations/dcr-new2"
         Assert-Cutover ($script:resources.ContainsKey($newId) -and $script:resources[$newId].properties.dataCollectionRuleId -eq $savedTarget.Dcr.ResourceId) '追加VMSSを新DCRへ関連付ける'
         Assert-Cutover ($script:resources.ContainsKey($oldId)) '当日の旧関連も削除しない'
     }
-    $script:cutoverCases.Add([pscustomobject]@{Case='①の事前確認後に増えた旧VMSS関連を②が新しく調査して保存する';Result='PASS';Assertions=$script:checks+$script:cutoverChecks-$before})
+    $script:cutoverCases.Add([pscustomobject]@{Case='事前チェック後に増えた旧VMSS関連を①が直前に調査して保存する';Result='PASS';Assertions=$script:checks+$script:cutoverChecks-$before})
 
     $before=$script:checks+$script:cutoverChecks
     Invoke-TestCase '後から収集対象になったSubのDCRは最初に変更する直前のBeforeを保存する' {
@@ -541,7 +541,7 @@ try{
         $second=Read-MigrationBackup -CheckCsv
         $saved=@($second.Targets | Where-Object SubscriptionId -eq $firstSub)[0]
         Assert-Cutover ($saved.Dcr.ResourceId -eq $dcrId -and (Test-BaselineValues $saved.Dcr.Before $firstTouchBefore) -and (Test-BaselineValues $firstTouchBefore $saved.Dcr.Before)) '対象になる前の古い状態ではなく、初めて変更する時点のDCR全体を保存'
-        Assert-Cutover ($saved.Dcr.Before.tags.owner -eq 'first-touch-current') '初回②より後の変更もBeforeに含める'
+        Assert-Cutover ($saved.Dcr.Before.tags.owner -eq 'first-touch-current') '初回①より後の変更もBeforeに含める'
         $newId="$parent/providers/Microsoft.Insights/dataCollectionRuleAssociations/dcr-new1"
         Assert-Cutover (@($saved.Associations | Where-Object {$_.ResourceId -eq $newId -and $null -eq $_.Before}).Count -eq 1 -and $script:resources.ContainsKey($newId)) '新しい収集対象だけ新関連の不在Beforeを保存して作成'
         foreach($diagnostic in $firstTarget.Diagnostics) {

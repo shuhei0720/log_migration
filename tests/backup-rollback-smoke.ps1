@@ -298,7 +298,7 @@ function Get-MigrationTargets {
     }
 }
 function Get-MigrationPlan {
-    param([object]$Target,[switch]$Fresh)
+    param([object]$Target)
     $beforeResources=@{};$beforeDiagnostics=@{}
     foreach($id in $script:resources.Keys){if($id.StartsWith("/subscriptions/$($Target.SubscriptionId)/")){$beforeResources[$id]=Copy-TestValue $script:resources[$id]}}
     foreach($id in $script:diagnostics.Keys){if($id.StartsWith("/subscriptions/$($Target.SubscriptionId)/")){$beforeDiagnostics[$id]=@{};foreach($name in $script:diagnostics[$id].Keys){$beforeDiagnostics[$id][$name]=Copy-TestValue $script:diagnostics[$id][$name]}}}
@@ -340,7 +340,7 @@ function Invoke-Entry {
     $script:backupAtEntry=if(Test-Path -LiteralPath $migrationBackupPath){try{Get-Content -LiteralPath $migrationBackupPath -Raw -Encoding UTF8 | ConvertFrom-Json}catch{$null}}else{$null}
     $script:selected=if ($SelectedSubscriptions.Count -gt 0) {$SelectedSubscriptions} else {$script:subs}
     $tokens=$null;$errors=$null
-    $entry=[Management.Automation.Language.Parser]::ParseFile((Join-Path $Repository (@{ precheck='step1_precheck.ps1'; copy='step2_copy.ps1'; verify='step3_verify.ps1'; delete='step4_delete.ps1'; rollback='rollback.ps1' }[$Step])),[ref]$tokens,[ref]$errors)
+    $entry=[Management.Automation.Language.Parser]::ParseFile((Join-Path $Repository (@{ precheck='precheck.ps1'; copy='step1_copy.ps1'; verify='step2_verify.ps1'; delete='step3_delete.ps1'; rollback='rollback.ps1' }[$Step])),[ref]$tokens,[ref]$errors)
     if ($errors.Count) { throw "構文エラー: $Step" }
     $body=@($entry.EndBlock.Statements | Where-Object {$_.Extent.Text -notmatch '^\.\s+\(Join-Path.*common\.ps1'} | ForEach-Object {$_.Extent.Text}) -join "`n"
     $parameterText=if ($entry.ParamBlock) {$entry.ParamBlock.Extent.Text} else {''}
@@ -441,9 +441,9 @@ function Assert-LocalBackupRejected([object]$Value) {
 }
 try {
 
-    Invoke-TestCase 'Ⅱが実際の書込みより前に元の最小バックアップを保存' {
+    Invoke-TestCase '①が実際の書込みより前に元の最小バックアップを保存' {
         Save-TestBackup
-        Assert-Rollback ($script:lastSetupEvidence.Writes.Count -gt 0 -and $script:lastSetupEvidence.BackupWitnesses.Count -eq $script:lastSetupEvidence.Writes.Count) '実際のⅡの全書込み直前に元のBefore保存を確認'
+        Assert-Rollback ($script:lastSetupEvidence.Writes.Count -gt 0 -and $script:lastSetupEvidence.BackupWitnesses.Count -eq $script:lastSetupEvidence.Writes.Count) '実際の①の全書込み直前に元のBefore保存を確認'
         Assert-Rollback (@($script:lastSetupEvidence.BackupWitnesses.SubscriptionId | Sort-Object -Unique).Count -eq 2) '各Subの変更直前に対象Subのバックアップが存在'
         Assert-NoAzureWrites
         $backup=Read-MigrationBackup -CheckCsv
@@ -516,18 +516,18 @@ try {
         Assert-Rollback (Test-OldStateReady) 'DCR診断とDCR本体の両方を復元'
         Assert-Rollback (-not $script:unsafeNewDelete) '両復元後だけ新診断を削除'
     }
-    Invoke-TestCase 'Ⅰは既存のⅡバックアップを読まず独立して確認する' {
+    Invoke-TestCase '事前チェックは既存の①バックアップを読まず独立して確認する' {
         Save-TestBackup
         $before=[IO.File]::ReadAllBytes($migrationBackupPath)
         # 保存済みのファイルは残し、名前確認に通る別の事前確認状態をfixture上で用意します。
         foreach($id in @($script:savedBackup.Targets.Storages.Id)){$script:resources.Remove($id)}
         Reset-Observation
         Invoke-Entry precheck
-        Assert-Rollback ($script:targetReads -eq 1 -and $script:reads.Count -gt 0) 'ファイルの有無にかかわらずⅠの確認を実行'
-        Assert-Rollback ([Convert]::ToBase64String($before) -eq [Convert]::ToBase64String([IO.File]::ReadAllBytes($migrationBackupPath))) 'ⅠはⅡバックアップを変更しない'
+        Assert-Rollback ($script:targetReads -eq 1 -and $script:reads.Count -gt 0) 'ファイルの有無にかかわらず事前チェックの確認を実行'
+        Assert-Rollback ([Convert]::ToBase64String($before) -eq [Convert]::ToBase64String([IO.File]::ReadAllBytes($migrationBackupPath))) '事前チェックは①バックアップを変更しない'
         Assert-NoAzureWrites
     }
-    Invoke-TestCase 'Ⅱの再実行は保存済みBeforeとファイルを変更しない' {
+    Invoke-TestCase '①の再実行は保存済みBeforeとファイルを変更しない' {
         Save-TestBackup
         $before=[Convert]::ToBase64String([IO.File]::ReadAllBytes($migrationBackupPath))
         Reset-Observation
@@ -549,10 +549,10 @@ try {
         Invoke-Entry rollback
         Assert-NoAzureWrites
     }
-    Invoke-TestCase '②はバックアップが無い初回にも変更前保存から開始する' {
+    Invoke-TestCase '①はバックアップが無い初回にも変更前保存から開始する' {
         Invoke-Entry copy
         $backup=Read-MigrationBackup -CheckCsv
-        Assert-Rollback ($backup.Version -eq 3 -and $backup.Targets.Count -eq 2) '初回Ⅱが全Subのバックアップを作成'
+        Assert-Rollback ($backup.Version -eq 3 -and $backup.Targets.Count -eq 2) '初回①が全Subのバックアップを作成'
         Assert-Rollback ($script:backupWitnesses.Count -eq $script:writes.Count -and $script:writes.Count -gt 0) '保存なしの書込みは一度も無い'
     }
     foreach ($step in @('delete','verify')) {
@@ -783,7 +783,7 @@ try {
         Assert-Rollback ($unrelatedVm -notin $script:targets[1].Collectors) '旧DCR関連のないVMを追加しない'
         Assert-Rollback (@($script:reads | Where-Object { $_ -eq $unrelatedVm -or $_.StartsWith($unrelatedVm+'/') }).Count -eq 0) '無関係VMを基礎設定対象に渡さない'
     }
-    Invoke-TestCase 'Ⅱの対象Subバックアップ保存に失敗したら設定書込みを始めない' {
+    Invoke-TestCase '①の対象Subバックアップ保存に失敗したら設定書込みを始めない' {
         $originalPath=$migrationBackupPath
         try {
             $migrationBackupPath=Join-Path $script:scratch 'missing-directory/backup.json'
@@ -794,7 +794,7 @@ try {
         }
         finally {$migrationBackupPath=$originalPath}
     }
-    Invoke-TestCase 'Ⅱの途中停止から再開し既存Beforeを維持して未保存Subだけを追加する' {
+    Invoke-TestCase '①の途中停止から再開し既存Beforeを維持して未保存Subだけを追加する' {
         $old=$script:targets[1].OldAssociations[0]
         $oldBody=Copy-TestValue $script:resources[$old.ResourceId]
         $script:resources.Remove($old.ResourceId)

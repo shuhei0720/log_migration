@@ -138,7 +138,7 @@ function Invoke-ArmRequest {
     }
     $script:fixture[$ResourceId]
 }
-# 保存先の単体確認では、記録済みⅡの入力を用意して実際のcopy/verify本体へ通します。
+# 保存先の単体確認では、記録済み①の入力を用意して実際のcopy/verify本体へ通します。
 function Invoke-DestinationStage {
     param([object]$Target,[switch]$VerifyOnly)
     # 探索・バックアップ読込み・レポートだけを置換し、実際の保存先処理をHTTP fixtureで確認します。
@@ -174,7 +174,7 @@ function Invoke-DestinationStage {
     }
     function Read-MigrationBackup {param($Path,[switch]$CheckCsv) $script:destinationBackup}
     function Get-MigrationTargets { $script:destinationTarget }
-    function Get-MigrationPlan {param($Target,[switch]$Fresh) $true}
+    function Get-MigrationPlan {param($Target) $true}
     function Complete-MigrationStep {
         param($Step,[switch]$IncludeChecks)
         if($script:failures.Count -gt 0){throw 'TEST_DESTINATION_RECORDED_FAILURE'}
@@ -185,7 +185,7 @@ function Invoke-DestinationStage {
     $migrationBackupPath=Join-Path $scratch 'before.json'
     ConvertTo-Json -InputObject $script:destinationBackup -Depth 40 | Set-Content -LiteralPath $migrationBackupPath -Encoding UTF8
     $script:storageNames.Clear()
-    $entry=if($VerifyOnly){'step3_verify.ps1'}else{'step2_copy.ps1'}
+    $entry=if($VerifyOnly){'step2_verify.ps1'}else{'step1_copy.ps1'}
     $entryText=Get-Content -LiteralPath (Join-Path $Repository $entry) -Raw -Encoding UTF8
     $entryBody=($entryText -split "`n" | Select-Object -Skip 2) -join "`n"
     try { Invoke-Expression $entryBody }
@@ -553,7 +553,7 @@ Invoke-BaselineCase '正しい1095管理ルールがあっても併存する旧3
 
 $report = [pscustomobject]@{
     Result = 'PASS'; CaseCount = $script:caseResults.Count; AssertionCount = $script:assertionCount; Checks = $script:assertionCount
-    PowerShellVersion = $PSVersionTable.PSVersion.ToString(); CommonHash = (Get-FileHash -LiteralPath $CommonPath -Algorithm SHA256).Hash; StageHashes = @(foreach($name in @('precheck','copy','verify')){ @{Name=$name;Hash=(Get-FileHash -LiteralPath (Join-Path $Repository (@{ precheck='step1_precheck.ps1'; copy='step2_copy.ps1'; verify='step3_verify.ps1' }[$name])) -Algorithm SHA256).Hash} })
+    PowerShellVersion = $PSVersionTable.PSVersion.ToString(); CommonHash = (Get-FileHash -LiteralPath $CommonPath -Algorithm SHA256).Hash; StageHashes = @(foreach($name in @('precheck','copy','verify')){ @{Name=$name;Hash=(Get-FileHash -LiteralPath (Join-Path $Repository (@{ precheck='precheck.ps1'; copy='step1_copy.ps1'; verify='step2_verify.ps1' }[$name])) -Algorithm SHA256).Hash} })
     ActualShapeCount = $script:shapeTexts.Count; AzureRequests = 0; Cases = $script:caseResults.ToArray()
 }
 $report | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $ReportPath -Encoding UTF8
