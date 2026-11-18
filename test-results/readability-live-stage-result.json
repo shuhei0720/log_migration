@@ -1,17 +1,17 @@
 {
   "private": false,
-  "documentState": "DRAFT",
-  "generatedAtUtc": "2026-11-18T19:14:34.605535+00:00",
-  "statusUpdatedAtUtc": "2026-11-18T19:14:07.864120+00:00",
+  "documentState": "MAIN_SCRIPTS_REVIEW_READY",
+  "generatedAtUtc": "2026-11-18T19:55:21.516004+00:00",
+  "statusUpdatedAtUtc": "2026-11-18T19:25:10.825940+00:00",
   "statusFile": "/tmp/log-migration-v3-linux-live/status.json",
-  "statusSha256": "44daf6f801f930b6c8efeef7138194e3669d2ed93dc520e59a935d9827f5ea2e",
+  "statusSha256": "abb89789f5081ab4d3fd35bf10007fc4cea55fe89a73a452c211fe8ba88edc32",
   "sourceManifestSha256": "607e39695c328189aae8d39b1bc0dd9d258c8599d4e78d9b1be941a50cc53c7d",
   "runtime": "Linux PowerShell 7.5.4",
   "actualNativeWindows51": false,
   "primaryPassed": 8,
-  "auxiliaryPassed": 0,
-  "all10Passed": false,
-  "currentStage": "r01-verify",
+  "auxiliaryPassed": 2,
+  "all10Passed": true,
+  "currentStage": "All Linux 8 primary + 2 auxiliary PASS; product execution stopped",
   "backupFile": "/tmp/log-migration-v3-linux-live/cycles/F2/log_migration_backup_dev.json",
   "backupSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c",
   "regressions": [
@@ -67,15 +67,15 @@
           "passed": true
         },
         {
-          "file": "/tmp/log-migration-v3-linux-live/snapshots/l01-rollback-all-state-checks.json",
-          "sha256": "d5b7020b5a16dd40faca7b6c5497cb058f08cf207e40b1e5310815fc0d2b5c23",
-          "checks": 48,
-          "passed": true
-        },
-        {
           "file": "/tmp/log-migration-v3-linux-live/snapshots/l01-rollback-all-restore-order-checks.json",
           "sha256": "274a0aa5d99d0890700ad508cc71f5131a0a3a404993245941703cfe6ef73fa5",
           "checks": 1,
+          "passed": true
+        },
+        {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/l01-rollback-all-state-checks.json",
+          "sha256": "d5b7020b5a16dd40faca7b6c5497cb058f08cf207e40b1e5310815fc0d2b5c23",
+          "checks": 48,
           "passed": true
         }
       ],
@@ -126,15 +126,21 @@
       ],
       "proofs": [
         {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/l02-after-a-checks.json",
+          "sha256": "52e988379e94d2de148d6274f4db1b41406aa018e720425ec3616b8ef7ddc7fa",
+          "checks": 58,
+          "passed": true
+        },
+        {
           "file": "/tmp/log-migration-v3-linux-live/snapshots/l02-partial-checks.json",
           "sha256": "dbc1ae9f901b8e951d55c62b8c455dd2036e5bd866aee5ffee0e2b1fdc0e3889",
           "checks": 57,
           "passed": true
         },
         {
-          "file": "/tmp/log-migration-v3-linux-live/snapshots/l02-after-a-checks.json",
-          "sha256": "52e988379e94d2de148d6274f4db1b41406aa018e720425ec3616b8ef7ddc7fa",
-          "checks": 58,
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/l02-rollback-a-restore-order-checks.json",
+          "sha256": "274a0aa5d99d0890700ad508cc71f5131a0a3a404993245941703cfe6ef73fa5",
+          "checks": 1,
           "passed": true
         },
         {
@@ -144,13 +150,7 @@
           "passed": true
         }
       ],
-      "supplementalSavedChecks": [
-        {
-          "file": "/tmp/log-migration-v3-linux-live/snapshots/l02-rollback-a-restore-order-checks.json",
-          "sha256": "274a0aa5d99d0890700ad508cc71f5131a0a3a404993245941703cfe6ef73fa5",
-          "checks": 1
-        }
-      ],
+      "supplementalSavedChecks": [],
       "issues": []
     },
     {
@@ -214,15 +214,15 @@
           "passed": true
         },
         {
-          "file": "/tmp/log-migration-v3-linux-live/snapshots/l03-rollback-all-state-checks.json",
-          "sha256": "cee62d266f2e1d65f47a7f488fc408a2ac8e45f2bab1257b219ff52c39b4ff4d",
-          "checks": 56,
-          "passed": true
-        },
-        {
           "file": "/tmp/log-migration-v3-linux-live/snapshots/l03-rollback-all-restore-order-checks.json",
           "sha256": "274a0aa5d99d0890700ad508cc71f5131a0a3a404993245941703cfe6ef73fa5",
           "checks": 1,
+          "passed": true
+        },
+        {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/l03-rollback-all-state-checks.json",
+          "sha256": "cee62d266f2e1d65f47a7f488fc408a2ac8e45f2bab1257b219ff52c39b4ff4d",
+          "checks": 56,
           "passed": true
         }
       ],
@@ -295,15 +295,21 @@
       ],
       "proofs": [
         {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/l04-after-a-checks.json",
+          "sha256": "52e988379e94d2de148d6274f4db1b41406aa018e720425ec3616b8ef7ddc7fa",
+          "checks": 58,
+          "passed": true
+        },
+        {
           "file": "/tmp/log-migration-v3-linux-live/snapshots/l04-copied-checks.json",
           "sha256": "dbc1ae9f901b8e951d55c62b8c455dd2036e5bd866aee5ffee0e2b1fdc0e3889",
           "checks": 57,
           "passed": true
         },
         {
-          "file": "/tmp/log-migration-v3-linux-live/snapshots/l04-after-a-checks.json",
-          "sha256": "52e988379e94d2de148d6274f4db1b41406aa018e720425ec3616b8ef7ddc7fa",
-          "checks": 58,
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/l04-rollback-a-restore-order-checks.json",
+          "sha256": "274a0aa5d99d0890700ad508cc71f5131a0a3a404993245941703cfe6ef73fa5",
+          "checks": 1,
           "passed": true
         },
         {
@@ -313,13 +319,7 @@
           "passed": true
         }
       ],
-      "supplementalSavedChecks": [
-        {
-          "file": "/tmp/log-migration-v3-linux-live/snapshots/l04-rollback-a-restore-order-checks.json",
-          "sha256": "274a0aa5d99d0890700ad508cc71f5131a0a3a404993245941703cfe6ef73fa5",
-          "checks": 1
-        }
-      ],
+      "supplementalSavedChecks": [],
       "issues": []
     },
     {
@@ -400,9 +400,21 @@
           "passed": true
         },
         {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/l05-delete-order-strong-checks.json",
+          "sha256": "a895557b81ef1bfaf34aa6722ef55f8ab02b6a0c8cb68c44ae5c15138f3ef37b",
+          "checks": 1,
+          "passed": true
+        },
+        {
           "file": "/tmp/log-migration-v3-linux-live/snapshots/l05-deleted-checks.json",
           "sha256": "888edd1da53ee78af87010b560b6f4224d00f235af291e202af982e1f5cef07f",
           "checks": 63,
+          "passed": true
+        },
+        {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/l05-rollback-all-restore-order-checks.json",
+          "sha256": "26bc5e64152dfce4b7225eee4860d259041bbd00a745491155fe6b00eada259f",
+          "checks": 5,
           "passed": true
         },
         {
@@ -412,18 +424,7 @@
           "passed": true
         }
       ],
-      "supplementalSavedChecks": [
-        {
-          "file": "/tmp/log-migration-v3-linux-live/snapshots/l05-delete-order-strong-checks.json",
-          "sha256": "a895557b81ef1bfaf34aa6722ef55f8ab02b6a0c8cb68c44ae5c15138f3ef37b",
-          "checks": 1
-        },
-        {
-          "file": "/tmp/log-migration-v3-linux-live/snapshots/l05-rollback-all-restore-order-checks.json",
-          "sha256": "26bc5e64152dfce4b7225eee4860d259041bbd00a745491155fe6b00eada259f",
-          "checks": 5
-        }
-      ],
+      "supplementalSavedChecks": [],
       "issues": []
     },
     {
@@ -503,6 +504,12 @@
       ],
       "proofs": [
         {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/l06-after-a-checks.json",
+          "sha256": "695b1bebe9539fe2598db206ecd7141bace8d1f2009ca198ea9cdce1a970c3bc",
+          "checks": 64,
+          "passed": true
+        },
+        {
           "file": "/tmp/log-migration-v3-linux-live/snapshots/l06-copied-checks.json",
           "sha256": "888edd1da53ee78af87010b560b6f4224d00f235af291e202af982e1f5cef07f",
           "checks": 63,
@@ -515,40 +522,37 @@
           "passed": true
         },
         {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/l06-delete-order-strong-checks.json",
+          "sha256": "a895557b81ef1bfaf34aa6722ef55f8ab02b6a0c8cb68c44ae5c15138f3ef37b",
+          "checks": 1,
+          "passed": true
+        },
+        {
           "file": "/tmp/log-migration-v3-linux-live/snapshots/l06-deleted-checks.json",
           "sha256": "888edd1da53ee78af87010b560b6f4224d00f235af291e202af982e1f5cef07f",
           "checks": 63,
           "passed": true
         },
         {
-          "file": "/tmp/log-migration-v3-linux-live/snapshots/l06-after-a-checks.json",
-          "sha256": "695b1bebe9539fe2598db206ecd7141bace8d1f2009ca198ea9cdce1a970c3bc",
-          "checks": 64,
-          "passed": true
-        }
-      ],
-      "supplementalSavedChecks": [
-        {
-          "file": "/tmp/log-migration-v3-linux-live/snapshots/l06-delete-order-strong-checks.json",
-          "sha256": "a895557b81ef1bfaf34aa6722ef55f8ab02b6a0c8cb68c44ae5c15138f3ef37b",
-          "checks": 1
-        },
-        {
           "file": "/tmp/log-migration-v3-linux-live/snapshots/l06-rollback-a-restore-order-checks.json",
           "sha256": "4d497a53958399c0a5f8cb26b2dac43dabcac948209dadcb9ffc601e54bfae5f",
-          "checks": 4
+          "checks": 4,
+          "passed": true
         },
         {
           "file": "/tmp/log-migration-v3-linux-live/snapshots/l06-rollback-b-restore-order-checks.json",
           "sha256": "7ff82162d978a3f33b62006b13af7dc8aeff2760bc75996c2aaf56d1b62597ec",
-          "checks": 2
+          "checks": 2,
+          "passed": true
         },
         {
           "file": "/tmp/log-migration-v3-linux-live/snapshots/l06-rolled-checks.json",
           "sha256": "9e70a16cfcec0596e857fe323519c534dae1eeca54defd8341701dcc7581f1a3",
-          "checks": 59
+          "checks": 59,
+          "passed": true
         }
       ],
+      "supplementalSavedChecks": [],
       "issues": []
     },
     {
@@ -640,9 +644,21 @@
           "passed": true
         },
         {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/l07-delete-order-strong-checks.json",
+          "sha256": "a895557b81ef1bfaf34aa6722ef55f8ab02b6a0c8cb68c44ae5c15138f3ef37b",
+          "checks": 1,
+          "passed": true
+        },
+        {
           "file": "/tmp/log-migration-v3-linux-live/snapshots/l07-deleted-checks.json",
           "sha256": "888edd1da53ee78af87010b560b6f4224d00f235af291e202af982e1f5cef07f",
           "checks": 63,
+          "passed": true
+        },
+        {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/l07-rollback-all-restore-order-checks.json",
+          "sha256": "ca84d1ed7f96ea9bc2aed8dc2b2f13bf845c64c6ef755269047590bcad35b236",
+          "checks": 12,
           "passed": true
         },
         {
@@ -652,18 +668,7 @@
           "passed": true
         }
       ],
-      "supplementalSavedChecks": [
-        {
-          "file": "/tmp/log-migration-v3-linux-live/snapshots/l07-delete-order-strong-checks.json",
-          "sha256": "a895557b81ef1bfaf34aa6722ef55f8ab02b6a0c8cb68c44ae5c15138f3ef37b",
-          "checks": 1
-        },
-        {
-          "file": "/tmp/log-migration-v3-linux-live/snapshots/l07-rollback-all-restore-order-checks.json",
-          "sha256": "ca84d1ed7f96ea9bc2aed8dc2b2f13bf845c64c6ef755269047590bcad35b236",
-          "checks": 12
-        }
-      ],
+      "supplementalSavedChecks": [],
       "issues": []
     },
     {
@@ -809,9 +814,9 @@
       "id": "R01",
       "condition": "①コピー中断→①再開→②確認→rollback",
       "scope": "全体A+B",
-      "status": "PENDING",
-      "sourceStatus": "PENDING",
-      "seconds": 147.767,
+      "status": "PASS",
+      "sourceStatus": "PASS",
+      "seconds": 249.936,
       "stages": [
         {
           "label": "r01-copy-partial",
@@ -845,27 +850,195 @@
           "actualHardKill": false,
           "exitCode": 0,
           "consistent": true
+        },
+        {
+          "label": "r01-verify",
+          "file": "/tmp/log-migration-v3-linux-live/evidence/r01-verify/summary.json",
+          "sha256": "9e29d0f22607ef31f09624db52af7186e7d340ec7d461e74e121953613f1446e",
+          "seconds": 35.704,
+          "startedUtc": "2026-11-18T19:14:07.891665+00:00",
+          "fault": "",
+          "actualHardKill": false,
+          "exitCode": 0,
+          "consistent": true
+        },
+        {
+          "label": "r01-rollback-all",
+          "file": "/tmp/log-migration-v3-linux-live/evidence/r01-rollback-all/summary.json",
+          "sha256": "661eda36b254b5a9eac862c9b4e6f970e120d76a3b08935f85701c778d9c2498",
+          "seconds": 66.465,
+          "startedUtc": "2026-11-18T19:15:12.322297+00:00",
+          "fault": "",
+          "actualHardKill": false,
+          "exitCode": 0,
+          "consistent": true
         }
       ],
-      "proofs": [],
-      "supplementalSavedChecks": [
+      "proofs": [
+        {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/r01-copied-checks.json",
+          "sha256": "888edd1da53ee78af87010b560b6f4224d00f235af291e202af982e1f5cef07f",
+          "checks": 63,
+          "passed": true
+        },
+        {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/r01-copy-resume-skipped-a-checks.json",
+          "sha256": "82e286ec0b7fdec7aac4a6d34f21c37b6443447527db7d484eba57ce8ef2c339",
+          "checks": 1,
+          "passed": true
+        },
         {
           "file": "/tmp/log-migration-v3-linux-live/snapshots/r01-partial-checks.json",
           "sha256": "496bf96e4269e1219a44a4c0d7fdd99c4710c10ec1ae3d7bd83c66fa5b8db061",
-          "checks": 47
+          "checks": 47,
+          "passed": true
+        },
+        {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/r01-rollback-all-restore-order-checks.json",
+          "sha256": "274a0aa5d99d0890700ad508cc71f5131a0a3a404993245941703cfe6ef73fa5",
+          "checks": 1,
+          "passed": true
+        },
+        {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/r01-rollback-all-state-checks.json",
+          "sha256": "9e70a16cfcec0596e857fe323519c534dae1eeca54defd8341701dcc7581f1a3",
+          "checks": 59,
+          "passed": true
         }
       ],
+      "supplementalSavedChecks": [],
       "issues": []
     },
     {
       "id": "R02",
       "condition": "③削除中断→③再開→②再確認→rollback",
       "scope": "全体A+B",
-      "status": "PENDING",
-      "sourceStatus": "PENDING",
-      "seconds": 0,
-      "stages": [],
-      "proofs": [],
+      "status": "PASS",
+      "sourceStatus": "PASS",
+      "seconds": 383.038,
+      "stages": [
+        {
+          "label": "r02-copy",
+          "file": "/tmp/log-migration-v3-linux-live/evidence/r02-copy/summary.json",
+          "sha256": "352f29b6b4331fa49e5fb368840dc003ae3148332beeccaac3be72c780b6d92b",
+          "seconds": 67.136,
+          "startedUtc": "2026-11-18T19:16:46.149422+00:00",
+          "fault": "",
+          "actualHardKill": false,
+          "exitCode": 0,
+          "consistent": true
+        },
+        {
+          "label": "r02-copy-noop",
+          "file": "/tmp/log-migration-v3-linux-live/evidence/r02-copy-noop/summary.json",
+          "sha256": "81d7b1b1d6a258b27a92fcf90ab5ea8c25abc0b6613bebb91667837bfde6421a",
+          "seconds": 43.349,
+          "startedUtc": "2026-11-18T19:17:53.305290+00:00",
+          "fault": "",
+          "actualHardKill": false,
+          "exitCode": 0,
+          "consistent": true
+        },
+        {
+          "label": "r02-verify-before",
+          "file": "/tmp/log-migration-v3-linux-live/evidence/r02-verify-before/summary.json",
+          "sha256": "78386cd312215bf2c1c24d7c8ae0c67897d252470ac2b51986547f55bc040f79",
+          "seconds": 34.223,
+          "startedUtc": "2026-11-18T19:18:36.671909+00:00",
+          "fault": "",
+          "actualHardKill": false,
+          "exitCode": 0,
+          "consistent": true
+        },
+        {
+          "label": "r02-delete-partial",
+          "file": "/tmp/log-migration-v3-linux-live/evidence/r02-delete-partial/summary.json",
+          "sha256": "11a307e458ea3d779ba3df5e48d1739a1375fbe0624452cbfa63ca1441700f11",
+          "seconds": 42.64,
+          "startedUtc": "2026-11-18T19:19:40.013499+00:00",
+          "fault": "after-first-old-diag-delete",
+          "actualHardKill": true,
+          "exitCode": -9,
+          "consistent": true
+        },
+        {
+          "label": "r02-delete-resume",
+          "file": "/tmp/log-migration-v3-linux-live/evidence/r02-delete-resume/summary.json",
+          "sha256": "76d1a0d32495ebd7e2807a4583360fd1920e492ddea09c92ca25fb731c4bb662",
+          "seconds": 64.049,
+          "startedUtc": "2026-11-18T19:20:53.816973+00:00",
+          "fault": "",
+          "actualHardKill": false,
+          "exitCode": 0,
+          "consistent": true
+        },
+        {
+          "label": "r02-verify-after",
+          "file": "/tmp/log-migration-v3-linux-live/evidence/r02-verify-after/summary.json",
+          "sha256": "a0a64a6f140d3ffede2dce8540afe9edbc53ba9cf006458005ed7dfc177adb3c",
+          "seconds": 38.993,
+          "startedUtc": "2026-11-18T19:21:57.885596+00:00",
+          "fault": "",
+          "actualHardKill": false,
+          "exitCode": 0,
+          "consistent": true
+        },
+        {
+          "label": "r02-rollback-all",
+          "file": "/tmp/log-migration-v3-linux-live/evidence/r02-rollback-all/summary.json",
+          "sha256": "bee7ee15632f5d9761e2c15fe0ccbbe96c0e0737c3ba825ad1d366627fc5d170",
+          "seconds": 92.648,
+          "startedUtc": "2026-11-18T19:23:09.677208+00:00",
+          "fault": "",
+          "actualHardKill": false,
+          "exitCode": 0,
+          "consistent": true
+        }
+      ],
+      "proofs": [
+        {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/r02-copied-checks.json",
+          "sha256": "888edd1da53ee78af87010b560b6f4224d00f235af291e202af982e1f5cef07f",
+          "checks": 63,
+          "passed": true
+        },
+        {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/r02-delete-partial-order-checks.json",
+          "sha256": "a895557b81ef1bfaf34aa6722ef55f8ab02b6a0c8cb68c44ae5c15138f3ef37b",
+          "checks": 1,
+          "passed": true
+        },
+        {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/r02-delete-resume-skipped-gone-checks.json",
+          "sha256": "269d67ceffa61766412b1c6fda716f48e893ce055450f70e5a12a6e4a070cbbc",
+          "checks": 1,
+          "passed": true
+        },
+        {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/r02-deleted-checks.json",
+          "sha256": "888edd1da53ee78af87010b560b6f4224d00f235af291e202af982e1f5cef07f",
+          "checks": 63,
+          "passed": true
+        },
+        {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/r02-partial-checks.json",
+          "sha256": "824449aa64d722b3b27bf5ae9ef4cd710be1e31e19104b366bb50ecc2649fa9d",
+          "checks": 50,
+          "passed": true
+        },
+        {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/r02-rollback-all-restore-order-checks.json",
+          "sha256": "e26259e96b63def88d2c9a4f3b850d371a902212bc3d5de3575c014ef92ab61d",
+          "checks": 12,
+          "passed": true
+        },
+        {
+          "file": "/tmp/log-migration-v3-linux-live/snapshots/r02-rollback-all-state-checks.json",
+          "sha256": "9e70a16cfcec0596e857fe323519c534dae1eeca54defd8341701dcc7581f1a3",
+          "checks": 59,
+          "passed": true
+        }
+      ],
       "supplementalSavedChecks": [],
       "issues": []
     }
@@ -911,9 +1084,30 @@
     ]
   },
   "additionalNativeFourStages": "NOT_EXECUTED",
-  "cleanupCompletion": "NOT_COMPLETED",
-  "overallReleaseAcceptance": "NOT_AUTOMATICALLY_DETERMINED",
+  "cleanupCompletion": {
+    "status": "PASS",
+    "resultFile": "readability-live-cleanup.json",
+    "resultSha256": "68518b5966693721b8ccfaf4352bcffe1ddd06b1deafb8ac6842ab63d1b50f18",
+    "resourceAndGroupCountPerSubscription": 0,
+    "originalParentsRestored": true,
+    "protectedExistingBodiesUnchanged": true,
+    "knownOwnedWorkspacesActiveAndRecoverableAbsent": true,
+    "providerRestorationDeferredUntilAllFinalTests": true
+  },
+  "overallReleaseAcceptance": {
+    "mainSixScriptsFunctionalValidation": "PASS",
+    "reviewSubmissionReady": true,
+    "userReviewPending": true,
+    "final54TypeTestNotStarted": true,
+    "nativeAzureFullWindowsSequenceCompleted": false
+  },
   "final54TypeCoverageAndLoadTest": "NOT_EXECUTED",
   "summaryAzureRequests": 0,
-  "kind": "CurrentLiveStageCheckpointNotFinalAcceptance"
+  "kind": "MainScriptsLiveValidationResult",
+  "finalSourceIntegrity": {
+    "sourceManifestSha256": "607e39695c328189aae8d39b1bc0dd9d258c8599d4e78d9b1be941a50cc53c7d",
+    "all20FilesMatch": true,
+    "mainScripts": 6,
+    "allSavedRawJsonFixturesUnchanged": true
+  }
 }

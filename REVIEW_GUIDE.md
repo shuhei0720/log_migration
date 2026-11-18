@@ -1,7 +1,8 @@
 # 診断設定移行スクリプトの読み方・作業の進め方
 
-2026年11月19日（日本時間）時点の説明用下書きです。**完成版のレビュー依頼・本番実行の案内は、現行版の実機確認が終わってから行います。**
-現行6本はLinux PowerShell 7.5.4とWindows PowerShell 5.1.20348.5773で、それぞれ136ケース・1,162判定を確認済みです。1,095日のテーブルAPI単独確認と、その試験資産の撤去も完了しています。Azureでの主要工程・中断・再開・切戻しの通し確認はLinux PowerShell 7.5.4で進めています。Windows 5.1でAzure全工程を完走した実績とは区別します。[現在の実機試験状況](test-results/READABILITY_REFACTOR.md#azure管理apiでの確認と残作業)を参照してください。
+2026年11月19日（日本時間）時点の、主要6本をレビューするための説明資料です。
+現行6本はLinux PowerShell 7.5.4とWindows PowerShell 5.1.20348.5773で、それぞれ136ケース・1,162判定が成功しました。Azure実機ではLinux PowerShell 7.5.4から、途中停止・再開・全体/個別切戻しの10条件・50工程が成功しています。1,095日のテーブルAPI単独確認も完了しています。[検証結果と実測時間](test-results/READABILITY_REFACTOR.md)と[Azure実機10条件のCSV](test-results/readability-live-cases.csv)を参照してください。
+Windows VMの命令実行機能が停止したため、WindowsからのAzure実機確認は事前チェックとコピー部分までです。Windows 5.1の136ケースはAPI応答を再生する回帰試験で、Azure全工程をWindowsから完走した実績とは区別します。
 旧版のWindows 889判定・Azure 74実行・350診断設定の検証は履歴です。現行版の実績としては数えません。最後の54タイプの網羅・負荷テストは、主要6本の完成とユーザーレビュー後に実施します。
 
 本文では、サブスクリプションを「Sub」、リソースグループを「RG」と略します。
@@ -268,11 +269,15 @@ try { $null = Get-MigrationPlan -Target $target }
 catch { Add-MigrationFailure -Target $target -Stage '全件調査' -Message $_.Exception.Message }
 ```
 
-Sub全体を並列にはしていません。[共通のバッチ処理](migration/common.ps1#L193)が診断設定の調査・複製などを最大5標準ジョブに分けます。削除は順番に行い、失敗した後の削除を止めます。現行版の実所要時間は実機検証後に示し、旧版の時間を100Subの所要時間へそのまま換算しません。
+Sub全体は順番に処理します。[共通のバッチ処理](migration/common.ps1#L193)が診断設定の調査・複製などを最大5標準ジョブに分けます。削除も順番に行い、失敗した後の削除を止めます。
+
+今回のLinux実機・2Sub/8対象では、保存先作成済みのコピーが約67～81秒、再実行が約43～54秒、確認が約34～42秒でした。再実行と確認のAzure書込みは0です。保存先やプロバイダーの初回準備は別に時間がかかります。100Subでの所要時間は、最後の網羅・負荷テストの結果も見て判断します。
 
 ## 9. 要件とコード・テストの対応
 
 [現行136ケースの全件一覧](test-results/CURRENT_FORMAL_CASES.md)と[Excelで読めるCSV](test-results/CURRENT_FORMAL_CASES.csv)を用意しています。異常入力に対して期待どおり停止したケースもPASSです。
+
+別途、Azure実機では、コピー途中/完了後・削除途中/完了後それぞれの全体/指定Sub切戻し8条件と、コピー/削除の中断からの再開2条件を確認しました。[実機10条件の全件一覧](test-results/readability-live-cases.csv)で、各条件の範囲と結果を確認できます。
 
 下表は現在のオフライン試験です。Azure実機での成功を表す表ではありません。集計は [regression-summary.json](tests/regression-summary.json)、現行コードの確認状況は [READABILITY_REFACTOR.md](test-results/READABILITY_REFACTOR.md) を参照します。
 
