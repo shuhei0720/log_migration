@@ -1,0 +1,280 @@
+{
+  "Result": "PASS",
+  "Cases": [
+    {
+      "Case": "既存GET結果から最小バックアップを作成",
+      "Result": "PASS",
+      "Assertions": 15,
+      "Writes": 0
+    },
+    {
+      "Case": "HashtableとPSCustomObjectの旧関連を保存して同じ内容で読める",
+      "Result": "PASS",
+      "Assertions": 14,
+      "Writes": 0
+    },
+    {
+      "Case": "PSCustomObject前値を実ARM serializerへ渡せる",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "DCR自体が診断対象でもsnapshotとの併用を許可",
+      "Result": "PASS",
+      "Assertions": 5,
+      "Writes": 19
+    },
+    {
+      "Case": "バックアップ既存時は上書きせずprecheck前に停止",
+      "Result": "PASS",
+      "Assertions": 4,
+      "Writes": 0
+    },
+    {
+      "Case": "CreateNewの直接衝突でも既存byteを上書きしない",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "VM・診断対象0のbackupは空配列を維持",
+      "Result": "PASS",
+      "Assertions": 5,
+      "Writes": 0
+    },
+    {
+      "Case": "backup無しのcopy は変更前に停止",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "backup無しのdelete は変更前に停止",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "backup無しのverify は変更前に停止",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "backup不正Version はlocalで拒否",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "backup不正Environment はlocalで拒否",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "backup不正TargetWorkspaceId はlocalで拒否",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "backup不正NewDiagnosticSettingName はlocalで拒否",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "backup不正DuplicateTarget はlocalで拒否",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "backup不正DuplicateDiagnostic はlocalで拒否",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "backup不正WrongSubResource はlocalで拒否",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "backup不正EmptyAfter はlocalで拒否",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "壊れたJSONとCSV宛先差分を拒否",
+      "Result": "PASS",
+      "Assertions": 4,
+      "Writes": 0
+    },
+    {
+      "Case": "CSVの正しいSub部分集合を許可し未知Subは拒否",
+      "Result": "PASS",
+      "Assertions": 6,
+      "Writes": 0
+    },
+    {
+      "Case": "未実施状態のrollbackは全てskip",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "全削除後のrollbackは旧全復元後だけ新を削除",
+      "Result": "PASS",
+      "Assertions": 21,
+      "Writes": 0
+    },
+    {
+      "Case": "複製途中のrollbackは存在する新設定だけ除去",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 12
+    },
+    {
+      "Case": "サブスクリプション部分選択で他Subを保持",
+      "Result": "PASS",
+      "Assertions": 4,
+      "Writes": 9
+    },
+    {
+      "Case": "存在しないSub指定は変更0",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "明示empty-arrayのSub指定は全体へ広げない",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "明示nullのSub指定は全体へ広げない",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "明示empty-stringのSub指定は全体へ広げない",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "明示whitespaceのSub指定は全体へ広げない",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "後続Sub/設定のOld 不一致は全復元前に停止",
+      "Result": "PASS",
+      "Assertions": 6,
+      "Writes": 0
+    },
+    {
+      "Case": "後続Sub/設定のNew 不一致は全復元前に停止",
+      "Result": "PASS",
+      "Assertions": 6,
+      "Writes": 0
+    },
+    {
+      "Case": "後続Sub/設定のDcr 不一致は全復元前に停止",
+      "Result": "PASS",
+      "Assertions": 6,
+      "Writes": 0
+    },
+    {
+      "Case": "後続Sub/設定のAssociation 不一致は全復元前に停止",
+      "Result": "PASS",
+      "Assertions": 6,
+      "Writes": 0
+    },
+    {
+      "Case": "旧復元用の空きが無ければ新を消さず停止",
+      "Result": "PASS",
+      "Assertions": 6,
+      "Writes": 0
+    },
+    {
+      "Case": "復元OldPut 失敗時は新診断DELETE0",
+      "Result": "PASS",
+      "Assertions": 6,
+      "Writes": 4
+    },
+    {
+      "Case": "復元Readback 失敗時は新診断DELETE0",
+      "Result": "PASS",
+      "Assertions": 6,
+      "Writes": 4
+    },
+    {
+      "Case": "復元DcrPut 失敗時は新診断DELETE0",
+      "Result": "PASS",
+      "Assertions": 6,
+      "Writes": 5
+    },
+    {
+      "Case": "復元AssociationPut 失敗時は新診断DELETE0",
+      "Result": "PASS",
+      "Assertions": 6,
+      "Writes": 6
+    },
+    {
+      "Case": "DCR復元がUpdatingなら新診断を削除しない",
+      "Result": "PASS",
+      "Assertions": 9,
+      "Writes": 12
+    },
+    {
+      "Case": "自分のDCR PUTがUpdatingからSucceededなら待って完了",
+      "Result": "PASS",
+      "Assertions": 4,
+      "Writes": 17
+    },
+    {
+      "Case": "DCRAにUpdatingが返る場合も新診断を削除しない",
+      "Result": "PASS",
+      "Assertions": 6,
+      "Writes": 0
+    },
+    {
+      "Case": "新削除途中の失敗は後続停止し再実行できる",
+      "Result": "PASS",
+      "Assertions": 6,
+      "Writes": 8
+    },
+    {
+      "Case": "旧削除済scopeの新欠損もverify/delete全体を停止",
+      "Result": "PASS",
+      "Assertions": 6,
+      "Writes": 0
+    },
+    {
+      "Case": "旧全消済リージョンのStorage基礎確認を維持",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "backup後に増えた無関係VMを関連付け対象へ広げない",
+      "Result": "PASS",
+      "Assertions": 4,
+      "Writes": 0
+    }
+  ],
+  "CaseCount": 45,
+  "Checks": 230,
+  "AzureRequests": 0,
+  "CommonHash": "D939C0099DCB21A18D6AFC6813DCDEB8C10855FB9867BF9B9A9698AA9C0E7548",
+  "RollbackHash": "100C8CE584626B12725F61BAD76B852717D8086A426C681816C15D7F9385C094"
+}

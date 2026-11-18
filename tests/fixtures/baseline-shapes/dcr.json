@@ -1,0 +1,96 @@
+{
+  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg-test-baseline/providers/Microsoft.Insights/dataCollectionRules/dcr-test",
+  "name": "dcr-test",
+  "type": "Microsoft.Insights/dataCollectionRules",
+  "location": "japaneast",
+  "properties": {
+    "dataSources": {
+      "windowsEventLogs": [
+        {
+          "streams": [
+            "Microsoft-Event"
+          ],
+          "xPathQueries": [
+            "Application!*[System[(Level=1 or Level=2 or Level=3 or Level=4 or Level=0 or Level=5)]]",
+            "Security!*[System[(band(Keywords,13510798882111488))]]",
+            "System!*[System[(Level=1 or Level=2 or Level=3 or Level=4 or Level=0 or Level=5)]]"
+          ],
+          "name": "eventLogsDataSource"
+        }
+      ],
+      "syslog": [
+        {
+          "streams": [
+            "Microsoft-Syslog"
+          ],
+          "facilityNames": [
+            "alert",
+            "audit",
+            "auth",
+            "authpriv",
+            "clock",
+            "cron",
+            "daemon",
+            "ftp",
+            "kern",
+            "local0",
+            "local1",
+            "local2",
+            "local3",
+            "local4",
+            "local5",
+            "local6",
+            "local7",
+            "lpr",
+            "mail",
+            "news",
+            "nopri",
+            "ntp",
+            "syslog",
+            "user",
+            "uucp"
+          ],
+          "logLevels": [
+            "Debug",
+            "Info",
+            "Notice",
+            "Warning",
+            "Error",
+            "Critical",
+            "Alert",
+            "Emergency"
+          ],
+          "name": "sysLogsDataSource"
+        }
+      ]
+    },
+    "destinations": {
+      "logAnalytics": [
+        {
+          "workspaceResourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg-test-baseline/providers/Microsoft.OperationalInsights/workspaces/log-test",
+          "workspaceId": "11111111-1111-1111-1111-111111111111",
+          "name": "new-workspace"
+        }
+      ]
+    },
+    "dataFlows": [
+      {
+        "streams": [
+          "Microsoft-Event"
+        ],
+        "destinations": [
+          "new-workspace"
+        ]
+      },
+      {
+        "streams": [
+          "Microsoft-Syslog"
+        ],
+        "destinations": [
+          "new-workspace"
+        ]
+      }
+    ],
+    "provisioningState": "Succeeded"
+  }
+}

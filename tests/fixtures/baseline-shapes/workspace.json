@@ -1,0 +1,17 @@
+{
+  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg-test-baseline/providers/Microsoft.OperationalInsights/workspaces/log-test",
+  "name": "log-test",
+  "type": "Microsoft.OperationalInsights/workspaces",
+  "location": "japaneast",
+  "properties": {
+    "provisioningState": "Succeeded",
+    "retentionInDays": 365,
+    "features": {
+      "legacy": 0,
+      "searchVersion": 1,
+      "enableLogAccessUsingOnlyResourcePermissions": true
+    },
+    "publicNetworkAccessForIngestion": "Enabled",
+    "publicNetworkAccessForQuery": "Enabled"
+  }
+}

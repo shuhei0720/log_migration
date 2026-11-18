@@ -1,0 +1,11 @@
+{
+  "startedAtUtc": "2026-11-17T13:37:02.536585+00:00",
+  "resourceGroupId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-load-11171016845",
+  "expectedCount": 300,
+  "provisioningState": "Succeeded",
+  "actualCount": 300,
+  "allIdsMatch": true,
+  "passed": true,
+  "finishedAtUtc": "2026-11-17T13:40:53.022882+00:00",
+  "seconds": 230.5
+}

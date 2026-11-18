@@ -1,0 +1,327 @@
+{
+  "verifiedAtUtc": "2026-11-17T13:34:47.530382+00:00",
+  "sourceCount": 54,
+  "oldAbsentCount": 54,
+  "oldWorkspaceSettingRemainingCount": 0,
+  "newMatchingCount": 54,
+  "initialArchiveUnchangedCount": 41,
+  "unrelatedUnchanged": true,
+  "matchingExemptionCount": 6,
+  "exemptions": [
+    {
+      "id": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-f6f0b49f9bd34e8fbb2c0304",
+      "matching": true,
+      "category": "Waiver",
+      "referenceCount": 0,
+      "expiresOn": null
+    },
+    {
+      "id": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-17fb86c1d07349769ff9b1a4",
+      "matching": true,
+      "category": "Waiver",
+      "referenceCount": 0,
+      "expiresOn": null
+    },
+    {
+      "id": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-0073f42c7cba4eef8454e06e",
+      "matching": true,
+      "category": "Waiver",
+      "referenceCount": 12,
+      "expiresOn": null
+    },
+    {
+      "id": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-f6f0b49f9bd34e8fbb2c0304",
+      "matching": true,
+      "category": "Waiver",
+      "referenceCount": 0,
+      "expiresOn": null
+    },
+    {
+      "id": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-17fb86c1d07349769ff9b1a4",
+      "matching": true,
+      "category": "Waiver",
+      "referenceCount": 0,
+      "expiresOn": null
+    },
+    {
+      "id": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-0073f42c7cba4eef8454e06e",
+      "matching": true,
+      "category": "Waiver",
+      "referenceCount": 12,
+      "expiresOn": null
+    }
+  ],
+  "checks": [
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1e",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1e/blobServices/default",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1e/queueServices/default",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1e/tableServices/default",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1e/fileServices/default",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1w",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1w/blobServices/default",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1w/queueServices/default",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1w/tableServices/default",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1w/fileServices/default",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s2e",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Sql/servers/sqlcx11171016845s2",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Sql/servers/sqlcx11171016845s2/databases/cxlogs",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Sql/servers/sqlcx11171016845s2/databases/master",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.CognitiveServices/accounts/aicx11171016845s2",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.CognitiveServices/accounts/aicx11171016845s2/projects/cxlogs",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s2e/blobServices/default",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s2e/queueServices/default",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s2e/tableServices/default",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s2e/fileServices/default",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.KeyVault/vaults/kvcx11171016845",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.ServiceBus/namespaces/sbcx11171016845",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.EventHub/namespaces/ehcx11171016845",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.DocumentDB/databaseAccounts/cos-cx-11171016845",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Web/sites/func-cx-11171016845",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-codex-logmigration-11171016845/providers/Microsoft.ContainerService/managedClusters/aks-cx-11171016845v4",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Web/sites/func-cx-11171016845/slots/staging",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/virtualNetworks/vm-codex-11171016845VNET",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/networkSecurityGroups/vm-codex-11171016845NSG",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/publicIPAddresses/vm-codex-11171016845PublicIP",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/networkInterfaces/vm-codex-11171016845VMNic",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Compute/virtualMachines/vm-codex-11171016845",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/RG-CODEX-LOGMIGRATION-11171016845/providers/Microsoft.Compute/disks/vm-codex-11171016845_OsDisk_1_add6666622374a9596ca93df2f089551",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/publicIPAddresses/pip-lb-11171016845",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/loadBalancers/lb-codex-11171016845",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/publicIPAddresses/vmwin-codex-11171016845PublicIP",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/virtualNetworks/vnet-cxwin-11171016845",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/networkSecurityGroups/vmwin-codex-11171016845NSG",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/networkInterfaces/vmwin-codex-11171016845VMNic",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Compute/virtualMachines/vmwin-codex-11171016845",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/RG-CODEX-LOGMIGRATION-11171016845/providers/Microsoft.Compute/disks/vmwin-codex-11171016845_OsDisk_1_f6996abcd7064f189aca1beb037619d0",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/trafficManagerProfiles/tm-cx-11171016845",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Web/serverfarms/plan-cx-11171016845-westus22",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Web/sites/web-cx-11171016845-westus22",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Web/sites/web-cx-11171016845-westus22/slots/staging",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845blk",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845blk/blobServices/default",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845fil",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845fil/fileServices/default",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845hns",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845hns/blobServices/default",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845hns/queueServices/default",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845hns/tableServices/default",
+      "oldAbsent": true,
+      "newMatch": true
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845hns/fileServices/default",
+      "oldAbsent": true,
+      "newMatch": true
+    }
+  ],
+  "failures": []
+}

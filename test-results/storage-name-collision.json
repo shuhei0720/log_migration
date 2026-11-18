@@ -1,0 +1,17 @@
+{
+  "case": "C16-existing-storage-strict-stop",
+  "utc": "2026-11-17T13:41:46.224000+00:00",
+  "exitCode": 1,
+  "strictGuardAsserted": true,
+  "frozenSourceSha256": "065dad1c5faba8c000c50fd338a29d022d037038c88fed601fc2e0689203f1a4",
+  "sourceTargetCountOne": true,
+  "guardObserved": true,
+  "armCalls": 58,
+  "armWriteAttempts": 0,
+  "cliCalls": 5,
+  "cliWriteAttempts": 0,
+  "sourceSettingsUnchanged": true,
+  "keepUnrelatedUnchanged": true,
+  "fixtureAdded": false,
+  "passed": true
+}

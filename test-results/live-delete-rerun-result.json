@@ -1,0 +1,12 @@
+{
+  "mode": "delete",
+  "startedAtUtc": "2026-11-17T13:33:41.213245+00:00",
+  "seconds": 107.3,
+  "exitCode": 0,
+  "log": "/tmp/log-migration-live/speed-final/delete-rerun.log",
+  "scriptSha256": "0c877d9075d56f59c334d5bf02c7e6cc647354718e1077f241d4ad9ec0a5f482",
+  "armMethods": {
+    "get": 109
+  },
+  "armWriteCount": 0
+}

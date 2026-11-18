@@ -1,0 +1,37 @@
+{
+  "cause": "Windows PowerShell 5.1 Hashtable to Select-Object projection loses dictionary keys",
+  "nativeBeforeProof": "/tmp/log-migration-live/finalvm/native-projection-probe-report.json",
+  "nativeBeforeProofSha256": "0a38b7a0277eb991d093cce0f758f5eaf46f11c815e7a71ddfc0c04edc6dcf62",
+  "nativeBeforeSelectedNull": true,
+  "nativeProbeExplicitValuesPreserved": true,
+  "localSaveReadRoundTripTypes": [
+    "Hashtable",
+    "PSCustomObject"
+  ],
+  "localRegressionChecks": 889,
+  "backupCases": 45,
+  "backupChecks": 230,
+  "newPrecheckSha256": "a9a23d2792da38066b8a0f7ad93d23bb89a84925d50ba1f124c8f29cb704ab74",
+  "nativeFullAfterFix": "PASS",
+  "newCommonSha256": "d939c0099dcb21a18d6afc6813dcdeb8c10855fb9867bf9b9a9698aa9c0e7548",
+  "userSuppliedOldDcrIdsConfigured": true,
+  "actualDcrAzureRequests": 0,
+  "nativeFullAfterProof": "/tmp/log-migration-live/finalvm/winps51-dcr-cutover-report.json",
+  "nativeFullAfterProofSha256": "fef5fdc53780b572a772c1b782276fcf72816658eebb233e710b1d484892adeb",
+  "nativeFullChecks": 889,
+  "nativeFullVersion": "5.1.20348.5773",
+  "nativeFullManifestSha256": "426676c12a198c751f78e265752e36e9f055c24eba62776f76285b96a2c40d15",
+  "nativeFullManifestFiles": 20,
+  "nativeFullAstFiles": 11,
+  "nativeFullBeforeAfterHashesMatched": true,
+  "nativeGuestAzureRequests": 0,
+  "nativeActualDcrAzureRequests": 0,
+  "previousNativeProjectionVerification": {
+    "Checks": 847,
+    "Report": "/tmp/log-migration-live/finalvm/winps51-dcr-cutover-847-before-api-shape-fix-report.json",
+    "ReportSha256": "1de132ca1997e2e72b1ea4a22cf90a63a164695f2719cab461a532db6913d5d1",
+    "ManifestSha256": "6d923f4a44f9157afd41ec83e89a13afe61e4fae8db16fb3ef3a390f6485186b",
+    "CommonSha256": "2E83BADB8A33D20BED89EF86CDF0758AD639C72CF0C910F6A7D2E3F98B440CDD",
+    "PrecheckSha256": "3FCA033D6595C95F65931F1D142DB67A9D1F140FDC75518E51B7106E1D8E952E"
+  }
+}

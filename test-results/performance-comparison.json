@@ -1,0 +1,41 @@
+{
+  "resourceType": "Microsoft.Network/networkSecurityGroups",
+  "resourceCount": 300,
+  "diagnosticConditions": "同一のログ2カテゴリ有効・metrics空、ログ刺激なし",
+  "destination": "各実行で新規Standard_ZRS/StorageV2/infra encryption/ALWのJPEaccount1を作成",
+  "serialSeconds": 1708.5,
+  "parallelSeconds": 485.0,
+  "savedSeconds": 1223.5,
+  "reductionPercent": 71.6,
+  "parallelLimit": 5,
+  "scriptRuntime": "PowerShell 7.5.4 Azure test host; PS5.1 compatibility separately validated",
+  "verificationStatus": "Passed",
+  "serialResult": {
+    "mode": "copy",
+    "startedAtUtc": "2026-11-17T14:13:56.610857+00:00",
+    "finishedAtUtc": "2026-11-17T14:42:25.125507+00:00",
+    "seconds": 1708.5,
+    "exitCode": 0,
+    "sourceCount": 300,
+    "successOutputCount": 300,
+    "productionScriptSha256": "78817db45eeb8e60b52c44e6e6ec4563b2ce33b900cb40c24ee315496835c2c2",
+    "configuredScriptSha256": "4fcafb31b82d4ef6ef3cdfbf0aa2a6fb58ed7431716556e90ce45b22e7b213e0",
+    "scriptRuntime": "PowerShell 7.5.4 on Azure test host; Windows PowerShell 5.1 compatibility verified separately",
+    "log": "/tmp/log-migration-live/load-run/copy.log"
+  },
+  "parallelResult": {
+    "mode": "copy",
+    "startedAtUtc": "2026-11-17T15:41:18.313394+00:00",
+    "finishedAtUtc": "2026-11-17T15:49:23.264580+00:00",
+    "seconds": 485.0,
+    "exitCode": 0,
+    "sourceCount": 300,
+    "successOutputCount": 300,
+    "productionScriptSha256": "909084be5936cd1857c1a5d4ee896126e4518851d15c7976741eadf6f29a7132",
+    "configuredScriptSha256": "5a6e51d0ebfb52356ecc2c5204206d1b681825140c150340dc6fbc864f6d44dd",
+    "scriptRuntime": "PowerShell 7.5.4 on Azure test host; Windows PowerShell 5.1 compatibility verified separately",
+    "log": "/tmp/log-migration-live/performance-parallel-run/copy.log"
+  },
+  "newMatches": 300,
+  "protectedSettingsUnchanged": 930
+}

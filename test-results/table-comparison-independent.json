@@ -1,0 +1,249 @@
+{
+  "passed": true,
+  "replayedAtUtc": "2026-11-18T03:28:29.508616+00:00",
+  "provenance": "当初はインライン実行で個別JSONを保存していなかったため、証跡採取のため同じ独立12ケースをLOCAL再生。過去の個別証跡を復元したものではありません。",
+  "harnessPath": "/tmp/log-migration-live/final-acceptance-prepare/acceptance.py",
+  "harnessSha256": "e0599fbc13de5dbbb20960bc3af1b705db64ebf21aa4a95748f27527ef6670da",
+  "extraction": "AST抽出の純粋比較関数2本のみ。検証器本体・Azure SDKのimportなし。",
+  "rawSnapshotSha256": {
+    "/tmp/log-migration-live/final-acceptance-prepare/a05/rollback-before-snapshot.json": "af351a73dff3f8bcdea4c4d1ea0a3c090e4878ab00ae3cbcd635824fa1ab5a21",
+    "/tmp/log-migration-live/final-acceptance-prepare/a05/rollback-after-snapshot.json": "57ccc9c5b4c492ca3d884876370c198451484295b59be600b723b8ced9f07a50"
+  },
+  "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-codex-logmigration-11171016845/providers/microsoft.operationalinsights/workspaces/log-codex-11171016845-rbqa/tables/syslog",
+  "actualRawPositive": {
+    "expectedEqual": true,
+    "actualEqual": true,
+    "observedNormalizedDifferences": [
+      {
+        "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-codex-logmigration-11171016845/providers/microsoft.operationalinsights/workspaces/log-codex-11171016845-rbqa/tables/syslog",
+        "context": "independent actual A05 replay",
+        "beforeRawSha256": "0fcf861654dead7a975c6f7d5485de8f86848d9d4d792ef5dd8aa27354277a1b",
+        "afterRawSha256": "8c3a3168c8258c1d83958ce2f78aa6c70a9bb5a3624aac32a25478390c7b508e",
+        "comparison": "table readback decorations normalized; all other fields strictly equal"
+      }
+    ]
+  },
+  "negativeCaseCount": 12,
+  "negativeCases": [
+    {
+      "name": "retentionInDays change",
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-codex-logmigration-11171016845/providers/microsoft.operationalinsights/workspaces/log-codex-11171016845-rbqa/tables/syslog",
+      "mutationPath": [
+        "properties",
+        "retentionInDays"
+      ],
+      "mutationValue": 1,
+      "expectedEqual": false,
+      "actualEqual": false,
+      "expectedRejected": true,
+      "actualRejected": true,
+      "inputCopiesUnmodified": true,
+      "passed": true,
+      "observedNormalizedDifferences": []
+    },
+    {
+      "name": "plan change",
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-codex-logmigration-11171016845/providers/microsoft.operationalinsights/workspaces/log-codex-11171016845-rbqa/tables/syslog",
+      "mutationPath": [
+        "properties",
+        "plan"
+      ],
+      "mutationValue": "Basic",
+      "expectedEqual": false,
+      "actualEqual": false,
+      "expectedRejected": true,
+      "actualRejected": true,
+      "inputCopiesUnmodified": true,
+      "passed": true,
+      "observedNormalizedDifferences": []
+    },
+    {
+      "name": "totalRetentionInDays change",
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-codex-logmigration-11171016845/providers/microsoft.operationalinsights/workspaces/log-codex-11171016845-rbqa/tables/syslog",
+      "mutationPath": [
+        "properties",
+        "totalRetentionInDays"
+      ],
+      "mutationValue": 100,
+      "expectedEqual": false,
+      "actualEqual": false,
+      "expectedRejected": true,
+      "actualRejected": true,
+      "inputCopiesUnmodified": true,
+      "passed": true,
+      "observedNormalizedDifferences": []
+    },
+    {
+      "name": "provisioningState change",
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-codex-logmigration-11171016845/providers/microsoft.operationalinsights/workspaces/log-codex-11171016845-rbqa/tables/syslog",
+      "mutationPath": [
+        "properties",
+        "provisioningState"
+      ],
+      "mutationValue": "Failed",
+      "expectedEqual": false,
+      "actualEqual": false,
+      "expectedRejected": true,
+      "actualRejected": true,
+      "inputCopiesUnmodified": true,
+      "passed": true,
+      "observedNormalizedDifferences": []
+    },
+    {
+      "name": "unknown properties field addition",
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-codex-logmigration-11171016845/providers/microsoft.operationalinsights/workspaces/log-codex-11171016845-rbqa/tables/syslog",
+      "mutationPath": [
+        "properties",
+        "unrecognized"
+      ],
+      "mutationValue": 1,
+      "expectedEqual": false,
+      "actualEqual": false,
+      "expectedRejected": true,
+      "actualRejected": true,
+      "inputCopiesUnmodified": true,
+      "passed": true,
+      "observedNormalizedDifferences": []
+    },
+    {
+      "name": "custom schema.description change",
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-codex-logmigration-11171016845/providers/microsoft.operationalinsights/workspaces/log-codex-11171016845-rbqa/tables/syslog",
+      "mutationPath": [
+        "properties",
+        "schema",
+        "description"
+      ],
+      "mutationValue": "User custom",
+      "expectedEqual": false,
+      "actualEqual": false,
+      "expectedRejected": true,
+      "actualRejected": true,
+      "inputCopiesUnmodified": true,
+      "passed": true,
+      "observedNormalizedDifferences": []
+    },
+    {
+      "name": "nonempty custom columns addition",
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-codex-logmigration-11171016845/providers/microsoft.operationalinsights/workspaces/log-codex-11171016845-rbqa/tables/syslog",
+      "mutationPath": [
+        "properties",
+        "schema",
+        "columns"
+      ],
+      "mutationValue": [
+        {
+          "name": "Custom",
+          "type": "string"
+        }
+      ],
+      "expectedEqual": false,
+      "actualEqual": false,
+      "expectedRejected": true,
+      "actualRejected": true,
+      "inputCopiesUnmodified": true,
+      "passed": true,
+      "observedNormalizedDifferences": []
+    },
+    {
+      "name": "unknown schema field addition",
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-codex-logmigration-11171016845/providers/microsoft.operationalinsights/workspaces/log-codex-11171016845-rbqa/tables/syslog",
+      "mutationPath": [
+        "properties",
+        "schema",
+        "unrecognized"
+      ],
+      "mutationValue": 1,
+      "expectedEqual": false,
+      "actualEqual": false,
+      "expectedRejected": true,
+      "actualRejected": true,
+      "inputCopiesUnmodified": true,
+      "passed": true,
+      "observedNormalizedDifferences": []
+    },
+    {
+      "name": "standard column name change",
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-codex-logmigration-11171016845/providers/microsoft.operationalinsights/workspaces/log-codex-11171016845-rbqa/tables/syslog",
+      "mutationPath": [
+        "properties",
+        "schema",
+        "standardColumns",
+        0,
+        "name"
+      ],
+      "mutationValue": "Wrong",
+      "expectedEqual": false,
+      "actualEqual": false,
+      "expectedRejected": true,
+      "actualRejected": true,
+      "inputCopiesUnmodified": true,
+      "passed": true,
+      "observedNormalizedDifferences": []
+    },
+    {
+      "name": "standard column type change",
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-codex-logmigration-11171016845/providers/microsoft.operationalinsights/workspaces/log-codex-11171016845-rbqa/tables/syslog",
+      "mutationPath": [
+        "properties",
+        "schema",
+        "standardColumns",
+        0,
+        "type"
+      ],
+      "mutationValue": "dynamic",
+      "expectedEqual": false,
+      "actualEqual": false,
+      "expectedRejected": true,
+      "actualRejected": true,
+      "inputCopiesUnmodified": true,
+      "passed": true,
+      "observedNormalizedDifferences": []
+    },
+    {
+      "name": "standard column displayName addition",
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-codex-logmigration-11171016845/providers/microsoft.operationalinsights/workspaces/log-codex-11171016845-rbqa/tables/syslog",
+      "mutationPath": [
+        "properties",
+        "schema",
+        "standardColumns",
+        0,
+        "displayName"
+      ],
+      "mutationValue": "User",
+      "expectedEqual": false,
+      "actualEqual": false,
+      "expectedRejected": true,
+      "actualRejected": true,
+      "inputCopiesUnmodified": true,
+      "passed": true,
+      "observedNormalizedDifferences": []
+    },
+    {
+      "name": "non-table metadata remains strict",
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-codex-logmigration-11171016845/providers/microsoft.operationalinsights/workspaces/log-codex-11171016845-rbqa",
+      "mutationPath": null,
+      "mutationValue": null,
+      "expectedEqual": false,
+      "actualEqual": false,
+      "expectedRejected": true,
+      "actualRejected": true,
+      "inputCopiesUnmodified": true,
+      "passed": true,
+      "observedNormalizedDifferences": []
+    }
+  ],
+  "operationalChangesRejected": [
+    "retentionInDays",
+    "plan",
+    "totalRetentionInDays",
+    "provisioningState"
+  ],
+  "copyAndAllInputBodiesUnmodified": true,
+  "rawFilesAndHarnessUnmodified": true,
+  "azureCalls": 0,
+  "sdkCalls": 0,
+  "httpCalls": 0,
+  "productionAndHarnessEdits": 0,
+  "replayScriptPath": "/tmp/log-migration-live/final-acceptance-prepare/table-comparison-fix-proof/independent12-replay/replay.py",
+  "replayScriptSha256": "9b1757dd9c444149a6157b08d96e8cb1670db8c8b3a87e982dc17188bed9aa83"
+}

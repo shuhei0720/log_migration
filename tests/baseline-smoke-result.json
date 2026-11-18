@@ -1,0 +1,150 @@
+{
+  "Result": "PASS",
+  "CaseCount": 23,
+  "AssertionCount": 102,
+  "Checks": 102,
+  "PowerShellVersion": "7.5.4",
+  "CommonHash": "AF33547E38ED88D508FF41DF11B8C92F4EEE3327F516B710855BE2E8D96427B0",
+  "ActualShapeCount": 8,
+  "AzureRequests": 0,
+  "Cases": [
+    {
+      "Case": "実ARM応答の全一致VerifyOnly",
+      "Result": "PASS",
+      "Assertions": 7,
+      "Writes": 0
+    },
+    {
+      "Case": "実ARM応答の全一致Copy再実行",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "Blob不足の読取専用検知と手動対応情報",
+      "Result": "PASS",
+      "Assertions": 6,
+      "Writes": 0
+    },
+    {
+      "Case": "Blob不足だけ補完し再実行を省略",
+      "Result": "PASS",
+      "Assertions": 4,
+      "Writes": 1
+    },
+    {
+      "Case": "旧DCR関連のあるVMSSも同じ新DCRの確認・補完対象",
+      "Result": "PASS",
+      "Assertions": 9,
+      "Writes": 1
+    },
+    {
+      "Case": "関連付けPUTのUpdating完了後も参照先を再確認-Expected",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 1
+    },
+    {
+      "Case": "関連付けPUTのUpdating完了後も参照先を再確認-Foreign",
+      "Result": "PASS",
+      "Assertions": 5,
+      "Writes": 1
+    },
+    {
+      "Case": "Storage基礎構成の不一致は上書きしない",
+      "Result": "PASS",
+      "Assertions": 4,
+      "Writes": 0
+    },
+    {
+      "Case": "既存Policy除外の不一致は他の作業を開始しない",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "LA保持期間だけ補完し他featureを保持",
+      "Result": "PASS",
+      "Assertions": 4,
+      "Writes": 1
+    },
+    {
+      "Case": "Lifecycle自分のルールだけ補完し他ルール保持",
+      "Result": "PASS",
+      "Assertions": 4,
+      "Writes": 1
+    },
+    {
+      "Case": "Lifecycle未作成404から有効な1ルールだけ作成",
+      "Result": "PASS",
+      "Assertions": 7,
+      "Writes": 1
+    },
+    {
+      "Case": "DCR不足だけ補完し再実行を省略",
+      "Result": "PASS",
+      "Assertions": 4,
+      "Writes": 1
+    },
+    {
+      "Case": "読み戻しが一致しなければ失敗を返す",
+      "Result": "PASS",
+      "Assertions": 4,
+      "Writes": 1
+    },
+    {
+      "Case": "LA不足時もVerifyOnlyはVM後続項目を確認",
+      "Result": "PASS",
+      "Assertions": 5,
+      "Writes": 0
+    },
+    {
+      "Case": "StorageのCreatingはVerifyOnlyでも変更しない",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "StorageのCreatingはCopyでも変更しない",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "LAのUpdatingはVerifyOnlyでも変更しない",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "LAのUpdatingはCopyでも変更しない",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "DCRのUpdatingはVerifyOnlyでも変更しない",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "DCRのUpdatingはCopyでも変更しない",
+      "Result": "PASS",
+      "Assertions": 3,
+      "Writes": 0
+    },
+    {
+      "Case": "Storage未設定の手動CSVへmutable期待値も出す",
+      "Result": "PASS",
+      "Assertions": 7,
+      "Writes": 0
+    },
+    {
+      "Case": "Storagemutable補完でも個別ネットワーク規則を保持",
+      "Result": "PASS",
+      "Assertions": 5,
+      "Writes": 1
+    }
+  ]
+}

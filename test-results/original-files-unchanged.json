@@ -1,0 +1,12 @@
+[
+  {
+    "file": "log_migration.ps1",
+    "unchanged": true,
+    "sha256": "231ad2e2273bfb32866c5c2e4b73463db4507a9f322c35e0f40d99bbe997ea88"
+  },
+  {
+    "file": "log_migration_targets.csv",
+    "unchanged": true,
+    "sha256": "8c783df0e4f9ad8092f86ad67ba26b09a78a3dd04d0461f62517f7dffcf78a9d"
+  }
+]

@@ -1,0 +1,8 @@
+{
+  "mode": "delete",
+  "startedAtUtc": "2026-11-17T13:27:43.548529+00:00",
+  "seconds": 334.1,
+  "exitCode": 0,
+  "log": "/tmp/log-migration-live/speed-final/delete.log",
+  "scriptSha256": "0c877d9075d56f59c334d5bf02c7e6cc647354718e1077f241d4ad9ec0a5f482"
+}

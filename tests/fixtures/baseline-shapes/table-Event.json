@@ -1,0 +1,12 @@
+{
+  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg-test-baseline/providers/Microsoft.OperationalInsights/workspaces/log-test/tables/Event",
+  "name": "Event",
+  "properties": {
+    "plan": "Analytics",
+    "schema": {
+      "name": "Event"
+    },
+    "provisioningState": "Succeeded",
+    "retentionInDays": 365
+  }
+}

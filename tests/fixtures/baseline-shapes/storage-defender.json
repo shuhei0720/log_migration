@@ -1,0 +1,18 @@
+{
+  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg-test-baseline/providers/Microsoft.Storage/storageAccounts/testjpe/providers/Microsoft.Security/defenderForStorageSettings/current",
+  "name": "current",
+  "type": "Microsoft.Security/defenderForStorageSettings",
+  "properties": {
+    "isEnabled": false,
+    "malwareScanning": {
+      "onUpload": {
+        "isEnabled": false,
+        "capGBPerMonth": -1
+      }
+    },
+    "sensitiveDataDiscovery": {
+      "isEnabled": false
+    },
+    "overrideSubscriptionLevelSettings": true
+  }
+}

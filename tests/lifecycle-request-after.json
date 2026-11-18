@@ -1,0 +1,37 @@
+{
+  "Result": "PASS",
+  "Assertions": 19,
+  "AzureRequests": 0,
+  "SourceCommon": "/tmp/log-migration-staged-candidate/log_migration_common.ps1",
+  "SourceHash": "3F06B36E692025214DB1051CD1CBE6AE2BB8AF0EB2080567982936B4DE47F0F4",
+  "Cases": [
+    {
+      "Case": "Missing",
+      "RulesCount": 1,
+      "NullCount": 0,
+      "Success": true,
+      "RequestBody": "{\n  \"properties\": {\n    \"policy\": {\n      \"rules\": [\n        {\n          \"definition\": {\n            \"filters\": {\n              \"blobTypes\": [\n                \"appendBlob\"\n              ]\n            },\n            \"actions\": {\n              \"baseBlob\": {\n                \"delete\": {\n                  \"daysAfterModificationGreaterThan\": 365\n                }\n              }\n            }\n          },\n          \"name\": \"log-append-365\",\n          \"enabled\": true,\n          \"type\": \"Lifecycle\"\n        }\n      ]\n    }\n  }\n}"
+    },
+    {
+      "Case": "Empty",
+      "RulesCount": 1,
+      "NullCount": 0,
+      "Success": true,
+      "RequestBody": "{\n  \"properties\": {\n    \"policy\": {\n      \"rules\": [\n        {\n          \"definition\": {\n            \"filters\": {\n              \"blobTypes\": [\n                \"appendBlob\"\n              ]\n            },\n            \"actions\": {\n              \"baseBlob\": {\n                \"delete\": {\n                  \"daysAfterModificationGreaterThan\": 365\n                }\n              }\n            }\n          },\n          \"name\": \"log-append-365\",\n          \"enabled\": true,\n          \"type\": \"Lifecycle\"\n        }\n      ]\n    }\n  }\n}"
+    },
+    {
+      "Case": "OtherRule",
+      "RulesCount": 2,
+      "NullCount": 0,
+      "Success": true,
+      "RequestBody": "{\n  \"properties\": {\n    \"policy\": {\n      \"rules\": [\n        {\n          \"definition\": {\n            \"filters\": {\n              \"blobTypes\": [\n                \"blockBlob\"\n              ]\n            },\n            \"actions\": {\n              \"baseBlob\": {\n                \"delete\": {\n                  \"daysAfterModificationGreaterThan\": 99\n                }\n              }\n            }\n          },\n          \"name\": \"keep-other\",\n          \"enabled\": true,\n          \"type\": \"Lifecycle\"\n        },\n        {\n          \"definition\": {\n            \"filters\": {\n              \"blobTypes\": [\n                \"appendBlob\"\n              ]\n            },\n            \"actions\": {\n              \"baseBlob\": {\n                \"delete\": {\n                  \"daysAfterModificationGreaterThan\": 365\n                }\n              }\n            }\n          },\n          \"name\": \"log-append-365\",\n          \"enabled\": true,\n          \"type\": \"Lifecycle\"\n        }\n      ]\n    }\n  }\n}"
+    },
+    {
+      "Case": "ReplaceOwnRule",
+      "RulesCount": 2,
+      "NullCount": 0,
+      "Success": true,
+      "RequestBody": "{\n  \"properties\": {\n    \"policy\": {\n      \"rules\": [\n        {\n          \"definition\": {\n            \"filters\": {\n              \"blobTypes\": [\n                \"blockBlob\"\n              ]\n            },\n            \"actions\": {\n              \"baseBlob\": {\n                \"delete\": {\n                  \"daysAfterModificationGreaterThan\": 99\n                }\n              }\n            }\n          },\n          \"name\": \"keep-other\",\n          \"enabled\": true,\n          \"type\": \"Lifecycle\"\n        },\n        {\n          \"definition\": {\n            \"filters\": {\n              \"blobTypes\": [\n                \"appendBlob\"\n              ]\n            },\n            \"actions\": {\n              \"baseBlob\": {\n                \"delete\": {\n                  \"daysAfterModificationGreaterThan\": 365\n                }\n              }\n            }\n          },\n          \"name\": \"log-append-365\",\n          \"enabled\": true,\n          \"type\": \"Lifecycle\"\n        }\n      ]\n    }\n  }\n}"
+    }
+  ]
+}

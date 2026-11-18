@@ -1,0 +1,374 @@
+{
+  "verifiedAtUtc": "2026-11-17T13:25:47.691851+00:00",
+  "sourceCount": 54,
+  "oldUnchangedCount": 54,
+  "newMatchingCount": 54,
+  "initialArchiveUnchangedCount": 41,
+  "unrelatedUnchanged": true,
+  "byDestination": {
+    "Log": 27,
+    "Storage": 27
+  },
+  "storageByRegion": {
+    "japaneast": 15,
+    "westus2": 3,
+    "japanwest": 9
+  },
+  "checks": [
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1e",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1e/blobServices/default",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1e/queueServices/default",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1e/tableServices/default",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1e/fileServices/default",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1w",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1w/blobServices/default",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1w/queueServices/default",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1w/tableServices/default",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s1w/fileServices/default",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s2e",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japaneast",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpe2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Sql/servers/sqlcx11171016845s2",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japaneast",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpe2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Sql/servers/sqlcx11171016845s2/databases/cxlogs",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japaneast",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpe2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Sql/servers/sqlcx11171016845s2/databases/master",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japaneast",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpe2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.CognitiveServices/accounts/aicx11171016845s2",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japaneast",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpe2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.CognitiveServices/accounts/aicx11171016845s2/projects/cxlogs",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japaneast",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpe2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s2e/blobServices/default",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japaneast",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpe2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s2e/queueServices/default",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japaneast",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpe2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s2e/tableServices/default",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japaneast",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpe2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845s2e/fileServices/default",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japaneast",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpe2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.KeyVault/vaults/kvcx11171016845",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japaneast",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpe2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.ServiceBus/namespaces/sbcx11171016845",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japaneast",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpe2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.EventHub/namespaces/ehcx11171016845",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japaneast",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpe2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.DocumentDB/databaseAccounts/cos-cx-11171016845",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japaneast",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpe2"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Web/sites/func-cx-11171016845",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-codex-logmigration-11171016845/providers/Microsoft.ContainerService/managedClusters/aks-cx-11171016845v4",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Web/sites/func-cx-11171016845/slots/staging",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/virtualNetworks/vm-codex-11171016845VNET",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/networkSecurityGroups/vm-codex-11171016845NSG",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/publicIPAddresses/vm-codex-11171016845PublicIP",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/networkInterfaces/vm-codex-11171016845VMNic",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Compute/virtualMachines/vm-codex-11171016845",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/RG-CODEX-LOGMIGRATION-11171016845/providers/Microsoft.Compute/disks/vm-codex-11171016845_OsDisk_1_add6666622374a9596ca93df2f089551",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/publicIPAddresses/pip-lb-11171016845",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/loadBalancers/lb-codex-11171016845",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/publicIPAddresses/vmwin-codex-11171016845PublicIP",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/virtualNetworks/vnet-cxwin-11171016845",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/networkSecurityGroups/vmwin-codex-11171016845NSG",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/networkInterfaces/vmwin-codex-11171016845VMNic",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Compute/virtualMachines/vmwin-codex-11171016845",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/RG-CODEX-LOGMIGRATION-11171016845/providers/Microsoft.Compute/disks/vmwin-codex-11171016845_OsDisk_1_f6996abcd7064f189aca1beb037619d0",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "expectedDestination": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-new"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Network/trafficManagerProfiles/tm-cx-11171016845",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japaneast",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpe2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Web/serverfarms/plan-cx-11171016845-westus22",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "westus2",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845usw22"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Web/sites/web-cx-11171016845-westus22",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "westus2",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845usw22"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Web/sites/web-cx-11171016845-westus22/slots/staging",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "westus2",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845usw22"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845blk",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japanwest",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpw2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845blk/blobServices/default",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japanwest",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpw2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845fil",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japanwest",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpw2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845fil/fileServices/default",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japanwest",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpw2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845hns",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japanwest",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpw2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845hns/blobServices/default",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japanwest",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpw2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845hns/queueServices/default",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japanwest",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpw2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845hns/tableServices/default",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japanwest",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpw2"
+    },
+    {
+      "resourceId": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845hns/fileServices/default",
+      "oldUnchanged": true,
+      "newMatch": true,
+      "sourceRegion": "japanwest",
+      "expectedDestination": "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpw2"
+    }
+  ],
+  "failures": [],
+  "excludedScopeIds": [
+    "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888"
+  ]
+}

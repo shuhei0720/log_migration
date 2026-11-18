@@ -1,0 +1,30 @@
+{
+  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg-test-baseline/providers/Microsoft.Storage/storageAccounts/testjpe/managementPolicies/default",
+  "name": "DefaultManagementPolicy",
+  "type": "Microsoft.Storage/storageAccounts/managementPolicies",
+  "properties": {
+    "policy": {
+      "rules": [
+        {
+          "enabled": true,
+          "name": "log-append-365",
+          "type": "Lifecycle",
+          "definition": {
+            "actions": {
+              "baseBlob": {
+                "delete": {
+                  "daysAfterModificationGreaterThan": 365.0
+                }
+              }
+            },
+            "filters": {
+              "blobTypes": [
+                "appendBlob"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

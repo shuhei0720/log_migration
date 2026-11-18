@@ -1,0 +1,44 @@
+[
+  {
+    "case": "multiple-old",
+    "utc": "2026-11-17T13:01:52.203196+00:00",
+    "exitCode": 1,
+    "expectedGuard": "同一リソースに対象の旧設定が複数あります",
+    "guardObserved": true,
+    "armCalls": 17,
+    "armWrites": 0,
+    "cliCalls": 3,
+    "cliWrites": 0,
+    "traceDirectory": "/tmp/log-migration-live/minimal-multiple-old",
+    "passed": true,
+    "fixturesRestored": true
+  },
+  {
+    "case": "max5",
+    "utc": "2026-11-17T13:02:51.471586+00:00",
+    "exitCode": 1,
+    "expectedGuard": "診断設定が上限の5件です",
+    "guardObserved": true,
+    "armCalls": 17,
+    "armWrites": 0,
+    "cliCalls": 3,
+    "cliWrites": 0,
+    "traceDirectory": "/tmp/log-migration-live/minimal-max5",
+    "passed": true,
+    "fixturesRestored": true
+  },
+  {
+    "case": "delete-new-mismatch",
+    "utc": "2026-11-17T13:04:04.852077+00:00",
+    "exitCode": 1,
+    "expectedGuard": "新設定の収集条件またはCSVで指定した送信先が一致しません",
+    "guardObserved": true,
+    "armCalls": 42,
+    "armWrites": 0,
+    "cliCalls": 3,
+    "cliWrites": 0,
+    "traceDirectory": "/tmp/log-migration-live/minimal-delete-new-mismatch",
+    "passed": true,
+    "fixturesRestored": true
+  }
+]

@@ -1,0 +1,189 @@
+{
+  "passed": true,
+  "positiveCases": [
+    "actual raw35leaf NG -> limited comparison PASS",
+    "empty columns None equivalent",
+    "empty columns [] equivalent",
+    "empty columns omitted equivalent"
+  ],
+  "negativeCases": [
+    {
+      "case": "arbitrary schema.description change",
+      "passed": true
+    },
+    {
+      "case": "explicit empty schema.description change",
+      "passed": true
+    },
+    {
+      "case": "Custom table default description to omission rejected",
+      "passed": true
+    },
+    {
+      "case": "other Microsoft table default description to omission rejected",
+      "passed": true
+    },
+    {
+      "case": "standard column add",
+      "passed": true
+    },
+    {
+      "case": "standard column delete",
+      "passed": true
+    },
+    {
+      "case": "standard column name",
+      "passed": true
+    },
+    {
+      "case": "standard column type",
+      "passed": true
+    },
+    {
+      "case": "standard column hint",
+      "passed": true
+    },
+    {
+      "case": "standard column displayName",
+      "passed": true
+    },
+    {
+      "case": "nonempty custom columns added",
+      "passed": true
+    },
+    {
+      "case": "nonempty custom column name",
+      "passed": true
+    },
+    {
+      "case": "nonempty custom column type",
+      "passed": true
+    },
+    {
+      "case": "nonempty custom column description",
+      "passed": true
+    },
+    {
+      "case": "plan",
+      "passed": true
+    },
+    {
+      "case": "retention",
+      "passed": true
+    },
+    {
+      "case": "total retention",
+      "passed": true
+    },
+    {
+      "case": "archive retention",
+      "passed": true
+    },
+    {
+      "case": "provisioning state",
+      "passed": true
+    },
+    {
+      "case": "resource ID",
+      "passed": true
+    },
+    {
+      "case": "resource type",
+      "passed": true
+    },
+    {
+      "case": "unknown top field",
+      "passed": true
+    },
+    {
+      "case": "unknown properties field",
+      "passed": true
+    },
+    {
+      "case": "unknown schema field",
+      "passed": true
+    },
+    {
+      "case": "non-table metadata keeps strict raw comparison",
+      "passed": true
+    }
+  ],
+  "replayedCases": [
+    {
+      "case": "A01",
+      "passed": true,
+      "azureOperations": 0,
+      "sourceFiles": {
+        "log_migration_common.ps1": "d939c0099dcb21a18d6afc6813dcdeb8c10855fb9867bf9b9a9698aa9c0e7548",
+        "log_migration_precheck.ps1": "a9a23d2792da38066b8a0f7ad93d23bb89a84925d50ba1f124c8f29cb704ab74",
+        "log_migration_copy.ps1": "2d3ee6cf641e039cee2c56d87273e1f69866bf85b778d7f2d7c66f28877273f1",
+        "log_migration_verify.ps1": "457fd8779fa4b33b52ee78a1222772f0705108dabac56005238e845b36d6cc45",
+        "log_migration_delete.ps1": "d4eab8cfac9b87ac539d9f247cc9f6e6edcc10b588e7f78187e8e60fdfee5f16",
+        "log_migration_rollback.ps1": "100c8ce584626b12725f61bad76b852717d8086a426c681816c15d7f9385c094"
+      },
+      "backupSha256": "c2440bcca294afc35ebf7e6f27e51b800234b20f9762671ea6ba5ff70fee5334"
+    },
+    {
+      "case": "A02",
+      "passed": true,
+      "azureOperations": 0,
+      "sourceFiles": {
+        "log_migration_common.ps1": "d939c0099dcb21a18d6afc6813dcdeb8c10855fb9867bf9b9a9698aa9c0e7548",
+        "log_migration_precheck.ps1": "a9a23d2792da38066b8a0f7ad93d23bb89a84925d50ba1f124c8f29cb704ab74",
+        "log_migration_copy.ps1": "2d3ee6cf641e039cee2c56d87273e1f69866bf85b778d7f2d7c66f28877273f1",
+        "log_migration_verify.ps1": "457fd8779fa4b33b52ee78a1222772f0705108dabac56005238e845b36d6cc45",
+        "log_migration_delete.ps1": "d4eab8cfac9b87ac539d9f247cc9f6e6edcc10b588e7f78187e8e60fdfee5f16",
+        "log_migration_rollback.ps1": "100c8ce584626b12725f61bad76b852717d8086a426c681816c15d7f9385c094"
+      },
+      "backupSha256": "5c69fff6d9bb92f493de8cba761ac8b779a3dfcacfb56b1d7d6b0f6e34ff644c"
+    },
+    {
+      "case": "A03",
+      "passed": true,
+      "azureOperations": 0,
+      "sourceFiles": {
+        "log_migration_common.ps1": "d939c0099dcb21a18d6afc6813dcdeb8c10855fb9867bf9b9a9698aa9c0e7548",
+        "log_migration_precheck.ps1": "a9a23d2792da38066b8a0f7ad93d23bb89a84925d50ba1f124c8f29cb704ab74",
+        "log_migration_copy.ps1": "2d3ee6cf641e039cee2c56d87273e1f69866bf85b778d7f2d7c66f28877273f1",
+        "log_migration_verify.ps1": "457fd8779fa4b33b52ee78a1222772f0705108dabac56005238e845b36d6cc45",
+        "log_migration_delete.ps1": "d4eab8cfac9b87ac539d9f247cc9f6e6edcc10b588e7f78187e8e60fdfee5f16",
+        "log_migration_rollback.ps1": "100c8ce584626b12725f61bad76b852717d8086a426c681816c15d7f9385c094"
+      },
+      "backupSha256": "f07890c11a54f637211fafb43b7607c0626be0accf5c852d96298215453be8a5"
+    },
+    {
+      "case": "A04",
+      "passed": true,
+      "azureOperations": 0,
+      "sourceFiles": {
+        "log_migration_common.ps1": "d939c0099dcb21a18d6afc6813dcdeb8c10855fb9867bf9b9a9698aa9c0e7548",
+        "log_migration_precheck.ps1": "a9a23d2792da38066b8a0f7ad93d23bb89a84925d50ba1f124c8f29cb704ab74",
+        "log_migration_copy.ps1": "2d3ee6cf641e039cee2c56d87273e1f69866bf85b778d7f2d7c66f28877273f1",
+        "log_migration_verify.ps1": "457fd8779fa4b33b52ee78a1222772f0705108dabac56005238e845b36d6cc45",
+        "log_migration_delete.ps1": "d4eab8cfac9b87ac539d9f247cc9f6e6edcc10b588e7f78187e8e60fdfee5f16",
+        "log_migration_rollback.ps1": "100c8ce584626b12725f61bad76b852717d8086a426c681816c15d7f9385c094"
+      },
+      "backupSha256": "cfd9f086b28de63a861b82622c8b9d482327eabd644d699309f3e75f364d173f"
+    }
+  ],
+  "A05OfflineCorrectedComparisonPassed": true,
+  "A05SavedRestoreOrderPassed": true,
+  "A05CaseSuccessJsonCreated": false,
+  "originalRawNgAndHarnessPreserved": {
+    "/tmp/log-migration-live/final-acceptance-prepare/a05/rollback-primary-verification.json": "9c3be99c0b0857af85835e4d6a7f11b49b8d76006208452be1d2ce2c7fc1ca6f",
+    "/tmp/log-migration-live/final-acceptance-prepare/a05/case-failure.json": "3a52ea0d1a9ed3c1c363ecf57bf86c313e68c17b320631f659c5d36f902af776",
+    "/tmp/log-migration-live/final-acceptance-prepare/harness-before-table-normalization/acceptance.py": "ba92b6b5dd78445ca55f4cb73c1949298e1fddcc4a5462235cd7dcab140429ab"
+  },
+  "productionSourceFiles": {
+    "log_migration_common.ps1": "d939c0099dcb21a18d6afc6813dcdeb8c10855fb9867bf9b9a9698aa9c0e7548",
+    "log_migration_precheck.ps1": "a9a23d2792da38066b8a0f7ad93d23bb89a84925d50ba1f124c8f29cb704ab74",
+    "log_migration_copy.ps1": "2d3ee6cf641e039cee2c56d87273e1f69866bf85b778d7f2d7c66f28877273f1",
+    "log_migration_verify.ps1": "457fd8779fa4b33b52ee78a1222772f0705108dabac56005238e845b36d6cc45",
+    "log_migration_delete.ps1": "d4eab8cfac9b87ac539d9f247cc9f6e6edcc10b588e7f78187e8e60fdfee5f16",
+    "log_migration_rollback.ps1": "100c8ce584626b12725f61bad76b852717d8086a426c681816c15d7f9385c094"
+  },
+  "newHarnessSha256": "e0599fbc13de5dbbb20960bc3af1b705db64ebf21aa4a95748f27527ef6670da",
+  "azureOperations": 0,
+  "authenticationCalls": 0,
+  "meaning": "Azure test stopped after raw table-response difference. Only comparison harness improved; original NG remains preserved."
+}

@@ -1,0 +1,53 @@
+{
+  "source": "Azure ARM GET responses captured 2026-11-17; identifiers sanitized and unused fields removed",
+  "results": [
+    {
+      "label": "storage-account",
+      "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg-test-baseline/providers/Microsoft.Storage/storageAccounts/testjpe",
+      "httpStatus": 200,
+      "file": "storage-account.json"
+    },
+    {
+      "label": "storage-blob",
+      "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg-test-baseline/providers/Microsoft.Storage/storageAccounts/testjpe/blobServices/default",
+      "httpStatus": 200,
+      "file": "storage-blob.json"
+    },
+    {
+      "label": "storage-lifecycle",
+      "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg-test-baseline/providers/Microsoft.Storage/storageAccounts/testjpe/managementPolicies/default",
+      "httpStatus": 200,
+      "file": "storage-lifecycle.json"
+    },
+    {
+      "label": "storage-defender",
+      "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg-test-baseline/providers/Microsoft.Storage/storageAccounts/testjpe/providers/Microsoft.Security/defenderForStorageSettings/current",
+      "httpStatus": 200,
+      "file": "storage-defender.json"
+    },
+    {
+      "label": "workspace",
+      "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg-test-baseline/providers/Microsoft.OperationalInsights/workspaces/log-test",
+      "httpStatus": 200,
+      "file": "workspace.json"
+    },
+    {
+      "label": "table-Event",
+      "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg-test-baseline/providers/Microsoft.OperationalInsights/workspaces/log-test/tables/Event",
+      "httpStatus": 200,
+      "file": "table-Event.json"
+    },
+    {
+      "label": "table-Syslog",
+      "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg-test-baseline/providers/Microsoft.OperationalInsights/workspaces/log-test/tables/Syslog",
+      "httpStatus": 200,
+      "file": "table-Syslog.json"
+    },
+    {
+      "label": "dcr",
+      "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg-test-baseline/providers/Microsoft.Insights/dataCollectionRules/dcr-test",
+      "httpStatus": 200,
+      "file": "dcr.json"
+    }
+  ]
+}

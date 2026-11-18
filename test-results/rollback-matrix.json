@@ -1,0 +1,367 @@
+{
+  "passed": true,
+  "status": "All8AcceptanceCasesCompleteAwaitSeparateCleanupGo",
+  "finishedAtUtc": "2026-11-18T05:09:13.297916+00:00",
+  "primaryAcceptanceCasesPassed": 8,
+  "caseCounts": {
+    "smallCases": 7,
+    "smallDiagnosticSourcesPerCase": 2,
+    "finalBulkDiagnosticSources": 350,
+    "nativeSources": 50,
+    "newFreeLoadNsgs": 300,
+    "dcrOnlyVmssScopes": 1,
+    "uniqueFinalResourceContexts": 351
+  },
+  "sourceFiles": {
+    "log_migration_common.ps1": "d939c0099dcb21a18d6afc6813dcdeb8c10855fb9867bf9b9a9698aa9c0e7548",
+    "log_migration_precheck.ps1": "a9a23d2792da38066b8a0f7ad93d23bb89a84925d50ba1f124c8f29cb704ab74",
+    "log_migration_copy.ps1": "2d3ee6cf641e039cee2c56d87273e1f69866bf85b778d7f2d7c66f28877273f1",
+    "log_migration_verify.ps1": "457fd8779fa4b33b52ee78a1222772f0705108dabac56005238e845b36d6cc45",
+    "log_migration_delete.ps1": "d4eab8cfac9b87ac539d9f247cc9f6e6edcc10b588e7f78187e8e60fdfee5f16",
+    "log_migration_rollback.ps1": "100c8ce584626b12725f61bad76b852717d8086a426c681816c15d7f9385c094"
+  },
+  "harnessSha256": "e0599fbc13de5dbbb20960bc3af1b705db64ebf21aa4a95748f27527ef6670da",
+  "cases": [
+    {
+      "id": "A01",
+      "phase": "copy",
+      "point": "during",
+      "scope": "all",
+      "sourceCount": 2,
+      "passed": true,
+      "secondsExcludingInvestigation": 469.1,
+      "resultPath": "/tmp/log-migration-live/final-acceptance-prepare/a01/case-result.json",
+      "resultSha256": "e2a7a47d0631aff9710383f72863b513c5c76db3a6153289896f196993cef3bf",
+      "backupSha256": "c2440bcca294afc35ebf7e6f27e51b800234b20f9762671ea6ba5ff70fee5334",
+      "harnessCorrectionConfirmed": false
+    },
+    {
+      "id": "A02",
+      "phase": "copy",
+      "point": "during",
+      "scope": "selected",
+      "sourceCount": 2,
+      "passed": true,
+      "secondsExcludingInvestigation": 251.8,
+      "resultPath": "/tmp/log-migration-live/final-acceptance-prepare/a02/case-result.json",
+      "resultSha256": "b4b88d50c029d43971bc0047fea269999a3f4926e4845687d7f2a17ce5d84b8f",
+      "backupSha256": "5c69fff6d9bb92f493de8cba761ac8b779a3dfcacfb56b1d7d6b0f6e34ff644c",
+      "harnessCorrectionConfirmed": false
+    },
+    {
+      "id": "A03",
+      "phase": "copy",
+      "point": "after",
+      "scope": "all",
+      "sourceCount": 2,
+      "passed": true,
+      "secondsExcludingInvestigation": 272.8,
+      "resultPath": "/tmp/log-migration-live/final-acceptance-prepare/a03/case-result.json",
+      "resultSha256": "574087888651637705666a207ba814be67444c2d9bba40b63495c12b2a911184",
+      "backupSha256": "f07890c11a54f637211fafb43b7607c0626be0accf5c852d96298215453be8a5",
+      "harnessCorrectionConfirmed": false
+    },
+    {
+      "id": "A04",
+      "phase": "copy",
+      "point": "after",
+      "scope": "selected",
+      "sourceCount": 2,
+      "passed": true,
+      "secondsExcludingInvestigation": 289.7,
+      "resultPath": "/tmp/log-migration-live/final-acceptance-prepare/a04/case-result.json",
+      "resultSha256": "c8d6a6b3abecede793571d964ae234f0d24b9fdb20071e7bece42c33dfa54134",
+      "backupSha256": "cfd9f086b28de63a861b82622c8b9d482327eabd644d699309f3e75f364d173f",
+      "harnessCorrectionConfirmed": false
+    },
+    {
+      "id": "A05",
+      "phase": "delete",
+      "point": "during",
+      "scope": "all",
+      "sourceCount": 2,
+      "passed": true,
+      "secondsExcludingInvestigation": 356.6,
+      "resultPath": "/tmp/log-migration-live/final-acceptance-prepare/a05/case-result.json",
+      "resultSha256": "3978422a2152f97c8345dbb0b2c1aac6fd059a8ae1d6075fff9a8b4c95e83c44",
+      "backupSha256": "050b021ee14757871fe66f7133b40f4e1be071b1dc3666a566a1d6d261fa12a1",
+      "harnessCorrectionConfirmed": true
+    },
+    {
+      "id": "A06",
+      "phase": "delete",
+      "point": "during",
+      "scope": "selected",
+      "sourceCount": 2,
+      "passed": true,
+      "secondsExcludingInvestigation": 388.3,
+      "resultPath": "/tmp/log-migration-live/final-acceptance-prepare/a06/case-result.json",
+      "resultSha256": "fff3b3fe4ce242523d79b6d71f178844bf40ca4e49c8a87f4cb7e89f1c539f9d",
+      "backupSha256": "0327b8d6b7316cebb04d8ff8a46cade68b8a1f9e95ad7c8498cc9f98815425a9",
+      "harnessCorrectionConfirmed": false
+    },
+    {
+      "id": "A07",
+      "phase": "delete",
+      "point": "after",
+      "scope": "selected",
+      "sourceCount": 2,
+      "passed": true,
+      "secondsExcludingInvestigation": 394.6,
+      "resultPath": "/tmp/log-migration-live/final-acceptance-prepare/a07/case-result.json",
+      "resultSha256": "e6c88f56aa84da2734939db6ead58ad027fdc122810f4df9be95b198931b8ae3",
+      "backupSha256": "75cee2e7b6e96b7e24b65ac049a93b93a5fa8f3cdd22a25a991bb44360bc5dd9",
+      "harnessCorrectionConfirmed": false
+    },
+    {
+      "id": "A08",
+      "phase": "delete",
+      "point": "after",
+      "scope": "all",
+      "sourceCount": 350,
+      "passed": true,
+      "secondsExcludingInvestigation": 4576.3,
+      "resultPath": "/tmp/log-migration-live/final-acceptance-prepare/a08/case-result.json",
+      "resultSha256": "54f09d999b1bb2a9748fa0eee41d8b8b4411dd84d08da04df9acec1bb3d9d59a",
+      "backupSha256": "3a12fba14452d27764e69c7c84ba26eb037080bf205fb9c5ccb8949442f4eb99",
+      "harnessCorrectionConfirmed": false
+    }
+  ],
+  "all74PhaseCallEvidence": {
+    "path": "/tmp/log-migration-live/final-acceptance-prepare/all74-product-step-evidence.json",
+    "sha256": "52c2c527628ebecc8dc0cec53b2f80c3e3774fdb7dd678b89a57dd950586d161",
+    "count": 74,
+    "outcomes": {
+      "Success": 64,
+      "ExpectedFailureStoppedSafely": 5,
+      "ExpectedRealSIGTERM": 5
+    }
+  },
+  "backupHashesPerAcceptanceCase": {
+    "A01": {
+      "path": "/tmp/log-migration-live/final-acceptance-prepare/a01/log_migration_backup_dev.json",
+      "sha256": "c2440bcca294afc35ebf7e6f27e51b800234b20f9762671ea6ba5ff70fee5334"
+    },
+    "A02": {
+      "path": "/tmp/log-migration-live/final-acceptance-prepare/a02/log_migration_backup_dev.json",
+      "sha256": "5c69fff6d9bb92f493de8cba761ac8b779a3dfcacfb56b1d7d6b0f6e34ff644c"
+    },
+    "A03": {
+      "path": "/tmp/log-migration-live/final-acceptance-prepare/a03/log_migration_backup_dev.json",
+      "sha256": "f07890c11a54f637211fafb43b7607c0626be0accf5c852d96298215453be8a5"
+    },
+    "A04": {
+      "path": "/tmp/log-migration-live/final-acceptance-prepare/a04/log_migration_backup_dev.json",
+      "sha256": "cfd9f086b28de63a861b82622c8b9d482327eabd644d699309f3e75f364d173f"
+    },
+    "A05": {
+      "path": "/tmp/log-migration-live/final-acceptance-prepare/a05/log_migration_backup_dev.json",
+      "sha256": "050b021ee14757871fe66f7133b40f4e1be071b1dc3666a566a1d6d261fa12a1"
+    },
+    "A06": {
+      "path": "/tmp/log-migration-live/final-acceptance-prepare/a06/log_migration_backup_dev.json",
+      "sha256": "0327b8d6b7316cebb04d8ff8a46cade68b8a1f9e95ad7c8498cc9f98815425a9"
+    },
+    "A07": {
+      "path": "/tmp/log-migration-live/final-acceptance-prepare/a07/log_migration_backup_dev.json",
+      "sha256": "75cee2e7b6e96b7e24b65ac049a93b93a5fa8f3cdd22a25a991bb44360bc5dd9"
+    },
+    "A08": {
+      "path": "/tmp/log-migration-live/final-acceptance-prepare/a08/log_migration_backup_dev.json",
+      "sha256": "3a12fba14452d27764e69c7c84ba26eb037080bf205fb9c5ccb8949442f4eb99"
+    }
+  },
+  "A08": {
+    "sourceFilter": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-old",
+    "phaseTimes": {
+      "copy-noop": 255.2,
+      "copy": 582.8,
+      "delete": 1389.5,
+      "precheck": 124.9,
+      "rollback-primary": 1635.7,
+      "verify": 140.6
+    },
+    "phaseArmLogicalCallCounts": {
+      "copy-noop": {
+        "GET": 842
+      },
+      "copy": {
+        "GET": 1189,
+        "PUT": 360
+      },
+      "delete": {
+        "GET": 846,
+        "DELETE": 352
+      },
+      "precheck": {
+        "GET": 457
+      },
+      "rollback-primary": {
+        "GET": 1765,
+        "PUT": 352,
+        "DELETE": 353
+      },
+      "verify": {
+        "GET": 492
+      }
+    },
+    "phaseWriteCompleted": {
+      "copy-noop": 0,
+      "copy": 360,
+      "delete": 352,
+      "precheck": 0,
+      "rollback-primary": 705,
+      "verify": 0
+    },
+    "coldStorageNameChecks": 3,
+    "coldStorageCreated": 3,
+    "newWorkspaceCreated": 1,
+    "newDcrCreated": 1,
+    "newDcrAssociationsCreated": 2,
+    "diagnosticDestinationCounts": {
+      "Log": 22,
+      "Storage": 328
+    },
+    "storageByRegion": {
+      "japaneast": 316,
+      "japanwest": 9,
+      "westus2": 3
+    },
+    "finalOldDcrAssociationReadbackCount": 2,
+    "finalOldDiagnosticReadbackBeforeNewSideChanges": 350,
+    "upperLimitBoundaryCount": 11,
+    "upperLimitLoadNsgCount": 10,
+    "upperLimitNativeCount": 1,
+    "beforeAfterSettings": {
+      "before": 441,
+      "copied": 791,
+      "noop": 791,
+      "afterDelete": 441,
+      "afterRollback": 441
+    },
+    "beforeAfterOld350RawEqualCount": 350,
+    "protectedNonTargetsRawEqualCount": 91,
+    "retainedNewDestinationsAndDcr": [
+      "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpemixed",
+      "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845jpwmixed",
+      "/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Storage/storageAccounts/stcx11171016845usw2mixed",
+      "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.OperationalInsights/workspaces/log-codex-11171016845-mixed",
+      "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-codex-logmigration-11171016845/providers/Microsoft.Insights/dataCollectionRules/dcr-codex-11171016845-mixed"
+    ],
+    "resourceTypeCounts": {
+      "Microsoft.Storage/storageAccounts": 6,
+      "Microsoft.Storage/storageAccounts/blobServices": 5,
+      "Microsoft.Storage/storageAccounts/queueServices": 4,
+      "Microsoft.Storage/storageAccounts/tableServices": 4,
+      "Microsoft.Storage/storageAccounts/fileServices": 5,
+      "Microsoft.Network/virtualNetworks": 3,
+      "Microsoft.Network/networkSecurityGroups": 303,
+      "Microsoft.ContainerService/managedClusters": 1,
+      "Microsoft.Web/sites": 2,
+      "Microsoft.Web/sites/slots": 2,
+      "Microsoft.Network/networkInterfaces": 1,
+      "Microsoft.Compute/virtualMachines": 1,
+      "Microsoft.Compute/disks": 1,
+      "Microsoft.ServiceBus/namespaces": 1,
+      "Microsoft.KeyVault/vaults": 1,
+      "Microsoft.CognitiveServices/accounts": 1,
+      "Microsoft.CognitiveServices/accounts/projects": 1,
+      "Microsoft.Network/trafficmanagerprofiles": 1,
+      "Microsoft.Sql/servers": 1,
+      "Microsoft.Sql/servers/databases": 2,
+      "Microsoft.Web/serverFarms": 1,
+      "Microsoft.Automation/automationAccounts": 1,
+      "Microsoft.RecoveryServices/vaults": 1,
+      "Microsoft.EventGrid/topics": 1
+    },
+    "copyPerSubscriptionTraceIntervals": {
+      "copyTotalSeconds": 582.8,
+      "copyStartedAtUtc": "2026-11-18T03:52:43.007344+00:00",
+      "copyFinishedAtUtc": "2026-11-18T04:02:25.822566+00:00",
+      "firstAnySubscriptionWriteOrCliCreateStartAtUtc": "2026-11-18T03:54:39.4060855Z",
+      "sharedPrewriteElapsedSeconds": 116.4,
+      "sharedLabel": "step process start to first mutation call; includes shared target discovery and baseline reads before first write",
+      "perSubscriptionTraceIntervals": [
+        {
+          "subscriptionId": "5f1b809c-f59f-4489-8211-4bef16a0463a",
+          "destination": "Log",
+          "diagnosticCount": 22,
+          "firstArmWriteOrCliCreateStartAtUtc": "2026-11-18T04:00:58.8124008Z",
+          "firstCliCreateStartAtUtc": "2026-11-18T04:00:58.8124008Z",
+          "lastNewDiagnosticPutCompletedAtUtc": "2026-11-18T04:02:25.0669534Z",
+          "lastNewDiagnosticReadbackGetStartedAtUtc": "2026-11-18T04:02:25.0718756Z",
+          "traceOperationSpanSeconds": 86.3,
+          "spanLabel": "trace first write/CLIcreate start to last new diagnostic readback GET start; GET completion time is not recorded; this is an operation interval, not a measured independent subscription script runtime",
+          "readbackGetCalls": 22,
+          "armWriteCalls": 25,
+          "cliCreateCalls": 1
+        },
+        {
+          "subscriptionId": "bfda36ec-1aed-4b0c-a907-4d4809c63888",
+          "destination": "Storage",
+          "diagnosticCount": 328,
+          "firstArmWriteOrCliCreateStartAtUtc": "2026-11-18T03:54:39.4060855Z",
+          "firstCliCreateStartAtUtc": "2026-11-18T03:54:45.9900344Z",
+          "lastNewDiagnosticPutCompletedAtUtc": "2026-11-18T04:00:54.5220454Z",
+          "lastNewDiagnosticReadbackGetStartedAtUtc": "2026-11-18T04:00:54.5266535Z",
+          "traceOperationSpanSeconds": 375.1,
+          "spanLabel": "trace first write/CLIcreate start to last new diagnostic readback GET start; GET completion time is not recorded; this is an operation interval, not a measured independent subscription script runtime",
+          "readbackGetCalls": 328,
+          "armWriteCalls": 335,
+          "cliCreateCalls": 3
+        }
+      ],
+      "azureOperationsDuringAnalysis": 0,
+      "methodology": "Existing instrumented traces only; no guessed readback completion; main copy duration remains582.8seconds"
+    },
+    "finalIndependentProof": {
+      "path": "/tmp/log-migration-live/final-acceptance-prepare/a08/final-extra-independent-proof.json",
+      "sha256": "fc8ced4ef9594bdd6aef81c3542a073ee152429cb9d16dcfdbf84d51d6a2fd14"
+    },
+    "copyAndNoopIndependentProof": {
+      "path": "/tmp/log-migration-live/final-acceptance-prepare/a08/copy-and-noop-extra-independent-proof.json",
+      "sha256": "f91cad3ca1780b98152a019be93a2687e81f3b5a825a3023a6f6c358a0a800df"
+    }
+  },
+  "A05VerifierImprovementHistory": {
+    "productionCodeChanged": false,
+    "executionHarnessSha256": "ba92b6b5dd78445ca55f4cb73c1949298e1fddcc4a5462235cd7dcab140429ab",
+    "validationHarnessSha256": "e0599fbc13de5dbbb20960bc3af1b705db64ebf21aa4a95748f27527ef6670da",
+    "originalNgPreserved": {
+      "path": "/tmp/log-migration-live/final-acceptance-prepare/a05/rollback-primary-verification.json",
+      "sha256": "9c3be99c0b0857af85835e4d6a7f11b49b8d76006208452be1d2ce2c7fc1ca6f"
+    },
+    "originalFailurePreserved": {
+      "path": "/tmp/log-migration-live/final-acceptance-prepare/a05/case-failure.json",
+      "sha256": "3a52ea0d1a9ed3c1c363ecf57bf86c313e68c17b320631f659c5d36f902af776"
+    },
+    "investigationSecondsExcluded": 662.3,
+    "localFixProof": {
+      "path": "/tmp/log-migration-live/final-acceptance-prepare/table-comparison-fix-proof/result.json",
+      "sha256": "838847f185296e5bffa17b5ad8460736740fca43a66dd87c76b0327dff4f7e8a"
+    },
+    "freshGate": {
+      "path": "/tmp/log-migration-live/final-acceptance-prepare/a05/metadata-ng-analysis/fresh-full-master-gate.json",
+      "sha256": "fe4b39db79d8a05285e9e37f54f6fe488a90263397b0aa91ace28cbad9b0b89c"
+    },
+    "meaning": "Raw Syslog response display metadata differed after Azure execution. Only narrow verifier comparison improved, original NG retained, source6 unchanged, actual setting changes still detected by negative tests."
+  },
+  "allOwnedProductRunnersStopped": true,
+  "activeOwnedProductRunners": [],
+  "finalRoutingState": {
+    "oldDiagnostics": 350,
+    "oldDcrAssociationsFullBefore": 2,
+    "newMixedDiagnostics": 0,
+    "newMixedAssociations": 0,
+    "nonTargetDiagnosticsRawUnchanged": 91,
+    "totalSettings": 441,
+    "existingWaivers": 5,
+    "newWaiver": 0,
+    "oldDcrBodiesAndLegacyKeepRawUnchanged": true,
+    "createdStorage3Workspace1Dcr1Retained": true
+  },
+  "azureOperationsDuringAggregation": 0,
+  "cleanupExecutedByThisAgent": false,
+  "cleanupRequiresSeparateRootGo": true,
+  "limits": "Actual Azure runs: cloud PowerShell7.5.4. Separate real WindowsPowerShell5.1 native889 validation preserved by Root. No actual log-arrival checks, ActivityLog migration, permission matrix, or Policy Remediation included."
+}

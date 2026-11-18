@@ -1,0 +1,13 @@
+{
+  "mode": "copy",
+  "startedAtUtc": "2026-11-17T14:13:56.610857+00:00",
+  "finishedAtUtc": "2026-11-17T14:42:25.125507+00:00",
+  "seconds": 1708.5,
+  "exitCode": 0,
+  "sourceCount": 300,
+  "successOutputCount": 300,
+  "productionScriptSha256": "78817db45eeb8e60b52c44e6e6ec4563b2ce33b900cb40c24ee315496835c2c2",
+  "configuredScriptSha256": "4fcafb31b82d4ef6ef3cdfbf0aa2a6fb58ed7431716556e90ce45b22e7b213e0",
+  "scriptRuntime": "PowerShell 7.5.4 on Azure test host; Windows PowerShell 5.1 compatibility verified separately",
+  "log": "/tmp/log-migration-live/load-run/copy.log"
+}

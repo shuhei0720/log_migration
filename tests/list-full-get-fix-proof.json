@@ -1,0 +1,45 @@
+{
+  "cause": "ListByRule omits writable description while individual GET includes it",
+  "liveBeforeProof": "/tmp/log-migration-live/dcr-cutover-run/delete-normal-root-cause.json",
+  "liveBeforeProofSha256": "114869e7dd5796904f105e6bb0cabf2c6da7ee7df500354ed438ea644b97521c",
+  "liveBeforeDeletes": 0,
+  "fix": "Stage1 fetches only selected old association full bodies with existing batch; normal cohort checks ID and RuleId; delete uses full exact Before",
+  "localRegressionChecks": 889,
+  "dcrCases": 45,
+  "dcrChecks": 276,
+  "commonSha256": "d939c0099dcb21a18d6afc6813dcdeb8c10855fb9867bf9b9a9698aa9c0e7548",
+  "precheckSha256": "a9a23d2792da38066b8a0f7ad93d23bb89a84925d50ba1f124c8f29cb704ab74",
+  "nativeAfter": "PASS",
+  "liveAfter": "PASS",
+  "nativeReportPath": "/tmp/log-migration-live/finalvm/winps51-dcr-cutover-report.json",
+  "nativeReportSha256": "fef5fdc53780b572a772c1b782276fcf72816658eebb233e710b1d484892adeb",
+  "nativeChecks": 889,
+  "liveAfterScope": "Fresh stage1 full writable Before, normal stage4 delete, selected rollback restores both old associations with descriptions before new-side changes; other subscription unchanged",
+  "liveAfterProofs": [
+    {
+      "path": "/tmp/log-migration-live/dcr-cutover-r2-run/precheck-initial-backup-verification.json",
+      "sha256": "ed0fa2a7fa0b1dc8301716449d34e390da6044639dbede0bcf8eaed4e622350d",
+      "passed": true
+    },
+    {
+      "path": "/tmp/log-migration-live/dcr-cutover-r2-run/delete-normal-verification.json",
+      "sha256": "c584cc7ba2c9b8c82876703f37dd76e092d71ed742d0f6e4c74a61c50689d793",
+      "passed": true
+    },
+    {
+      "path": "/tmp/log-migration-live/dcr-cutover-r2-run/rollback-sub1-trace-verification.json",
+      "sha256": "c7475cb8e1bc660dc0c9b65c578cb244ef0013496a8e8a5739e45aeca0d3a517",
+      "passed": true
+    },
+    {
+      "path": "/tmp/log-migration-live/dcr-cutover-r2-run/rollback-sub1-verification.json",
+      "sha256": "3263398fe2f5d45ec08b8aa7493522273fefeb26a7fe8c7a2e12d087dbc1cfc0",
+      "passed": true
+    },
+    {
+      "path": "/tmp/log-migration-live/dcr-cutover-r2-run/rollback-sub2-verification.json",
+      "sha256": "6ba5f854414de90ee2a6fffac7c751477b6512e97a46e36db982e600fab9c9d6",
+      "passed": true
+    }
+  ]
+}

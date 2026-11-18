@@ -1,0 +1,8 @@
+{
+  "mode": "copy",
+  "startedAtUtc": "2026-11-17T13:11:42.551967+00:00",
+  "seconds": 620.8,
+  "exitCode": 0,
+  "log": "/tmp/log-migration-live/speed-final/copy.log",
+  "scriptSha256": "acf3550a771b2147e9cf2aa1a8bc2dd772adf897a9a5844f0b26ba8d763b129d"
+}
