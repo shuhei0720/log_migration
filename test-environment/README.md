@@ -7,21 +7,20 @@
 
 ## 設定と費用
 
-PS1先頭の2変数で対象subscriptionを指定します。VNet名と所属RGも先頭の変数、または同名引数で指定します。
+PS1先頭の2変数で対象subscriptionを指定します。既存VNetは、先頭の2変数または同名引数でリソースIDを指定します。
 
 ```powershell
 $SubscriptionIdA = '5f1b809c-f59f-4489-8211-4bef16a0463a'
 $SubscriptionIdB = 'bfda36ec-1aed-4b0c-a907-4d4809c63888'
 
 $network = @{
-    ExistingVnetNameA = 'vnet-fx-net261118a-a'
-    ExistingVnetResourceGroupA = 'rg-fx-net261118a-a'
-    ExistingVnetNameB = 'vnet-fx-net261118a-b'
-    ExistingVnetResourceGroupB = 'rg-fx-net261118a-b'
+    ExistingVnetIdA = '/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-net261118a-a/providers/Microsoft.Network/virtualNetworks/vnet-fx-net261118a-a'
+    ExistingVnetIdB = '/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-net261118a-b/providers/Microsoft.Network/virtualNetworks/vnet-fx-net261118a-b'
 }
 ```
 
-VNet・サブネットのIDと実際のIP範囲はAzureから取得します。VNet・サブネットの作成、更新、削除は行いません。
+VNet IDからRG名・VNet名を取得し、サブネットのIDと実際のIP範囲はAzureから取得します。VNet・サブネットの作成、更新、削除は行いません。
+Plan/Deployで指定したIDは台帳へ保存し、Capture/Seed/Cleanupでは保存済みのIDを使います。
 既存リージョン、下表のサイズ、必要な委任・NSGを作成前に検証します。IPアドレスの基部は固定しません。
 
 | サブネット名 | サイズ | Aでの用途 | Bでの用途 |

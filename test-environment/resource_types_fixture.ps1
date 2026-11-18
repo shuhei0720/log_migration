@@ -9,11 +9,9 @@ param(
     [string[]]$SkipTypes = @(),
     [string]$AdminSshPublicKey = '',
     [string]$PublisherEmail = 'fixture@example.invalid',
-    # 既存VNetは名前と所属RGだけを指定します。IDとアドレスは実GETで確認します。
-    [string]$ExistingVnetNameA = 'vnet-fx-net261118a-a',
-    [string]$ExistingVnetResourceGroupA = 'rg-fx-net261118a-a',
-    [string]$ExistingVnetNameB = 'vnet-fx-net261118a-b',
-    [string]$ExistingVnetResourceGroupB = 'rg-fx-net261118a-b',
+    # 既存VNetはリソースIDで指定します。RG名・VNet名と実サブネット情報はここから取得します。
+    [string]$ExistingVnetIdA = '/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-net261118a-a/providers/Microsoft.Network/virtualNetworks/vnet-fx-net261118a-a',
+    [string]$ExistingVnetIdB = '/subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-net261118a-b/providers/Microsoft.Network/virtualNetworks/vnet-fx-net261118a-b',
     [string]$RunRoot = ''
 )
 
@@ -32,10 +30,16 @@ $ManagementGroupParentId = ''
 
 # 利用する5サブネットは固定です。このスクリプトはVNet/サブネットを作成・更新しません。
 $ExistingSubnetNames = [ordered]@{Protect='ProtectSubnet';Private='PrivateSubnet';ApplicationGateway='ApplicationGatewaySubnet';VNetIntegration='VNetIntegrationSubnet';AzureFirewall='AzureFirewallSubnet'}
-$ExistingNetworkConfiguration = @(
-    [pscustomobject]@{role='A';subscriptionId=$SubscriptionIdA;resourceGroupName=$ExistingVnetResourceGroupA;vnetName=$ExistingVnetNameA;vnetId=('/subscriptions/'+$SubscriptionIdA+'/resourceGroups/'+$ExistingVnetResourceGroupA+'/providers/Microsoft.Network/virtualNetworks/'+$ExistingVnetNameA);subnetNames=$ExistingSubnetNames},
-    [pscustomobject]@{role='B';subscriptionId=$SubscriptionIdB;resourceGroupName=$ExistingVnetResourceGroupB;vnetName=$ExistingVnetNameB;vnetId=('/subscriptions/'+$SubscriptionIdB+'/resourceGroups/'+$ExistingVnetResourceGroupB+'/providers/Microsoft.Network/virtualNetworks/'+$ExistingVnetNameB);subnetNames=$ExistingSubnetNames}
-)
+$ExistingNetworkConfiguration = @()
+# 以降の工程は作成時の台帳を使うため、入力IDの検証はPlan/Deployだけで行います。
+if($Action -in @('Plan','Deploy')){
+    foreach($network in @(@{role='A';subscriptionId=$SubscriptionIdA;id=$ExistingVnetIdA},@{role='B';subscriptionId=$SubscriptionIdB;id=$ExistingVnetIdB})){
+        # 対象サブスクリプションのVNet本体IDだけを受け付けます。子リソースやURLは指定できません。
+        $pattern='\A/subscriptions/'+[regex]::Escape($network.subscriptionId)+'/resourceGroups/([^/\\?#%\s]+)/providers/Microsoft\.Network/virtualNetworks/([^/\\?#%\s]+)\z'
+        if($network.id -notmatch $pattern){throw ('ExistingVnetId'+$network.role+' must be an exact VNet resource ID in its configured subscription.')}
+        $ExistingNetworkConfiguration += [pscustomobject]@{role=$network.role;subscriptionId=$network.subscriptionId;resourceGroupName=$Matches[1];vnetName=$Matches[2];vnetId=$network.id;subnetNames=$ExistingSubnetNames}
+    }
+}
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
