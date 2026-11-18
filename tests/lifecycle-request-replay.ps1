@@ -61,15 +61,29 @@ $resourceId='/subscriptions/offline/resourceGroups/offline/providers/Microsoft.S
 $Target=@{SubscriptionName='offline';SubscriptionId='offline'}
 $VerifyOnly=$false
 $env:MIGRATION_ARM_TRACE=''
-$results=@(foreach ($caseName in @('Missing','Empty','OtherRule','ReplaceOwnRule')) {
+$results=@(foreach ($caseName in @('Missing','Empty','OtherRule','ReplaceOwnRule','Legacy365Only','Desired1095AlreadyCorrectPlusLegacy365')) {
     $script:caseName=$caseName
     $script:capturedBody=$null; $script:capturedJson='';$script:checkRecords.Clear()
     $ready=$true
     Invoke-Expression $expectedCode
     $other=@{name='keep-other';enabled=$true;type='Lifecycle';definition=@{filters=@{blobTypes=@('blockBlob')};actions=@{baseBlob=@{delete=@{daysAfterModificationGreaterThan=99}}}}}
-    $oldOwn=@{name='log-append-365';enabled=$false;type='Lifecycle';definition=@{filters=@{blobTypes=@('appendBlob')};actions=@{baseBlob=@{delete=@{daysAfterModificationGreaterThan=1}}}}}
-    $initialRules=switch ($caseName) { 'Empty' {@()};'OtherRule' {@($other)};'ReplaceOwnRule' {@($oldOwn,$other)} }
-    $script:initialPolicy=if ($caseName -eq 'Missing') {$null} else {[pscustomobject]@{properties=[pscustomobject]@{policy=[pscustomobject]@{rules=@($initialRules)}}}}
+    # 365を含む別名・別用途のルールは、既存の値をすべて維持します。
+    $custom365=@{name='keep-other-365';enabled=$false;type='Lifecycle';definition=@{filters=@{blobTypes=@('blockBlob');prefixMatch=@('日本語/365/')};actions=@{baseBlob=@{delete=@{daysAfterModificationGreaterThan=365}}}}}
+    $wrongOwn=@{name='log-append-1095';enabled=$false;type='Lifecycle';definition=@{filters=@{blobTypes=@('appendBlob')};actions=@{baseBlob=@{delete=@{daysAfterModificationGreaterThan=1}}}}}
+    $legacyOwn=@{name='log-append-365';enabled=$true;type='Lifecycle';definition=@{filters=@{blobTypes=@('appendBlob')};actions=@{baseBlob=@{delete=@{daysAfterModificationGreaterThan=365}}}}}
+    $correctOwn=@{name='log-append-1095';enabled=$true;type='Lifecycle';definition=@{filters=@{blobTypes=@('appendBlob')};actions=@{baseBlob=@{delete=@{daysAfterModificationGreaterThan=1095}}}}}
+    $initialRules=@(switch ($caseName) {
+        'Empty' {@()}
+        'OtherRule' {@($other,$custom365)}
+        'ReplaceOwnRule' {@($wrongOwn,$other,$custom365)}
+        'Legacy365Only' {@($legacyOwn,$other,$custom365)}
+        'Desired1095AlreadyCorrectPlusLegacy365' {@($correctOwn,$legacyOwn,$other,$custom365)}
+    })
+    $otherBefore=@{}
+    foreach($rule in @($initialRules | Where-Object {$_.name -notin @('log-append-1095','log-append-365')})) {
+        $otherBefore[$rule.name]=ConvertTo-Json -InputObject $rule -Depth 30 -Compress
+    }
+    $script:initialPolicy=if ($caseName -eq 'Missing') {$null} else {[pscustomobject]@{properties=[pscustomobject]@{policy=[pscustomobject]@{rules=$initialRules}}}}
     if ($caseName -eq 'Missing') {
         $missingProbe=Get-OptionalArmResource -ResourceId $resourceId -ApiVersion '2023-05-01'
         Assert-Replay ($null -eq $missingProbe) '404を本当のnullとして再現できていません。'
@@ -79,17 +93,19 @@ $results=@(foreach ($caseName in @('Missing','Empty','OtherRule','ReplaceOwnRule
     $nullCount=@($rules | Where-Object {$null -eq $_}).Count
     $expectedNulls=if ($caseName -eq 'Missing') {$MissingPolicyNullCount} else {0}
     Assert-Replay ($nullCount -eq $expectedNulls) "$caseName : nullルールが混入しています。"
-    $ownRules=@($rules | Where-Object {$_.name -eq 'log-append-365'})
-    Assert-Replay ($ownRules.Count -eq 1 -and $ownRules[0].enabled -eq $true) "$caseName : 自分のルールが一意に設定されていません。"
-    $wantedCount=if ($caseName -in @('OtherRule','ReplaceOwnRule')) {2} else {1+$expectedNulls}
+    $ownRules=@($rules | Where-Object {$_.name -eq 'log-append-1095'})
+    Assert-Replay ($ownRules.Count -eq 1 -and $ownRules[0].enabled -eq $true -and $ownRules[0].definition.actions.baseBlob.delete.daysAfterModificationGreaterThan -eq 1095) "$caseName : 有効な1095日ルールが一意に設定されていません。"
+    $legacyRules=@($rules | Where-Object {$_.name -eq 'log-append-365'})
+    Assert-Replay ($legacyRules.Count -eq 0) "$caseName : 先に削除される旧365日ルールが残っています。"
+    $wantedCount=1+$otherBefore.Count+$expectedNulls
     Assert-Replay ($rules.Count -eq $wantedCount) "$caseName : 送信するルール数が一致しません。"
     Assert-Replay ($script:checkRecords.Count -eq 1 -and $script:checkRecords[0].Success -eq ($expectedNulls -eq 0)) "$caseName : 成否が一致しません。"
-    if ($caseName -in @('OtherRule','ReplaceOwnRule')) {
-        $kept=@($rules | Where-Object {$_.name -eq 'keep-other'})
-        Assert-Replay ($kept.Count -eq 1 -and $kept[0].definition.actions.baseBlob.delete.daysAfterModificationGreaterThan -eq 99) "$caseName : 他ルールが変わっています。"
+    foreach($name in $otherBefore.Keys) {
+        $kept=@($rules | Where-Object {$_.name -eq $name})
+        Assert-Replay ($kept.Count -eq 1 -and (ConvertTo-Json -InputObject $kept[0] -Depth 30 -Compress) -ceq $otherBefore[$name]) "$caseName : 別名ルール $name の内容が変わっています。"
     }
-    [pscustomobject]@{Case=$caseName;RulesCount=$rules.Count;NullCount=$nullCount;Success=$script:checkRecords[0].Success;RequestBody=$script:capturedJson}
+    [pscustomobject]@{Case=$caseName;RulesCount=$rules.Count;NullCount=$nullCount;OwnDays=1095;LegacyRules=$legacyRules.Count;PreservedOtherRules=$otherBefore.Count;Success=$script:checkRecords[0].Success;RequestBody=$script:capturedJson}
 })
-$result=[pscustomobject]@{Result='PASS';Assertions=$script:checks;AzureRequests=0;SourceCommon=$SourceCommon;SourceHash=(Get-FileHash $SourceCommon -Algorithm SHA256).Hash;SourceCopy=$copyPath;SourceCopyHash=(Get-FileHash $copyPath -Algorithm SHA256).Hash;Cases=$results}
+$result=[pscustomobject]@{Result='PASS';CaseCount=$results.Count;Assertions=$script:checks;AzureRequests=0;SourceCommon=$SourceCommon;SourceHash=(Get-FileHash $SourceCommon -Algorithm SHA256).Hash;SourceCopy=$copyPath;SourceCopyHash=(Get-FileHash $copyPath -Algorithm SHA256).Hash;Cases=$results}
 if ($ResultPath) { $result | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $ResultPath -Encoding UTF8 }
 if ($PassThru) {$result} else {$result | ConvertTo-Json -Depth 30}

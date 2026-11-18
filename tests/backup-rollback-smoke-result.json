@@ -2,15 +2,15 @@
   "Result": "PASS",
   "Cases": [
     {
-      "Case": "既存GET結果から最小バックアップを作成",
+      "Case": "Ⅱが実際の書込みより前に元の最小バックアップを保存",
       "Result": "PASS",
-      "Assertions": 15,
+      "Assertions": 16,
       "Writes": 0
     },
     {
       "Case": "HashtableとPSCustomObjectの旧関連を保存して同じ内容で読める",
       "Result": "PASS",
-      "Assertions": 14,
+      "Assertions": 16,
       "Writes": 0
     },
     {
@@ -22,32 +22,32 @@
     {
       "Case": "DCR自体が診断対象でもsnapshotとの併用を許可",
       "Result": "PASS",
-      "Assertions": 5,
+      "Assertions": 6,
       "Writes": 19
     },
     {
-      "Case": "バックアップ既存時は上書きせずprecheck前に停止",
+      "Case": "Ⅰは既存のⅡバックアップを読まず独立して確認する",
       "Result": "PASS",
-      "Assertions": 4,
+      "Assertions": 5,
       "Writes": 0
     },
     {
-      "Case": "CreateNewの直接衝突でも既存byteを上書きしない",
+      "Case": "Ⅱの再実行は保存済みBeforeとファイルを変更しない",
       "Result": "PASS",
-      "Assertions": 3,
-      "Writes": 0
+      "Assertions": 5,
+      "Writes": 14
     },
     {
       "Case": "VM・診断対象0のbackupは空配列を維持",
       "Result": "PASS",
-      "Assertions": 5,
+      "Assertions": 6,
       "Writes": 0
     },
     {
-      "Case": "backup無しのcopy は変更前に停止",
+      "Case": "②はバックアップが無い初回にも変更前保存から開始する",
       "Result": "PASS",
       "Assertions": 3,
-      "Writes": 0
+      "Writes": 16
     },
     {
       "Case": "backup無しのdelete は変更前に停止",
@@ -64,217 +64,247 @@
     {
       "Case": "backup不正Version はlocalで拒否",
       "Result": "PASS",
-      "Assertions": 3,
+      "Assertions": 4,
       "Writes": 0
     },
     {
       "Case": "backup不正Environment はlocalで拒否",
       "Result": "PASS",
-      "Assertions": 3,
+      "Assertions": 4,
       "Writes": 0
     },
     {
       "Case": "backup不正TargetWorkspaceId はlocalで拒否",
       "Result": "PASS",
-      "Assertions": 3,
+      "Assertions": 4,
       "Writes": 0
     },
     {
       "Case": "backup不正NewDiagnosticSettingName はlocalで拒否",
       "Result": "PASS",
-      "Assertions": 3,
+      "Assertions": 4,
       "Writes": 0
     },
     {
       "Case": "backup不正DuplicateTarget はlocalで拒否",
       "Result": "PASS",
-      "Assertions": 3,
+      "Assertions": 4,
       "Writes": 0
     },
     {
       "Case": "backup不正DuplicateDiagnostic はlocalで拒否",
       "Result": "PASS",
-      "Assertions": 3,
+      "Assertions": 4,
       "Writes": 0
     },
     {
       "Case": "backup不正WrongSubResource はlocalで拒否",
       "Result": "PASS",
-      "Assertions": 3,
+      "Assertions": 4,
       "Writes": 0
     },
     {
       "Case": "backup不正EmptyAfter はlocalで拒否",
       "Result": "PASS",
-      "Assertions": 3,
+      "Assertions": 4,
       "Writes": 0
     },
     {
       "Case": "壊れたJSONとCSV宛先差分を拒否",
       "Result": "PASS",
-      "Assertions": 4,
+      "Assertions": 5,
       "Writes": 0
     },
     {
-      "Case": "CSVの正しいSub部分集合を許可し未知Subは拒否",
+      "Case": "CSVの正しいSub部分集合を許可しアクセス対象外Subは拒否",
       "Result": "PASS",
-      "Assertions": 6,
+      "Assertions": 7,
       "Writes": 0
     },
     {
       "Case": "未実施状態のrollbackは全てskip",
       "Result": "PASS",
-      "Assertions": 3,
+      "Assertions": 4,
       "Writes": 0
     },
     {
       "Case": "全削除後のrollbackは旧全復元後だけ新を削除",
       "Result": "PASS",
-      "Assertions": 21,
+      "Assertions": 22,
       "Writes": 0
     },
     {
       "Case": "複製途中のrollbackは存在する新設定だけ除去",
       "Result": "PASS",
-      "Assertions": 3,
+      "Assertions": 4,
       "Writes": 12
     },
     {
       "Case": "サブスクリプション部分選択で他Subを保持",
       "Result": "PASS",
-      "Assertions": 4,
+      "Assertions": 5,
       "Writes": 9
     },
     {
       "Case": "存在しないSub指定は変更0",
       "Result": "PASS",
-      "Assertions": 3,
+      "Assertions": 4,
       "Writes": 0
     },
     {
       "Case": "明示empty-arrayのSub指定は全体へ広げない",
       "Result": "PASS",
-      "Assertions": 3,
+      "Assertions": 4,
       "Writes": 0
     },
     {
       "Case": "明示nullのSub指定は全体へ広げない",
       "Result": "PASS",
-      "Assertions": 3,
+      "Assertions": 4,
       "Writes": 0
     },
     {
       "Case": "明示empty-stringのSub指定は全体へ広げない",
       "Result": "PASS",
-      "Assertions": 3,
+      "Assertions": 4,
       "Writes": 0
     },
     {
       "Case": "明示whitespaceのSub指定は全体へ広げない",
       "Result": "PASS",
-      "Assertions": 3,
+      "Assertions": 4,
       "Writes": 0
     },
     {
       "Case": "後続Sub/設定のOld 不一致は全復元前に停止",
       "Result": "PASS",
-      "Assertions": 6,
+      "Assertions": 7,
       "Writes": 0
     },
     {
       "Case": "後続Sub/設定のNew 不一致は全復元前に停止",
       "Result": "PASS",
-      "Assertions": 6,
+      "Assertions": 7,
       "Writes": 0
     },
     {
       "Case": "後続Sub/設定のDcr 不一致は全復元前に停止",
       "Result": "PASS",
-      "Assertions": 6,
+      "Assertions": 7,
       "Writes": 0
     },
     {
       "Case": "後続Sub/設定のAssociation 不一致は全復元前に停止",
       "Result": "PASS",
-      "Assertions": 6,
+      "Assertions": 7,
       "Writes": 0
     },
     {
       "Case": "旧復元用の空きが無ければ新を消さず停止",
       "Result": "PASS",
-      "Assertions": 6,
+      "Assertions": 7,
       "Writes": 0
     },
     {
       "Case": "復元OldPut 失敗時は新診断DELETE0",
       "Result": "PASS",
-      "Assertions": 6,
+      "Assertions": 7,
       "Writes": 4
     },
     {
       "Case": "復元Readback 失敗時は新診断DELETE0",
       "Result": "PASS",
-      "Assertions": 6,
+      "Assertions": 7,
       "Writes": 4
     },
     {
       "Case": "復元DcrPut 失敗時は新診断DELETE0",
       "Result": "PASS",
-      "Assertions": 6,
+      "Assertions": 7,
       "Writes": 5
     },
     {
       "Case": "復元AssociationPut 失敗時は新診断DELETE0",
       "Result": "PASS",
-      "Assertions": 6,
+      "Assertions": 7,
       "Writes": 6
     },
     {
       "Case": "DCR復元がUpdatingなら新診断を削除しない",
       "Result": "PASS",
-      "Assertions": 9,
+      "Assertions": 10,
       "Writes": 12
     },
     {
       "Case": "自分のDCR PUTがUpdatingからSucceededなら待って完了",
       "Result": "PASS",
-      "Assertions": 4,
+      "Assertions": 5,
       "Writes": 17
     },
     {
       "Case": "DCRAにUpdatingが返る場合も新診断を削除しない",
       "Result": "PASS",
-      "Assertions": 6,
+      "Assertions": 7,
       "Writes": 0
     },
     {
       "Case": "新削除途中の失敗は後続停止し再実行できる",
       "Result": "PASS",
-      "Assertions": 6,
+      "Assertions": 7,
       "Writes": 8
     },
     {
       "Case": "旧削除済scopeの新欠損もverify/delete全体を停止",
       "Result": "PASS",
-      "Assertions": 6,
+      "Assertions": 7,
       "Writes": 0
     },
     {
       "Case": "旧全消済リージョンのStorage基礎確認を維持",
       "Result": "PASS",
-      "Assertions": 3,
+      "Assertions": 4,
       "Writes": 0
     },
     {
       "Case": "backup後に増えた無関係VMを関連付け対象へ広げない",
       "Result": "PASS",
-      "Assertions": 4,
+      "Assertions": 5,
+      "Writes": 0
+    },
+    {
+      "Case": "Ⅱの対象Subバックアップ保存に失敗したら設定書込みを始めない",
+      "Result": "PASS",
+      "Assertions": 7,
+      "Writes": 0
+    },
+    {
+      "Case": "Ⅱの途中停止から再開し既存Beforeを維持して未保存Subだけを追加する",
+      "Result": "PASS",
+      "Assertions": 9,
+      "Writes": 8
+    },
+    {
+      "Case": "後続Subの総保持90では旧設定を全件削除しない",
+      "Result": "PASS",
+      "Assertions": 11,
+      "Writes": 0
+    },
+    {
+      "Case": "後続Subの継承総保持365（要求1095）では旧設定を全件削除しない",
+      "Result": "PASS",
+      "Assertions": 11,
+      "Writes": 0
+    },
+    {
+      "Case": "3年ルールが正しくても後続Subに旧365日ルールが残る場合は削除しない",
+      "Result": "PASS",
+      "Assertions": 15,
       "Writes": 0
     }
   ],
-  "CaseCount": 45,
-  "Checks": 230,
+  "CaseCount": 50,
+  "Checks": 326,
   "AzureRequests": 0,
-  "CommonHash": "A9DDE37D49556B7AB8C8BC552FFFE2C74733F74345C4F13FC64B1D7AC6EB3A6A",
-  "RollbackHash": "880166D62E358FBD0A85AB365C060C59A439AB3F1B0E73B4E750D2D466A6E220"
+  "CommonHash": "0E8138AD4CDA35165A26163AAA843DC78F636907037025B3614F857E8F670078",
+  "RollbackHash": "8709528EE142B36AACF8F2A0D5C9EC15880CE6025F7CEF0B50243088153583F4"
 }

@@ -507,6 +507,10 @@ $script:writes = [System.Collections.Generic.List[string]]::new()
 $script:availability = $true
 $script:baselineBadSubscription = ''
 $script:destinationReads = [Collections.Generic.List[string]]::new()
+$script:cliCreates = [Collections.Generic.List[string]]::new()
+$script:flow = [Collections.Generic.List[string]]::new()
+$script:backedWrites = [Collections.Generic.List[string]]::new()
+$script:nameChecks = [Collections.Generic.List[string]]::new()
 $inputCsvPath = Join-Path ([IO.Path]::GetTempPath()) ('migration-staged-'+[guid]::NewGuid().ToString('N')+'.csv')
 $migrationBackupPath = $inputCsvPath+'.backup.json'
 $script:entryBackup = $null
@@ -514,13 +518,16 @@ $script:entryBackup = $null
     [pscustomobject]@{SubscriptionName='s1';ResourceGroup='rg';StorageAccount='stjpetest1';WorkspaceName='log-new';LogDestination='Storage'},
     [pscustomobject]@{SubscriptionName='s2';ResourceGroup='rg';StorageAccount='stjpetest2';WorkspaceName='log-new';LogDestination='Storage'}
 ) | Export-Csv $inputCsvPath -NoTypeInformation -Encoding UTF8
-function Reset-Report { $script:failures.Clear(); $script:verificationResults.Clear(); $script:writes.Clear(); $script:storageNames.Clear(); $script:initiativeDefinition=$null; $script:destinationReads.Clear() }
+function Reset-Report { $script:failures.Clear(); $script:verificationResults.Clear(); $script:writes.Clear(); $script:storageNames.Clear(); $script:initiativeDefinition=$null; $script:destinationReads.Clear();$script:cliCreates.Clear();$script:flow.Clear();$script:backedWrites.Clear();$script:nameChecks.Clear() }
 function Get-ResourceId([string]$subscription) { "/subscriptions/$subscription/resourceGroups/source/providers/Some.Service/resources/example" }
 function New-Fixture {
     $script:store = @{}
     $script:destinations = @{}
+    $script:storageTemplates = @{}
+    $script:resourceLocations = @{}
     foreach ($subscription in @('s1','s2')) {
         $resourceId = Get-ResourceId $subscription
+        $script:resourceLocations[$resourceId]='japaneast'
         $script:store[$resourceId] = @{
             old = [pscustomobject]@{name='old';workspaceId=$targetWorkspaceId;logs=@([pscustomobject]@{category='日本語';enabled=$false;retentionPolicy=[pscustomobject]@{enabled=$true;days=17}});metrics=@()}
             unrelated = [pscustomobject]@{name='unrelated';workspaceId='/other';logs=@();metrics=@()}
@@ -529,7 +536,7 @@ function New-Fixture {
         $groupId="/subscriptions/$subscription/resourceGroups/rg"
         $storageId="$groupId/providers/Microsoft.Storage/storageAccounts/stjpetest$($subscription.Substring(1))"
         $script:destinations[$groupId]=[pscustomobject]@{id=$groupId;location='japaneast'}
-        $script:destinations[$storageId]=Copy-Setting @{
+        $script:storageTemplates[$storageId]=Copy-Setting @{
             id=$storageId;location='japaneast';kind='StorageV2';sku=@{name='Standard_ZRS'}
             properties=@{
                 provisioningState='Succeeded';encryption=@{requireInfrastructureEncryption=$true};immutableStorageWithVersioning=@{enabled=$true}
@@ -539,8 +546,8 @@ function New-Fixture {
         }
         $script:destinations["$storageId/blobServices/default"]=Copy-Setting @{properties=@{isVersioningEnabled=$true}}
         $script:destinations["$storageId/managementPolicies/default"]=Copy-Setting @{properties=@{policy=@{rules=@(@{
-            name='log-append-365';enabled=$true;type='Lifecycle'
-            definition=@{filters=@{blobTypes=@('appendBlob')};actions=@{baseBlob=@{delete=@{daysAfterModificationGreaterThan=365}}}}
+            name='log-append-1095';enabled=$true;type='Lifecycle'
+            definition=@{filters=@{blobTypes=@('appendBlob')};actions=@{baseBlob=@{delete=@{daysAfterModificationGreaterThan=1095}}}}
         })}}}
         $script:destinations["$storageId/providers/Microsoft.Security/defenderForStorageSettings/current"]=Copy-Setting @{properties=@{isEnabled=$false;overrideSubscriptionLevelSettings=$true}}
         $workspaceId="$groupId/providers/Microsoft.OperationalInsights/workspaces/log-new"
@@ -561,11 +568,29 @@ function Invoke-AzJson {
         'account/list' { foreach ($id in @('s1','s2')) { [pscustomobject]@{id=$id;name=$id} }; return }
         'resource/list' {
             $subscription = $Arguments[3]
-            [pscustomobject]@{id=(Get-ResourceId $subscription);type='Some.Service/resources';location='japaneast'}
+            $script:flow.Add('scan:'+$subscription)
+            foreach($id in @($script:store.Keys | Sort-Object)){
+                if($id -like "/subscriptions/$subscription/*"){[pscustomobject]@{id=$id;type='Some.Service/resources';location=$(if($script:resourceLocations.ContainsKey($id)){$script:resourceLocations[$id]}else{'japaneast'})}}
+            }
             return
         }
-        'storage/sku' { [pscustomobject]@{name='Standard_ZRS';kind='StorageV2';locations=@('japaneast')}; return }
-        'storage/account' { if($Arguments[2] -ne 'check-name'){throw 'Unexpected storage creation in preset fixture'}; [pscustomobject]@{nameAvailable=$script:availability;reason='AlreadyExists'}; return }
+        'storage/sku' { [pscustomobject]@{name='Standard_ZRS';kind='StorageV2';locations=@('japaneast','japanwest')}; return }
+        'storage/account' {
+            $sub=$Arguments[[array]::IndexOf($Arguments,'--subscription')+1]
+            $name=$Arguments[[array]::IndexOf($Arguments,'--name')+1]
+            $id="/subscriptions/$sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/$name"
+            if($Arguments[2] -eq 'check-name'){
+                $script:nameChecks.Add($name)
+                [pscustomobject]@{nameAvailable=($script:availability -and -not $script:destinations.ContainsKey($id));reason='AlreadyExists'};return
+            }
+            if($Arguments[2] -eq 'create' -and $script:storageTemplates.ContainsKey($id)){
+                Assert-BackedBeforeWrite $id
+                $script:cliCreates.Add($id)
+                $script:destinations[$id]=Copy-Setting $script:storageTemplates[$id]
+                return $script:destinations[$id]
+            }
+            throw 'Unexpected storage command or creation target'
+        }
         'provider/show' { [pscustomobject]@{registrationState='Registered'}; return }
         default { throw "Unexpected CLI: $($Arguments -join ' ')" }
     }
@@ -575,6 +600,28 @@ function Invoke-RestMethod {
     # 実際のIRMと同じく、root JSON arrayを1オブジェクトとして返します。
     Write-Output -NoEnumerate @([pscustomobject]@{name='japaneast';shortName='jpe'},[pscustomobject]@{name='japanwest';shortName='jpw'})
 }
+# HTTP/CLIの変更直前に、今回の対象SubのBeforeが既にファイルへ保存済みか観測します。
+function Assert-BackedBeforeWrite([string]$ResourceId) {
+    if(-not (Test-Path -LiteralPath $migrationBackupPath)){throw 'TEST_BEFORE_NOT_DURABLE'}
+    $saved=Get-Content -LiteralPath $migrationBackupPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    $sub=($ResourceId -split '/')[2]
+    $row=@($saved.Targets | Where-Object SubscriptionId -eq $sub)
+    if($saved.Version -ne 3 -or $row.Count -ne 1){throw 'TEST_BEFORE_SUB_NOT_DURABLE'}
+    if($ResourceId -match '^(.*)/providers/Microsoft.Insights/diagnosticSettings/[^/]+$'){
+        $diagnostic=@($row[0].Diagnostics | Where-Object ResourceId -eq $Matches[1])
+        if($diagnostic.Count -ne 1 -or $diagnostic[0].Before.workspaceId -ne $targetWorkspaceId){throw 'TEST_DIAGNOSTIC_BEFORE_NOT_DURABLE'}
+    }
+    $script:flow.Add('write:'+$sub)
+    $script:backedWrites.Add($ResourceId)
+}
+# メモリ内fixtureの処理は同じActionを同じスコープで実行します。標準ジョブ自体は上の実テストで確認済みです。
+function Invoke-DiagnosticBatch {
+    param([object[]]$Items,[scriptblock]$Action,[string]$SettingName)
+    foreach($item in $Items){
+        try{[pscustomobject]@{Item=$item;Result=(& $Action $item $SettingName);Error=''}}
+        catch{[pscustomobject]@{Item=$item;Result=$null;Error=$_.Exception.Message}}
+    }
+}
 function Get-DiagnosticSettings {
     param([string]$ResourceId, [string]$Name)
     if ($Name) { $script:store[$ResourceId][$Name] }
@@ -582,6 +629,7 @@ function Get-DiagnosticSettings {
 }
 function Invoke-ArmRequest {
     param([string]$ResourceId, [string]$Method='Get', [hashtable]$Body, [string]$ApiVersion)
+    if($Method -eq 'Get' -and $ResourceId -match '/storageAccounts/[^/]+$' -and -not $script:destinations.ContainsKey($ResourceId)){throw 'ARM Get 失敗 (404): fixture storage absent'}
     if($Method -eq 'Get' -and $script:destinations.ContainsKey($ResourceId)) {
         $script:destinationReads.Add($ResourceId)
         $current=Copy-Setting $script:destinations[$ResourceId]
@@ -596,7 +644,7 @@ function Invoke-ArmRequest {
         [pscustomobject]@{properties=[pscustomobject]@{policyDefinitions=@(foreach ($id in $policyReferenceIds) {[pscustomobject]@{policyDefinitionReferenceId=$id}})}}; return
     }
     if ($ResourceId -match '^(.*)/providers/Microsoft.Insights/diagnosticSettings/([^/]+)$') {
-        $parentId=$Matches[1]; $name=[Uri]::UnescapeDataString($Matches[2]); $script:writes.Add("$Method $ResourceId")
+        $parentId=$Matches[1]; $name=[Uri]::UnescapeDataString($Matches[2]); Assert-BackedBeforeWrite $ResourceId; $script:writes.Add("$Method $ResourceId")
         if ($Method -eq 'Delete') { $script:store[$parentId].Remove($name); return }
         if ($Method -eq 'Put') {
             $setting = ConvertFrom-Json (ConvertTo-Json -InputObject $Body.properties -Depth 40)
@@ -615,34 +663,82 @@ function Complete-MigrationStep {
 function Read-MigrationBackup { param($Path,[switch]$CheckCsv) $script:entryBackup }
 function Get-OldDcrAssociations {param([object[]]$Targets,[string[]]$DcrIds) @()}
 function Run-Step([string]$Step, [bool]$FailureExpected=$false) {
-    if ($Step -eq 'precheck' -and (Test-Path $migrationBackupPath)) { Remove-Item $migrationBackupPath -Force }
+    $script:storageNames.Clear()
     $text = Get-Content (Join-Path $directory (@{ precheck='step1_precheck.ps1'; copy='step2_copy.ps1'; verify='step3_verify.ps1'; delete='step4_delete.ps1'; rollback='rollback.ps1' }[$Step])) -Raw
     $body = ($text -split "`n" | Select-Object -Skip 2) -join "`n"
     $failed = $false
     try { Invoke-Expression $body }
     catch { if ($_.Exception.Message -notlike 'TEST_STEP_NG:*') { throw }; $failed=$true }
-    if ($Step -eq 'precheck' -and -not $failed) { $script:entryBackup = Get-Content $migrationBackupPath -Raw -Encoding UTF8 | ConvertFrom-Json }
+    if ($Step -eq 'copy' -and (Test-Path -LiteralPath $migrationBackupPath)) { $script:entryBackup = Get-Content $migrationBackupPath -Raw -Encoding UTF8 | ConvertFrom-Json }
     Assert ($failed -eq $FailureExpected) "step outcome $Step"
 }
 New-Fixture
+# ①は既存のⅡバックアップがあっても読み書きせず、単独で確認できます。
+Set-Content -LiteralPath $migrationBackupPath -Value 'TEST_EXISTING_BACKUP_UNCHANGED' -Encoding UTF8
+$beforeHash=(Get-FileHash -LiteralPath $migrationBackupPath -Algorithm SHA256).Hash
 Reset-Report
 Run-Step precheck
 Assert ($script:writes.Count -eq 0) 'precheck must read only'
+Assert ((Get-FileHash -LiteralPath $migrationBackupPath -Algorithm SHA256).Hash -ceq $beforeHash) 'precheck must not read or replace an existing backup'
+Remove-Item -LiteralPath $migrationBackupPath -Force
+Reset-Report
+Run-Step precheck
+Assert (-not (Test-Path -LiteralPath $migrationBackupPath)) 'precheck must not create a backup for later stages'
+# 前日①の後に増えたリソースも、②が直前に調べて対象に含めます。
+$lateId='/subscriptions/s2/resourceGroups/source/providers/Some.Service/resources/added-after-precheck'
+$script:store[$lateId]=@{
+    old=[pscustomobject]@{name='old';workspaceId=$targetWorkspaceId;logs=@([pscustomobject]@{category='翌日追加';enabled=$true});metrics=@()}
+    unrelated=[pscustomobject]@{name='unrelated';workspaceId='/other';logs=@();metrics=@()}
+}
 $script:availability=$false
 Reset-Report
 Run-Step precheck $true
 Assert ($script:writes.Count -eq 0 -and $script:failures.Count -eq 2) 'fresh same-name must stop both without writes'
+$script:availability=$true
 Reset-Report
 Run-Step copy
-Assert ($script:writes.Count -eq 2) 'copy must not call name availability again and create two'
+Assert ($script:writes.Count -eq 3 -and $script:cliCreates.Count -eq 2) 'copy must freshly discover and capture three resources, then create two storage accounts'
+Assert ($script:entryBackup.Version -eq 3 -and @($script:entryBackup.Targets.Diagnostics).Count -eq 3 -and $script:store[$lateId].ContainsKey($newDiagnosticSettingName)) 'stage II must include the resource added after day-before checks'
+Assert ($script:flow.IndexOf('scan:s1') -lt $script:flow.IndexOf('write:s1') -and $script:flow.IndexOf('write:s1') -lt $script:flow.IndexOf('scan:s2')) 'sub A scan and durable capture and writes precede sub B resource scan'
+Assert ($script:backedWrites.Count -eq 5) 'every initial storage and diagnostic mutation observed its durable Before'
+$firstBackupHash=(Get-FileHash -LiteralPath $migrationBackupPath -Algorithm SHA256).Hash
+$script:availability=$false
 foreach ($id in $script:store.Keys) { Assert ($script:store[$id].ContainsKey('old') -and $script:store[$id].ContainsKey('unrelated')) 'old and unrelated retained' }
 Reset-Report
 Run-Step copy
-Assert ($script:writes.Count -eq 0) 'copy rerun must skip matching new'
+Assert ($script:writes.Count -eq 0 -and $script:cliCreates.Count -eq 0 -and $script:nameChecks.Count -eq 0) 'copy rerun must skip matching new and saved storage names'
+Assert ((Get-FileHash -LiteralPath $migrationBackupPath -Algorithm SHA256).Hash -ceq $firstBackupHash) 'no-op stage II must retain the original durable Before file'
+# 同じサブスクリプションに後から増えた地域だけ、新しい保存先とBeforeを追加します。
+$beforeRegionAppend=Copy-Setting $script:entryBackup
+$regionResourceId='/subscriptions/s1/resourceGroups/source/providers/Some.Service/resources/added-japanwest'
+$script:resourceLocations[$regionResourceId]='japanwest'
+$script:store[$regionResourceId]=@{
+    old=[pscustomobject]@{name='old';workspaceId=$targetWorkspaceId;logs=@([pscustomobject]@{category='別地域追加';enabled=$true});metrics=@()}
+    unrelated=[pscustomobject]@{name='unrelated';workspaceId='/other';logs=@();metrics=@()}
+}
+$jpeStorage='/subscriptions/s1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/stjpetest1'
+$jpwStorage='/subscriptions/s1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/stjpwtest1'
+$script:storageTemplates[$jpwStorage]=Copy-Setting $script:storageTemplates[$jpeStorage]
+$script:storageTemplates[$jpwStorage].id=$jpwStorage
+$script:storageTemplates[$jpwStorage].location='japanwest'
+foreach($suffix in @('/blobServices/default','/managementPolicies/default','/providers/Microsoft.Security/defenderForStorageSettings/current')){
+    $script:destinations[$jpwStorage+$suffix]=Copy-Setting $script:destinations[$jpeStorage+$suffix]
+}
+$script:availability=$true
+Reset-Report
+Run-Step copy
+Assert ($script:cliCreates.Count -eq 1 -and $script:cliCreates[0] -eq $jpwStorage -and $script:writes.Count -eq 1) 'resume must create only the newly needed regional storage and diagnostic setting'
+Assert ($script:store[$regionResourceId][$newDiagnosticSettingName].storageAccountId -eq $jpwStorage) 'new region diagnostic setting uses its own region storage'
+Assert ($script:entryBackup.CreatedAtUtc -ceq $beforeRegionAppend.CreatedAtUtc -and @($script:entryBackup.Targets.Diagnostics).Count -eq 4) 'append must preserve the original migration metadata and add the new target'
+foreach($original in $beforeRegionAppend.Targets.Diagnostics){
+    $saved=@($script:entryBackup.Targets.Diagnostics | Where-Object ResourceId -eq $original.ResourceId)[0]
+    Assert ((Get-DiagnosticSignature $saved.Before) -ceq (Get-DiagnosticSignature $original.Before)) 'regional append must preserve every prior diagnostic Before'
+}
+
 $script:availability=$true
 Reset-Report
 Run-Step precheck $true
-Assert ($script:writes.Count -eq 0 -and @($script:failures | Where-Object { $_.Reason -match '新しい診断設定名' }).Count -eq 2) 'fresh must reject even identical existing new names'
+Assert ($script:writes.Count -eq 0 -and @($script:failures | Where-Object { $_.Reason -match '新しい診断設定名' }).Count -eq 4) 'fresh must reject even identical existing new names'
 $id1=Get-ResourceId s1; $id2=Get-ResourceId s2
 $script:store[$id1][$newDiagnosticSettingName].logs[0].enabled=$true
 Reset-Report
@@ -668,7 +764,7 @@ Assert ($script:writes.Count -eq 0) 'baseline mismatch must block all deletes'
 $script:baselineBadSubscription=''
 Reset-Report
 Run-Step delete
-Assert ($script:writes.Count -eq 2) 'all matching must delete two old only'
+Assert ($script:writes.Count -eq 4) 'all matching must delete all four old only'
 foreach ($id in $script:store.Keys) { Assert (-not $script:store[$id].ContainsKey('old') -and $script:store[$id].ContainsKey('unrelated') -and $script:store[$id].ContainsKey($newDiagnosticSettingName)) 'new and unrelated retained after deletion' }
 Reset-Report
 Run-Step delete
@@ -676,6 +772,7 @@ Assert ($script:writes.Count -eq 0) 'delete rerun must skip already removed old'
 
     } finally { foreach ($path in @($inputCsvPath,$migrationBackupPath)) { if ($path -and (Test-Path -LiteralPath $path)) { Remove-Item -LiteralPath $path -Force } } }
 }
+$coreChecks=$script:checks
 # 保存した実ARM応答を使うbaseline単体検証も、別script scopeで実行します。
 $baselineReportPath = Join-Path ([IO.Path]::GetTempPath()) ('migration-baseline-'+[guid]::NewGuid().ToString('N')+'.json')
 try {
@@ -710,8 +807,13 @@ $hashes=@{}
 foreach($file in $productionFiles){$hashes[$file]=(Get-FileHash (Join-Path $Repository $file) -Algorithm SHA256).Hash}
 $summary=[pscustomobject]@{
     Result='PASS';Checks=$checks;AzureRequests=0;PowerShellVersion=$PSVersionTable.PSVersion.ToString()
+    CoreChecks=$coreChecks
+    BaselineCases=$baselineResult.CaseCount;BaselineChecks=$baselineResult.Checks
+    LifecycleCases=@($lifecycleResult.Cases).Count;LifecycleChecks=$lifecycleResult.Assertions
     BackupCases=$rollbackResult.CaseCount;BackupChecks=$rollbackResult.Checks
     DcrCases=$cutoverResult.CaseCount;DcrChecks=$cutoverResult.Checks
+    FormalCases=$baselineResult.CaseCount+@($lifecycleResult.Cases).Count+$rollbackResult.CaseCount+$cutoverResult.CaseCount
+    FamilyConnectionChecks=4
     ManifestFiles=$productionFiles.Count+5+@(Get-ChildItem (Join-Path $PSScriptRoot 'fixtures/baseline-shapes') -File -Filter '*.json').Count
     Hashes=$hashes
 }

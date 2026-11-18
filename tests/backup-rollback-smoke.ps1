@@ -52,7 +52,7 @@ function Write-TestCsv {
     } }) | Export-Csv -LiteralPath $inputCsvPath -NoTypeInformation -Encoding UTF8
 }
 function New-TestFixture {
-    $script:diagnostics = @{}; $script:resources = @{}; $script:targets = @();$script:oldListPartial=$false
+    $script:diagnostics = @{}; $script:resources = @{}; $script:targets = @();$script:oldListPartial=$false;$script:oldAssociationShape='PSCustomObject';$script:listedOldAssociationExtras=@();$script:storageTemplatesByName=@{};$script:beforePlanState=@{};$script:backupWitnesses=[Collections.Generic.List[object]]::new();$script:nameChecks=[Collections.Generic.List[string]]::new();$script:activeStep=''
     foreach ($index in 0..1) {
         $sub=$script:subs[$index]; $number=$index+1
         $groupId="/subscriptions/$sub/resourceGroups/rg-target"
@@ -131,7 +131,16 @@ function New-TestFixture {
             $shapePath=Join-Path $PSScriptRoot ('fixtures/baseline-shapes/'+$shape.Name+'.json')
             $resource=Get-Content -LiteralPath $shapePath -Raw -Encoding UTF8 | ConvertFrom-Json
             $resource.id=$shape.Id
-            $script:resources[$shape.Id]=$resource
+            # 新しい完成値はメモリ上にだけ補い、保存済み実応答はそのまま保持します。
+            if($shape.Name -in @('table-Event','table-Syslog')) { $resource.properties | Add-Member totalRetentionInDays 1095 -Force }
+            if($shape.Name -eq 'storage-lifecycle') {
+                foreach($rule in @($resource.properties.policy.rules | Where-Object {$_.name -ceq 'log-append-365'})) {
+                    $rule.name='log-append-1095'
+                    $rule.definition.actions.baseBlob.delete.daysAfterModificationGreaterThan=1095
+                }
+            }
+            if($shape.Name -eq 'storage-account') {$script:storageTemplatesByName[$target.StorageAccount]=$resource}
+            else {$script:resources[$shape.Id]=$resource}
         }
         $script:targets += @($target)
     }
@@ -143,6 +152,7 @@ function New-TestFixture {
 function Reset-Observation {
     $script:writes.Clear();$script:reads.Clear();$script:diagReads=0;$script:targetReads=0;$script:providerReads.Clear()
     $script:failedPut='';$script:failedDelete='';$script:badReadback='';$script:dcrWriteState='Succeeded';$script:transitionDcrId='';$script:readyAfterReads=0;$script:unsafeNewDelete=$false
+    $script:backupWitnesses.Clear();$script:nameChecks.Clear()
     $script:failures.Clear();$script:verificationResults.Clear()
 }
 # 全外部接続をメモリ内状態へ置き換えます。想定外のCLIは即停止します。
@@ -155,7 +165,59 @@ function Invoke-AzJson {
         $script:providerReads.Add([pscustomobject]@{SubscriptionId=$Arguments[3];Namespace=$Arguments[5]})
         return [pscustomobject]@{registrationState='Registered'}
     }
+    if(($Arguments[0..2] -join '/') -eq 'storage/sku/list') {
+        return [pscustomobject]@{name='Standard_ZRS';kind='StorageV2';locations=@('japaneast','japanwest')}
+    }
+    if(($Arguments[0..2] -join '/') -eq 'storage/account/check-name') {
+        $name=$Arguments[[array]::IndexOf($Arguments,'--name')+1]
+        $script:nameChecks.Add($name)
+        $exists=@($script:resources.Keys | Where-Object {$_ -match '/storageAccounts/([^/]+)$' -and $Matches[1] -eq $name}).Count -gt 0
+        return [pscustomobject]@{nameAvailable=(-not $exists);reason=if($exists){'AlreadyExists'}else{''}}
+    }
+    if(($Arguments[0..2] -join '/') -eq 'storage/account/create') {
+        $name=$Arguments[[array]::IndexOf($Arguments,'--name')+1]
+        $sub=$Arguments[[array]::IndexOf($Arguments,'--subscription')+1]
+        $group=$Arguments[[array]::IndexOf($Arguments,'--resource-group')+1]
+        $resourceId="/subscriptions/$sub/resourceGroups/$group/providers/Microsoft.Storage/storageAccounts/$name"
+        # 失敗する呼出しも試行件数に残し、書込み前提違反を期待NGで隠しません。
+        $script:writes.Add([pscustomobject]@{ResourceId=$resourceId;Method='Create';Body=$null})
+        Assert-BackupBeforeWrite -ResourceId $resourceId
+        if(-not $script:storageTemplatesByName.ContainsKey($name)){throw "未知のStorage作成: $name"}
+        $resource=Copy-TestValue $script:storageTemplatesByName[$name]
+        if($resource.id -ne $resourceId){throw 'CLIのSub・RGが期待するStorageと一致しません。'}
+        $script:resources[$resourceId]=$resource
+        return Copy-TestValue $resource
+    }
     throw "想定外CLI: $($Arguments -join ' ')"
+}
+function Assert-BackupBeforeWrite {
+    param([string]$ResourceId)
+    if($script:activeStep -ne 'copy'){return}
+    if($ResourceId -notmatch '^/subscriptions/([^/]+)/'){throw '書込み先Subを特定できません。'}
+    $sub=$Matches[1]
+    if(-not (Test-Path -LiteralPath $migrationBackupPath)){throw '変更前バックアップが保存される前の書込みです。'}
+    $current=Read-MigrationBackup -Path $migrationBackupPath
+    $saved=@($current.Targets | Where-Object SubscriptionId -eq $sub)
+    if($current.Version -ne 3 -or $saved.Count -ne 1 -or -not $script:beforePlanState.ContainsKey($sub)){throw '対象SubのVersion3バックアップがありません。'}
+    $state=$script:beforePlanState[$sub]
+    $previous=@($script:backupAtEntry.Targets | Where-Object SubscriptionId -eq $sub)
+    foreach($diagnostic in $saved[0].Diagnostics) {
+        $original=@($previous.Diagnostics | Where-Object ResourceId -eq $diagnostic.ResourceId)
+        $expected=if($original.Count){$original[0].Before}else{$state.Diagnostics[$diagnostic.ResourceId][$diagnostic.OldName]}
+        if((Get-DiagnosticSignature $diagnostic.Before) -cne (Get-DiagnosticSignature $expected)){throw '元の診断設定Beforeが保存されていません。'}
+    }
+    foreach($record in @($saved[0].Dcr | Where-Object {$null -ne $_})+@($saved[0].Associations)+@($saved[0].OldAssociations)) {
+        $original=@(@($previous.Dcr | Where-Object {$null -ne $_})+@($previous.Associations)+@($previous.OldAssociations) | Where-Object ResourceId -eq $record.ResourceId)
+        $association=$record.ResourceId -match '/dataCollectionRuleAssociations/'
+        $expected=if($original.Count){$original[0].Before}else{Get-RollbackBody $state.Resources[$record.ResourceId] -Association:$association}
+        if(-not ((Test-BaselineValues $record.Before $expected) -and (Test-BaselineValues $expected $record.Before))){throw 'DCR・関連付けの元Beforeが保存されていません。'}
+    }
+    foreach($record in $saved[0].Exemptions) {
+        $original=@($previous.Exemptions | Where-Object ResourceId -eq $record.ResourceId)
+        $expected=if($original.Count){$original[0].Existed}else{$state.Resources.ContainsKey($record.ResourceId)}
+        if($record.Existed -ne $expected){throw '適用除外の元の有無が保存されていません。'}
+    }
+    $script:backupWitnesses.Add([pscustomobject]@{ResourceId=$ResourceId;SubscriptionId=$sub;Version=$current.Version;Diagnostics=$saved[0].Diagnostics.Count;OldAssociations=$saved[0].OldAssociations.Count})
 }
 function Get-DiagnosticSettings {
     param([string]$ResourceId,[string]$Name)
@@ -168,6 +230,14 @@ function Get-DiagnosticSettings {
 }
 function Invoke-ArmRequest {
     param([string]$ResourceId,[string]$Method='Get',[object]$Body,[string]$ApiVersion)
+    if ($Method -eq 'Get' -and $ResourceId -match '/policyAssignments\?') {
+        $script:reads.Add($ResourceId)
+        return [pscustomobject]@{value=@(foreach($assignment in $policyAssignments){[pscustomobject]@{id=$assignment.Id;properties=[pscustomobject]@{policyDefinitionId='/providers/Microsoft.Authorization/policySetDefinitions/test'}}})}
+    }
+    if($Method -eq 'Get' -and $ResourceId -match '/policySetDefinitions/') {
+        $script:reads.Add($ResourceId)
+        return [pscustomobject]@{properties=[pscustomobject]@{policyDefinitions=@(foreach($id in $policyReferenceIds){[pscustomobject]@{policyDefinitionReferenceId=$id}})}}
+    }
     if ($Method -eq 'Get') {
         $script:reads.Add($ResourceId)
         if (-not $script:resources.ContainsKey($ResourceId)) { throw "ARM Get 失敗 (404): offline resource missing / $ResourceId" }
@@ -178,6 +248,7 @@ function Invoke-ArmRequest {
         return Copy-TestValue $script:resources[$ResourceId]
     }
     $script:writes.Add([pscustomobject]@{ResourceId=$ResourceId;Method=$Method;Body=(Copy-TestValue $Body)})
+    Assert-BackupBeforeWrite -ResourceId $ResourceId
     if ($Method -eq 'Put' -and $ResourceId -eq $script:failedPut) { throw 'TEST_PUT_FAILURE' }
     if ($Method -eq 'Delete' -and $ResourceId -eq $script:failedDelete) { throw 'TEST_DELETE_FAILURE' }
     if ($ResourceId -match '^(.*)/providers/Microsoft.Insights/diagnosticSettings/([^/]+)$') {
@@ -215,11 +286,23 @@ function Complete-MigrationStep {
 }
 function Get-MigrationTargets {
     $script:targetReads++
-    $names=@((Import-Csv -LiteralPath $inputCsvPath).SubscriptionName)
-    foreach ($target in $script:targets) {if ($target.SubscriptionName -in $names) {$target}}
+    foreach($row in @(Import-Csv -LiteralPath $inputCsvPath)) {
+        $original=@($script:targets | Where-Object SubscriptionName -eq $row.SubscriptionName)
+        if($original.Count -ne 1){Add-MigrationFailure -Stage 'CSV・サブスクリプション確認' -Message 'fixtureにないサブスクリプションです。';return}
+        $target=@{}
+        foreach($key in $original[0].Keys){$target[$key]=$original[0][$key]}
+        foreach($key in @('SubscriptionName','ResourceGroup','StorageAccount','WorkspaceName','LogDestination')){$target[$key]=([string]$row.$key).Trim()}
+        $target.WorkspaceId="/subscriptions/$($target.SubscriptionId)/resourceGroups/$($target.ResourceGroup)/providers/Microsoft.OperationalInsights/workspaces/$($target.WorkspaceName)"
+        $target.DiagnosticPlans=[Collections.Generic.List[object]]::new();$target.CurrentSettings=@{};$target.Storages=@{};$target.OldAssociations=@();$target.Collectors=@()
+        $target
+    }
 }
 function Get-MigrationPlan {
     param([object]$Target,[switch]$Fresh)
+    $beforeResources=@{};$beforeDiagnostics=@{}
+    foreach($id in $script:resources.Keys){if($id.StartsWith("/subscriptions/$($Target.SubscriptionId)/")){$beforeResources[$id]=Copy-TestValue $script:resources[$id]}}
+    foreach($id in $script:diagnostics.Keys){if($id.StartsWith("/subscriptions/$($Target.SubscriptionId)/")){$beforeDiagnostics[$id]=@{};foreach($name in $script:diagnostics[$id].Keys){$beforeDiagnostics[$id][$name]=Copy-TestValue $script:diagnostics[$id][$name]}}}
+    $script:beforePlanState[$Target.SubscriptionId]=@{Resources=$beforeResources;Diagnostics=$beforeDiagnostics}
     $Target.DiagnosticPlans.Clear();$Target.CurrentSettings=@{};$Target.Storages=@{}
     foreach ($id in $script:diagnostics.Keys | Sort-Object) {
         if (-not $id.StartsWith("/subscriptions/$($Target.SubscriptionId)/")) { continue }
@@ -241,15 +324,20 @@ function Get-MigrationPlan {
         if($id.StartsWith("/subscriptions/$($Target.SubscriptionId)/") -and $id -match '^(.*)/providers/Microsoft.Insights/dataCollectionRuleAssociations/[^/]+$' -and
            $script:resources[$id].properties.dataCollectionRuleId -in $oldDcrIds) {
             $before=if($script:oldListPartial){@{properties=@{dataCollectionRuleId=$script:resources[$id].properties.dataCollectionRuleId}}}else{Get-RollbackBody $script:resources[$id] -Association}
-            [pscustomobject]@{SubscriptionId=$Target.SubscriptionId;ResourceId=$id;ParentResourceId=$Matches[1];Before=$before;After=$null}
+            $record=@{SubscriptionId=$Target.SubscriptionId;ResourceId=$id;ParentResourceId=$Matches[1];Before=$before;After=$null}
+            if($script:oldAssociationShape -eq 'Hashtable'){$record}else{[pscustomobject]$record}
         }
     })
+    foreach($extra in $script:listedOldAssociationExtras){if($extra.SubscriptionId -eq $Target.SubscriptionId -and $extra.ResourceId -notin @($Target.OldAssociations.ResourceId)){$Target.OldAssociations+=@($extra)}}
     $Target.Collectors=@($Target.OldAssociations.ParentResourceId | Where-Object {$_} | Sort-Object -Unique)
     $true
 }
 function Invoke-Entry {
     param([string]$Step,[string[]]$SelectedSubscriptions,[bool]$ExpectFailure=$false)
     $BackupPath=$migrationBackupPath;$SubscriptionIds=$SelectedSubscriptions
+    $script:storageNames.Clear();$script:initiativeDefinition=$null
+    $script:activeStep=$Step
+    $script:backupAtEntry=if(Test-Path -LiteralPath $migrationBackupPath){try{Get-Content -LiteralPath $migrationBackupPath -Raw -Encoding UTF8 | ConvertFrom-Json}catch{$null}}else{$null}
     $script:selected=if ($SelectedSubscriptions.Count -gt 0) {$SelectedSubscriptions} else {$script:subs}
     $tokens=$null;$errors=$null
     $entry=[Management.Automation.Language.Parser]::ParseFile((Join-Path $Repository (@{ precheck='step1_precheck.ps1'; copy='step2_copy.ps1'; verify='step3_verify.ps1'; delete='step4_delete.ps1'; rollback='rollback.ps1' }[$Step])),[ref]$tokens,[ref]$errors)
@@ -277,19 +365,19 @@ function Invoke-TestCase([string]$Name,[scriptblock]$Action) {
     $script:cases.Add([pscustomobject]@{Case=$Name;Result='PASS';Assertions=$script:checks-$before;Writes=$script:writes.Count})
 }
 
-# 単発の保存処理はprecheckに置かれているため、実際の保存try本文をそのまま再利用します。
-$preTokens=$null;$preErrors=$null
-$preAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $Repository 'step1_precheck.ps1'),[ref]$preTokens,[ref]$preErrors)
-$saveTry=@($preAst.FindAll({param($node) $node -is [Management.Automation.Language.TryStatementAst] -and $node.Body.Extent.Text -match 'FileMode\]::CreateNew'},$true))
-if ($saveTry.Count -ne 1) {throw 'precheckのバックアップ保存本文を一意に取得できません。'}
-$script:saveBackupCode=$saveTry[0].Body.Extent.Text.Substring(1,$saveTry[0].Body.Extent.Text.Length-2)
-function Save-MigrationBackup {
-    param([object[]]$Targets)
-    Invoke-Expression $script:saveBackupCode
-}
+# IIを実行して実際のBefore保存を確認後、各切戻しケースの開始状態をfixture上で作ります。
 function Save-TestBackup {
-    $null=Save-MigrationBackup -Targets $script:targets
-    $script:savedBackup=Get-Content -LiteralPath $migrationBackupPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    $originalResources=@{};$originalDiagnostics=@{}
+    foreach($id in $script:resources.Keys){$originalResources[$id]=Copy-TestValue $script:resources[$id]}
+    foreach($id in $script:diagnostics.Keys){$originalDiagnostics[$id]=@{};foreach($name in $script:diagnostics[$id].Keys){$originalDiagnostics[$id][$name]=Copy-TestValue $script:diagnostics[$id][$name]}}
+    Invoke-Entry copy
+    $script:savedBackup=Read-MigrationBackup -Path $migrationBackupPath
+    $script:lastSetupEvidence=@{Reads=@($script:reads);Writes=@($script:writes);BackupWitnesses=@($script:backupWitnesses);TargetReads=$script:targetReads;DiagReads=$script:diagReads;NameChecks=@($script:nameChecks)}
+    # 保存先は残し、診断・DCR・関連・適用除外だけを合成ケースのBeforeへ戻します。
+    foreach($id in @($script:resources.Keys | Where-Object {$_ -match '/(dataCollectionRules|dataCollectionRuleAssociations|policyExemptions)/[^/]+$'})){$script:resources.Remove($id)}
+    foreach($id in $originalResources.Keys | Where-Object {$_ -match '/(dataCollectionRules|dataCollectionRuleAssociations|policyExemptions)/[^/]+$'}){$script:resources[$id]=$originalResources[$id]}
+    $script:diagnostics=$originalDiagnostics
+    Reset-Observation
 }
 function Seed-AfterMigration([switch]$KeepOld) {
     foreach ($target in $script:savedBackup.Targets) {
@@ -352,13 +440,14 @@ function Assert-LocalBackupRejected([object]$Value) {
     Assert-Rollback ($script:reads.Count -eq 0 -and $script:diagReads -eq 0) '不正バックアップ判定は外部照会0'
 }
 try {
-    Invoke-TestCase '既存GET結果から最小バックアップを作成' {
+
+    Invoke-TestCase 'Ⅱが実際の書込みより前に元の最小バックアップを保存' {
         Save-TestBackup
-        Assert-Rollback ($script:diagReads -eq 0) '診断設定を再取得しない'
-        Assert-Rollback ($script:reads.Count -eq 14) '追加GETはWaiver6+DCR2+新関連3+選択旧関連3だけ'
+        Assert-Rollback ($script:lastSetupEvidence.Writes.Count -gt 0 -and $script:lastSetupEvidence.BackupWitnesses.Count -eq $script:lastSetupEvidence.Writes.Count) '実際のⅡの全書込み直前に元のBefore保存を確認'
+        Assert-Rollback (@($script:lastSetupEvidence.BackupWitnesses.SubscriptionId | Sort-Object -Unique).Count -eq 2) '各Subの変更直前に対象Subのバックアップが存在'
         Assert-NoAzureWrites
         $backup=Read-MigrationBackup -CheckCsv
-        Assert-Rollback ($backup.Version -eq 2 -and @($backup.Targets).Count -eq 2) '版とSub数'
+        Assert-Rollback ($backup.Version -eq 3 -and @($backup.Targets).Count -eq 2) '版とSub数'
         Assert-Rollback (@($backup.Targets.Diagnostics).Count -eq 4) '全旧診断設定を保存'
         $before=$backup.Targets[0].Dcr.Before
         Assert-Rollback ($before.kind -eq 'Windows' -and $before.tags.restore -eq 'before') '既存DCRのkind/tags'
@@ -374,10 +463,14 @@ try {
     }
     Invoke-TestCase 'HashtableとPSCustomObjectの旧関連を保存して同じ内容で読める' {
         foreach($sourceType in @('Hashtable','PSCustomObject')) {
+            $script:oldAssociationShape=$sourceType
             if($sourceType -eq 'PSCustomObject') {
                 foreach($target in $script:targets) {$target.OldAssociations=@($target.OldAssociations | ForEach-Object {Copy-TestValue $_})}
             }
-            if(Test-Path -LiteralPath $migrationBackupPath) {Remove-Item -LiteralPath $migrationBackupPath}
+            if(Test-Path -LiteralPath $migrationBackupPath) {
+                foreach($id in @($script:savedBackup.Targets.Storages.Id)){$script:resources.Remove($id)}
+                Remove-Item -LiteralPath $migrationBackupPath
+            }
             Save-TestBackup
             $backup=Read-MigrationBackup -CheckCsv
             Assert-Rollback (@($backup.Targets.OldAssociations).Count -eq 3) "$sourceType の旧関連3件を保持"
@@ -423,31 +516,32 @@ try {
         Assert-Rollback (Test-OldStateReady) 'DCR診断とDCR本体の両方を復元'
         Assert-Rollback (-not $script:unsafeNewDelete) '両復元後だけ新診断を削除'
     }
-    Invoke-TestCase 'バックアップ既存時は上書きせずprecheck前に停止' {
+    Invoke-TestCase 'Ⅰは既存のⅡバックアップを読まず独立して確認する' {
         Save-TestBackup
         $before=[IO.File]::ReadAllBytes($migrationBackupPath)
+        # 保存済みのファイルは残し、名前確認に通る別の事前確認状態をfixture上で用意します。
+        foreach($id in @($script:savedBackup.Targets.Storages.Id)){$script:resources.Remove($id)}
         Reset-Observation
-        Invoke-Entry precheck -ExpectFailure $true
-        Assert-Rollback ($script:targetReads -eq 0 -and $script:reads.Count -eq 0 -and $script:diagReads -eq 0) '既存ファイルはAzure照会より前に停止'
-        Assert-Rollback ([Convert]::ToBase64String($before) -eq [Convert]::ToBase64String([IO.File]::ReadAllBytes($migrationBackupPath))) '既存ファイルのbyte不変'
+        Invoke-Entry precheck
+        Assert-Rollback ($script:targetReads -eq 1 -and $script:reads.Count -gt 0) 'ファイルの有無にかかわらずⅠの確認を実行'
+        Assert-Rollback ([Convert]::ToBase64String($before) -eq [Convert]::ToBase64String([IO.File]::ReadAllBytes($migrationBackupPath))) 'ⅠはⅡバックアップを変更しない'
         Assert-NoAzureWrites
     }
-    Invoke-TestCase 'CreateNewの直接衝突でも既存byteを上書きしない' {
+    Invoke-TestCase 'Ⅱの再実行は保存済みBeforeとファイルを変更しない' {
         Save-TestBackup
         $before=[Convert]::ToBase64String([IO.File]::ReadAllBytes($migrationBackupPath))
         Reset-Observation
-        $failed=$false
-        try {$null=Save-MigrationBackup -Targets $script:targets} catch {$failed=$true}
-        Assert-Rollback $failed '保存try単体のCreateNewが既存fileを拒否'
-        Assert-Rollback ([Convert]::ToBase64String([IO.File]::ReadAllBytes($migrationBackupPath)) -eq $before) 'CreateNew衝突後もbyte不変'
-        Assert-NoAzureWrites
+        Invoke-Entry copy
+        Assert-Rollback ([Convert]::ToBase64String([IO.File]::ReadAllBytes($migrationBackupPath)) -eq $before) '同じ対象の再実行で元Beforeのbyte不変'
+        Assert-Rollback ($script:nameChecks.Count -eq 0) '保存済みの同一Storage計画は新規名確認を繰り返さない'
+        Assert-Rollback ($script:backupWitnesses.Count -eq $script:writes.Count) '再開時も元Beforeを保持してからだけ書込み'
     }
     Invoke-TestCase 'VM・診断対象0のbackupは空配列を維持' {
         foreach ($target in $script:targets) {$target.Vms=@();$target.Collectors=@();$target.OldAssociations=@();$target.DiagnosticPlans.Clear();$target.Storages=@{};$target.CurrentSettings=@{}}
         foreach($id in @($script:resources.Keys | Where-Object {$script:resources[$_].properties.dataCollectionRuleId -in $oldDcrIds})) {$script:resources.Remove($id)}
         $script:diagnostics=@{}
         Save-TestBackup
-        Assert-Rollback ($script:reads.Count -eq 6 -and $script:diagReads -eq 0) 'VM無しの追加GETはWaiverだけ'
+        Assert-Rollback ($script:lastSetupEvidence.DiagReads -eq 0) '診断対象なしでは診断設定の再取得なし'
         $backup=Read-MigrationBackup -CheckCsv
         Assert-Rollback (@($backup.Targets | Where-Object {@($_.Diagnostics).Count -ne 0 -or @($_.Associations).Count -ne 0}).Count -eq 0) '診断・関連付けの空配列を保存'
         Assert-Rollback ($null -eq $backup.Targets[0].Dcr -and $null -eq $backup.Targets[1].Dcr) 'DCR snapshotはnull'
@@ -455,7 +549,13 @@ try {
         Invoke-Entry rollback
         Assert-NoAzureWrites
     }
-    foreach ($step in @('copy','delete','verify')) {
+    Invoke-TestCase '②はバックアップが無い初回にも変更前保存から開始する' {
+        Invoke-Entry copy
+        $backup=Read-MigrationBackup -CheckCsv
+        Assert-Rollback ($backup.Version -eq 3 -and $backup.Targets.Count -eq 2) '初回Ⅱが全Subのバックアップを作成'
+        Assert-Rollback ($script:backupWitnesses.Count -eq $script:writes.Count -and $script:writes.Count -gt 0) '保存なしの書込みは一度も無い'
+    }
+    foreach ($step in @('delete','verify')) {
         Invoke-TestCase "backup無しの$step は変更前に停止" {
             Invoke-Entry $step -ExpectFailure $true
             Assert-NoAzureWrites
@@ -486,13 +586,13 @@ try {
         Assert-Rollback $failed '壊れたJSONを拒否'
         Remove-Item -LiteralPath $migrationBackupPath
         Save-TestBackup
-        $rows=@(Import-Csv $inputCsvPath);$rows[1].StorageAccount='foreignstorage';$rows | Export-Csv $inputCsvPath -NoTypeInformation -Encoding UTF8
+        $rows=@(Import-Csv $inputCsvPath);$rows[0].StorageAccount='foreignstorage';@($rows[0]) | Export-Csv $inputCsvPath -NoTypeInformation -Encoding UTF8
         Reset-Observation
         Invoke-Entry copy -ExpectFailure $true
         Assert-NoAzureWrites
-        Assert-Rollback ($script:targetReads -eq 0) 'CSV差分はAzure照会前に拒否'
+        Assert-Rollback ($script:reads.Count -eq 0 -and $script:diagReads -eq 0 -and $script:providerReads.Count -eq 0) '保存済みSubの宛先差分は変更前に拒否'
     }
-    Invoke-TestCase 'CSVの正しいSub部分集合を許可し未知Subは拒否' {
+    Invoke-TestCase 'CSVの正しいSub部分集合を許可しアクセス対象外Subは拒否' {
         Save-TestBackup;Seed-AfterMigration
         $rows=@(Import-Csv $inputCsvPath)
         @($rows[0]) | Export-Csv $inputCsvPath -NoTypeInformation -Encoding UTF8
@@ -505,7 +605,7 @@ try {
         Reset-Observation
         Invoke-Entry copy -ExpectFailure $true
         Assert-NoAzureWrites
-        Assert-Rollback ($script:targetReads -eq 0) '未知CSV Subは照会前に拒否'
+        Assert-Rollback ($script:reads.Count -eq 0 -and $script:diagReads -eq 0 -and $script:providerReads.Count -eq 0) 'アクセス対象外CSV Subは外部照会前に拒否'
     }
     Invoke-TestCase '未実施状態のrollbackは全てskip' {
         Save-TestBackup
@@ -682,6 +782,81 @@ try {
         Assert-NoAzureWrites
         Assert-Rollback ($unrelatedVm -notin $script:targets[1].Collectors) '旧DCR関連のないVMを追加しない'
         Assert-Rollback (@($script:reads | Where-Object { $_ -eq $unrelatedVm -or $_.StartsWith($unrelatedVm+'/') }).Count -eq 0) '無関係VMを基礎設定対象に渡さない'
+    }
+    Invoke-TestCase 'Ⅱの対象Subバックアップ保存に失敗したら設定書込みを始めない' {
+        $originalPath=$migrationBackupPath
+        try {
+            $migrationBackupPath=Join-Path $script:scratch 'missing-directory/backup.json'
+            Invoke-Entry copy -ExpectFailure $true
+            Assert-NoAzureWrites
+            Assert-Rollback (-not (Test-Path -LiteralPath $migrationBackupPath)) '保存に失敗したファイルは作成済み扱いにしない'
+            foreach($id in $script:diagnostics.Keys){Assert-Rollback (-not $script:diagnostics[$id].ContainsKey($newDiagnosticSettingName)) 'バックアップ未保存の対象を複製しない'}
+        }
+        finally {$migrationBackupPath=$originalPath}
+    }
+    Invoke-TestCase 'Ⅱの途中停止から再開し既存Beforeを維持して未保存Subだけを追加する' {
+        $old=$script:targets[1].OldAssociations[0]
+        $oldBody=Copy-TestValue $script:resources[$old.ResourceId]
+        $script:resources.Remove($old.ResourceId)
+        # 一覧には残るが個別GETに失敗する応答で、後続Subの保存前停止を再現します。
+        $script:listedOldAssociationExtras=@($old)
+        Invoke-Entry copy -ExpectFailure $true
+        $partial=Read-MigrationBackup
+        Assert-Rollback ($partial.Targets.Count -eq 1 -and $partial.Targets[0].SubscriptionId -eq $script:subs[0]) '処理できた最初のSubだけを保存'
+        Assert-Rollback (@($script:writes | Where-Object {$_.ResourceId -like "/subscriptions/$($script:subs[0])/*"}).Count -gt 0) '最初のSubの作業は保存後に実施済み'
+        Assert-Rollback (@($script:writes | Where-Object {$_.ResourceId -like "/subscriptions/$($script:subs[1])/*"}).Count -eq 0) '未保存の後続Subへの書込み0'
+        $firstBefore=ConvertTo-Json -InputObject $partial.Targets[0] -Depth 40 -Compress
+        $createdAt=$partial.CreatedAtUtc
+        $script:resources[$old.ResourceId]=$oldBody
+        Reset-Observation
+        Invoke-Entry copy
+        $complete=Read-MigrationBackup -CheckCsv
+        Assert-Rollback ($complete.Targets.Count -eq 2 -and $complete.CreatedAtUtc -eq $createdAt) '再開で不足Subだけを追加し操作の元時刻を維持'
+        $first=@($complete.Targets | Where-Object SubscriptionId -eq $script:subs[0])[0]
+        Assert-Rollback ((ConvertTo-Json -InputObject $first -Depth 40 -Compress) -ceq $firstBefore) '既存SubのBeforeを完成形で上書きしない'
+        Assert-Rollback (@($script:writes | Where-Object {$_.ResourceId -like "/subscriptions/$($script:subs[0])/*"}).Count -eq 0) '完成済みSubは再作成しない'
+        Assert-Rollback (@($script:backupWitnesses.SubscriptionId | Sort-Object -Unique).Count -eq 1 -and $script:backupWitnesses[0].SubscriptionId -eq $script:subs[1]) '新たに保存したSubだけ保存後に変更'
+    }
+    foreach($tableCase in @(@{Name='総保持90';Total=90;Inherited=$false},@{Name='継承総保持365（要求1095）';Total=365;Inherited=$true})) {
+        Invoke-TestCase "後続Subの$($tableCase.Name)では旧設定を全件削除しない" {
+            Save-TestBackup
+            Seed-AfterMigration -KeepOld
+            $second=$script:savedBackup.Targets[1]
+            $tableId="/subscriptions/$($second.SubscriptionId)/resourceGroups/$($second.Routing.ResourceGroup)/providers/Microsoft.OperationalInsights/workspaces/$($second.Routing.WorkspaceName)/tables/Syslog"
+            $script:resources[$tableId].properties.totalRetentionInDays=$tableCase.Total
+            $script:resources[$tableId].properties | Add-Member totalRetentionInDaysAsDefault $tableCase.Inherited -Force
+            Reset-Observation
+            Invoke-Entry delete -ExpectFailure $true
+            Assert-NoAzureWrites
+            Assert-Rollback (@($script:failures | Where-Object ResourceId -eq $tableId).Count -eq 1) '後続Subの総保持不一致を記録'
+            foreach($savedTarget in $script:savedBackup.Targets) {
+                foreach($old in $savedTarget.OldAssociations){Assert-Rollback $script:resources.ContainsKey($old.ResourceId) '全Subの旧DCR関連を維持'}
+                foreach($old in $savedTarget.Diagnostics){Assert-Rollback $script:diagnostics[$old.ResourceId].ContainsKey($old.OldName) '全Subの旧診断設定を維持'}
+            }
+        }
+    }
+    Invoke-TestCase '3年ルールが正しくても後続Subに旧365日ルールが残る場合は削除しない' {
+        Save-TestBackup
+        Seed-AfterMigration -KeepOld
+        $second=$script:savedBackup.Targets[1]
+        $storageId=$second.Storages[0].Id
+        $policyId="$storageId/managementPolicies/default"
+        $ready=@($script:resources[$policyId].properties.policy.rules | Where-Object {$_.name -ceq 'log-append-1095'})
+        Assert-Rollback ($ready.Count -eq 1 -and $ready[0].definition.actions.baseBlob.delete.daysAfterModificationGreaterThan -eq 1095) '新しい1095日ルールが正しい前提'
+        $legacy=Copy-TestValue $ready[0]
+        $legacy.name='log-append-365'
+        $legacy.definition.actions.baseBlob.delete.daysAfterModificationGreaterThan=365
+        $script:resources[$policyId].properties.policy.rules+=@($legacy)
+        foreach($step in @('verify','delete')) {
+            Reset-Observation
+            Invoke-Entry $step -ExpectFailure $true
+            Assert-NoAzureWrites
+            Assert-Rollback (@($script:failures | Where-Object ResourceId -eq $policyId).Count -eq 1) "$step は旧365日ルールの残存を記録"
+        }
+        foreach($savedTarget in $script:savedBackup.Targets) {
+            foreach($old in $savedTarget.OldAssociations){Assert-Rollback $script:resources.ContainsKey($old.ResourceId) '全Subの旧DCR関連を維持'}
+            foreach($old in $savedTarget.Diagnostics){Assert-Rollback $script:diagnostics[$old.ResourceId].ContainsKey($old.OldName) '全Subの旧診断設定を維持'}
+        }
     }
     $result=[pscustomobject]@{Result='PASS';Cases=$script:cases;CaseCount=$script:cases.Count;Checks=$script:checks;AzureRequests=0;CommonHash=(Get-FileHash (Join-Path $Repository 'common.ps1') -Algorithm SHA256).Hash;RollbackHash=(Get-FileHash (Join-Path $Repository 'rollback.ps1') -Algorithm SHA256).Hash}
     if ($ReportPath) {$result | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $ReportPath -Encoding UTF8}

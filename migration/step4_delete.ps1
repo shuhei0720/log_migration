@@ -17,11 +17,12 @@ function Confirm-MigrationResource {
 }
 
 
-# verifyの全件成功を人が確認してから実行します。
+# Ⅲの全件成功を人が確認してから実行します。
+# Ⅱで保存したバックアップを使い、Ⅰの結果ファイルには依存しません。
 # 全CSV対象を現在値で再確認し、1件でも未完了なら削除を一切始めません。
 try { $backup = Read-MigrationBackup -CheckCsv }
 catch {
-    Add-MigrationFailure -Stage 'バックアップ確認' -Message $_.Exception.Message
+    Add-MigrationFailure -Stage 'Ⅱのバックアップ確認' -Message $_.Exception.Message
     Complete-MigrationStep -Step 'delete'
 }
 $targets = @(Get-MigrationTargets)
@@ -49,7 +50,7 @@ try {
         foreach ($storage in $saved.Storages) { $target.Storages[$storage.Location] = $storage }
     }
 }
-catch { Add-MigrationFailure -Stage 'バックアップ照合' -Message $_.Exception.Message }
+catch { Add-MigrationFailure -Stage 'Ⅱのバックアップ照合' -Message $_.Exception.Message }
 if ($script:failures.Count -gt 0) { Complete-MigrationStep -Step 'delete' -IncludeChecks }
 foreach ($target in $targets) {
     try {
@@ -105,16 +106,18 @@ foreach ($target in $targets) {
             # 対象ルールだけを確認し、別名のライフサイクルルールはそのまま保持します。
             $resourceId = "$($storagePlan.Id)/managementPolicies/default"
             $expected = @{
-                name = 'log-append-365'; enabled = $true; type = 'Lifecycle'
+                name = 'log-append-1095'; enabled = $true; type = 'Lifecycle'
                 definition = @{
                     filters = @{ blobTypes = @('appendBlob') }
-                    actions = @{ baseBlob = @{ delete = @{ daysAfterModificationGreaterThan = 365 } } }
+                    actions = @{ baseBlob = @{ delete = @{ daysAfterModificationGreaterThan = 1095 } } }
                 }
             }
             try {
+                # 管理対象の旧365日ルールが残っていないことも確認します。
+                $managedRuleNames = @($expected.name, "log-append-365")
                 $policy = Get-OptionalArmResource -ResourceId $resourceId -ApiVersion '2023-05-01'
-                $rules = @($policy.properties.policy.rules | Where-Object { $_.name -eq $expected.name })
-                if ($rules.Count -ne 1 -or -not (Test-BaselineValues -Actual $rules[0] -Expected $expected)) { throw 'log-append-365ルールが未設定、または期待値と一致しません。' }
+                $rules = @($policy.properties.policy.rules | Where-Object { $_.name -in $managedRuleNames })
+                if ($rules.Count -ne 1 -or -not (Test-BaselineValues -Actual $rules[0] -Expected $expected)) { throw 'log-append-1095ルールが未設定、または期待値と一致しません。' }
                 Add-MigrationCheck -Target $target -ResourceId $resourceId -Stage 'ライフサイクル' -Success $true -Message '一致' -Expected $expected
             }
             catch { Add-MigrationFailure -Target $target -ResourceId $resourceId -Stage 'ライフサイクル' -Message $_.Exception.Message -Expected $expected }
@@ -138,8 +141,17 @@ foreach ($target in $targets) {
             # 旧DCRの対象だったVM・VMSSについて、テーブル→新DCR→新関連を確認します。
             foreach ($name in @('Event','Syslog')) {
                 $resourceId = "$($target.WorkspaceId)/tables/$name"
-                $expected = @{ properties = @{ schema = @{ name = $name }; provisioningState = 'Succeeded' } }
-                Confirm-MigrationResource -Target $target -ResourceId $resourceId -ApiVersion '2025-07-01' -Expected $expected -Stage 'VMログテーブル'
+                $expected = @{ properties = @{ schema = @{ name = $name }; provisioningState = 'Succeeded'; totalRetentionInDays = 1095 } }
+                try {
+                    $table = Get-OptionalArmResource -ResourceId $resourceId -ApiVersion '2025-07-01'
+                    # 継承値を未設定として扱い、1095日を明示設定しているか確認します。
+                    if (-not (Test-BaselineValues -Actual $table -Expected $expected) -or
+                        ($null -ne $table.properties.totalRetentionInDaysAsDefault -and $table.properties.totalRetentionInDaysAsDefault -ne $false)) {
+                        throw 'テーブルが未作成、更新中、または総保持期間1095日の明示設定と一致しません。'
+                    }
+                    Add-MigrationCheck -Target $target -ResourceId $resourceId -Stage 'VMログテーブル' -Success $true -Message '総保持期間1095日を明示設定済み' -Expected $expected
+                }
+                catch { Add-MigrationFailure -Target $target -ResourceId $resourceId -Stage 'VMログテーブル' -Message $_.Exception.Message -Expected $expected }
             }
             $body = Get-MigrationDcrBody -Target $target
             $expected = @{ location = $body.location; properties = $body.properties.Clone() }
@@ -159,7 +171,7 @@ foreach ($target in $targets) {
             }
         }
 
-        # 旧設定が削除済みでも、①で保存した全対象の新設定を確認します。
+        # 旧設定が削除済みでも、Ⅱで保存した全対象の新設定を確認します。
         foreach ($saved in $savedTarget.Diagnostics) {
             $settings = @($target.CurrentSettings[$saved.ResourceId] | Where-Object { $_.name -eq $newDiagnosticSettingName })
             $matched = $settings.Count -eq 1 -and (Get-DiagnosticSignature $settings[0]) -ceq (Get-DiagnosticSignature $saved.After)

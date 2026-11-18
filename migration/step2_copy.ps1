@@ -23,52 +23,146 @@ function Set-BaselineResource {
     $current
 }
 
-# 初回の事前チェック後に実行します。途中で止まった場合は、この工程から再実行できます。
-# 既に一致する設定は変更せず、不足する設定だけ補います。旧診断設定は削除しません。
-try { $backup = Read-MigrationBackup -CheckCsv }
-catch {
-    Add-MigrationFailure -Stage 'バックアップ確認' -Message $_.Exception.Message
-    Complete-MigrationStep -Step 'copy'
-}
+# ①の結果ファイルは使いません。各サブスクリプションを直前に調査し、変更前の状態を保存します。
 $targets = @(Get-MigrationTargets)
-foreach ($target in $targets) {
-    try { $null = Get-MigrationPlan -Target $target }
-    catch { Add-MigrationFailure -Target $target -Stage "複製前の調査" -Message $_.Exception.Message }
-}
+if ($script:failures.Count -gt 0) { Complete-MigrationStep -Step "copy" -IncludeChecks }
 try {
-    if (@($targets | Where-Object { $_.SubscriptionId -notin $backup.Targets.SubscriptionId }).Count -gt 0) { throw 'サブスクリプションの実IDがバックアップにありません。' }
-    foreach ($target in $targets) {
-        $saved = @($backup.Targets | Where-Object SubscriptionId -eq $target.SubscriptionId)[0]
-        $savedCollectors = @($saved.Associations | ForEach-Object { $_.ResourceId -replace '/providers/Microsoft.Insights/dataCollectionRuleAssociations/[^/]+$','' } | Sort-Object)
-        if ($target.DiagnosticPlans.Count -ne @($saved.Diagnostics).Count) { throw '旧診断設定の対象数がバックアップから変わっています。' }
-        foreach ($plan in $target.DiagnosticPlans) {
-            $original = @($saved.Diagnostics | Where-Object { $_.ResourceId -eq $plan.ResourceId -and $_.OldName -eq $plan.SourceName })
-            if ($original.Count -ne 1 -or $plan.SourceSignature -cne (Get-DiagnosticSignature $original[0].Before) -or
-                $plan.NewSignature -cne (Get-DiagnosticSignature $original[0].After)) { throw "バックアップ外、または変更された旧診断設定です: $($plan.ResourceId)" }
+    if (Test-Path -LiteralPath $migrationBackupPath) {
+        $backup = Read-MigrationBackup
+    }
+    else {
+        $backup = @{
+            Version = 3; OldDcrIds = @($oldDcrIds); CreatedAtUtc = [DateTime]::UtcNow.ToString('o')
+            TargetWorkspaceId = $targetWorkspaceId; Environment = $environment
+            NewDiagnosticSettingName = $newDiagnosticSettingName; Targets = @()
         }
-        if ($target.OldAssociations.Count -ne $saved.OldAssociations.Count) { throw '旧DCR関連の対象数がバックアップから変わっています。' }
-        foreach ($association in $target.OldAssociations) {
-            $original = @($saved.OldAssociations | Where-Object ResourceId -eq $association.ResourceId)
-            # 一覧が返す参照先だけを照合し、削除直前は保存した全内容と比較します。
-            if ($original.Count -ne 1 -or $original[0].Before.properties.dataCollectionRuleId -ne $association.Before.properties.dataCollectionRuleId) { throw "バックアップ外、または参照先が変わった旧DCR関連です: $($association.ResourceId)" }
-        }
-        # ④で旧関連が消えた親リソースも、新関連の全件確認から落としません。
-        $target.Collectors = $savedCollectors
-        foreach ($storage in $saved.Storages) { $target.Storages[$storage.Location] = $storage }
     }
 }
-catch { Add-MigrationFailure -Stage 'バックアップ照合' -Message $_.Exception.Message }
-# 入力・対象調査に失敗した場合は、作成・更新を始めません。
-if ($script:failures.Count -gt 0) { Complete-MigrationStep -Step "copy" }
+catch {
+    Add-MigrationFailure -Stage 'バックアップ確認' -Message $_.Exception.Message
+    Complete-MigrationStep -Step "copy" -IncludeChecks
+}
 
 foreach ($target in $targets) {
     $subscriptionId = $target.SubscriptionId
     $preparationComplete = $false
     $failureCountBefore = $script:failures.Count
     $resourceId = ''
-    $stage = '保存先の準備'
+    $stage = '複製前の調査'
     $expected = $null
     try {
+        $planReady = Get-MigrationPlan -Target $target
+        if (-not $planReady -or $script:failures.Count -gt $failureCountBefore) { throw '対象の調査が完了していないため、このサブスクリプションは変更しません。' }
+        $stage = 'バックアップ照合・保存'
+        $saved = @($backup.Targets | Where-Object SubscriptionId -eq $subscriptionId)
+        $routing = @{}
+        foreach ($key in @('SubscriptionName','ResourceGroup','StorageAccount','WorkspaceName','LogDestination')) { $routing[$key] = $target[$key] }
+        if ($saved.Count -gt 0) {
+            foreach ($key in $routing.Keys) {
+                if ([string]$saved[0].Routing.$key -ne [string]$routing[$key]) { throw "CSVの$key が保存済みの設定と一致しません。" }
+            }
+            # 一度保存したBeforeは変更しません。旧設定が消えた・変わった場合も先に停止します。
+            $snapshot = ConvertTo-Json -InputObject $saved[0] -Depth 40 | ConvertFrom-Json
+            foreach ($original in $snapshot.Diagnostics) {
+                $current = @($target.DiagnosticPlans | Where-Object { $_.ResourceId -eq $original.ResourceId -and $_.SourceName -eq $original.OldName })
+                if ($current.Count -ne 1 -or $current[0].SourceSignature -cne (Get-DiagnosticSignature $original.Before) -or
+                    $current[0].NewSignature -cne (Get-DiagnosticSignature $original.After)) { throw "保存済みの旧診断設定が存在しないか、設定が変わっています: $($original.ResourceId)" }
+            }
+            foreach ($original in $snapshot.OldAssociations) {
+                $current = @($target.OldAssociations | Where-Object ResourceId -eq $original.ResourceId)
+                if ($current.Count -ne 1 -or $current[0].Before.properties.dataCollectionRuleId -ne $original.Before.properties.dataCollectionRuleId) { throw "保存済みの旧DCR関連が存在しないか、参照先が変わっています: $($original.ResourceId)" }
+            }
+        }
+        else {
+            $snapshot = @{
+                SubscriptionName = $target.SubscriptionName; SubscriptionId = $subscriptionId; Routing = $routing
+                Diagnostics = @(); Storages = @(); Dcr = $null; Associations = @(); OldAssociations = @(); Exemptions = @()
+            }
+        }
+        $snapshotChanged = $saved.Count -eq 0
+        foreach ($plan in $target.DiagnosticPlans) {
+            if (@($snapshot.Diagnostics | Where-Object ResourceId -eq $plan.ResourceId).Count -gt 0) { continue }
+            if (@($plan.NewSettings).Count -gt 0) { throw "新しい診断設定名が既存設定と重複しています: $($plan.ResourceId)" }
+            $before = @{}
+            foreach ($key in @('logs','metrics','workspaceId','storageAccountId','eventHubAuthorizationRuleId','eventHubName','serviceBusRuleId','marketplacePartnerId','logAnalyticsDestinationType')) {
+                if ($null -ne $plan.SourceSettings[0].$key) { $before[$key] = $plan.SourceSettings[0].$key }
+            }
+            $snapshot.Diagnostics += @(@{ ResourceId = $plan.ResourceId; OldName = $plan.SourceName; Before = $before; After = $plan.Expected })
+            $snapshotChanged = $true
+        }
+        $newStorages = @()
+        foreach ($storage in @($target.Storages.Values | Sort-Object Name)) {
+            if (-not $script:storageNames.Add($storage.Name)) { throw "変換後のストレージ名が重複しています: $($storage.Name)" }
+            $original = @($snapshot.Storages | Where-Object { $_.Location -eq $storage.Location -or $_.Name -eq $storage.Name })
+            if ($original.Count -gt 0) {
+                if ($original.Count -ne 1 -or $original[0].Id -ne $storage.Id -or $original[0].Name -ne $storage.Name -or $original[0].Location -ne $storage.Location) { throw "保存済みのストレージ計画と一致しません: $($storage.Name)" }
+                continue
+            }
+            if (@($backup.Targets.Storages | Where-Object { $_.Name -eq $storage.Name -and $_.Id -ne $storage.Id }).Count -gt 0) { throw "別のサブスクリプションに同じストレージ名が保存されています: $($storage.Name)" }
+            $newStorages += @($storage)
+        }
+        if ($newStorages.Count -gt 0) {
+            $skus = @(Invoke-AzJson -Arguments @("storage", "sku", "list", "--subscription", $subscriptionId))
+            foreach ($storage in $newStorages) {
+                if (-not ($skus | Where-Object { $_.name -eq "Standard_ZRS" -and $_.kind -eq "StorageV2" -and $storage.Location -in $_.locations })) { throw "Standard_ZRSを利用できないリージョンです: $($storage.Location)" }
+                $availability = Invoke-AzJson -Arguments @("storage", "account", "check-name", "--subscription", $subscriptionId, "--name", $storage.Name)
+                if ($availability.nameAvailable -ne $true) { throw "名前を利用できません: $($storage.Name) / $($availability.reason) / $($availability.message)" }
+                $snapshot.Storages += @($storage)
+                $snapshotChanged = $true
+                Add-MigrationCheck -Target $target -ResourceId $storage.Id -Stage 'ストレージ名の事前確認' -Success $true -Message '利用可能'
+            }
+        }
+        # 新たに見つかった旧関連だけを完全GETし、切戻しに必要な説明・DCEも保存します。
+        $newOldAssociations = @($target.OldAssociations | Where-Object { $_.ResourceId -notin @($snapshot.OldAssociations.ResourceId) })
+        foreach ($result in @(Invoke-DiagnosticBatch -Items $newOldAssociations -Action {
+            param($old, $unused)
+            Invoke-ArmRequest -ResourceId $old.ResourceId
+        })) {
+            if ($result.Error) { throw "旧DCR関連の取得失敗: $($result.Item.ResourceId) / $($result.Error)" }
+            $before = Get-RollbackBody $result.Result -Association -RequireReady
+            if ($before.properties.dataCollectionRuleId -ne $result.Item.Before.properties.dataCollectionRuleId) { throw "一覧取得後に旧DCR関連の参照先が変わっています: $($result.Item.ResourceId)" }
+            $snapshot.OldAssociations += @(@{ ResourceId = $result.Item.ResourceId; Before = $before })
+            $snapshotChanged = $true
+        }
+        if ($target.Collectors.Count -gt 0) {
+            $dcrName = $target.WorkspaceName -replace '^log','dcr'
+            $dcrId = "/subscriptions/$subscriptionId/resourceGroups/$($target.ResourceGroup)/providers/Microsoft.Insights/dataCollectionRules/$dcrName"
+            if (-not $snapshot.Dcr) {
+                $before = Get-RollbackBody (Get-OptionalArmResource -ResourceId $dcrId) -RequireReady
+                $snapshot.Dcr = @{ ResourceId = $dcrId; Before = $before; After = Get-MigrationDcrBody -Target $target }
+                $snapshotChanged = $true
+            }
+            foreach ($collectorId in $target.Collectors) {
+                $associationId = "$collectorId/providers/Microsoft.Insights/dataCollectionRuleAssociations/$dcrName"
+                if ($associationId -in @($snapshot.Associations.ResourceId)) { continue }
+                $before = Get-RollbackBody (Get-OptionalArmResource -ResourceId $associationId) -Association -RequireReady
+                if ($before.properties.dataCollectionRuleId -in $oldDcrIds) { throw "新関連と旧関連のIDが同じです: $associationId" }
+                $snapshot.Associations += @(@{ ResourceId = $associationId; Before = $before; After = @{ properties = @{ dataCollectionRuleId = $dcrId } } })
+                $snapshotChanged = $true
+            }
+        }
+        if ($saved.Count -eq 0) {
+            $snapshot.Exemptions = @(foreach ($assignment in $policyAssignments) {
+                $id = "/subscriptions/$subscriptionId/providers/Microsoft.Authorization/policyExemptions/log-migration-$environment-$($assignment.Name)"
+                @{ ResourceId = $id; Existed = [bool](Get-OptionalArmResource -ResourceId $id -ApiVersion '2022-07-01-preview') }
+            })
+        }
+        if ($snapshotChanged) {
+            $nextBackup = ConvertTo-Json -InputObject $backup -Depth 40 | ConvertFrom-Json
+            $nextBackup.Targets = @($nextBackup.Targets | Where-Object SubscriptionId -ne $subscriptionId) + @($snapshot)
+            $temporaryBackupPath = $migrationBackupPath + '.' + [guid]::NewGuid().ToString('N') + '.tmp'
+            try {
+                $bytes = [Text.Encoding]::UTF8.GetBytes((ConvertTo-Json -InputObject $nextBackup -Depth 40))
+                $file = [IO.File]::Open($temporaryBackupPath, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write)
+                try { $file.Write($bytes, 0, $bytes.Length); $file.Flush($true) } finally { $file.Dispose() }
+                if (Test-Path -LiteralPath $migrationBackupPath) { [IO.File]::Replace($temporaryBackupPath, $migrationBackupPath, [NullString]::Value) }
+                else { [IO.File]::Move($temporaryBackupPath, $migrationBackupPath) }
+                $backup = $nextBackup
+            }
+            finally { if (Test-Path -LiteralPath $temporaryBackupPath) { Remove-Item -LiteralPath $temporaryBackupPath -Force } }
+        }
+        Add-MigrationCheck -Target $target -ResourceId $migrationBackupPath -Stage '切戻し用バックアップ' -Success $true -Message '変更前の状態を保存済み'
+
         $groupId = "/subscriptions/$subscriptionId/resourceGroups/$($target.ResourceGroup)"
         $ready = $true
         foreach ($assignment in $policyAssignments) {
@@ -200,21 +294,23 @@ foreach ($target in $targets) {
             $resourceId = "$($storagePlan.Id)/managementPolicies/default"
             $stage = "ライフサイクル"
             $expected = @{
-                name = "log-append-365"; enabled = $true; type = "Lifecycle"
+                name = "log-append-1095"; enabled = $true; type = "Lifecycle"
                 definition = @{
                     filters = @{ blobTypes = @("appendBlob") }
-                    actions = @{ baseBlob = @{ delete = @{ daysAfterModificationGreaterThan = 365 } } }
+                    actions = @{ baseBlob = @{ delete = @{ daysAfterModificationGreaterThan = 1095 } } }
                 }
             }
             try {
+                # 旧365日ルールが残って先に削除されないよう、今回の管理ルールだけを置き換えます。
+                $managedRuleNames = @($expected.name, "log-append-365")
                 $policy = Get-OptionalArmResource -ResourceId $resourceId -ApiVersion "2023-05-01"
-                $rules = @($policy.properties.policy.rules | Where-Object { $_.name -eq $expected.name })
+                $rules = @($policy.properties.policy.rules | Where-Object { $_.name -in $managedRuleNames })
                 if ($rules.Count -ne 1 -or -not (Test-BaselineValues -Actual $rules[0] -Expected $expected)) {
                     # このスクリプトのルールだけ補完し、別名のルールは保持します。
-                    $rules = @($policy.properties.policy.rules | Where-Object { $null -ne $_ -and $_.name -ne $expected.name }) + @($expected)
+                    $rules = @($policy.properties.policy.rules | Where-Object { $null -ne $_ -and $_.name -notin $managedRuleNames }) + @($expected)
                     $null = Invoke-ArmRequest -Method Put -ResourceId $resourceId -ApiVersion "2023-05-01" -Body @{ properties = @{ policy = @{ rules = $rules } } }
                     $policy = Invoke-ArmRequest -ResourceId $resourceId -ApiVersion "2023-05-01"
-                    $rules = @($policy.properties.policy.rules | Where-Object { $_.name -eq $expected.name })
+                    $rules = @($policy.properties.policy.rules | Where-Object { $_.name -in $managedRuleNames })
                     if ($rules.Count -ne 1 -or -not (Test-BaselineValues -Actual $rules[0] -Expected $expected)) { throw "ライフサイクルの読み戻しが一致しません。" }
                 }
                 Add-MigrationCheck -Target $target -ResourceId $resourceId -Stage $stage -Success $true -Message "一致" -Expected $expected
@@ -278,28 +374,43 @@ foreach ($target in $targets) {
             foreach ($name in @("Event", "Syslog")) {
                 $resourceId = "$($target.WorkspaceId)/tables/$name"
                 $stage = "VMログテーブル"
-                $expected = @{ properties = @{ schema = @{ name = $name }; provisioningState = "Succeeded" } }
+                $expected = @{ properties = @{ schema = @{ name = $name }; totalRetentionInDays = 1095; provisioningState = "Succeeded" } }
                 try {
                     $table = Get-OptionalArmResource -ResourceId $resourceId -ApiVersion "2025-07-01"
-                    if (-not (Test-BaselineValues -Actual $table -Expected $expected)) {
-                        if (-not $table) {
-                            $table = Invoke-ArmRequest -Method Put -ResourceId $resourceId -ApiVersion "2025-07-01" -Body @{ properties = @{ schema = @{ name = $name } } }
+                    $deadline = (Get-Date).AddMinutes(5)
+                    # 進行中のテーブルへ重ねて書き込まず、完了してから総保持期間だけを変更します。
+                    while ($table -and $table.properties.provisioningState -ne "Succeeded") {
+                        if ((Get-Date) -ge $deadline -or $table.properties.provisioningState -in @("Failed", "Canceled", "Deleting")) {
+                            throw "VMログテーブルが利用できません: state=$($table.properties.provisioningState)"
                         }
-                        $deadline = (Get-Date).AddMinutes(5)
-                        while ($table.properties.provisioningState -ne "Succeeded") {
-                            if ((Get-Date) -ge $deadline -or $table.properties.provisioningState -in @("Failed", "Canceled", "Deleting")) {
-                                throw "VMログテーブルが利用できません: state=$($table.properties.provisioningState)"
-                            }
-                            Start-Sleep -Seconds 10
-                            $table = Invoke-ArmRequest -ResourceId $resourceId -ApiVersion "2025-07-01"
-                        }
-                        if (-not (Test-BaselineValues -Actual $table -Expected $expected)) { throw "VMログテーブルの設定が一致しません。" }
+                        Start-Sleep -Seconds 10
+                        $table = Invoke-ArmRequest -ResourceId $resourceId -ApiVersion "2025-07-01"
                     }
+                    if (-not $table) {
+                        $null = Invoke-ArmRequest -Method Put -ResourceId $resourceId -ApiVersion "2025-07-01" `
+                            -Body @{ properties = @{ schema = @{ name = $name }; totalRetentionInDays = 1095 } }
+                        $table = Invoke-ArmRequest -ResourceId $resourceId -ApiVersion "2025-07-01"
+                    }
+                    elseif ($table.properties.totalRetentionInDays -ne 1095 -or
+                        ($null -ne $table.properties.totalRetentionInDaysAsDefault -and $table.properties.totalRetentionInDaysAsDefault -ne $false)) {
+                        # PATCHで指定しない分析保持期間・スキーマ・プランは維持します。
+                        $null = Invoke-ArmRequest -Method Patch -ResourceId $resourceId -ApiVersion "2025-07-01" -Body @{ properties = @{ totalRetentionInDays = 1095 } }
+                        $table = Invoke-ArmRequest -ResourceId $resourceId -ApiVersion "2025-07-01"
+                    }
+                    while ($table.properties.provisioningState -ne "Succeeded") {
+                        if ((Get-Date) -ge $deadline -or $table.properties.provisioningState -in @("Failed", "Canceled", "Deleting")) {
+                            throw "VMログテーブルが利用できません: state=$($table.properties.provisioningState)"
+                        }
+                        Start-Sleep -Seconds 10
+                        $table = Invoke-ArmRequest -ResourceId $resourceId -ApiVersion "2025-07-01"
+                    }
+                    if (-not (Test-BaselineValues -Actual $table -Expected $expected) -or
+                        ($null -ne $table.properties.totalRetentionInDaysAsDefault -and $table.properties.totalRetentionInDaysAsDefault -ne $false)) { throw "VMログテーブルの総保持期間が明示的な1095日と一致しません。" }
                     Add-MigrationCheck -Target $target -ResourceId $resourceId -Stage $stage -Success $true -Message "一致" -Expected $expected
                 }
                 catch {
                     $ready = $false
-                $tablesReady = $false
+                    $tablesReady = $false
                     Add-MigrationCheck -Target $target -ResourceId $resourceId -Stage $stage -Success $false -Message $_.Exception.Message -Expected $expected
                 }
             }
@@ -390,7 +501,10 @@ foreach ($target in $targets) {
             if ($_.Error) {
                 Add-MigrationFailure -Target $target -ResourceId $_.Item.ResourceId -Stage "診断設定の複製" -Message $_.Error -Expected $_.Item.Expected
             }
-            else { Write-Host "$($_.Result): $($_.Item.ResourceId) / $newDiagnosticSettingName" }
+            else {
+                Add-MigrationCheck -Target $target -ResourceId $_.Item.ResourceId -Stage "診断設定の複製" -Success $true -Message ([string]$_.Result) -Expected $_.Item.Expected
+                Write-Host "$($_.Result): $($_.Item.ResourceId) / $newDiagnosticSettingName"
+            }
         }
     }
     catch {
@@ -408,5 +522,5 @@ foreach ($target in $targets) {
         }
     }
 }
-Complete-MigrationStep -Step "copy"
+Complete-MigrationStep -Step "copy" -IncludeChecks
 Write-Host "旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。"

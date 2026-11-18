@@ -50,6 +50,16 @@ function Reset-BaselineFixture {
     $target.Collectors=@($vmId)
     $script:fixture = @{}
     foreach ($id in $script:shapeTexts.Keys) { $script:fixture[$id] = $script:shapeTexts[$id] | ConvertFrom-Json }
+    foreach($rule in $script:fixture[$policyId].properties.policy.rules) {
+        if($rule.name -eq 'log-append-365') {
+            $rule.name='log-append-1095'
+            $rule.definition.actions.baseBlob.delete.daysAfterModificationGreaterThan=1095
+        }
+    }
+    # 保存済みの実応答ファイルは変えず、今回追加する完成値だけメモリへ設定します。
+    foreach ($name in @('Event','Syslog')) {
+        $script:fixture["$workspaceId/tables/$name"].properties | Add-Member totalRetentionInDays 1095 -Force
+    }
     $script:fixture[$groupId] = Copy-TestValue @{ id = $groupId; location = 'japaneast' }
     $script:fixture[$associationId] = Copy-TestValue @{ properties = @{ dataCollectionRuleId = $dcrId } }
     foreach ($assignment in $policyAssignments) {
@@ -61,6 +71,7 @@ function Reset-BaselineFixture {
     $script:writes = [System.Collections.Generic.List[object]]::new()
     $script:skipMutationId = ''
     $script:transitionAssociationId='';$script:associationReadsToReady=0;$script:finalAssociationRule=''
+    $script:tableProvisioningDelay=0;$script:pendingTableReads=@{};$script:tableReadPolls=0;$script:earlyDcrWrite=$false;$script:rejectTableRetentionWrite=$false
     $script:failures.Clear()
     $script:verificationResults.Clear()
 }
@@ -85,6 +96,14 @@ function Invoke-ArmRequest {
     param([string]$ResourceId, [string]$Method = 'Get', [hashtable]$Body, [string]$ApiVersion)
     if ($Method -eq 'Get') {
         if (-not $script:fixture.ContainsKey($ResourceId)) { throw "ARM Get 失敗 (404): offline fixture missing / $ResourceId" }
+        if($script:pendingTableReads.ContainsKey($ResourceId)) {
+            $script:tableReadPolls++
+            $script:pendingTableReads[$ResourceId]--
+            if($script:pendingTableReads[$ResourceId] -le 0) {
+                $script:fixture[$ResourceId].properties.provisioningState='Succeeded'
+                $script:pendingTableReads.Remove($ResourceId)
+            }
+        }
         if($ResourceId -eq $script:transitionAssociationId -and $script:associationReadsToReady -gt 0) {
             $script:associationReadsToReady--
             if($script:associationReadsToReady -eq 0) {
@@ -95,29 +114,64 @@ function Invoke-ArmRequest {
         return $script:fixture[$ResourceId]
     }
     if ($Method -notin @('Put', 'Patch')) { throw "許可していないAPI呼出し: $Method" }
+    if($ResourceId -match '/dataCollectionRules/[^/]+$' -and $script:pendingTableReads.Count -gt 0){$script:earlyDcrWrite=$true}
     $script:writes.Add([pscustomobject]@{ ResourceId = $ResourceId; Method = $Method; Body = Copy-TestValue $Body })
+    if($script:rejectTableRetentionWrite -and $ResourceId -match '/tables/(Event|Syslog)$' -and
+        $null -ne $Body.properties.totalRetentionInDays) {
+        throw 'Table retention update rejected.'
+    }
     if ($script:skipMutationId -ne $ResourceId) {
         $changes = Copy-TestValue $Body
         if ($ResourceId -match '/dataCollectionRules/[^/]+$') { $changes.properties | Add-Member -NotePropertyName provisioningState -NotePropertyValue 'Succeeded' -Force }
+        if($ResourceId -match '/tables/(Event|Syslog)$') {
+            if($null -ne $changes.properties.totalRetentionInDays) { $changes.properties | Add-Member totalRetentionInDaysAsDefault $false -Force }
+            if($script:tableProvisioningDelay -gt 0) {
+                $changes.properties | Add-Member provisioningState 'Updating' -Force
+                $script:pendingTableReads[$ResourceId]=$script:tableProvisioningDelay
+            } elseif($Method -eq 'Put') {
+                $changes.properties | Add-Member provisioningState 'Succeeded' -Force
+            }
+        }
         if($ResourceId -eq $script:transitionAssociationId) {$changes.properties | Add-Member provisioningState 'Updating' -Force}
         if ($script:fixture.ContainsKey($ResourceId)) { Merge-TestProperties -Current $script:fixture[$ResourceId] -Changes $changes }
         else { $script:fixture[$ResourceId] = $changes }
     }
     $script:fixture[$ResourceId]
 }
-# 共通の旧ラッパーを再現せず、現在のcopy/verify本体をそのままfixtureへ通します。
+# 保存先の単体確認では、記録済みⅡの入力を用意して実際のcopy/verify本体へ通します。
 function Invoke-DestinationStage {
     param([object]$Target,[switch]$VerifyOnly)
-    # 対象探索・バックアップI/Oだけを置き換え、作成/確認の処理とHTTP mockは実際に通します。
+    # 探索・バックアップ読込み・レポートだけを置換し、実際の保存先処理をHTTP fixtureで確認します。
     $Target.DiagnosticPlans=[Collections.Generic.List[object]]::new()
     $Target.CurrentSettings=@{}
-    $Target.OldAssociations=@()
+    if(-not $Target.StorageAccount){$Target.StorageAccount=@($Target.Storages.Values)[0].Name}
+    if(-not $Target.LogDestination){$Target.LogDestination='Storage'}
     $body=Get-MigrationDcrBody -Target $Target
     $savedAssociations=@(foreach($collectorId in $Target.Collectors){
-        @{ResourceId="$collectorId/providers/Microsoft.Insights/dataCollectionRuleAssociations/$($dcrShape.name)";Before=$null;After=@{properties=@{dataCollectionRuleId=$dcrId}}}
+        $id="$collectorId/providers/Microsoft.Insights/dataCollectionRuleAssociations/$($dcrShape.name)"
+        @{ResourceId=$id;Before=Get-RollbackBody $script:fixture[$id] -Association;After=@{properties=@{dataCollectionRuleId=$dcrId}}}
+    })
+    $Target.OldAssociations=@(foreach($collectorId in $Target.Collectors){
+        $id="$collectorId/providers/Microsoft.Insights/dataCollectionRuleAssociations/offline-old"
+        $before=@{properties=@{description='元の関連';dataCollectionRuleId=$oldDcrIds[0]}}
+        $script:fixture[$id]=Copy-TestValue $before
+        @{ResourceId=$id;ParentResourceId=$collectorId;Before=$before}
+    })
+    $routing=@{}
+    foreach($key in @('SubscriptionName','ResourceGroup','StorageAccount','WorkspaceName','LogDestination')){$routing[$key]=$Target[$key]}
+    $exemptions=@(foreach($assignment in $policyAssignments){
+        @{ResourceId="/subscriptions/$($Target.SubscriptionId)/providers/Microsoft.Authorization/policyExemptions/log-migration-$environment-$($assignment.Name)";Existed=$true}
     })
     $script:destinationTarget=$Target
-    $script:destinationBackup=@{Targets=@(@{SubscriptionId=$Target.SubscriptionId;Diagnostics=@();OldAssociations=@();Storages=@($Target.Storages.Values);Associations=$savedAssociations;Dcr=@{ResourceId=$dcrId;Before=$null;After=$body}})}
+    $script:destinationBackup=@{
+        Version=3;CreatedAtUtc=[DateTime]::UtcNow.ToString('o');Environment=$environment;TargetWorkspaceId=$targetWorkspaceId
+        NewDiagnosticSettingName=$newDiagnosticSettingName;OldDcrIds=@($oldDcrIds)
+        Targets=@(@{
+            SubscriptionName=$Target.SubscriptionName;SubscriptionId=$Target.SubscriptionId;Routing=$routing
+            Diagnostics=@();OldAssociations=@($Target.OldAssociations);Storages=@($Target.Storages.Values)
+            Associations=$savedAssociations;Dcr=@{ResourceId=$dcrId;Before=$null;After=$body};Exemptions=$exemptions
+        })
+    }
     function Read-MigrationBackup {param($Path,[switch]$CheckCsv) $script:destinationBackup}
     function Get-MigrationTargets { $script:destinationTarget }
     function Get-MigrationPlan {param($Target,[switch]$Fresh) $true}
@@ -125,11 +179,18 @@ function Invoke-DestinationStage {
         param($Step,[switch]$IncludeChecks)
         if($script:failures.Count -gt 0){throw 'TEST_DESTINATION_RECORDED_FAILURE'}
     }
+    # 本体の原子的JSON保存先も毎回の専用一時ディレクトリへ隔離します。
+    $scratch=Join-Path ([IO.Path]::GetTempPath()) ('migration-destination-'+[guid]::NewGuid().ToString('N'))
+    $null=New-Item -ItemType Directory -Path $scratch
+    $migrationBackupPath=Join-Path $scratch 'before.json'
+    ConvertTo-Json -InputObject $script:destinationBackup -Depth 40 | Set-Content -LiteralPath $migrationBackupPath -Encoding UTF8
+    $script:storageNames.Clear()
     $entry=if($VerifyOnly){'step3_verify.ps1'}else{'step2_copy.ps1'}
     $entryText=Get-Content -LiteralPath (Join-Path $Repository $entry) -Raw -Encoding UTF8
     $entryBody=($entryText -split "`n" | Select-Object -Skip 2) -join "`n"
     try { Invoke-Expression $entryBody }
     catch {if($_.Exception.Message -ne 'TEST_DESTINATION_RECORDED_FAILURE'){throw}}
+    finally {if(Test-Path -LiteralPath $scratch){Remove-Item -LiteralPath $scratch -Recurse -Force}}
     return ($script:failures.Count -eq 0)
 }
 
@@ -149,7 +210,7 @@ Invoke-BaselineCase '実ARM応答の全一致VerifyOnly' {
     Assert-Baseline ($script:verificationResults.Count -ge 17) 'Policy/Storage/LA/VM全項目の確認記録'
     Assert-Baseline ($script:fixture[$dcrId].properties.destinations.logAnalytics[0].workspaceId -ne '') 'DCRの読取専用workspaceGUIDあり'
     Assert-Baseline ($script:fixture[$workspaceId].properties.features.legacy -eq 0) 'LAの既定featureを含む'
-    Assert-Baseline ($script:fixture[$policyId].properties.policy.rules[0].definition.actions.baseBlob.delete.daysAfterModificationGreaterThan -eq 365) 'Lifecycleの365.0を保持'
+    Assert-Baseline ($script:fixture[$policyId].properties.policy.rules[0].definition.actions.baseBlob.delete.daysAfterModificationGreaterThan -eq 1095) 'Lifecycleの総保持1095を確認'
 }
 Invoke-BaselineCase '実ARM応答の全一致Copy再実行' {
     $ready = Invoke-DestinationStage -Target $target
@@ -259,7 +320,7 @@ Invoke-BaselineCase 'Lifecycle未作成404から有効な1ルールだけ作成'
     $sentRules = @($script:writes[0].Body.properties.policy.rules)
     Assert-Baseline ($sentRules.Count -eq 1) '送信ルール数は1'
     Assert-Baseline (@($sentRules | Where-Object { $null -eq $_ }).Count -eq 0) 'nullルールを送信しない'
-    Assert-Baseline ($sentRules[0].name -eq 'log-append-365' -and $sentRules[0].definition.actions.baseBlob.delete.daysAfterModificationGreaterThan -eq 365) '送信ルールの名前と保持日数'
+    Assert-Baseline ($sentRules[0].name -eq 'log-append-1095' -and $sentRules[0].definition.actions.baseBlob.delete.daysAfterModificationGreaterThan -eq 1095) '送信ルールの名前と保持日数'
     $again = Invoke-DestinationStage -Target $target
     Assert-Baseline $again '作成後の再実行成功'
     Assert-Baseline ($script:writes.Count -eq 1) '再実行で追加書込0'
@@ -332,6 +393,164 @@ Invoke-BaselineCase 'Storagemutable補完でも個別ネットワーク規則を
     Assert-Baseline ($script:fixture[$accountId].properties.networkAcls.ipv6Rules[0].value -eq '2001:db8::/32') 'IPv6規則保持'
     Assert-Baseline ($script:fixture[$accountId].properties.networkAcls.defaultAction -eq 'Deny') 'DefaultDenyを補完'
 }
+
+# 総保持だけを1095日にする変更を、分析保持・スキーマ・他テーブルの変更と区別して確認します。
+Invoke-BaselineCase 'EventとSyslogの総保持90だけを1095へ補完し他の設定を保持' {
+    $workspaceBefore=ConvertTo-Json -InputObject $script:fixture[$workspaceId] -Depth 40 -Compress
+    $otherTableId="$workspaceId/tables/Custom_CL"
+    $otherTable=Copy-TestValue @{id=$otherTableId;properties=@{retentionInDays=7;totalRetentionInDays=14;plan='Analytics';schema=@{name='Custom_CL'};customSetting='keep'}}
+    $script:fixture[$otherTableId]=$otherTable
+    $otherBefore=ConvertTo-Json -InputObject $otherTable -Depth 40 -Compress
+    $schemaBefore=@{}
+    foreach($name in @('Event','Syslog')) {
+        $table=$script:fixture["$workspaceId/tables/$name"]
+        $table.properties.totalRetentionInDays=90
+        $table.properties.retentionInDays=30
+        $table.properties | Add-Member customSetting "keep-$name" -Force
+        $schemaBefore[$name]=ConvertTo-Json -InputObject $table.properties.schema -Depth 40 -Compress
+    }
+    $ready=Invoke-DestinationStage -Target $target
+    Assert-Baseline $ready '総保持の補完が成功'
+    Assert-Baseline ($script:writes.Count -eq 2) 'EventとSyslogだけ各1書込み'
+    foreach($name in @('Event','Syslog')) {
+        $tableId="$workspaceId/tables/$name"
+        $write=@($script:writes | Where-Object ResourceId -eq $tableId)
+        Assert-Baseline ($write.Count -eq 1 -and $write[0].Method -eq 'Patch') "$name は既存テーブルへPATCH"
+        Assert-Baseline (($write[0].Body.properties.PSObject.Properties.Name -join ',') -ceq 'totalRetentionInDays') "$name の送信項目は総保持だけ"
+        Assert-Baseline ($write[0].Body.properties.totalRetentionInDays -eq 1095 -and $script:fixture[$tableId].properties.totalRetentionInDays -eq 1095) "$name の総保持1095を読み戻す"
+        Assert-Baseline ($script:fixture[$tableId].properties.retentionInDays -eq 30 -and $script:fixture[$tableId].properties.plan -eq 'Analytics') "$name の分析保持30とプランは維持"
+        Assert-Baseline ((ConvertTo-Json -InputObject $script:fixture[$tableId].properties.schema -Depth 40 -Compress) -ceq $schemaBefore[$name] -and $script:fixture[$tableId].properties.customSetting -eq "keep-$name") "$name のスキーマと追加項目は維持"
+    }
+    Assert-Baseline ((ConvertTo-Json -InputObject $script:fixture[$workspaceId] -Depth 40 -Compress) -ceq $workspaceBefore) 'ワークスペースの設定は不変'
+    Assert-Baseline ((ConvertTo-Json -InputObject $script:fixture[$otherTableId] -Depth 40 -Compress) -ceq $otherBefore) '対象外テーブルは不変'
+    $again=Invoke-DestinationStage -Target $target
+    Assert-Baseline ($again -and $script:writes.Count -eq 2) '1095設定済みの再実行は追加書込み0'
+}
+Invoke-BaselineCase '分析保持365でも総保持が未指定なら確認NGと設定補完' {
+    $eventId="$workspaceId/tables/Event"
+    $script:fixture[$eventId].properties.PSObject.Properties.Remove('totalRetentionInDays')
+    $script:fixture[$eventId].properties.retentionInDays=365
+    $ready=Invoke-DestinationStage -Target $target -VerifyOnly
+    Assert-Baseline (-not $ready -and $script:writes.Count -eq 0) '分析保持を総保持設定済みと誤認しない'
+    Assert-Baseline (@($script:failures | Where-Object ResourceId -eq $eventId).Count -eq 1) '総保持未指定のEventを記録'
+    $script:failures.Clear();$script:verificationResults.Clear()
+    $ready=Invoke-DestinationStage -Target $target
+    Assert-Baseline ($ready -and $script:writes.Count -eq 1 -and $script:writes[0].Method -eq 'Patch' -and $script:writes[0].ResourceId -eq $eventId) '未指定の総保持だけ1PATCH'
+    Assert-Baseline ($script:fixture[$eventId].properties.totalRetentionInDays -eq 1095 -and $script:fixture[$eventId].properties.retentionInDays -eq 365) '総保持を追加し分析保持365を維持'
+}
+Invoke-BaselineCase 'EventとSyslogの新規作成は総保持1095を指定し完了後にDCRを作成' {
+    foreach($name in @('Event','Syslog')){$script:fixture.Remove("$workspaceId/tables/$name")}
+    $script:fixture.Remove($dcrId)
+    $script:tableProvisioningDelay=3
+    $ready=Invoke-DestinationStage -Target $target
+    Assert-Baseline $ready 'テーブルの更新完了を待ちDCR作成まで成功'
+    $tableWrites=@($script:writes | Where-Object {$_.ResourceId -match '/tables/(Event|Syslog)$'})
+    Assert-Baseline ($tableWrites.Count -eq 2) '新しい2テーブルだけ各1書込み'
+    foreach($name in @('Event','Syslog')) {
+        $tableId="$workspaceId/tables/$name"
+        $write=@($tableWrites | Where-Object ResourceId -eq $tableId)
+        Assert-Baseline ($write.Count -eq 1 -and $write[0].Method -eq 'Put') "$name は新規PUT"
+        Assert-Baseline ($write[0].Body.properties.schema.name -eq $name -and $write[0].Body.properties.totalRetentionInDays -eq 1095) "$name の新規PUTにスキーマ名と総保持1095"
+        Assert-Baseline ((@($write[0].Body.properties.PSObject.Properties.Name | Sort-Object) -join ',') -ceq 'schema,totalRetentionInDays') "$name の分析保持やプランを指定しない"
+        Assert-Baseline ($script:fixture[$tableId].properties.provisioningState -eq 'Succeeded') "$name の完了を読み戻す"
+    }
+    Assert-Baseline ($script:tableReadPolls -ge 6 -and $script:pendingTableReads.Count -eq 0) '両テーブルのUpdatingを実GETで待つ'
+    Assert-Baseline (-not $script:earlyDcrWrite -and @($script:writes | Where-Object ResourceId -eq $dcrId).Count -eq 1) '全テーブル完了後にだけDCRを作成'
+}
+Invoke-BaselineCase '総保持PATCHの読み戻し不一致ではDCRと関連作成を開始しない' {
+    $eventId="$workspaceId/tables/Event"
+    $script:fixture[$eventId].properties.totalRetentionInDays=90
+    $script:skipMutationId=$eventId
+    $script:fixture.Remove($dcrId)
+    $ready=Invoke-DestinationStage -Target $target
+    Assert-Baseline (-not $ready) '総保持の読み戻し不一致は未完了'
+    Assert-Baseline ($script:writes.Count -eq 1 -and $script:writes[0].ResourceId -eq $eventId) '総保持PATCH試行以外の書込み0'
+    Assert-Baseline (-not $script:fixture.ContainsKey($dcrId)) 'DCRは未作成のまま'
+    $failure=@($script:failures | Where-Object ResourceId -eq $eventId)
+    Assert-Baseline ($failure.Count -eq 1 -and ($failure[0].ExpectedConfiguration | ConvertFrom-Json).properties.totalRetentionInDays -eq 1095) '手動対応一覧に正しい総保持1095を記録'
+}
+Invoke-BaselineCase '確認版はEventとSyslogの総保持90を変更せず全件NGにする' {
+    foreach($name in @('Event','Syslog')){$script:fixture["$workspaceId/tables/$name"].properties.totalRetentionInDays=90}
+    $ready=Invoke-DestinationStage -Target $target -VerifyOnly
+    Assert-Baseline (-not $ready -and $script:writes.Count -eq 0) '確認版は設定不一致でも書込み0'
+    $failures=@($script:failures | Where-Object Stage -eq 'VMログテーブル')
+    Assert-Baseline ($failures.Count -eq 2) '両テーブルの総保持不一致を確認'
+    foreach($failure in $failures){Assert-Baseline (($failure.ExpectedConfiguration | ConvertFrom-Json).properties.totalRetentionInDays -eq 1095) '確認結果の完成値は総保持1095'}
+}
+
+
+Invoke-BaselineCase '総保持1095のPATCHが拒否されても元の分析保持と設定を維持' {
+    $eventId="$workspaceId/tables/Event"
+    $script:fixture[$eventId].properties.retentionInDays=30
+    $script:fixture[$eventId].properties.totalRetentionInDays=90
+    $script:rejectTableRetentionWrite=$true
+    $script:fixture.Remove($dcrId)
+    $ready=Invoke-DestinationStage -Target $target
+    Assert-Baseline (-not $ready) '総保持更新のAPI拒否は未完了'
+    Assert-Baseline ($script:writes.Count -eq 1 -and $script:writes[0].ResourceId -eq $eventId) '対象テーブル以外の書込みを開始しない'
+    Assert-Baseline ($script:fixture[$eventId].properties.retentionInDays -eq 30 -and $script:fixture[$eventId].properties.totalRetentionInDays -eq 90) 'API拒否後も元の保持設定を維持'
+    Assert-Baseline (-not $script:fixture.ContainsKey($dcrId)) '後続DCRを作成しない'
+    Assert-Baseline (@($script:failures | Where-Object ResourceId -eq $eventId).Count -eq 1) '手動対応対象のテーブルを記録'
+}
+
+Invoke-BaselineCase '継承した総保持365を明示1095へ変更し読取り専用フラグは送らない' {
+    $eventId="$workspaceId/tables/Event"
+    $script:fixture[$eventId].properties.totalRetentionInDays=365
+    $script:fixture[$eventId].properties | Add-Member totalRetentionInDaysAsDefault $true -Force
+    $ready=Invoke-DestinationStage -Target $target -VerifyOnly
+    Assert-Baseline (-not $ready -and $script:writes.Count -eq 0) '継承した365は要求する明示1095ではない'
+    $script:failures.Clear();$script:verificationResults.Clear()
+    $ready=Invoke-DestinationStage -Target $target
+    Assert-Baseline ($ready -and $script:writes.Count -eq 1 -and $script:writes[0].ResourceId -eq $eventId -and $script:writes[0].Method -eq 'Patch') '継承中のEventだけ総保持をPATCH'
+    Assert-Baseline (($script:writes[0].Body.properties.PSObject.Properties.Name -join ',') -ceq 'totalRetentionInDays') '読み取り専用AsDefaultは書込み本文に含めない'
+    Assert-Baseline ($script:fixture[$eventId].properties.totalRetentionInDays -eq 1095 -and $script:fixture[$eventId].properties.totalRetentionInDaysAsDefault -eq $false) '明示設定1095を読み戻す'
+    $again=Invoke-DestinationStage -Target $target
+    Assert-Baseline ($again -and $script:writes.Count -eq 1) '明示設定後の再実行は追加書込み0'
+}
+Invoke-BaselineCase '総保持1095でAsDefaultが省略またはnullなら変更せず確認できる' {
+    $script:fixture["$workspaceId/tables/Event"].properties.PSObject.Properties.Remove('totalRetentionInDaysAsDefault')
+    $script:fixture["$workspaceId/tables/Syslog"].properties | Add-Member totalRetentionInDaysAsDefault $null -Force
+    $ready=Invoke-DestinationStage -Target $target -VerifyOnly
+    Assert-Baseline ($ready -and $script:writes.Count -eq 0) '任意フラグの省略とnullを許容'
+    $ready=Invoke-DestinationStage -Target $target
+    Assert-Baseline ($ready -and $script:writes.Count -eq 0) '総保持1095なら再設定せずスキップ'
+}
+
+
+Invoke-BaselineCase '旧365管理ルールだけ1095へ置換し他名ルールの365設定を保持' {
+    $owned=@($script:fixture[$policyId].properties.policy.rules | Where-Object name -eq 'log-append-1095')[0]
+    $owned.name='log-append-365'
+    $owned.definition.actions.baseBlob.delete.daysAfterModificationGreaterThan=365
+    $other=Copy-TestValue @{name='keep-custom-365';enabled=$true;type='Lifecycle';definition=@{filters=@{blobTypes=@('blockBlob');prefixMatch=@('残す/')};actions=@{baseBlob=@{delete=@{daysAfterModificationGreaterThan=365}}}}}
+    $script:fixture[$policyId].properties.policy.rules+=@($other)
+    $otherBefore=ConvertTo-Json -InputObject $other -Depth 40 -Compress
+    $ready=Invoke-DestinationStage -Target $target
+    Assert-Baseline $ready '旧管理ルールの置換が成功'
+    Assert-Baseline ($script:writes.Count -eq 1 -and $script:writes[0].ResourceId -eq $policyId -and $script:writes[0].Method -eq 'Put') 'Lifecycleだけ1PUT'
+    $rules=@($script:fixture[$policyId].properties.policy.rules)
+    $new=@($rules | Where-Object name -eq 'log-append-1095')
+    Assert-Baseline ($rules.Count -eq 2 -and $new.Count -eq 1 -and $new[0].definition.actions.baseBlob.delete.daysAfterModificationGreaterThan -eq 1095) '新管理ルールは1095で一意'
+    Assert-Baseline (@($rules | Where-Object name -eq 'log-append-365').Count -eq 0) '365で先に削除する旧管理ルールを残さない'
+    $kept=@($rules | Where-Object name -eq 'keep-custom-365')[0]
+    Assert-Baseline ((ConvertTo-Json -InputObject $kept -Depth 40 -Compress) -ceq $otherBefore) '他名ルールは365という名前・日数・日本語条件を含め完全保持'
+    $again=Invoke-DestinationStage -Target $target
+    Assert-Baseline ($again -and $script:writes.Count -eq 1) '置換後の再実行は追加書込み0'
+}
+Invoke-BaselineCase '正しい1095管理ルールがあっても併存する旧365管理ルールを除去' {
+    $legacy=Copy-TestValue @($script:fixture[$policyId].properties.policy.rules | Where-Object name -eq 'log-append-1095')[0]
+    $legacy.name='log-append-365'
+    $legacy.definition.actions.baseBlob.delete.daysAfterModificationGreaterThan=365
+    $script:fixture[$policyId].properties.policy.rules+=@($legacy)
+    $ready=Invoke-DestinationStage -Target $target -VerifyOnly
+    Assert-Baseline (-not $ready -and $script:writes.Count -eq 0) '新1095が正しくても旧365が残る間は確認NG'
+    Assert-Baseline (@($script:failures | Where-Object ResourceId -eq $policyId).Count -eq 1) '旧管理ルールが残るポリシーを一覧へ記録'
+    $script:failures.Clear();$script:verificationResults.Clear()
+    $ready=Invoke-DestinationStage -Target $target
+    Assert-Baseline ($ready -and $script:writes.Count -eq 1 -and $script:writes[0].ResourceId -eq $policyId) '既存1095が一致していても旧365を除去'
+    $rules=@($script:fixture[$policyId].properties.policy.rules)
+    Assert-Baseline ($rules.Count -eq 1 -and $rules[0].name -eq 'log-append-1095' -and $rules[0].definition.actions.baseBlob.delete.daysAfterModificationGreaterThan -eq 1095) '自分のルールは1095だけを1件残す'
+}
+
 $report = [pscustomobject]@{
     Result = 'PASS'; CaseCount = $script:caseResults.Count; AssertionCount = $script:assertionCount; Checks = $script:assertionCount
     PowerShellVersion = $PSVersionTable.PSVersion.ToString(); CommonHash = (Get-FileHash -LiteralPath $CommonPath -Algorithm SHA256).Hash; StageHashes = @(foreach($name in @('precheck','copy','verify')){ @{Name=$name;Hash=(Get-FileHash -LiteralPath (Join-Path $Repository (@{ precheck='step1_precheck.ps1'; copy='step2_copy.ps1'; verify='step3_verify.ps1' }[$name])) -Algorithm SHA256).Hash} })

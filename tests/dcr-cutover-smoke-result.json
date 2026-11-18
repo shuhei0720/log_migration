@@ -1,7 +1,7 @@
 {
   "Result": "PASS",
-  "Checks": 276,
-  "CaseCount": 45,
+  "Checks": 355,
+  "CaseCount": 47,
   "Cases": [
     {
       "Case": "2本の一覧とnextLink・Subfilter・writableだけ保存",
@@ -86,150 +86,160 @@
     {
       "Case": "旧関連barrier-Success",
       "Result": "PASS",
-      "Assertions": 9
+      "Assertions": 10
     },
     {
       "Case": "旧関連barrier-PutFailure",
       "Result": "PASS",
-      "Assertions": 13
+      "Assertions": 14
     },
     {
       "Case": "旧関連barrier-ReadbackFailure",
       "Result": "PASS",
-      "Assertions": 10
+      "Assertions": 11
     },
     {
       "Case": "旧関連barrier-ForeignBefore",
       "Result": "PASS",
-      "Assertions": 10
+      "Assertions": 11
     },
     {
       "Case": "旧関連barrier-UpdatingThenReady",
       "Result": "PASS",
-      "Assertions": 9
+      "Assertions": 10
     },
     {
       "Case": "実discoveryは旧関連のないVMとVMSSを収集対象へ加えない",
       "Result": "PASS",
-      "Assertions": 11
+      "Assertions": 13
     },
     {
-      "Case": "Version2は旧2本・VMSS旧関連を最小保存する",
+      "Case": "Version3は旧2本・VMSS旧関連を最小保存する",
       "Result": "PASS",
-      "Assertions": 9
+      "Assertions": 11
     },
     {
       "Case": "Rule一覧が参照IDだけでも完全GETの説明とDCEを保存・復元する",
       "Result": "PASS",
-      "Assertions": 19
+      "Assertions": 21
     },
     {
-      "Case": "選択した旧関連の完全GET失敗はバックアップを作らず停止する",
+      "Case": "後続Subの旧関連GET失敗ではそのSubを保存・変更しない",
       "Result": "PASS",
-      "Assertions": 7
+      "Assertions": 9
     },
     {
       "Case": "複製の再実行は旧DCR関連を解除しない",
       "Result": "PASS",
-      "Assertions": 9
+      "Assertions": 10
     },
     {
       "Case": "旧DCR関連のないVMは診断設定だけ複製し関連付けを作らない",
       "Result": "PASS",
-      "Assertions": 9
+      "Assertions": 11
     },
     {
       "Case": "旧関連消失後もVMSS新関連を全件確認対象へ残す",
       "Result": "PASS",
-      "Assertions": 8
+      "Assertions": 9
     },
     {
       "Case": "後続VMSSの新関連Missingは旧削除全体を止める",
       "Result": "PASS",
-      "Assertions": 12
+      "Assertions": 13
     },
     {
       "Case": "後続VMSSの新関連WrongRuleは旧削除全体を止める",
       "Result": "PASS",
-      "Assertions": 12
+      "Assertions": 13
     },
     {
       "Case": "後続VMSSの新関連Updatingは旧削除全体を止める",
       "Result": "PASS",
-      "Assertions": 12
+      "Assertions": 13
     },
     {
       "Case": "旧2本の関連だけを解除し削除済み再実行は変更0",
       "Result": "PASS",
-      "Assertions": 13
+      "Assertions": 14
     },
     {
       "Case": "旧関連0のDELETE失敗は後続と全旧診断を停止",
       "Result": "PASS",
-      "Assertions": 13
+      "Assertions": 14
     },
     {
       "Case": "旧関連1のDELETE失敗は後続と全旧診断を停止",
       "Result": "PASS",
-      "Assertions": 13
+      "Assertions": 14
     },
     {
       "Case": "旧関連の内容変更は上書き・削除しない",
       "Result": "PASS",
-      "Assertions": 3
+      "Assertions": 4
     },
     {
-      "Case": "backup後に追加された旧関連を処理前に拒否する",
+      "Case": "②再実行は追加旧VMSS関連のBeforeを保存し元のBeforeは維持する",
       "Result": "PASS",
-      "Assertions": 4
+      "Assertions": 30
     },
     {
       "Case": "指定Subの削除は集中DCRの他Sub関連を残す",
       "Result": "PASS",
-      "Assertions": 7
+      "Assertions": 8
     },
     {
       "Case": "指定Subの切戻しは他Subの旧・新関連を保持する",
       "Result": "PASS",
+      "Assertions": 9
+    },
+    {
+      "Case": "Version3のVersion1不正をAzure照会前に拒否",
+      "Result": "PASS",
+      "Assertions": 4
+    },
+    {
+      "Case": "Version3のOldDcrIds不正をAzure照会前に拒否",
+      "Result": "PASS",
+      "Assertions": 4
+    },
+    {
+      "Case": "Version3のOldAssociationsNull不正をAzure照会前に拒否",
+      "Result": "PASS",
+      "Assertions": 4
+    },
+    {
+      "Case": "Version3のForeignOldDcr不正をAzure照会前に拒否",
+      "Result": "PASS",
+      "Assertions": 4
+    },
+    {
+      "Case": "Version3のMissingNewParent不正をAzure照会前に拒否",
+      "Result": "PASS",
+      "Assertions": 4
+    },
+    {
+      "Case": "Version3のDuplicateOld不正をAzure照会前に拒否",
+      "Result": "PASS",
+      "Assertions": 4
+    },
+    {
+      "Case": "Version3のSameOldNewAssociation不正をAzure照会前に拒否",
+      "Result": "PASS",
+      "Assertions": 4
+    },
+    {
+      "Case": "①の事前確認後に増えた旧VMSS関連を②が新しく調査して保存する",
+      "Result": "PASS",
       "Assertions": 8
     },
     {
-      "Case": "Version2のVersion1不正をAzure照会前に拒否",
+      "Case": "後から収集対象になったSubのDCRは最初に変更する直前のBeforeを保存する",
       "Result": "PASS",
-      "Assertions": 3
-    },
-    {
-      "Case": "Version2のOldDcrIds不正をAzure照会前に拒否",
-      "Result": "PASS",
-      "Assertions": 3
-    },
-    {
-      "Case": "Version2のOldAssociationsNull不正をAzure照会前に拒否",
-      "Result": "PASS",
-      "Assertions": 3
-    },
-    {
-      "Case": "Version2のForeignOldDcr不正をAzure照会前に拒否",
-      "Result": "PASS",
-      "Assertions": 3
-    },
-    {
-      "Case": "Version2のMissingNewParent不正をAzure照会前に拒否",
-      "Result": "PASS",
-      "Assertions": 3
-    },
-    {
-      "Case": "Version2のDuplicateOld不正をAzure照会前に拒否",
-      "Result": "PASS",
-      "Assertions": 3
-    },
-    {
-      "Case": "Version2のSameOldNewAssociation不正をAzure照会前に拒否",
-      "Result": "PASS",
-      "Assertions": 3
+      "Assertions": 12
     }
   ],
   "AzureRequests": 0,
-  "CommonHash": "A9DDE37D49556B7AB8C8BC552FFFE2C74733F74345C4F13FC64B1D7AC6EB3A6A",
-  "RollbackHash": "880166D62E358FBD0A85AB365C060C59A439AB3F1B0E73B4E750D2D466A6E220"
+  "CommonHash": "0E8138AD4CDA35165A26163AAA843DC78F636907037025B3614F857E8F670078",
+  "RollbackHash": "8709528EE142B36AACF8F2A0D5C9EC15880CE6025F7CEF0B50243088153583F4"
 }

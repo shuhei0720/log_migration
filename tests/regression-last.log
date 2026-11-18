@@ -34,38 +34,54 @@ fixture-info
 WARNING: fixture-warning
 調査完了: s1 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
 調査完了: s2 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
-切戻し用バックアップ: /tmp/migration-staged-21583fd70f4244aaa99eaabf84207749.csv.backup.json
 調査完了: s1 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
 調査完了: s2 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
 調査完了: s1 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
-調査完了: s2 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
+調査完了: s2 / 対象診断設定=2 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
+調査完了: s1 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
 複製・確認完了: /subscriptions/s1/resourceGroups/source/providers/Some.Service/resources/example / storage-archive
+調査完了: s2 / 対象診断設定=2 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
+複製・確認完了: /subscriptions/s2/resourceGroups/source/providers/Some.Service/resources/added-after-precheck / storage-archive
 複製・確認完了: /subscriptions/s2/resourceGroups/source/providers/Some.Service/resources/example / storage-archive
 旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 調査完了: s1 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
-調査完了: s2 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
 既存設定と一致・変更なし: /subscriptions/s1/resourceGroups/source/providers/Some.Service/resources/example / storage-archive
+調査完了: s2 / 対象診断設定=2 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
+既存設定と一致・変更なし: /subscriptions/s2/resourceGroups/source/providers/Some.Service/resources/added-after-precheck / storage-archive
 既存設定と一致・変更なし: /subscriptions/s2/resourceGroups/source/providers/Some.Service/resources/example / storage-archive
 旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
-調査完了: s1 / 対象診断設定=0 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
+調査完了: s1 / 対象診断設定=2 / ストレージ=2 / 旧DCR関連=0 / 収集対象=0
+複製・確認完了: /subscriptions/s1/resourceGroups/source/providers/Some.Service/resources/added-japanwest / storage-archive
+既存設定と一致・変更なし: /subscriptions/s1/resourceGroups/source/providers/Some.Service/resources/example / storage-archive
+調査完了: s2 / 対象診断設定=2 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
+既存設定と一致・変更なし: /subscriptions/s2/resourceGroups/source/providers/Some.Service/resources/added-after-precheck / storage-archive
+既存設定と一致・変更なし: /subscriptions/s2/resourceGroups/source/providers/Some.Service/resources/example / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+調査完了: s1 / 対象診断設定=0 / ストレージ=2 / 旧DCR関連=0 / 収集対象=0
 調査完了: s2 / 対象診断設定=0 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
-調査完了: s1 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
-調査完了: s2 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
+調査完了: s1 / 対象診断設定=2 / ストレージ=2 / 旧DCR関連=0 / 収集対象=0
+既存設定と一致・変更なし: /subscriptions/s1/resourceGroups/source/providers/Some.Service/resources/added-japanwest / storage-archive
+調査完了: s2 / 対象診断設定=2 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
+既存設定と一致・変更なし: /subscriptions/s2/resourceGroups/source/providers/Some.Service/resources/added-after-precheck / storage-archive
 既存設定と一致・変更なし: /subscriptions/s2/resourceGroups/source/providers/Some.Service/resources/example / storage-archive
-調査完了: s1 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
-調査完了: s2 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
-調査完了: s1 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
-調査完了: s2 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
-調査完了: s1 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
-調査完了: s2 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
+調査完了: s1 / 対象診断設定=2 / ストレージ=2 / 旧DCR関連=0 / 収集対象=0
+調査完了: s2 / 対象診断設定=2 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
+調査完了: s1 / 対象診断設定=2 / ストレージ=2 / 旧DCR関連=0 / 収集対象=0
+調査完了: s2 / 対象診断設定=2 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
+調査完了: s1 / 対象診断設定=2 / ストレージ=2 / 旧DCR関連=0 / 収集対象=0
+既存設定と一致・変更なし: /subscriptions/s1/resourceGroups/source/providers/Some.Service/resources/added-japanwest / storage-archive
 既存設定と一致・変更なし: /subscriptions/s1/resourceGroups/source/providers/Some.Service/resources/example / storage-archive
+調査完了: s2 / 対象診断設定=2 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
+既存設定と一致・変更なし: /subscriptions/s2/resourceGroups/source/providers/Some.Service/resources/added-after-precheck / storage-archive
 複製・確認完了: /subscriptions/s2/resourceGroups/source/providers/Some.Service/resources/example / storage-archive
 旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
-調査完了: s1 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
-調査完了: s2 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
-調査完了: s1 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
-調査完了: s2 / 対象診断設定=1 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
+調査完了: s1 / 対象診断設定=2 / ストレージ=2 / 旧DCR関連=0 / 収集対象=0
+調査完了: s2 / 対象診断設定=2 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
+調査完了: s1 / 対象診断設定=2 / ストレージ=2 / 旧DCR関連=0 / 収集対象=0
+調査完了: s2 / 対象診断設定=2 / ストレージ=1 / 旧DCR関連=0 / 収集対象=0
+旧設定削除OK: /subscriptions/s1/resourceGroups/source/providers/Some.Service/resources/added-japanwest / old
 旧設定削除OK: /subscriptions/s1/resourceGroups/source/providers/Some.Service/resources/example / old
+旧設定削除OK: /subscriptions/s2/resourceGroups/source/providers/Some.Service/resources/added-after-precheck / old
 旧設定削除OK: /subscriptions/s2/resourceGroups/source/providers/Some.Service/resources/example / old
 調査完了: s1 / 対象診断設定=0 / ストレージ=0 / 旧DCR関連=0 / 収集対象=0
 調査完了: s2 / 対象診断設定=0 / ストレージ=0 / 旧DCR関連=0 / 収集対象=0
@@ -82,102 +98,345 @@ WARNING: fixture-warning
 旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a
-新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-target/providers/Microsoft.Insights/dataCollectionRules/dcr-new1 / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-target/providers/Microsoft.Insights/dataCollectionRules/dcr-new1
-新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a
-新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
 新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a
 新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b
 新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a
 新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a
-新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b
-新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a
-新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a
 新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b
 新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a
 新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a
+新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b
+新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a
+新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a
 新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b
 新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a
 新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a
 新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b
 新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a
 新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-e43fb463bc7a4b87a25445b99655ff40/log_migration_backup.json
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a
+新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b
+新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a
+新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 既存設定と一致・変更なし: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
 既存設定と一致・変更なし: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
 既存設定と一致・変更なし: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
 既存設定と一致・変更なし: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
 旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+既存設定と一致・変更なし: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+既存設定と一致・変更なし: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a
 新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b
 新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a
 新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a
 新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b
 新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a
 新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a
 新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b
 新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a
 新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 調査完了: 11111111-1111-1111-1111-111111111111 / 対象診断設定=1 / ストレージ=0 / 旧DCR関連=2 / 収集対象=2
 調査完了: 11111111-1111-1111-1111-111111111111 / 対象診断設定=1 / ストレージ=0 / 旧DCR関連=0 / 収集対象=0
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 既存設定と一致・変更なし: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
 既存設定と一致・変更なし: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
 既存設定と一致・変更なし: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
@@ -193,60 +452,176 @@ WARNING: fixture-warning
 新設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b
 新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a
 新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 既存設定と一致・変更なし: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
 既存設定と一致・変更なし: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
 既存設定と一致・変更なし: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
 既存設定と一致・変更なし: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
 旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-target/providers/Microsoft.Compute/virtualMachines/vm-2 / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-target/providers/Microsoft.Compute/virtualMachines/vm-2 / storage-archive
 既存設定と一致・変更なし: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
 既存設定と一致・変更なし: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
 既存設定と一致・変更なし: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
 既存設定と一致・変更なし: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
 旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 旧DCR関連解除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-target/providers/Microsoft.Compute/virtualMachines/vm-1/providers/Microsoft.Insights/dataCollectionRuleAssociations/old-collector
 旧DCR関連解除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Compute/virtualMachineScaleSets/scale-set/providers/Microsoft.Insights/dataCollectionRuleAssociations/old-collector
 旧設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / old
 旧設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / old
 旧設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / old
 旧設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / old
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 旧DCR関連解除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-target/providers/Microsoft.Compute/virtualMachines/vm-1/providers/Microsoft.Insights/dataCollectionRuleAssociations/old-collector
 旧DCR関連解除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Compute/virtualMachineScaleSets/scale-set/providers/Microsoft.Insights/dataCollectionRuleAssociations/old-collector
 旧設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / old
 旧設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / old
 旧設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / old
 旧設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / old
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 旧DCR関連解除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-target/providers/Microsoft.Compute/virtualMachines/vm-1/providers/Microsoft.Insights/dataCollectionRuleAssociations/old-collector
 旧DCR関連解除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Compute/virtualMachineScaleSets/scale-set/providers/Microsoft.Insights/dataCollectionRuleAssociations/old-collector
 旧設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / old
 旧設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / old
 旧設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / old
 旧設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / old
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+既存設定と一致・変更なし: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+既存設定と一致・変更なし: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+既存設定と一致・変更なし: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+既存設定と一致・変更なし: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 旧DCR関連解除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-target/providers/Microsoft.Compute/virtualMachines/vm-1/providers/Microsoft.Insights/dataCollectionRuleAssociations/old-collector
 旧設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / old
 旧設定削除OK: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / old
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
 新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a
 新設定削除OK: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-切戻し用バックアップ: /tmp/migration-rollback-a37912e657f34e32a5276320dbb5fa7d/log_migration_backup.json
-ローカル回帰検証 889 件成功。Azureへの接続・変更は実行していません。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+複製・確認完了: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+既存設定と一致・変更なし: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+既存設定と一致・変更なし: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+既存設定と一致・変更なし: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+既存設定と一致・変更なし: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+既存設定と一致・変更なし: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+既存設定と一致・変更なし: /subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+既存設定と一致・変更なし: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/a / storage-archive
+既存設定と一致・変更なし: /subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/source/providers/Microsoft.Test/widgets/b / storage-archive
+旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。
+ローカル回帰検証 1162 件成功。Azureへの接続・変更は実行していません。

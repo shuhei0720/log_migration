@@ -1,0 +1,14 @@
+[
+  {
+    "File": "step3_verify.ps1",
+    "ExecutableTokensEqual": true,
+    "AstErrors": 0,
+    "TokenCount": 1407
+  },
+  {
+    "File": "step4_delete.ps1",
+    "ExecutableTokensEqual": true,
+    "AstErrors": 0,
+    "TokenCount": 1753
+  }
+]

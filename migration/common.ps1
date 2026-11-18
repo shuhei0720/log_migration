@@ -400,11 +400,6 @@ function Get-MigrationTargets {
             $script:regionNames = Invoke-RestMethod -Uri $regionNamesUrl -TimeoutSec 30
             if ($script:regionNames.Count -eq 0) { throw "Azure Naming Toolのリージョン略称を取得できません。" }
         }
-        # 旧2本から一度だけ一覧を取得し、VMSSも元の関連付けの親IDで扱います。
-        $oldAssociations = @(Get-OldDcrAssociations -Targets $targets.ToArray() -DcrIds $oldDcrIds)
-        foreach ($target in $targets) {
-            $target.OldAssociations = @($oldAssociations | Where-Object { $_.SubscriptionId -eq $target.SubscriptionId })
-        }
         $targets.ToArray()
     }
     catch { Add-MigrationFailure -Target $target -ResourceId $inputCsvPath -Stage "CSV・サブスクリプション確認" -Message $_.Exception.Message }
@@ -420,6 +415,8 @@ function Get-MigrationPlan {
     $Target.Storages = @{}
     $Target.DiagnosticPlans.Clear()
     $ready = $true
+    # 他サブスクリプションの作業待ちで古くならないよう、この対象の調査時に取得します。
+    $Target.OldAssociations = @(Get-OldDcrAssociations -Targets @($Target) -DcrIds $oldDcrIds)
     $resources = @(Invoke-AzJson -Arguments @("resource", "list", "--subscription", $subscriptionId))
     $Target.Collectors = @($Target.OldAssociations.ParentResourceId | Where-Object { $_ } | Sort-Object -Unique)
     $dcrName = $Target.WorkspaceName -replace '^log','dcr'
@@ -624,9 +621,9 @@ function Get-RollbackBody {
 function Read-MigrationBackup {
     param([string]$Path = $migrationBackupPath, [switch]$CheckCsv)
     $backup = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json
-    if ($backup.Version -ne 2 -or -not $backup.CreatedAtUtc -or $backup.TargetWorkspaceId -ne $targetWorkspaceId -or
+    if ($backup.Version -ne 3 -or -not $backup.CreatedAtUtc -or $backup.TargetWorkspaceId -ne $targetWorkspaceId -or
         $backup.Environment -ne $environment -or $backup.NewDiagnosticSettingName -ne $newDiagnosticSettingName -or
-        $backup.Targets -isnot [array] -or $backup.Targets.Count -eq 0) { throw 'バックアップの版・環境・移行元・新設定名が今回の設定と一致しません。' }
+        $backup.Targets -isnot [array] -or $backup.Targets.Count -eq 0) { throw '②で作成したバックアップの版・環境・移行元・新設定名が今回の設定と一致しません。' }
     if ($backup.OldDcrIds -isnot [array] -or $backup.OldDcrIds.Count -ne 2 -or $backup.OldDcrIds[0] -eq $backup.OldDcrIds[1] -or
         @($backup.OldDcrIds | Where-Object { $_ -notmatch '^/subscriptions/[0-9a-f-]{36}/resourceGroups/[^/]+/providers/Microsoft.Insights/dataCollectionRules/[^/]+$' }).Count -gt 0 -or
         (@($backup.OldDcrIds | Sort-Object) -join ',') -ne (@($oldDcrIds | Sort-Object) -join ',')) { throw 'バックアップの旧DCR 2本が今回の設定と一致しません。' }

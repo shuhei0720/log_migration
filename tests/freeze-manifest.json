@@ -1,47 +1,47 @@
 [
   {
     "path": "migration/common.ps1",
-    "sha256": "a9dde37d49556b7ab8c8bc552fffe2c74733f74345c4f13fc64b1d7ac6eb3a6a"
+    "sha256": "0e8138ad4cda35165a26163aaa843dc78f636907037025b3614f857e8f670078"
   },
   {
     "path": "migration/step1_precheck.ps1",
-    "sha256": "5229b1cc3f8e10d0bb28d69615aea95d3cfa6fca28513f09356dd5ce4edf26a2"
+    "sha256": "fb09abd1de44ddb703867a1684d96bdb45b81bf48d738e2f04f0dca902656581"
   },
   {
     "path": "migration/step2_copy.ps1",
-    "sha256": "3d30cd53a0de0b098ae3a62f6b0733f07c150e8272ea3e946452fc1787d54918"
+    "sha256": "09ab6f1c4046503c3062e1f3582d27bdff61baed4917ded9b4fa94423531a98c"
   },
   {
     "path": "migration/step3_verify.ps1",
-    "sha256": "73e06af75e42e047f25fa6d97a6080631004ed4cd4be346acc44e1930410ad50"
+    "sha256": "042671ab103dbc7eac7d9b1237de0f07c52893a880da3ad8c6d45200d58995db"
   },
   {
     "path": "migration/step4_delete.ps1",
-    "sha256": "29513533ebec435a30fca8e058498efe393e8b783a1c1617918d4900b1882a3f"
+    "sha256": "7977fe306baf24a61e990388ffe23d1981b4b364261d56a3760e1b19a671ba1b"
   },
   {
     "path": "migration/rollback.ps1",
-    "sha256": "880166d62e358fbd0a85ab365c060c59a439ab3f1b0e73b4e750d2d466a6e220"
+    "sha256": "8709528ee142b36aacf8f2a0d5c9ec15880ce6025f7cef0b50243088153583f4"
   },
   {
     "path": "tests/regression.ps1",
-    "sha256": "7171f271e8022d41260e912fa0af90d1435efdbdd59fb12de652e8addf526dce"
+    "sha256": "a2f347bb32414b37a6a58d657c9cf9e46bb563e6385e3b49a8aae904f19a2f25"
   },
   {
     "path": "tests/baseline-smoke.ps1",
-    "sha256": "db7eaba5eed3446e00b264812b5abd405851624a9aa958070ac5bab0e64a0ad9"
+    "sha256": "24289e6f777aba8d82c5e84b42b4163717c8e1e2307ae7de4ba0f3edff703a07"
   },
   {
     "path": "tests/lifecycle-request-replay.ps1",
-    "sha256": "c23659cc7c778b22409cbae458d84a6d3744fe056a63a91e2370cd6c5140e637"
+    "sha256": "a9f0981c1b2ec7ea4c176db7f11785f35a329ff14099e5e476a0264e035a8228"
   },
   {
     "path": "tests/backup-rollback-smoke.ps1",
-    "sha256": "674d3a77180f36530902de97c2644c694429dd11146bb60d1df0917599e43534"
+    "sha256": "4cb9290853747fcea38740aeee730b14ce77838ba4d602df7f66da9f3f31f2c2"
   },
   {
     "path": "tests/dcr-cutover-smoke.ps1",
-    "sha256": "28a2e3ac97d213e15448d990e9df07983a083fe1b9068cfa743fc37b83f73d04"
+    "sha256": "62214667c9430c493f6b180bc6ff15935fa27237e66cb36ef6aa06c4bef0eef6"
   },
   {
     "path": "tests/fixtures/baseline-shapes/dcr.json",

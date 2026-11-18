@@ -54,7 +54,7 @@ function Wait-RollbackResource {
     Get-RollbackBody $restored -Association:$Association -RequireReady
 }
 
-# 1. 全体または指定Subの前値・現在値を確認します。この段階ではAzureを変更しません。
+# 1. ②で保存した変更前情報から、全体または指定Subの現在値を確認します。
 $resourceId = $BackupPath
 $expected = $null
 try {
