@@ -43,6 +43,8 @@ Storageの管理ルールは `log-append-1095` で1095日です。自分の旧 `
 
 [Windowsの実行結果・20ファイルの前後hash](readability-windows51-copy-first.json)。この試験ではAPI応答を再生し、Azure通信0で本体コードを検証しました。Azureへ実接続する主要工程・中断・再実行・切戻しの確認は、別の通し試験として進めています。
 
+[136ケースの全件一覧](CURRENT_FORMAL_CASES.md) / [CSV](CURRENT_FORMAL_CASES.csv)。異常系のPASSは、指定した条件で停止・未完了一覧を出す期待動作が確認できたことを示します。
+
 ## 今回確認した構成
 
 `precheck.ps1`を任意の事前確認とし、通常工程を`step1_copy.ps1`→`step2_verify.ps1`→`step3_delete.ps1`へ変更しました。事前チェック専用の同名判定と初期化はprecheck内です。共通関数19個の呼出し先を構文から確認し、すべて3〜5ファイルで使われていることを確認しました。[関数の使用先と説明](../REVIEW_GUIDE.md#commonの関数を使う場所)を参照してください。

@@ -21,6 +21,22 @@
 
 診断設定の対象判定とDCR関連の対象判定は別です。「旧診断だけあるVM」と「旧DCR関連だけあるVMSS」も、それぞれ該当する処理だけを受けます。指定外の診断設定・DCR関連は対象にしません。
 
+次の2つの経路を分けて読むと、診断設定とDCRを混同せずに追えます。①では旧経路を残して新経路を追加し、③で旧経路を外します。
+
+```mermaid
+flowchart LR
+  subgraph D["診断設定：既存と同じログ・メトリック条件を複製"]
+    A["対象リソース"] --> O["旧診断設定"] --> W["移行元Log Analytics"]
+    A --> N["新診断設定"] --> T["CSV指定の新Log Analytics<br/>またはリソースと同じ地域のStorage"]
+  end
+  subgraph C["VM・VMSS：指定した旧DCR関連があるものを処理"]
+    V["VM・VMSS"] --> OA["旧関連付け"] --> OD["旧DCR 2本"]
+    V --> NA["新関連付け"] --> ND["新DCR：原本の収集内容"] --> NW["CSV指定の新Log Analytics"]
+  end
+```
+
+Storage行でも、VM・VMSS用の新DCRの送信先は新Log Analyticsです。①で追加するのはログの送信設定であり、過去のログデータを別の保存先へコピーする処理はありません。
+
 ## 2. 6ファイルの関係
 
 ```mermaid
@@ -255,6 +271,8 @@ catch { Add-MigrationFailure -Target $target -Stage '全件調査' -Message $_.E
 Sub全体を並列にはしていません。[共通のバッチ処理](migration/common.ps1#L193)が診断設定の調査・複製などを最大5標準ジョブに分けます。削除は順番に行い、失敗した後の削除を止めます。現行版の実所要時間は実機検証後に示し、旧版の時間を100Subの所要時間へそのまま換算しません。
 
 ## 9. 要件とコード・テストの対応
+
+[現行136ケースの全件一覧](test-results/CURRENT_FORMAL_CASES.md)と[Excelで読めるCSV](test-results/CURRENT_FORMAL_CASES.csv)を用意しています。異常入力に対して期待どおり停止したケースもPASSです。
 
 下表は現在のオフライン試験です。Azure実機での成功を表す表ではありません。集計は [regression-summary.json](tests/regression-summary.json)、現行コードの確認状況は [READABILITY_REFACTOR.md](test-results/READABILITY_REFACTOR.md) を参照します。
 
