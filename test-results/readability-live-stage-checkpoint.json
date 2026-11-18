@@ -1,10 +1,10 @@
 {
   "kind": "CurrentLiveStageCheckpointNotFinalAcceptance",
-  "capturedAtUtc": "2026-11-18T18:18:07.134162+00:00",
+  "capturedAtUtc": "2026-11-18T18:52:29.055525+00:00",
   "sourceManifestSha256": "607e39695c328189aae8d39b1bc0dd9d258c8599d4e78d9b1be941a50cc53c7d",
   "runtime": "Linux PowerShell 7.5.4",
   "actualNativeWindows51": false,
-  "completedPrimaryCases": 1,
+  "completedPrimaryCases": 5,
   "plannedPrimaryCases": 8,
   "plannedAuxiliaryCases": 2,
   "completedAuxiliaryCases": 0,
@@ -20,37 +20,6 @@
     "seconds": 35.084,
     "azureWrites": 0,
     "beforeCreated": false
-  },
-  "completedCase": {
-    "id": "L01",
-    "status": "PASS",
-    "stages": [
-      {
-        "label": "l01-copy-partial",
-        "step": "copy",
-        "seconds": 79.623,
-        "executionContractPassed": true,
-        "armWriteAttempts": 9,
-        "cliWriteAttempts": 1,
-        "backupBeforeSha256": null,
-        "backupAfterSha256": "2c5df056fc8f6286eca3f780f2d420badfe9d2101b4c50b0cc3b07ad8c6f0928"
-      },
-      {
-        "label": "l01-rollback-all",
-        "step": "rollback",
-        "seconds": 41.102,
-        "executionContractPassed": true,
-        "armWriteAttempts": 6,
-        "cliWriteAttempts": 0,
-        "backupBeforeSha256": "2c5df056fc8f6286eca3f780f2d420badfe9d2101b4c50b0cc3b07ad8c6f0928",
-        "backupAfterSha256": "2c5df056fc8f6286eca3f780f2d420badfe9d2101b4c50b0cc3b07ad8c6f0928"
-      }
-    ],
-    "proofs": [
-      "l01-partial-r1",
-      "l01-rollback-all-state",
-      "l01-rollback-all-restore-order"
-    ]
   },
   "independentGetProofs": [
     {
@@ -466,5 +435,1061 @@
       "azureWrites": 0
     }
   ],
-  "remainingCases": "L02-L08 and R01-R02 are not accepted at this checkpoint; final review submission waits for completion."
+  "remainingCases": "L06-L08 and R01-R02 are not accepted at this checkpoint; final review submission waits for completion.",
+  "completedCases": [
+    {
+      "id": "L01",
+      "status": "PASS",
+      "stages": [
+        {
+          "label": "l01-copy-partial",
+          "step": "copy",
+          "seconds": 79.623,
+          "executionContractPassed": true,
+          "armWriteAttempts": 9,
+          "cliWriteAttempts": 1,
+          "backupBeforeSha256": null,
+          "backupAfterSha256": "2c5df056fc8f6286eca3f780f2d420badfe9d2101b4c50b0cc3b07ad8c6f0928"
+        },
+        {
+          "label": "l01-rollback-all",
+          "step": "rollback",
+          "seconds": 41.102,
+          "executionContractPassed": true,
+          "armWriteAttempts": 6,
+          "cliWriteAttempts": 0,
+          "backupBeforeSha256": "2c5df056fc8f6286eca3f780f2d420badfe9d2101b4c50b0cc3b07ad8c6f0928",
+          "backupAfterSha256": "2c5df056fc8f6286eca3f780f2d420badfe9d2101b4c50b0cc3b07ad8c6f0928"
+        }
+      ],
+      "proofs": [
+        "l01-partial-r1",
+        "l01-rollback-all-state",
+        "l01-rollback-all-restore-order"
+      ]
+    },
+    {
+      "id": "L02",
+      "status": "PASS",
+      "stages": [
+        {
+          "label": "l02-copy-partial",
+          "step": "copy",
+          "seconds": 218.606,
+          "executionContractPassed": true,
+          "armWriteAttempts": 15,
+          "cliWriteAttempts": 3,
+          "backupBeforeSha256": "2c5df056fc8f6286eca3f780f2d420badfe9d2101b4c50b0cc3b07ad8c6f0928",
+          "backupAfterSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c"
+        },
+        {
+          "label": "l02-rollback-a",
+          "step": "rollback",
+          "seconds": 40.282,
+          "executionContractPassed": true,
+          "armWriteAttempts": 6,
+          "cliWriteAttempts": 0,
+          "backupBeforeSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c",
+          "backupAfterSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c"
+        },
+        {
+          "label": "l02-rollback-b",
+          "step": "rollback",
+          "seconds": 14.085,
+          "executionContractPassed": true,
+          "armWriteAttempts": 4,
+          "cliWriteAttempts": 0,
+          "backupBeforeSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c",
+          "backupAfterSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c"
+        }
+      ],
+      "proofs": [
+        "l02-partial",
+        "l02-after-a",
+        "l02-rolled"
+      ]
+    },
+    {
+      "id": "L03",
+      "status": "PASS",
+      "stages": [
+        {
+          "label": "l03-copy",
+          "step": "copy",
+          "seconds": 80.773,
+          "executionContractPassed": true,
+          "armWriteAttempts": 13,
+          "cliWriteAttempts": 0,
+          "backupBeforeSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c",
+          "backupAfterSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c"
+        },
+        {
+          "label": "l03-copy-noop",
+          "step": "copy",
+          "seconds": 47.781,
+          "executionContractPassed": true,
+          "armWriteAttempts": 0,
+          "cliWriteAttempts": 0,
+          "backupBeforeSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c",
+          "backupAfterSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c"
+        },
+        {
+          "label": "l03-verify",
+          "step": "verify",
+          "seconds": 37.719,
+          "executionContractPassed": true,
+          "armWriteAttempts": 0,
+          "cliWriteAttempts": 0,
+          "backupBeforeSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c",
+          "backupAfterSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c"
+        },
+        {
+          "label": "l03-rollback-all",
+          "step": "rollback",
+          "seconds": 61.843,
+          "executionContractPassed": true,
+          "armWriteAttempts": 13,
+          "cliWriteAttempts": 0,
+          "backupBeforeSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c",
+          "backupAfterSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c"
+        }
+      ],
+      "proofs": [
+        "l03-copied",
+        "l03-rollback-all-state",
+        "l03-rollback-all-restore-order"
+      ]
+    },
+    {
+      "id": "L04",
+      "status": "PASS",
+      "stages": [
+        {
+          "label": "l04-copy",
+          "step": "copy",
+          "seconds": 74.461,
+          "executionContractPassed": true,
+          "armWriteAttempts": 13,
+          "cliWriteAttempts": 0,
+          "backupBeforeSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c",
+          "backupAfterSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c"
+        },
+        {
+          "label": "l04-copy-noop",
+          "step": "copy",
+          "seconds": 53.918,
+          "executionContractPassed": true,
+          "armWriteAttempts": 0,
+          "cliWriteAttempts": 0,
+          "backupBeforeSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c",
+          "backupAfterSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c"
+        },
+        {
+          "label": "l04-verify",
+          "step": "verify",
+          "seconds": 41.616,
+          "executionContractPassed": true,
+          "armWriteAttempts": 0,
+          "cliWriteAttempts": 0,
+          "backupBeforeSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c",
+          "backupAfterSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c"
+        },
+        {
+          "label": "l04-rollback-a",
+          "step": "rollback",
+          "seconds": 33.644,
+          "executionContractPassed": true,
+          "armWriteAttempts": 6,
+          "cliWriteAttempts": 0,
+          "backupBeforeSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c",
+          "backupAfterSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c"
+        },
+        {
+          "label": "l04-rollback-b",
+          "step": "rollback",
+          "seconds": 25.549,
+          "executionContractPassed": true,
+          "armWriteAttempts": 7,
+          "cliWriteAttempts": 0,
+          "backupBeforeSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c",
+          "backupAfterSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c"
+        }
+      ],
+      "proofs": [
+        "l04-copied",
+        "l04-after-a",
+        "l04-rolled"
+      ]
+    },
+    {
+      "id": "L05",
+      "status": "PASS",
+      "stages": [
+        {
+          "label": "l05-copy",
+          "step": "copy",
+          "seconds": 70.747,
+          "executionContractPassed": true,
+          "armWriteAttempts": 13,
+          "cliWriteAttempts": 0,
+          "backupBeforeSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c",
+          "backupAfterSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c"
+        },
+        {
+          "label": "l05-copy-noop",
+          "step": "copy",
+          "seconds": 48.194,
+          "executionContractPassed": true,
+          "armWriteAttempts": 0,
+          "cliWriteAttempts": 0,
+          "backupBeforeSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c",
+          "backupAfterSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c"
+        },
+        {
+          "label": "l05-verify-before",
+          "step": "verify",
+          "seconds": 41.41,
+          "executionContractPassed": true,
+          "armWriteAttempts": 0,
+          "cliWriteAttempts": 0,
+          "backupBeforeSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c",
+          "backupAfterSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c"
+        },
+        {
+          "label": "l05-delete",
+          "step": "delete",
+          "seconds": 51.044,
+          "executionContractPassed": true,
+          "armWriteAttempts": 4,
+          "cliWriteAttempts": 0,
+          "backupBeforeSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c",
+          "backupAfterSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c"
+        },
+        {
+          "label": "l05-rollback-all",
+          "step": "rollback",
+          "seconds": 77.247,
+          "executionContractPassed": true,
+          "armWriteAttempts": 17,
+          "cliWriteAttempts": 0,
+          "backupBeforeSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c",
+          "backupAfterSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c"
+        }
+      ],
+      "proofs": [
+        "l05-copied-resumed",
+        "l05-delete-order",
+        "l05-deleted",
+        "l05-rollback-all-state"
+      ]
+    }
+  ],
+  "beforeSha256": "5db3e65deacfe7abfd8ffd0e55c9b62f33033ce65f3e3bab46b72d23c1746e1c",
+  "beforeTargetCount": 2,
+  "partialDeleteAndRollbackProofs": [
+    {
+      "sourceName": "l05-copied-resumed-checks.json",
+      "sourceSha256": "888edd1da53ee78af87010b560b6f4224d00f235af291e202af982e1f5cef07f",
+      "passed": true,
+      "checks": [
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Network/networkSecurityGroups/nsg-fx-v3core261118a-jpe",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Network/networkSecurityGroups/nsg-fx-v3core261118a-cac",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Network/networkSecurityGroups/nsg-fx-v3core261118a-jpw",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Network/virtualNetworks/vnet-fx-v3core261118a-a",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Network/virtualNetworks/vnet-fx-v3core261118a-b",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Compute/virtualMachines/vm-fx-v3core261118a",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Compute/virtualMachineScaleSets/vmss-fx-v3core261118a",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Insights/dataCollectionRules/dcr-fx-v3core261118a-old-1",
+          "passed": true
+        },
+        {
+          "name": "old association exact: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Compute/virtualMachines/vm-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/old-1",
+          "passed": true
+        },
+        {
+          "name": "old association exact: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Compute/virtualMachines/vm-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/old-2",
+          "passed": true
+        },
+        {
+          "name": "old association exact: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Compute/virtualMachineScaleSets/vmss-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/old-vmss-2",
+          "passed": true
+        },
+        {
+          "name": "F2 association exact: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Compute/virtualMachines/vm-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/dcr-fx-v3core261118a-f2-a",
+          "passed": true
+        },
+        {
+          "name": "F2 association exact: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Compute/virtualMachineScaleSets/vmss-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/dcr-fx-v3core261118a-f2-b",
+          "passed": true
+        },
+        {
+          "name": "F1 association baseline unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Compute/virtualMachines/vm-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/dcr-fx-v3core261118a-f1-a",
+          "passed": true
+        },
+        {
+          "name": "F1 association baseline unchanged: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Compute/virtualMachineScaleSets/vmss-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/dcr-fx-v3core261118a-f1-b",
+          "passed": true
+        },
+        {
+          "name": "sentinel DCRA unchanged",
+          "passed": true
+        },
+        {
+          "name": "waiver presence matches initial A-existing/B-created: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-f6f0b49f9bd34e8fbb2c0304",
+          "passed": true
+        },
+        {
+          "name": "waiver exact assignment/Waiver/full-null-or-12refs/no-expiry: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-f6f0b49f9bd34e8fbb2c0304",
+          "passed": true
+        },
+        {
+          "name": "initial A waiver raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-f6f0b49f9bd34e8fbb2c0304",
+          "passed": true
+        },
+        {
+          "name": "waiver presence matches initial A-existing/B-created: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-17fb86c1d07349769ff9b1a4",
+          "passed": true
+        },
+        {
+          "name": "waiver exact assignment/Waiver/full-null-or-12refs/no-expiry: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-17fb86c1d07349769ff9b1a4",
+          "passed": true
+        },
+        {
+          "name": "initial A waiver raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-17fb86c1d07349769ff9b1a4",
+          "passed": true
+        },
+        {
+          "name": "waiver presence matches initial A-existing/B-created: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-0073f42c7cba4eef8454e06e",
+          "passed": true
+        },
+        {
+          "name": "waiver exact assignment/Waiver/full-null-or-12refs/no-expiry: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-0073f42c7cba4eef8454e06e",
+          "passed": true
+        },
+        {
+          "name": "initial A waiver raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-0073f42c7cba4eef8454e06e",
+          "passed": true
+        },
+        {
+          "name": "waiver presence matches initial A-existing/B-created: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-f6f0b49f9bd34e8fbb2c0304",
+          "passed": true
+        },
+        {
+          "name": "waiver exact assignment/Waiver/full-null-or-12refs/no-expiry: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-f6f0b49f9bd34e8fbb2c0304",
+          "passed": true
+        },
+        {
+          "name": "waiver presence matches initial A-existing/B-created: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-17fb86c1d07349769ff9b1a4",
+          "passed": true
+        },
+        {
+          "name": "waiver exact assignment/Waiver/full-null-or-12refs/no-expiry: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-17fb86c1d07349769ff9b1a4",
+          "passed": true
+        },
+        {
+          "name": "waiver presence matches initial A-existing/B-created: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-0073f42c7cba4eef8454e06e",
+          "passed": true
+        },
+        {
+          "name": "waiver exact assignment/Waiver/full-null-or-12refs/no-expiry: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-0073f42c7cba4eef8454e06e",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.operationalinsights/workspaces/log-fx-v3core261118a-f1-a",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.operationalinsights/workspaces/log-fx-v3core261118a-f1-a/tables/event",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.operationalinsights/workspaces/log-fx-v3core261118a-f1-a/tables/syslog",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.insights/datacollectionrules/dcr-fx-v3core261118a-f1-a",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118ajpef1a",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118ajpef1a/managementpolicies/default",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118ajpef1a/blobservices/default",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118ajpef1a/providers/microsoft.security/defenderforstoragesettings/current",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118acacf1a",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118acacf1a/managementpolicies/default",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118acacf1a/blobservices/default",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118acacf1a/providers/microsoft.security/defenderforstoragesettings/current",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourcegroups/rg-fx-v3core261118a-b/providers/microsoft.operationalinsights/workspaces/log-fx-v3core261118a-f1-b",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourcegroups/rg-fx-v3core261118a-b/providers/microsoft.insights/datacollectionrules/dcr-fx-v3core261118a-f1-b",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.insights/datacollectionrules/dcr-fx-v3core261118a-old-1",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.insights/datacollectionrules/dcr-fx-v3core261118a-old-2",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.insights/datacollectionrules/dcr-fx-v3core261118a-sentinel",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.network/virtualnetworks/vnet-fx-v3core261118a-a",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourcegroups/rg-fx-v3core261118a-b/providers/microsoft.network/virtualnetworks/vnet-fx-v3core261118a-b",
+          "passed": true
+        },
+        {
+          "name": "workspace default365: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.OperationalInsights/workspaces/log-fx-v3core261118a-f2-a",
+          "passed": true
+        },
+        {
+          "name": "explicit table total1095 ready: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.OperationalInsights/workspaces/log-fx-v3core261118a-f2-a/Event",
+          "passed": true
+        },
+        {
+          "name": "explicit table total1095 ready: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.OperationalInsights/workspaces/log-fx-v3core261118a-f2-a/Syslog",
+          "passed": true
+        },
+        {
+          "name": "new DCR full collection/destination ready: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Insights/dataCollectionRules/dcr-fx-v3core261118a-f2-a",
+          "passed": true
+        },
+        {
+          "name": "workspace default365: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.OperationalInsights/workspaces/log-fx-v3core261118a-f2-b",
+          "passed": true
+        },
+        {
+          "name": "explicit table total1095 ready: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.OperationalInsights/workspaces/log-fx-v3core261118a-f2-b/Event",
+          "passed": true
+        },
+        {
+          "name": "explicit table total1095 ready: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.OperationalInsights/workspaces/log-fx-v3core261118a-f2-b/Syslog",
+          "passed": true
+        },
+        {
+          "name": "new DCR full collection/destination ready: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Insights/dataCollectionRules/dcr-fx-v3core261118a-f2-b",
+          "passed": true
+        },
+        {
+          "name": "storage region/kind/ZRS: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Storage/storageAccounts/stf3c261118ajpwf2b",
+          "passed": true
+        },
+        {
+          "name": "storage required security: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Storage/storageAccounts/stf3c261118ajpwf2b",
+          "passed": true
+        },
+        {
+          "name": "storage blob versioning: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Storage/storageAccounts/stf3c261118ajpwf2b",
+          "passed": true
+        },
+        {
+          "name": "storage Defender explicit disable: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Storage/storageAccounts/stf3c261118ajpwf2b",
+          "passed": true
+        },
+        {
+          "name": "owned lifecycle1095 exact/no old365: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Storage/storageAccounts/stf3c261118ajpwf2b",
+          "passed": true
+        }
+      ],
+      "azureWrites": 0
+    },
+    {
+      "sourceName": "l05-delete-order-strong-checks.json",
+      "sourceSha256": "a895557b81ef1bfaf34aa6722ef55f8ab02b6a0c8cb68c44ae5c15138f3ef37b",
+      "passed": true,
+      "checks": [
+        {
+          "name": "all three distinct old associations deleted before any old diagnostic DELETE attempt",
+          "passed": true
+        }
+      ],
+      "azureWrites": 0
+    },
+    {
+      "sourceName": "l05-deleted-checks.json",
+      "sourceSha256": "888edd1da53ee78af87010b560b6f4224d00f235af291e202af982e1f5cef07f",
+      "passed": true,
+      "checks": [
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Network/networkSecurityGroups/nsg-fx-v3core261118a-jpe",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Network/networkSecurityGroups/nsg-fx-v3core261118a-cac",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Network/networkSecurityGroups/nsg-fx-v3core261118a-jpw",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Network/virtualNetworks/vnet-fx-v3core261118a-a",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Network/virtualNetworks/vnet-fx-v3core261118a-b",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Compute/virtualMachines/vm-fx-v3core261118a",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Compute/virtualMachineScaleSets/vmss-fx-v3core261118a",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Insights/dataCollectionRules/dcr-fx-v3core261118a-old-1",
+          "passed": true
+        },
+        {
+          "name": "old association exact: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Compute/virtualMachines/vm-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/old-1",
+          "passed": true
+        },
+        {
+          "name": "old association exact: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Compute/virtualMachines/vm-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/old-2",
+          "passed": true
+        },
+        {
+          "name": "old association exact: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Compute/virtualMachineScaleSets/vmss-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/old-vmss-2",
+          "passed": true
+        },
+        {
+          "name": "F2 association exact: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Compute/virtualMachines/vm-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/dcr-fx-v3core261118a-f2-a",
+          "passed": true
+        },
+        {
+          "name": "F2 association exact: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Compute/virtualMachineScaleSets/vmss-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/dcr-fx-v3core261118a-f2-b",
+          "passed": true
+        },
+        {
+          "name": "F1 association baseline unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Compute/virtualMachines/vm-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/dcr-fx-v3core261118a-f1-a",
+          "passed": true
+        },
+        {
+          "name": "F1 association baseline unchanged: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Compute/virtualMachineScaleSets/vmss-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/dcr-fx-v3core261118a-f1-b",
+          "passed": true
+        },
+        {
+          "name": "sentinel DCRA unchanged",
+          "passed": true
+        },
+        {
+          "name": "waiver presence matches initial A-existing/B-created: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-f6f0b49f9bd34e8fbb2c0304",
+          "passed": true
+        },
+        {
+          "name": "waiver exact assignment/Waiver/full-null-or-12refs/no-expiry: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-f6f0b49f9bd34e8fbb2c0304",
+          "passed": true
+        },
+        {
+          "name": "initial A waiver raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-f6f0b49f9bd34e8fbb2c0304",
+          "passed": true
+        },
+        {
+          "name": "waiver presence matches initial A-existing/B-created: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-17fb86c1d07349769ff9b1a4",
+          "passed": true
+        },
+        {
+          "name": "waiver exact assignment/Waiver/full-null-or-12refs/no-expiry: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-17fb86c1d07349769ff9b1a4",
+          "passed": true
+        },
+        {
+          "name": "initial A waiver raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-17fb86c1d07349769ff9b1a4",
+          "passed": true
+        },
+        {
+          "name": "waiver presence matches initial A-existing/B-created: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-0073f42c7cba4eef8454e06e",
+          "passed": true
+        },
+        {
+          "name": "waiver exact assignment/Waiver/full-null-or-12refs/no-expiry: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-0073f42c7cba4eef8454e06e",
+          "passed": true
+        },
+        {
+          "name": "initial A waiver raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-0073f42c7cba4eef8454e06e",
+          "passed": true
+        },
+        {
+          "name": "waiver presence matches initial A-existing/B-created: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-f6f0b49f9bd34e8fbb2c0304",
+          "passed": true
+        },
+        {
+          "name": "waiver exact assignment/Waiver/full-null-or-12refs/no-expiry: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-f6f0b49f9bd34e8fbb2c0304",
+          "passed": true
+        },
+        {
+          "name": "waiver presence matches initial A-existing/B-created: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-17fb86c1d07349769ff9b1a4",
+          "passed": true
+        },
+        {
+          "name": "waiver exact assignment/Waiver/full-null-or-12refs/no-expiry: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-17fb86c1d07349769ff9b1a4",
+          "passed": true
+        },
+        {
+          "name": "waiver presence matches initial A-existing/B-created: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-0073f42c7cba4eef8454e06e",
+          "passed": true
+        },
+        {
+          "name": "waiver exact assignment/Waiver/full-null-or-12refs/no-expiry: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-0073f42c7cba4eef8454e06e",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.operationalinsights/workspaces/log-fx-v3core261118a-f1-a",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.operationalinsights/workspaces/log-fx-v3core261118a-f1-a/tables/event",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.operationalinsights/workspaces/log-fx-v3core261118a-f1-a/tables/syslog",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.insights/datacollectionrules/dcr-fx-v3core261118a-f1-a",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118ajpef1a",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118ajpef1a/managementpolicies/default",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118ajpef1a/blobservices/default",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118ajpef1a/providers/microsoft.security/defenderforstoragesettings/current",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118acacf1a",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118acacf1a/managementpolicies/default",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118acacf1a/blobservices/default",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118acacf1a/providers/microsoft.security/defenderforstoragesettings/current",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourcegroups/rg-fx-v3core261118a-b/providers/microsoft.operationalinsights/workspaces/log-fx-v3core261118a-f1-b",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourcegroups/rg-fx-v3core261118a-b/providers/microsoft.insights/datacollectionrules/dcr-fx-v3core261118a-f1-b",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.insights/datacollectionrules/dcr-fx-v3core261118a-old-1",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.insights/datacollectionrules/dcr-fx-v3core261118a-old-2",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.insights/datacollectionrules/dcr-fx-v3core261118a-sentinel",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.network/virtualnetworks/vnet-fx-v3core261118a-a",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourcegroups/rg-fx-v3core261118a-b/providers/microsoft.network/virtualnetworks/vnet-fx-v3core261118a-b",
+          "passed": true
+        },
+        {
+          "name": "workspace default365: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.OperationalInsights/workspaces/log-fx-v3core261118a-f2-a",
+          "passed": true
+        },
+        {
+          "name": "explicit table total1095 ready: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.OperationalInsights/workspaces/log-fx-v3core261118a-f2-a/Event",
+          "passed": true
+        },
+        {
+          "name": "explicit table total1095 ready: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.OperationalInsights/workspaces/log-fx-v3core261118a-f2-a/Syslog",
+          "passed": true
+        },
+        {
+          "name": "new DCR full collection/destination ready: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Insights/dataCollectionRules/dcr-fx-v3core261118a-f2-a",
+          "passed": true
+        },
+        {
+          "name": "workspace default365: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.OperationalInsights/workspaces/log-fx-v3core261118a-f2-b",
+          "passed": true
+        },
+        {
+          "name": "explicit table total1095 ready: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.OperationalInsights/workspaces/log-fx-v3core261118a-f2-b/Event",
+          "passed": true
+        },
+        {
+          "name": "explicit table total1095 ready: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.OperationalInsights/workspaces/log-fx-v3core261118a-f2-b/Syslog",
+          "passed": true
+        },
+        {
+          "name": "new DCR full collection/destination ready: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Insights/dataCollectionRules/dcr-fx-v3core261118a-f2-b",
+          "passed": true
+        },
+        {
+          "name": "storage region/kind/ZRS: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Storage/storageAccounts/stf3c261118ajpwf2b",
+          "passed": true
+        },
+        {
+          "name": "storage required security: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Storage/storageAccounts/stf3c261118ajpwf2b",
+          "passed": true
+        },
+        {
+          "name": "storage blob versioning: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Storage/storageAccounts/stf3c261118ajpwf2b",
+          "passed": true
+        },
+        {
+          "name": "storage Defender explicit disable: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Storage/storageAccounts/stf3c261118ajpwf2b",
+          "passed": true
+        },
+        {
+          "name": "owned lifecycle1095 exact/no old365: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Storage/storageAccounts/stf3c261118ajpwf2b",
+          "passed": true
+        }
+      ],
+      "azureWrites": 0
+    },
+    {
+      "sourceName": "l05-rollback-all-restore-order-checks.json",
+      "sourceSha256": "26bc5e64152dfce4b7225eee4860d259041bbd00a745491155fe6b00eada259f",
+      "passed": true,
+      "checks": [
+        {
+          "name": "old restores completed before any own new-side cleanup",
+          "passed": true
+        },
+        {
+          "name": "restored old resource readback before own cleanup: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.compute/virtualmachines/vm-fx-v3core261118a/providers/microsoft.insights/datacollectionruleassociations/old-1",
+          "passed": true
+        },
+        {
+          "name": "restored old resource readback before own cleanup: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.compute/virtualmachines/vm-fx-v3core261118a/providers/microsoft.insights/datacollectionruleassociations/old-2",
+          "passed": true
+        },
+        {
+          "name": "restored old resource readback before own cleanup: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourcegroups/rg-fx-v3core261118a-b/providers/microsoft.compute/virtualmachinescalesets/vmss-fx-v3core261118a/providers/microsoft.insights/datacollectionruleassociations/old-vmss-2",
+          "passed": true
+        },
+        {
+          "name": "restored old resource readback before own cleanup: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.compute/virtualmachines/vm-fx-v3core261118a/providers/microsoft.insights/diagnosticsettings/old-core",
+          "passed": true
+        }
+      ],
+      "azureWrites": 0
+    },
+    {
+      "sourceName": "l05-rollback-all-state-checks.json",
+      "sourceSha256": "9e70a16cfcec0596e857fe323519c534dae1eeca54defd8341701dcc7581f1a3",
+      "passed": true,
+      "checks": [
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Network/networkSecurityGroups/nsg-fx-v3core261118a-jpe",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Network/networkSecurityGroups/nsg-fx-v3core261118a-cac",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Network/networkSecurityGroups/nsg-fx-v3core261118a-jpw",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Network/virtualNetworks/vnet-fx-v3core261118a-a",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Network/virtualNetworks/vnet-fx-v3core261118a-b",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Compute/virtualMachines/vm-fx-v3core261118a",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Compute/virtualMachineScaleSets/vmss-fx-v3core261118a",
+          "passed": true
+        },
+        {
+          "name": "exact old/F1/F2/all sentinels: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Insights/dataCollectionRules/dcr-fx-v3core261118a-old-1",
+          "passed": true
+        },
+        {
+          "name": "old association exact: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Compute/virtualMachines/vm-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/old-1",
+          "passed": true
+        },
+        {
+          "name": "old association exact: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Compute/virtualMachines/vm-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/old-2",
+          "passed": true
+        },
+        {
+          "name": "old association exact: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Compute/virtualMachineScaleSets/vmss-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/old-vmss-2",
+          "passed": true
+        },
+        {
+          "name": "F2 association exact: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Compute/virtualMachines/vm-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/dcr-fx-v3core261118a-f2-a",
+          "passed": true
+        },
+        {
+          "name": "F2 association exact: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Compute/virtualMachineScaleSets/vmss-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/dcr-fx-v3core261118a-f2-b",
+          "passed": true
+        },
+        {
+          "name": "F1 association baseline unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-fx-v3core261118a-a/providers/Microsoft.Compute/virtualMachines/vm-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/dcr-fx-v3core261118a-f1-a",
+          "passed": true
+        },
+        {
+          "name": "F1 association baseline unchanged: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourceGroups/rg-fx-v3core261118a-b/providers/Microsoft.Compute/virtualMachineScaleSets/vmss-fx-v3core261118a/providers/Microsoft.Insights/dataCollectionRuleAssociations/dcr-fx-v3core261118a-f1-b",
+          "passed": true
+        },
+        {
+          "name": "sentinel DCRA unchanged",
+          "passed": true
+        },
+        {
+          "name": "waiver presence matches initial A-existing/B-created: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-f6f0b49f9bd34e8fbb2c0304",
+          "passed": true
+        },
+        {
+          "name": "waiver exact assignment/Waiver/full-null-or-12refs/no-expiry: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-f6f0b49f9bd34e8fbb2c0304",
+          "passed": true
+        },
+        {
+          "name": "initial A waiver raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-f6f0b49f9bd34e8fbb2c0304",
+          "passed": true
+        },
+        {
+          "name": "waiver presence matches initial A-existing/B-created: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-17fb86c1d07349769ff9b1a4",
+          "passed": true
+        },
+        {
+          "name": "waiver exact assignment/Waiver/full-null-or-12refs/no-expiry: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-17fb86c1d07349769ff9b1a4",
+          "passed": true
+        },
+        {
+          "name": "initial A waiver raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-17fb86c1d07349769ff9b1a4",
+          "passed": true
+        },
+        {
+          "name": "waiver presence matches initial A-existing/B-created: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-0073f42c7cba4eef8454e06e",
+          "passed": true
+        },
+        {
+          "name": "waiver exact assignment/Waiver/full-null-or-12refs/no-expiry: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-0073f42c7cba4eef8454e06e",
+          "passed": true
+        },
+        {
+          "name": "initial A waiver raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-0073f42c7cba4eef8454e06e",
+          "passed": true
+        },
+        {
+          "name": "waiver presence matches initial A-existing/B-created: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-f6f0b49f9bd34e8fbb2c0304",
+          "passed": true
+        },
+        {
+          "name": "waiver presence matches initial A-existing/B-created: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-17fb86c1d07349769ff9b1a4",
+          "passed": true
+        },
+        {
+          "name": "waiver presence matches initial A-existing/B-created: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/providers/Microsoft.Authorization/policyExemptions/log-migration-dev-0073f42c7cba4eef8454e06e",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.operationalinsights/workspaces/log-fx-v3core261118a-f1-a",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.operationalinsights/workspaces/log-fx-v3core261118a-f1-a/tables/event",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.operationalinsights/workspaces/log-fx-v3core261118a-f1-a/tables/syslog",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.insights/datacollectionrules/dcr-fx-v3core261118a-f1-a",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118ajpef1a",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118ajpef1a/managementpolicies/default",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118ajpef1a/blobservices/default",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118ajpef1a/providers/microsoft.security/defenderforstoragesettings/current",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118acacf1a",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118acacf1a/managementpolicies/default",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118acacf1a/blobservices/default",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.storage/storageaccounts/stf3c261118acacf1a/providers/microsoft.security/defenderforstoragesettings/current",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourcegroups/rg-fx-v3core261118a-b/providers/microsoft.operationalinsights/workspaces/log-fx-v3core261118a-f1-b",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourcegroups/rg-fx-v3core261118a-b/providers/microsoft.insights/datacollectionrules/dcr-fx-v3core261118a-f1-b",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.insights/datacollectionrules/dcr-fx-v3core261118a-old-1",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.insights/datacollectionrules/dcr-fx-v3core261118a-old-2",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.insights/datacollectionrules/dcr-fx-v3core261118a-sentinel",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.network/virtualnetworks/vnet-fx-v3core261118a-a",
+          "passed": true
+        },
+        {
+          "name": "protected F1/source/network full raw unchanged: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourcegroups/rg-fx-v3core261118a-b/providers/microsoft.network/virtualnetworks/vnet-fx-v3core261118a-b",
+          "passed": true
+        },
+        {
+          "name": "retained destination raw: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.operationalinsights/workspaces/log-fx-v3core261118a-f2-a",
+          "passed": true
+        },
+        {
+          "name": "retained destination raw: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.operationalinsights/workspaces/log-fx-v3core261118a-f2-a/tables/event",
+          "passed": true
+        },
+        {
+          "name": "retained destination raw: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.operationalinsights/workspaces/log-fx-v3core261118a-f2-a/tables/syslog",
+          "passed": true
+        },
+        {
+          "name": "retained destination raw: /subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourcegroups/rg-fx-v3core261118a-a/providers/microsoft.insights/datacollectionrules/dcr-fx-v3core261118a-f2-a",
+          "passed": true
+        },
+        {
+          "name": "retained destination raw: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourcegroups/rg-fx-v3core261118a-b/providers/microsoft.operationalinsights/workspaces/log-fx-v3core261118a-f2-b",
+          "passed": true
+        },
+        {
+          "name": "retained destination raw: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourcegroups/rg-fx-v3core261118a-b/providers/microsoft.operationalinsights/workspaces/log-fx-v3core261118a-f2-b/tables/event",
+          "passed": true
+        },
+        {
+          "name": "retained destination raw: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourcegroups/rg-fx-v3core261118a-b/providers/microsoft.operationalinsights/workspaces/log-fx-v3core261118a-f2-b/tables/syslog",
+          "passed": true
+        },
+        {
+          "name": "retained destination raw: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourcegroups/rg-fx-v3core261118a-b/providers/microsoft.insights/datacollectionrules/dcr-fx-v3core261118a-f2-b",
+          "passed": true
+        },
+        {
+          "name": "retained destination raw: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourcegroups/rg-fx-v3core261118a-b/providers/microsoft.storage/storageaccounts/stf3c261118ajpwf2b",
+          "passed": true
+        },
+        {
+          "name": "retained destination raw: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourcegroups/rg-fx-v3core261118a-b/providers/microsoft.storage/storageaccounts/stf3c261118ajpwf2b/managementpolicies/default",
+          "passed": true
+        },
+        {
+          "name": "retained destination raw: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourcegroups/rg-fx-v3core261118a-b/providers/microsoft.storage/storageaccounts/stf3c261118ajpwf2b/blobservices/default",
+          "passed": true
+        },
+        {
+          "name": "retained destination raw: /subscriptions/bfda36ec-1aed-4b0c-a907-4d4809c63888/resourcegroups/rg-fx-v3core261118a-b/providers/microsoft.storage/storageaccounts/stf3c261118ajpwf2b/providers/microsoft.security/defenderforstoragesettings/current",
+          "passed": true
+        }
+      ],
+      "azureWrites": 0
+    }
+  ]
 }
