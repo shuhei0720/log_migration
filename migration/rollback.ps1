@@ -6,7 +6,7 @@ if (-not $BackupPath) { $BackupPath = $migrationBackupPath }
 # --------------------------------------------------
 # 診断設定の照合と復元
 # 引数: Targetは対象Sub、Diagnosticsは対象ID・旧名・Before/Afterの保存一覧、Restoreは不足する旧設定の復元指定。
-# 処理: Restoreなしは照合のみ。指定時は旧設定をPUT・GETし、不一致や枠不足はErrorに記録する。
+# 処理: Restoreなしは照合のみ。指定時は不足する旧設定を復元する。After=nullの新設定は操作しない。
 # 戻り値: 対象ごとのItem/Result/Error一覧（ResultはOldPresent/NewPresent）。
 # --------------------------------------------------
 function Invoke-RollbackDiagnostics {
@@ -19,7 +19,7 @@ function Invoke-RollbackDiagnostics {
         param($saved, $newName)
         $settings = @(Get-DiagnosticSettings -ResourceId $saved.ResourceId)
         $old = @($settings | Where-Object { $_.name -eq $saved.OldName })
-        $new = @($settings | Where-Object { $_.name -eq $newName })
+        $new = @(if ($null -ne $saved.After) { $settings | Where-Object { $_.name -eq $newName } })
         if ($old.Count -gt 1 -or ($old.Count -eq 1 -and (Get-DiagnosticSignature $old[0]) -cne (Get-DiagnosticSignature $saved.Before))) { throw '同名の旧診断設定が前値と異なります。上書きしません。' }
         if ($new.Count -gt 1 -or ($new.Count -eq 1 -and (Get-DiagnosticSignature $new[0]) -cne (Get-DiagnosticSignature $saved.After))) { throw '新診断設定が移行時の完成形と異なります。削除しません。' }
         if ($old.Count -eq 0 -and $settings.Count -ge 5) { throw '旧設定を復元する空きがありません。新設定は残します。' }
@@ -86,7 +86,7 @@ try {
     $resources = [Collections.Generic.List[object]]::new()
     # --------------------------------------------------
     # 現在値と保存値の照合
-    # 旧診断設定・旧DCR関連はBefore、新診断設定はAfterと照合する。
+    # 旧診断設定・旧DCR関連はBefore、新規作成した診断設定だけAfterと照合する。
     # 既存DCR・関連付けの現在値をBefore・Afterと比較して復元対象を記録する。新設DCR本体は残す。
     # --------------------------------------------------
     foreach ($target in $targets) {

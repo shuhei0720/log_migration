@@ -427,12 +427,22 @@ function Get-MigrationTargets {
         foreach ($row in $rows) {
             $target = @{}
             foreach ($column in $columns) { $target[$column] = ([string]$row.$column).Trim() }
-            foreach ($column in $columns) {
-                if ($column -eq "StorageAccount" -and $target.LogDestination -eq "Log") { continue }
+            # --------------------------------------------------
+            # 診断設定とVMログの作成対象を選択
+            # 空欄・Noneは作成を省略する。VM用の列がない旧CSVは、従来どおりVMログを作成する。
+            # 保存先は送信を止める場合も準備するため、リソースグループとワークスペース名を必須にする。
+            # --------------------------------------------------
+            $target.VmLogDestination = if ("VmLogDestination" -in $row.PSObject.Properties.Name) { ([string]$row.VmLogDestination).Trim() } else { "Log" }
+            if ($target.LogDestination -notin @("Storage", "Log", "None", "")) { throw "LogDestinationはStorage、Log、Noneまたは空欄を指定してください。" }
+            if ($target.VmLogDestination -notin @("Log", "None", "")) { throw "VmLogDestinationはLog、Noneまたは空欄を指定してください。" }
+            $target.SkipDiagnostics = $target.LogDestination -in @("None", "")
+            $target.SkipVm = $target.VmLogDestination -in @("None", "")
+            $required = @("SubscriptionName", "ResourceGroup", "WorkspaceName")
+            if ($target.LogDestination -eq "Storage") { $required += "StorageAccount" }
+            foreach ($column in $required) {
                 if ([string]::IsNullOrWhiteSpace($target[$column])) { throw "CSVの必須項目が空です: $column / $($target.SubscriptionName)" }
             }
-            if ($target.LogDestination -notin @("Storage", "Log")) { throw "LogDestinationはStorageまたはLogを指定してください。" }
-            if ($target.LogDestination -eq "Storage" -and
+            if ($target.StorageAccount -and
                 ($target.StorageAccount -cnotmatch '^[a-z0-9]{3,24}$' -or [regex]::Matches($target.StorageAccount, 'jpe').Count -ne 1)) {
                 throw "StorageAccountは小文字英数字3～24文字で、jpeを1箇所だけ含めてください: $($target.StorageAccount)"
             }
@@ -440,7 +450,7 @@ function Get-MigrationTargets {
             if ($matches.Count -ne 1) { throw "サブスクリプションを一意に特定できません。CSVにはIDを指定してください: $($target.SubscriptionName)" }
             $target.SubscriptionId = $matches[0].id
             if (-not $subscriptionIds.Add($target.SubscriptionId)) { throw "同じサブスクリプションをCSVの複数行に指定できません: $($target.SubscriptionId)" }
-            $target.WorkspaceId = "/subscriptions/$($target.SubscriptionId)/resourceGroups/$($target.ResourceGroup)/providers/Microsoft.OperationalInsights/workspaces/$($target.WorkspaceName)"
+            $target.WorkspaceId = if ($target.WorkspaceName) { "/subscriptions/$($target.SubscriptionId)/resourceGroups/$($target.ResourceGroup)/providers/Microsoft.OperationalInsights/workspaces/$($target.WorkspaceName)" } else { "" }
             if ($target.LogDestination -eq "Log" -and $target.WorkspaceId -eq $targetWorkspaceId) {
                 throw "Logの移行先ワークスペースが移行元と同じです。別の送信先を指定してください。"
             }
@@ -453,9 +463,9 @@ function Get-MigrationTargets {
         }
         # --------------------------------------------------
         # 地域略称の取得
-        # Storage宛ての行がある場合に、地域名と略称の一覧を1回取得する。
+        # Storage名を指定した行があれば、送信設定の作成・省略に関係なく地域名と略称を取得する。
         # --------------------------------------------------
-        if (@($targets | Where-Object { $_.LogDestination -eq "Storage" }).Count -gt 0) {
+        if (@($targets | Where-Object { $_.StorageAccount }).Count -gt 0) {
             $script:regionNames = Invoke-RestMethod -Uri $regionNamesUrl -TimeoutSec 30
             if ($script:regionNames.Count -eq 0) { throw "Azure Naming Toolのリージョン略称を取得できません。" }
         }
@@ -480,11 +490,11 @@ function Get-MigrationPlan {
     $ready = $true
     # --------------------------------------------------
     # 旧DCRと収集対象の調査
-    # 指定旧2DCRの関連を調べ、新DCR・関連のIDが旧設定を上書きしないことを確認する。
+    # 旧関連は削除・切戻し用にすべて調べる。VM側を省略した場合、新しい関連の対象は空にする。
     # --------------------------------------------------
     $Target.OldAssociations = @(Get-OldDcrAssociations -Targets @($Target) -DcrIds $oldDcrIds)
     $resources = @(Invoke-AzJson -Arguments @("resource", "list", "--subscription", $subscriptionId))
-    $Target.Collectors = @($Target.OldAssociations.ParentResourceId | Where-Object { $_ } | Sort-Object -Unique)
+    $Target.Collectors = @(if (-not $Target.SkipVm) { $Target.OldAssociations.ParentResourceId | Where-Object { $_ } | Sort-Object -Unique })
     $dcrName = $Target.WorkspaceName -replace '^log','dcr'
     $dcrId = "/subscriptions/$subscriptionId/resourceGroups/$($Target.ResourceGroup)/providers/Microsoft.Insights/dataCollectionRules/$dcrName"
     $newAssociationIds = @($Target.Collectors | ForEach-Object { "$_/providers/Microsoft.Insights/dataCollectionRuleAssociations/$dcrName" })
@@ -512,8 +522,8 @@ function Get-MigrationPlan {
     })
     # --------------------------------------------------
     # 新しい診断設定と地域別Storageの計画
-    # 旧ワークスペース宛てのログ・メトリックを引き継ぎ、CSVに従って送信先を組み立てる。
-    # 診断設定名・空き枠・Storage名を調べ、対象IDと比較用の設定値を記録する。
+    # 旧ワークスペース宛ての設定を選び、CSVに従って新しい送信先または送信終了を計画する。
+    # Storage名があれば地域別の保存先を計画し、新診断を作る場合だけ診断設定名と追加枠も確認する。
     # --------------------------------------------------
     foreach ($result in @($discovered | Sort-Object Item)) {
         $resourceId = $result.Item
@@ -529,10 +539,17 @@ function Get-MigrationPlan {
             if ($sources.Count -eq 0) { continue }
             if ($sources.Count -gt 1) { throw "対象の旧設定が複数あります。統合や上書きは行いません。" }
             $source = $sources[0]
-            if ($source.name -eq $newDiagnosticSettingName) { throw "旧設定名と新しい診断設定名が同じです。" }
-            $expected = @{ logs = @($source.logs | Where-Object { $null -ne $_ }); metrics = @($source.metrics | Where-Object { $null -ne $_ }) }
+            if (-not $Target.SkipDiagnostics -and $source.name -eq $newDiagnosticSettingName) { throw "旧設定名と新しい診断設定名が同じです。" }
             $region = ""
-            if ($Target.LogDestination -eq "Storage") {
+            # --------------------------------------------------
+            # 新診断設定の送信先を選択
+            # 作成する場合だけ旧設定のログ・メトリックを引き継ぐ。省略時はExpectedをnullのまま残す。
+            # 省略しても旧設定の名前とBeforeを保存するため、最後の削除と切戻しの対象に残す。
+            # --------------------------------------------------
+            if (-not $Target.SkipDiagnostics) {
+                $expected = @{ logs = @($source.logs | Where-Object { $null -ne $_ }); metrics = @($source.metrics | Where-Object { $null -ne $_ }) }
+            }
+            if ($Target.StorageAccount) {
                 $region = ([string]$diagnosticResources[$resourceId] -replace '\s', '').ToLowerInvariant()
                 if (-not $region -or $region -eq "global") { $region = $globalResourceLocation }
                 $regionName = @($script:regionNames | Where-Object { ($_.name -replace '\s', '') -eq $region })
@@ -541,14 +558,14 @@ function Get-MigrationPlan {
                 if ($storageName -cnotmatch '^[a-z0-9]{3,24}$') { throw "変換後のストレージ名が不正です: $storageName" }
                 $storageId = "/subscriptions/$subscriptionId/resourceGroups/$($Target.ResourceGroup)/providers/Microsoft.Storage/storageAccounts/$storageName"
                 $Target.Storages[$region] = @{ Name = $storageName; Id = $storageId; Location = $region }
-                $expected.storageAccountId = $storageId
+                if ($Target.LogDestination -eq "Storage") { $expected.storageAccountId = $storageId }
             }
-            else {
+            if ($Target.LogDestination -eq "Log") {
                 $expected.workspaceId = $Target.WorkspaceId
                 if ($source.logAnalyticsDestinationType) { $expected.logAnalyticsDestinationType = $source.logAnalyticsDestinationType }
             }
-            $newSettings = @($settings | Where-Object { $_.name -eq $newDiagnosticSettingName })
-            if ($newSettings.Count -eq 0 -and $settings.Count -ge 5) { throw "診断設定が上限の5件です。旧設定を残して追加する余地がありません。" }
+            $newSettings = @(if (-not $Target.SkipDiagnostics) { $settings | Where-Object { $_.name -eq $newDiagnosticSettingName } })
+            if (-not $Target.SkipDiagnostics -and $newSettings.Count -eq 0 -and $settings.Count -ge 5) { throw "診断設定が上限の5件です。旧設定を残して追加する余地がありません。" }
             $Target.DiagnosticPlans.Add([pscustomobject]@{
                 ResourceId = $resourceId
                 Region = $region
@@ -566,6 +583,15 @@ function Get-MigrationPlan {
         }
     }
 
+    # --------------------------------------------------
+    # 診断設定の対象がない場合のStorage準備
+    # CSVにStorage名があれば、送信設定の対象が0件でも東日本に保存先を用意する。
+    # --------------------------------------------------
+    if ($Target.StorageAccount -and $Target.Storages.Count -eq 0) {
+        $storageName = $Target.StorageAccount
+        $Target.Storages['japaneast'] = @{ Name = $storageName; Location = 'japaneast'
+            Id = "/subscriptions/$subscriptionId/resourceGroups/$($Target.ResourceGroup)/providers/Microsoft.Storage/storageAccounts/$storageName" }
+    }
     Write-Host "調査完了: $($Target.SubscriptionName) / 対象診断設定=$($Target.DiagnosticPlans.Count) / ストレージ=$($Target.Storages.Count) / 旧DCR関連=$($Target.OldAssociations.Count) / 収集対象=$($Target.Collectors.Count)"
     $ready
 }
@@ -723,7 +749,7 @@ function Read-MigrationBackup {
         (@($backup.OldDcrIds | Sort-Object) -join ',') -ne (@($oldDcrIds | Sort-Object) -join ',')) { throw 'バックアップの旧DCR 2本が今回の設定と一致しません。' }
     # --------------------------------------------------
     # 保存内容の検査
-    # 対象Sub・リソースIDの重複、Before/Afterの構造、DCRと関連の対応、適用除外を確認する。
+    # 対象IDの重複、Before/After、DCRと関連の対応を確認する。省略する診断はAfter=nullであることも確認する。
     # --------------------------------------------------
     $ids = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     foreach ($target in $backup.Targets) {
@@ -735,14 +761,20 @@ function Read-MigrationBackup {
         foreach ($key in @('Diagnostics','Storages','Associations','OldAssociations','Exemptions')) {
             if ($target.$key -isnot [array]) { throw "バックアップの$key は配列で保存してください。" }
         }
-        if (-not $target.Routing.ResourceGroup -or -not $target.Routing.WorkspaceName -or $target.Routing.LogDestination -notin @('Storage','Log')) { throw 'バックアップのCSV情報が不正です。' }
+        $vmDestination = if ('VmLogDestination' -in $target.Routing.PSObject.Properties.Name) { [string]$target.Routing.VmLogDestination } else { 'Log' }
+        $skipDiagnostics = $target.Routing.LogDestination -in @('None','')
+        $skipVm = $vmDestination -in @('None','')
+        if ($target.Routing.LogDestination -notin @('Storage','Log','None','') -or $vmDestination -notin @('Log','None','') -or
+            -not $target.Routing.ResourceGroup -or -not $target.Routing.WorkspaceName -or
+            ($skipVm -and ($target.Dcr -or $target.Associations.Count -gt 0))) { throw 'バックアップのCSV情報と作成対象が一致しません。' }
         $prefix = "/subscriptions/$($target.SubscriptionId)/"
         $resources = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
         foreach ($saved in $target.Diagnostics) {
             if (-not ([string]$saved.ResourceId).StartsWith($prefix,[StringComparison]::OrdinalIgnoreCase) -or
-                -not $resources.Add($saved.ResourceId) -or $saved.OldName -isnot [string] -or [string]::IsNullOrWhiteSpace($saved.OldName) -or $saved.OldName -eq $newDiagnosticSettingName -or
-                $saved.Before.workspaceId -ne $targetWorkspaceId -or -not $saved.After -or
-                -not ($saved.After.workspaceId -or $saved.After.storageAccountId)) { throw 'バックアップの診断設定の対象・名前・送信先が不正、または重複しています。' }
+                -not $resources.Add($saved.ResourceId) -or $saved.OldName -isnot [string] -or [string]::IsNullOrWhiteSpace($saved.OldName) -or
+                (-not $skipDiagnostics -and $saved.OldName -eq $newDiagnosticSettingName) -or $saved.Before.workspaceId -ne $targetWorkspaceId -or
+                ('After' -notin $saved.PSObject.Properties.Name) -or ($skipDiagnostics -and $null -ne $saved.After) -or
+                (-not $skipDiagnostics -and -not ($saved.After.workspaceId -or $saved.After.storageAccountId))) { throw 'バックアップの診断設定の対象・名前・送信先が不正、または重複しています。' }
         }
         $resources = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
         foreach ($saved in @($target.Storages) + @($target.Dcr | Where-Object { $null -ne $_ }) + @($target.Associations) + @($target.OldAssociations) + @($target.Exemptions)) {
@@ -766,7 +798,7 @@ function Read-MigrationBackup {
             if (-not $saved.Before.properties.dataCollectionRuleId -or $saved.Before.properties.dataCollectionRuleId -notin $backup.OldDcrIds -or
                 $saved.ResourceId -notmatch '^(.+)/providers/Microsoft.Insights/dataCollectionRuleAssociations/[^/]+$') { throw 'バックアップの旧DCR関連付けが不正です。' }
             $parentId = $Matches[1]
-            if (@($target.Associations | Where-Object { ($_.ResourceId -replace '/providers/Microsoft.Insights/dataCollectionRuleAssociations/[^/]+$','') -eq $parentId }).Count -ne 1) { throw '旧DCR関連の親リソースに、新DCR関連の保存情報がありません。' }
+            if (-not $skipVm -and @($target.Associations | Where-Object { ($_.ResourceId -replace '/providers/Microsoft.Insights/dataCollectionRuleAssociations/[^/]+$','') -eq $parentId }).Count -ne 1) { throw '旧DCR関連の親リソースに、新DCR関連の保存情報がありません。' }
         }
         Assert-DcrCutoverIds -OldDcrIds $backup.OldDcrIds -NewDcrIds @(if ($target.Dcr) { $dcrId }) -OldAssociations $target.OldAssociations -NewAssociationIds @($target.Associations.ResourceId)
         $ownExemptions = @(foreach ($assignment in $policyAssignments) { "/subscriptions/$($target.SubscriptionId)/providers/Microsoft.Authorization/policyExemptions/log-migration-$environment-$($assignment.Name)" })
@@ -775,7 +807,7 @@ function Read-MigrationBackup {
     }
     # --------------------------------------------------
     # CSVとの照合
-    # 確認・削除工程では、CSVの対象と送信先が保存済みの情報と一致することを確認する。
+    # 作業途中で送信先や省略指定が変わっていないか照合する。VM用の列がない旧CSV・旧記録はLogとして読む。
     # --------------------------------------------------
     if ($CheckCsv) {
         $rows = @(Import-Csv -LiteralPath $inputCsvPath -Encoding UTF8)
@@ -783,8 +815,10 @@ function Read-MigrationBackup {
         foreach ($row in $rows) {
             $saved = @($backup.Targets | Where-Object { $_.SubscriptionName -eq ([string]$row.SubscriptionName).Trim() })
             if ($saved.Count -ne 1) { throw 'CSVにバックアップ外のサブスクリプションがあります。' }
-            foreach ($key in @('SubscriptionName','ResourceGroup','StorageAccount','WorkspaceName','LogDestination')) {
-                if (([string]$row.$key).Trim() -ne [string]$saved[0].Routing.$key) { throw "CSVの$key がバックアップと一致しません。" }
+            foreach ($key in @('SubscriptionName','ResourceGroup','StorageAccount','WorkspaceName','LogDestination','VmLogDestination')) {
+                $currentValue = if ($key -eq 'VmLogDestination' -and $key -notin $row.PSObject.Properties.Name) { 'Log' } else { ([string]$row.$key).Trim() }
+                $savedValue = if ($key -eq 'VmLogDestination' -and $key -notin $saved[0].Routing.PSObject.Properties.Name) { 'Log' } else { [string]$saved[0].Routing.$key }
+                if ($currentValue -ne $savedValue) { throw "CSVの$key がバックアップと一致しません。" }
             }
         }
     }

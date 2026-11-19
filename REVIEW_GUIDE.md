@@ -1,30 +1,29 @@
 # 診断設定移行スクリプトの読み方・作業の進め方
 
 2026年11月19日（日本時間）時点の、主要6本をレビューするための説明資料です。
-現行6本はLinux PowerShell 7.5.4とWindows PowerShell 5.1.20348.5773で、それぞれ136ケース・1,162判定が成功しました。Azure実機ではLinux PowerShell 7.5.4から、途中停止・再開・全体/個別切戻しの10条件・50工程が成功しています。1,095日のテーブルAPI単独確認も完了しています。[検証結果と実測時間](test-results/READABILITY_REFACTOR.md)と[Azure実機10条件のCSV](test-results/readability-live-cases.csv)を参照してください。
-Windows VMの命令実行機能が停止したため、WindowsからのAzure実機確認は事前チェックとコピー部分までです。Windows 5.1の136ケースはAPI応答を再生する回帰試験で、Azure全工程をWindowsから完走した実績とは区別します。
-旧版のWindows 889判定・Azure 74実行・350診断設定の検証は履歴です。現行版の実績としては数えません。最後の54タイプの網羅・負荷テストは、主要6本の完成とユーザーレビュー後に実施します。
+送信先選択を追加した現行6本は、Linux PowerShell 7.5.4で185ケース・1,845判定が成功しました。同じ凍結版のWindows PowerShell 5.1再検証を実施中です。[今回のLinux確認結果](test-results/destination-selection-linux.json)を参照してください。
+過去のAzure実機10条件・50工程は、送信先選択を追加する前の版の実績です。今回のフラグをAzureへ適用した実績には数えません。最後の54タイプの網羅・負荷テストは、主要6本のユーザーレビュー後に実施します。
 
-コード内のコメントは区切り線付きで統一しました。処理ブロックは見出しと1〜2行、関数は引数・戻り値・重要な条件を数行で説明しています。[実行コードが変更されていないことの確認結果](test-results/readability-comments-review.json)も残しています。
+コメントは区切り線付きで統一し、処理ブロックの役割と、関数の引数・戻り値・重要な条件を短く説明しています。
 
 本文では、サブスクリプションを「Sub」、リソースグループを「RG」と略します。
 
 ## 1. この処理で何を移すのか
 
-「既存のログの収集条件を保ち、新しい送信設定を追加し、確認後に旧送信設定を外す」処理です。保存済みログをコピーする処理ではありません。
+診断設定とVM・VMSSのログ送信を、それぞれ新しい保存先へ移すか、送信を終了するか選びます。移す側は新設定を追加してから、送信を終了する側は新設定を作らず、最後の③で旧設定を外します。保存済みログはコピーしません。
 
 | 名前 | 意味・このスクリプトでの扱い |
 |---|---|
 | 移行元ワークスペース | 旧診断設定の宛先。このIDを持つ設定だけを選びます。変数名は `$targetWorkspaceId` ですが、指定するのは**移行元**です。 |
-| 新しい保存先 | CSVで指定するStorageまたはLog Analytics。新しい診断設定の宛先になります。 |
-| 診断設定 | 各Azureリソースに付く「何のログ・メトリックをどこへ送るか」という設定です。旧設定を残して新設定を追加します。 |
-| DCR | VM・VMSSから収集する内容と送信先の定義です。新DCRは原本どおりWindowsのApplication/Security/SystemとSyslogを収集します。 |
+| 新しい保存先 | RGとLog Analyticsは全行で準備します。Storage名を指定した行は、送信の選択に関係なく地域別Storageも準備します。 |
+| 診断設定 | 各Azureリソースに付く、ログ・メトリックの収集条件と送信先です。CSVの`LogDestination`で移行・終了を選びます。 |
+| DCR | VM・VMSSの収集内容と送信先の定義です。`VmLogDestination=Log`ではWindowsのApplication/Security/SystemとSyslogを新Log Analyticsへ送ります。 |
 | DCR関連付け | VM・VMSSとDCRを結ぶ別の設定です。指定した旧DCR 2本に関連する個体だけが新関連の対象です。 |
-| 適用除外 | 作業前に各Subへ置く3件のWaiverです。最初の2件は割り当て全体、3件目だけ指定12参照IDを除外します。 |
+| 適用除外 | 作業前に各Subへ置く3件のWaiverです。最初の2件は割り当て全体、3件目だけ指定12参照IDを除外します。送信終了後の旧設定の再適用も防ぎます。 |
 
 診断設定の対象判定とDCR関連の対象判定は別です。「旧診断だけあるVM」と「旧DCR関連だけあるVMSS」も、それぞれ該当する処理だけを受けます。指定外の診断設定・DCR関連は対象にしません。
 
-次の2つの経路を分けて読むと、診断設定とDCRを混同せずに追えます。①では旧経路を残して新経路を追加し、③で旧経路を外します。
+次の図は、診断設定とVMログの両方で新設定を作る場合です。`None`・空欄の側は新経路を追加せず、③で旧経路だけを外します。診断とVMの片方だけ、または両方の送信を終了できます。
 
 ```mermaid
 flowchart LR
@@ -38,7 +37,7 @@ flowchart LR
   end
 ```
 
-Storage行でも、VM・VMSS用の新DCRの送信先は新Log Analyticsです。①で追加するのはログの送信設定であり、過去のログデータを別の保存先へコピーする処理はありません。
+`VmLogDestination=Log`なら、VM・VMSS用の新DCRと新関連付け（DCRA）を用意します。両方を`None`・空欄にしても、保存先とWaiverは準備します。省略するのは新診断設定・新DCR・新DCRAだけです。旧VM・VMSS対象があれば、VMログを止める場合もEvent/Syslogの3年保持を準備します。
 
 ## 2. 6ファイルの関係
 
@@ -57,8 +56,8 @@ flowchart LR
 |---|---|
 | [common.ps1](migration/common.ps1) | 利用者設定 → 通信 → 対象探索 → 比較・結果記録 → DCR完成形 → バックアップ検査。単独では実行しません。 |
 | [precheck.ps1](migration/precheck.ps1) | CSV読込み → Subごとのポリシー確認 → 対象・名前・追加可能数の確認 → 結果CSV。 |
-| [step1_copy.ps1](migration/step1_copy.ps1) | CSV基本確認 → Subごとの再調査・変更前保存 → 適用除外 → 保存先/DCR準備 → 新診断設定の追加。 |
-| [step2_verify.ps1](migration/step2_verify.ps1) | ①の記録とCSV確認 → 現在の対象を再調査 → 保存先・関連・新診断設定の全件照合。Azureへの書込みはありません。 |
+| [step1_copy.ps1](migration/step1_copy.ps1) | CSV確認 → Subごとの再調査・変更前保存 → 適用除外 → 保存先を準備 → 有効な側の新設定を準備。 |
+| [step2_verify.ps1](migration/step2_verify.ps1) | ①の記録とCSV確認 → 現在の対象を再調査 → 保存先・保持設定と有効な側の新設定を照合し、省略側はOKを記録。Azureへの書込みはありません。 |
 | [step3_delete.ps1](migration/step3_delete.ps1) | 全CSV対象の再確認 → 全対象の旧DCR関連解除 → 旧診断設定削除。 |
 | [rollback.ps1](migration/rollback.ps1) | 全体/指定Subの確認 → 旧関連復元 → 旧診断設定復元 → 読戻し確認 → 今回の新側設定を元へ戻す。 |
 
@@ -122,49 +121,64 @@ $environment = "dev" # prod / stg / dev
 | CSV列 | 指定するもの |
 |---|---|
 | SubscriptionName | 対象SubのID。一意の名前も使えますが、IDなら名前変更や同名を避けられます。 |
-| ResourceGroup | 新しい保存先を用意するRG。移行対象リソースの所属RGを指定する列ではありません。 |
-| StorageAccount | 小文字英数字3〜24文字、`jpe`をちょうど1箇所含む名前。Log行は空欄可。 |
-| WorkspaceName | **新しい**Log Analytics名。Storage行でもVMログ用の保存先として準備します。 |
-| LogDestination | `Storage` または `Log`。 |
+| ResourceGroup | 全行で必須。保存先のRGで、移行対象リソースの所属RGではありません。 |
+| StorageAccount | `LogDestination=Storage`は必須。他の選択では空欄可。名前があれば全モードでStorageを準備します。小文字英数字3〜24文字で、`jpe`をちょうど1箇所含めます。 |
+| WorkspaceName | 全行で必須。新しいLog Analytics名。 |
+| LogDestination | 診断設定の選択。`Storage`・`Log`は新設定を作成、`None`・空欄は③で旧設定を外して送信終了。 |
+| VmLogDestination | VM・VMSSの選択。`Log`は新DCR・新DCRAを作成、`None`・空欄は③で旧関連を外して送信終了。 |
+
+`VmLogDestination`列がない旧CSVは、VMログを`Log`として扱います。列を追加して空欄にすると送信終了の指定になるため、列の有無を確認してください。
+
+| LogDestination | VmLogDestination | ③完了後の送信先 |
+|---|---|---|
+| Storage | Log | 診断はStorage、VMはLog Analytics。 |
+| Storage | None / 空欄 | 診断だけをStorageへ送信。VMの送信は終了。 |
+| Log | Log | 診断・VMともLog Analytics。 |
+| Log | None / 空欄 | 診断だけをLog Analyticsへ送信。VMの送信は終了。 |
+| None / 空欄 | Log | VMだけを新Log Analyticsへ送信。診断の送信は終了。 |
+| None / 空欄 | None / 空欄 | 両方の送信を終了。保存先とWaiverは準備する。 |
 
 ```csv
-SubscriptionName,ResourceGroup,StorageAccount,WorkspaceName,LogDestination
-11111111-1111-1111-1111-111111111111,rg-log-new-a,stexamplejpe01,log-new-a,Storage
-22222222-2222-2222-2222-222222222222,rg-log-new-b,,log-new-b,Log
+SubscriptionName,ResourceGroup,StorageAccount,WorkspaceName,LogDestination,VmLogDestination
+11111111-1111-1111-1111-111111111111,rg-log-new-a,stexamplejpe01,log-new-a,Storage,Log
+22222222-2222-2222-2222-222222222222,rg-log-new-b,,log-new-b,Log,None
+33333333-3333-3333-3333-333333333333,rg-log-new-c,,log-new-c,None,Log
+44444444-4444-4444-4444-444444444444,rg-log-new-d,stexamplejpe04,log-new-d,Storage,
+55555555-5555-5555-5555-555555555555,rg-log-new-e,stexamplejpe05,log-new-e,None,None
 ```
 
-Storageは対象リソースの実リージョン分だけ用意します。`jpe`部分だけをMicrosoft公開のAzure Naming Toolの略称に置換し、変換後の長さ・重複・利用可否も確認します。global/所在地なしは東日本です。Log行はリージョン別Storageを作りません。
+`StorageAccount`に名前があれば、`LogDestination`の選択に関係なく、旧診断対象のリージョンごとにStorageを用意します。旧診断対象が0件なら東日本に1つ用意します。`jpe`部分だけをMicrosoft公開のAzure Naming Toolの略称に置換し、変換後の長さ・重複・利用可否も確認します。global/所在地なしは東日本です。
 
 ## 4. 各工程で止まる位置・変更する位置
 
 ### 任意の事前チェックは前日にも使える独立した確認
 
-[事前チェックの本体](migration/precheck.ps1#L9)は、環境のポリシー割り当て・参照ID、現在の対象、新設定名、Storage名とStandard_ZRSの利用可否、診断設定の追加枠などを確認します。同名の新診断設定・Storageは初回事前チェックで停止します。
+[事前チェックの本体](migration/precheck.ps1#L9)は、環境のポリシー割り当て・参照IDと現在の旧設定を調べます。新設定を作る側は名前の衝突と追加枠を確認し、Storage名を指定した行は全モードで名前とStandard_ZRSの地域対応を確認します。省略する側の同名新設定は操作しません。
 Azureを変更せず、Beforeバックアップも作りません。既存の①バックアップも読み書きしません。前日の事前チェックが成功しても、当日の①は自分で現在値を調べ直します。
 
 ### ①はSubごとに「調査→保存→変更」
 
 [①のSubループ](migration/step1_copy.ps1#L61)を1周ずつ読むと順序を追えます。
 
-1. 現在の旧診断設定・旧DCR関連・リージョンを調査し、初回の同名衝突を確認します。
-2. 切戻しに必要な情報をVersion 3のJSONへ保存します。一時ファイルに完全に書いてから差し替え、保存できないSubへの書込みは始めません。
-3. 3件のWaiverを確認・作成し、必要なプロバイダーを登録します。
-4. RG、リージョン別Storage、新ワークスペースを準備します。旧DCR対象があればEvent/Syslog、新DCR、新関連も準備します。
-5. 準備が成功したSubだけ、新診断設定を追加して読み戻します。旧診断設定・旧DCR関連は残します。
+1. 現在の旧診断設定・旧DCR関連を調査します。新設定を作る側では同名衝突も確認します。
+2. 省略する側も含め、旧設定のBeforeをVersion 3のJSONへ保存します。保存できないSubへの書込みは始めません。
+3. 3件のWaiverを確認・作成し、保存先と有効な新設定に必要なプロバイダーを登録します。
+4. RG・ワークスペースを全行で準備し、Storage名があれば地域別Storageも準備します。旧VM・VMSS対象があればEvent/Syslogの3年保持を設定し、VMログが有効な場合に新DCR・新DCRAを用意します。
+5. 診断の移行先が有効なら新診断設定を追加して読み戻します。省略側は新設定を作らず、旧設定・旧関連は③まで残します。
 
 Subは順番に処理します。あるSubの準備に失敗しても他Subの処理は続く場合があり、最後に未完了一覧を出してエラー終了します。各Subの変更前保存は、そのSubの最初の変更より前です。
 保存済みBeforeは再実行でも上書きしません。新しく見つかった対象だけ追記します。保存済みの旧設定が消えた・内容が変わった場合は、古いBeforeのまま作業を進めず停止します。
-今回の記録にある新設定は完成形と一致すればスキップします。初めて扱う対象にある同名設定は再利用しません。保存先の不変の基礎構成が違う場合も上書きせず、手動対応へ回します。
+新設定を作る側は、今回の記録にある設定が期待値と一致すればスキップします。初めて扱う対象の同名設定や、基礎構成が異なる保存先は上書きせず、手動対応へ回します。保存した診断・VMの選択を途中で変更すると停止します。
 
 ### ②は手動修正後にも使う全件確認
 
-[②](migration/step2_verify.ps1#L30)は、現在のAzureと①の記録の両方を読みます。旧設定が既に削除済みでも、記録した全対象の新設定を確認します。記録外の旧対象の追加や設定変更は停止理由になります。
-保存先だけでなく、新診断の収集条件・宛先、新DCR・関連、保持設定、Waiverまで確認します。結果をCSVへ出すだけで、Azureは変更しません。
+[②](migration/step2_verify.ps1#L30)は、現在のAzureと①の記録を読み、保存先・保持設定・Waiverと、有効な側の新設定を確認します。旧VM・VMSS対象のEvent/Syslogは、VMログを省略する場合も3年保持を確認します。旧設定の削除後も記録した新設定を確認し、記録外の旧対象の追加や設定変更は停止理由になります。
+`None`・空欄の側は「新設定の作成を省略」としてOKを記録します。その側の新設定は要求せず、同名の無関係な設定も操作しません。結果をCSVへ出すだけで、Azureは変更しません。
 
 ### ③は全CSV対象の確認が通るまで削除しない
 
 [③の前半](migration/step3_delete.ps1#L30)は②に相当する確認です。実行時CSVの全Subを確認し、1件でも未完了なら最初のDELETEも行いません。
-確認後は、**全対象の旧DCR 2本への関連を解除してから、旧診断設定を削除**します。旧DCR本体は削除しません。削除直前も新旧設定を照合し、最初の削除失敗で以後の削除を止めます。
+確認後は、**全対象の旧DCR 2本への関連を解除してから、旧診断設定を削除**します。省略側も旧設定をBeforeと照合して削除し、ここでその側の送信を終了します。新設定を作った側は新旧を照合します。最初の削除失敗で以後を止め、旧DCR本体は残します。
 ③を途中から再実行する場合も全件確認をやり直し、既にない旧設定を除いて残りを処理します。
 
 ## 5. Beforeバックアップと結果CSVは別のもの
@@ -173,8 +187,8 @@ Subは順番に処理します。あるSubの準備に失敗しても他Subの�
 
 | JSON内の情報 | 何のために保存するか |
 |---|---|
-| 環境・移行元・新設定名・CSVの保存先指定 | 別の移行や異なる宛先の記録を誤って使わないため。 |
-| DiagnosticsのBefore / After | 旧診断設定を戻す内容と、新診断設定の完成形を区別するため。 |
+| 環境・移行元・新設定名・CSVの保存先と診断/VMの選択 | 別の移行や異なる選択の記録を誤って使わないため。途中の選択変更は拒否します。 |
+| DiagnosticsのBefore / After | Beforeは旧診断設定の復元用、Afterは新設定の期待値。`LogDestination=None`・空欄のAfterは`null`です。 |
 | 新DCR・新関連のBefore / After | 同じIDに以前から設定があった場合、切戻しで元の内容へ戻すため。 |
 | OldAssociationsのBefore | 指定した旧2DCRへの関連を、説明なども含めて復元するため。 |
 | StorageのID・名前・region、Waiverの既存有無 | 保存先を取り違えず、既存の適用除外を残すため。 |
@@ -199,8 +213,8 @@ $backup.Targets[0].Diagnostics | Select-Object ResourceId, OldName, Before, Afte
 | Event / Syslogテーブル | `totalRetentionInDays = 1095`をテーブル単位で明示設定。 | 既存テーブルはこの1項目だけPATCHし、分析保持期間・スキーマ・プランは維持。 |
 | ワークスペース既定値 | `retentionInDays = 365`のまま。 | Event/Syslog以外のテーブルを一律1,095日にはしない。 |
 
-テーブルの**合計1,095日には分析保持期間も含みます**。「分析期間＋さらに1,095日」ではありません。診断設定のログ・メトリック収集条件は旧設定を引き継ぎ、上記の保存先設定で保持期間を扱います。
-実装は [①Storageルール](migration/step1_copy.ps1#L353)、[①Workspace](migration/step1_copy.ps1#L402)、[①Event/Syslog](migration/step1_copy.ps1#L443)。②・③は値の一致を確認するだけです。
+保存先は送信を止める行でも準備します。Storage名があればLifecycleを設定し、旧VM・VMSS対象があればVMログの選択に関係なくEvent/Syslogを3年保持にします。テーブルの**合計1,095日には分析保持期間も含みます**。「分析期間＋さらに1,095日」ではありません。診断設定を移す場合の収集条件は旧設定を引き継ぎます。
+実装は [①Storageルール](migration/step1_copy.ps1#L356)、[①Workspace](migration/step1_copy.ps1#L405)、[①Event/Syslog](migration/step1_copy.ps1#L448)。②・③は値の一致を確認するだけです。
 AzureのAPI単独確認では、EventへのPUTと既存SyslogへのPATCHで合計1,095日を設定できることを確認しました。SyslogのPATCHでは分析保持30日・スキーマ・プランを維持し、Workspace既定値も365日のままでした。Eventは既存の組込テーブルとして応答しており、未存在テーブルの新規作成を確認した結果ではありません。事前チェック〜切戻しの通し確認とは別です。
 
 ## 7. 操作者の進め方と途中停止時の選択
@@ -222,7 +236,7 @@ Windows PowerShell 5.1とAzure CLIを用意し、Ownerとして`az login`済み�
 | ①途中・完了後 | 同じ変数・CSV・JSONを保持して①。次に②。事前チェックを再開用に使わない。 | ①のJSONを指定してrollback。 |
 | ③途中・完了後 | 同じ記録で②、全件確認後に③。旧設定の削除済みを考慮して再確認する。 | 同じrollbackで旧診断・旧DCR関連を復元。 |
 
-再開のために保存先や新設定名を変えません。対象を明示的に絞る場合はCSVの行を減らせますが、保存済みの各行の値は維持します。切戻しの対象選択はCSVではなく、次の引数で指定します。
+再開時は保存先・新設定名・診断とVMの選択を変えません。`LogDestination`・`VmLogDestination`を保存時から変えると停止します。対象を絞るためCSVの行を減らす場合も、残す行の値は維持します。切戻しの対象選択はCSVではなく、次の引数で指定します。
 引数なしは**①のJSONにある全Sub**を戻します。以下は選択肢であり、順番に両方実行する手順ではありません。
 
 ```powershell
@@ -234,7 +248,7 @@ Windows PowerShell 5.1とAzure CLIを用意し、Ownerとして`az login`済み�
 
 切戻しの基準は**各対象を①で最初に変更する直前**です。事前チェックは確認だけなので事前チェック実行時のスナップショットへ戻す処理ではありません。
 [rollbackの復元順](migration/rollback.ps1#L117)は旧DCR関連の全件復元・読戻し→旧診断設定復元・読戻し→新側の後片付けです。復元失敗時は新診断設定を残して停止し、同名の異なる設定を上書き・削除しません。
-Storage・Log Analytics・保存済みログ・新規DCR本体は残します。保存先の保持設定も切戻し対象ではありません。以前からあった新側DCR/関連はBeforeへ戻し、今回追加した関連と新診断を外します。既存Waiverは保持し、今回新設したWaiverだけを明示的な切戻し時に削除します。通常の事前チェック〜③ではWaiverを自動削除しません。
+省略した側も旧診断設定・旧DCR関連をBeforeから復元します。その側にある同名の無関係な新設定は操作しません。Storage・Log Analytics・保存済みログ・新規DCR本体と保持設定は残します。移行で変更した既存DCR/関連はBeforeへ戻し、今回追加した関連と新診断を外します。既存Waiverは保持し、今回新設したWaiverだけを切戻し時に削除します。通常の①〜③ではWaiverを残します。
 
 ## 8. PowerShellを読むための最小限の見方
 
@@ -248,7 +262,7 @@ Storage・Log Analytics・保存済みログ・新規DCR本体は残します。
 | `continue` / `throw` | 今の1件を終えて次へ / エラーとして処理を止める。catchがあればそこで記録する。 |
 | `$null = ...` / 行末のバッククォート | 戻り値を画面へ出さない / 次の行も同じ命令の続き。 |
 
-次は読解用の実コード抜粋です。[①の新対象追加](migration/step1_copy.ps1#L102)では、既に記録がある対象を飛ばし、初めての対象に同名新設定があれば止めます。
+次は読解用の抜粋です。[①の新対象追加](migration/step1_copy.ps1#L104)では、既に記録がある対象を飛ばします。次の同名衝突確認は診断の新設定を作る側に適用し、省略側の同名設定は対象にしません。
 
 ```powershell
 foreach ($plan in $target.DiagnosticPlans) {
@@ -258,7 +272,7 @@ foreach ($plan in $target.DiagnosticPlans) {
 }
 ```
 
-[①のBlob設定](migration/step1_copy.ps1#L338)の次の表は「propertiesの中のisVersioningEnabledをtrueにする」という期待値です。`@{}`は項目名で値を取り出せる表、`@()`は順番に取り出せる複数値、と読み分けます。
+[①のBlob設定](migration/step1_copy.ps1#L341)の次の表は「propertiesの中のisVersioningEnabledをtrueにする」という期待値です。`@{}`は項目名で値を取り出せる表、`@()`は順番に取り出せる複数値、と読み分けます。
 
 ```powershell
 $expected = @{ properties = @{ isVersioningEnabled = $true } }
@@ -286,10 +300,10 @@ Sub全体は順番に処理します。[共通のバッチ処理](migration/comm
 | 確認したい要件 | 読むコード | テストの例 |
 |---|---|---|
 | 事前チェックは独立・Before不要 | [事前チェック](migration/precheck.ps1#L9) | [backup-rollback](tests/backup-rollback-smoke.ps1#L519)：既存の①backupを読まず確認。 |
-| 各Subの変更前に保存・保存失敗なら書込み0 | [①保存](migration/step1_copy.ps1#L188) | [backup-rollback](tests/backup-rollback-smoke.ps1#L444)、[保存失敗](tests/backup-rollback-smoke.ps1#L786)。 |
-| Before不変・再開・新対象追記 | [①再開](migration/step1_copy.ps1#L80) | [backup-rollback](tests/backup-rollback-smoke.ps1#L530)、[後日追加region](tests/regression.ps1#L711)。 |
-| 初回衝突停止・自分の一致済み設定skip | [①名前](migration/step1_copy.ps1#L102)、[①複製](migration/step1_copy.ps1#L561) | [regression](tests/regression.ps1#L696)、[一致済み再実行](tests/baseline-smoke.ps1#L215)。 |
-| 全件成功後に旧関連→旧診断を削除 | [③](migration/step3_delete.ps1#L237) | [後続Sub不備で全DELETE0](tests/backup-rollback-smoke.ps1#L821)、[旧2本だけ解除](tests/dcr-cutover-smoke.ps1#L380)。 |
+| 各Subの変更前に保存・保存失敗なら書込み0 | [①保存](migration/step1_copy.ps1#L190) | [backup-rollback](tests/backup-rollback-smoke.ps1#L444)、[保存失敗](tests/backup-rollback-smoke.ps1#L786)。 |
+| Before不変・再開・新対象追記 | [①再開](migration/step1_copy.ps1#L81) | [backup-rollback](tests/backup-rollback-smoke.ps1#L530)、[後日追加region](tests/regression.ps1#L711)。 |
+| 初回衝突停止・自分の一致済み設定skip | [①名前](migration/step1_copy.ps1#L104)、[①複製](migration/step1_copy.ps1#L572) | [regression](tests/regression.ps1#L696)、[一致済み再実行](tests/baseline-smoke.ps1#L215)。 |
+| 全件成功後に旧関連→旧診断を削除 | [③](migration/step3_delete.ps1#L244) | [後続Sub不備で全DELETE0](tests/backup-rollback-smoke.ps1#L821)、[旧2本だけ解除](tests/dcr-cutover-smoke.ps1#L380)。 |
 | 復元を先に完了・指定外Sub保持 | [rollback](migration/rollback.ps1#L117) | [復元順序](tests/backup-rollback-smoke.ps1#L617)、[Sub選択](tests/backup-rollback-smoke.ps1#L645)。 |
-| 1,095日・既存分析保持・別名ルール保持 | [①保持設定](migration/step1_copy.ps1#L353) | [総保持だけ補完](tests/baseline-smoke.ps1#L398)、[旧365ルール置換](tests/baseline-smoke.ps1#L520)。 |
+| 1,095日・既存分析保持・別名ルール保持 | [①保持設定](migration/step1_copy.ps1#L356) | [総保持だけ補完](tests/baseline-smoke.ps1#L398)、[旧365ルール置換](tests/baseline-smoke.ps1#L520)。 |
 | 最大5ジョブ・終了時に回収 | [共通バッチ](migration/common.ps1#L213) | [0/1件と上限5](tests/regression.ps1#L426)、[起動失敗](tests/regression.ps1#L489)。 |

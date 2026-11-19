@@ -35,7 +35,7 @@ catch {
 # --------------------------------------------------
 # 旧設定の調査と保存済み対象の補完
 # 現在の旧診断設定・旧DCR関連を調べ、残っている設定をバックアップと比較する。
-# 削除済みの対象も確認するため、収集対象と保存先をバックアップから補う。
+# 旧設定が削除済みでも同じ保存先を確認するため、収集対象と保存先はバックアップの一覧を使う。
 # --------------------------------------------------
 $targets = @(Get-MigrationTargets)
 foreach ($target in $targets) {
@@ -57,6 +57,7 @@ try {
             if ($original.Count -ne 1 -or $original[0].Before.properties.dataCollectionRuleId -ne $association.Before.properties.dataCollectionRuleId) { throw "バックアップ外、または参照先が変わった旧DCR関連です: $($association.ResourceId)" }
         }
         $target.Collectors = $savedCollectors
+        $target.Storages.Clear()
         foreach ($storage in $saved.Storages) { $target.Storages[$storage.Location] = $storage }
     }
 }
@@ -90,7 +91,7 @@ foreach ($target in $targets) {
 
         # --------------------------------------------------
         # プロバイダー登録の確認
-        # 利用するリソースプロバイダーが登録済みか確認する。
+        # 送信を止める場合も、保存先に必要なプロバイダーの確認は省略しない。
         # --------------------------------------------------
         $namespaces = @('Microsoft.OperationalInsights', 'Microsoft.Insights')
         if ($target.Storages.Count -gt 0) { $namespaces += @('Microsoft.Storage', 'Microsoft.Security') }
@@ -106,13 +107,13 @@ foreach ($target in $targets) {
 
         # --------------------------------------------------
         # リソースグループの確認
-        # 移行先のリソースグループが存在するか確認する。
+        # 送信指定にかかわらず、保存先のリソースグループが存在するか確認する。
         # --------------------------------------------------
         Confirm-MigrationResource -Target $target -ResourceId $groupId -ApiVersion '2022-09-01' -Expected @{} -Stage 'リソースグループ'
 
         # --------------------------------------------------
         # Storageアカウントの照合
-        # 保存先ごとに、地域・ZRS・暗号化・不変ストレージ・ネットワーク設定を照合する。
+        # 送信指定にかかわらず、指定された保存先の地域・ZRS・暗号化・ネットワーク設定を照合する。
         # --------------------------------------------------
         foreach ($storagePlan in @($target.Storages.Values | Sort-Object Name)) {
             $expected = @{
@@ -165,7 +166,7 @@ foreach ($target in $targets) {
 
         # --------------------------------------------------
         # Log Analyticsの照合
-        # 地域・保持期間365日・公開アクセス・権限設定を照合する。
+        # 保存先は省略しない。送信を止める場合も保持期間365日などを照合する。
         # --------------------------------------------------
         $expected = @{
             location = $location
@@ -178,9 +179,9 @@ foreach ($target in $targets) {
 
         # --------------------------------------------------
         # Event・Syslogテーブルの照合
-        # VMログの収集対象があれば、両テーブルの総保持期間が1095日の明示設定か確認する。
+        # 保存済みの旧VM対象があれば、送信を止める場合も総保持期間1095日を確認する。
         # --------------------------------------------------
-        if ($target.Collectors.Count -gt 0) {
+        if ($savedTarget.OldAssociations.Count -gt 0) {
             foreach ($name in @('Event','Syslog')) {
                 $resourceId = "$($target.WorkspaceId)/tables/$name"
                 $expected = @{ properties = @{ schema = @{ name = $name }; provisioningState = 'Succeeded'; totalRetentionInDays = 1095 } }
@@ -194,11 +195,12 @@ foreach ($target in $targets) {
                 }
                 catch { Add-MigrationFailure -Target $target -ResourceId $resourceId -Stage 'VMログテーブル' -Message $_.Exception.Message -Expected $expected }
             }
-            # --------------------------------------------------
-            # 新DCRと関連付けの照合
-            # 新DCRの収集条件・送信先・作成完了状態を照合する。
-            # 保存済みの各VM・VMSSに、新DCRへの関連があるか確認する。
-            # --------------------------------------------------
+        }
+        # --------------------------------------------------
+        # 新DCRと関連付けの照合
+        # VMログ送信を続ける対象だけ、新DCRの収集条件・送信先と各VM・VMSSの関連を照合する。
+        # --------------------------------------------------
+        if ($target.Collectors.Count -gt 0) {
             $body = Get-MigrationDcrBody -Target $target
             $expected = @{ location = $body.location; properties = $body.properties.Clone() }
             $expected.properties.provisioningState = 'Succeeded'
@@ -219,9 +221,14 @@ foreach ($target in $targets) {
 
         # --------------------------------------------------
         # 新診断設定の全件照合
-        # 旧設定が削除済みの対象も含め、保存済み全対象の収集条件・送信先を照合する。
+        # 旧設定が削除済みの対象も含め、新診断設定の収集条件・送信先を照合する。
+        # 作成しない指定は、既存の同名設定を照合せず省略をOKで記録する。
         # --------------------------------------------------
         foreach ($saved in $savedTarget.Diagnostics) {
+            if ($null -eq $saved.After) {
+                Add-MigrationCheck -Target $target -ResourceId $saved.ResourceId -Stage '診断設定の全件確認' -Success $true -Message 'ログ送信停止指定のため、新診断設定の作成・照合を省略' -Expected $null
+                continue
+            }
             $settings = @($target.CurrentSettings[$saved.ResourceId] | Where-Object { $_.name -eq $newDiagnosticSettingName })
             $matched = $settings.Count -eq 1 -and (Get-DiagnosticSignature $settings[0]) -ceq (Get-DiagnosticSignature $saved.After)
             $message = if ($matched) { '新設定がバックアップの完成形と一致' } else { '新設定が存在しないか、収集条件・送信先が一致しません。旧設定は削除できません。' }
@@ -239,22 +246,24 @@ if ($script:failures.Count -gt 0) { Complete-MigrationStep -Step 'delete' -Inclu
 # --------------------------------------------------
 # 旧DCR関連の削除
 # 全サブスクリプションの旧関連を順に削除し、削除済みの関連は飛ばす。
-# 削除直前に旧関連の保存内容と新DCRへの関連を確認し、失敗した時点で終了する。
+# 旧関連は保存内容と照合し、VM送信を続ける場合だけ新関連も確認する。失敗時は終了する。
 # --------------------------------------------------
 foreach ($target in $targets) {
     $subscriptionId = $target.SubscriptionId
     $savedTarget = @($backup.Targets | Where-Object SubscriptionId -eq $subscriptionId)[0]
-    $dcrName = $target.WorkspaceName -replace '^log','dcr'
     foreach ($saved in $savedTarget.OldAssociations) {
         try {
             $current = Get-RollbackBody (Get-OptionalArmResource -ResourceId $saved.ResourceId) -Association -RequireReady
             if (-not $current) { continue }
             if (-not ((Test-BaselineValues $current $saved.Before) -and (Test-BaselineValues $saved.Before $current))) { throw '旧DCR関連が事前確認時から変わっています。' }
-            $parentId = $saved.ResourceId -replace '/providers/Microsoft.Insights/dataCollectionRuleAssociations/[^/]+$',''
-            $newId = "$parentId/providers/Microsoft.Insights/dataCollectionRuleAssociations/$dcrName"
-            $expected = @{ properties = @{ dataCollectionRuleId = $savedTarget.Dcr.ResourceId } }
-            $new = Get-RollbackBody (Get-OptionalArmResource -ResourceId $newId) -Association -RequireReady
-            if (-not (Test-BaselineValues $new $expected)) { throw '解除直前の新DCR関連が完成形と一致しません。' }
+            if (-not $target.SkipVm) {
+                $dcrName = $target.WorkspaceName -replace '^log','dcr'
+                $parentId = $saved.ResourceId -replace '/providers/Microsoft.Insights/dataCollectionRuleAssociations/[^/]+$',''
+                $newId = "$parentId/providers/Microsoft.Insights/dataCollectionRuleAssociations/$dcrName"
+                $expected = @{ properties = @{ dataCollectionRuleId = $savedTarget.Dcr.ResourceId } }
+                $new = Get-RollbackBody (Get-OptionalArmResource -ResourceId $newId) -Association -RequireReady
+                if (-not (Test-BaselineValues $new $expected)) { throw '解除直前の新DCR関連が完成形と一致しません。' }
+            }
             $null = Invoke-ArmRequest -Method Delete -ResourceId $saved.ResourceId
             Write-Host "旧DCR関連解除OK: $($saved.ResourceId)"
         }
@@ -268,17 +277,19 @@ foreach ($target in $targets) {
 # --------------------------------------------------
 # 旧診断設定の削除
 # 旧関連をすべて削除した後、調査時に残っていた旧診断設定を順に削除する。
-# 削除直前に新旧両設定を再取得し、収集条件・送信先が調査時の内容と一致するか確認する。
+# 旧設定は必ず照合し、診断ログ送信を続ける場合だけ新設定も照合する。
 # --------------------------------------------------
 foreach ($target in $targets) {
     $subscriptionId = $target.SubscriptionId
     foreach ($plan in $target.DiagnosticPlans) {
         try {
             $settings = @(Get-DiagnosticSettings -ResourceId $plan.ResourceId)
-            foreach ($check in @(
-                @{ Name = $newDiagnosticSettingName; Signature = $plan.NewSignature },
-                @{ Name = $plan.SourceName; Signature = $plan.SourceSignature }
-            )) {
+            $checks = @()
+            if (-not $target.SkipDiagnostics) {
+                $checks += @{ Name = $newDiagnosticSettingName; Signature = $plan.NewSignature }
+            }
+            $checks += @{ Name = $plan.SourceName; Signature = $plan.SourceSignature }
+            foreach ($check in $checks) {
                 $current = @($settings | Where-Object { $_.name -eq $check.Name })
                 if ($current.Count -ne 1 -or (Get-DiagnosticSignature -Setting $current[0]) -cne $check.Signature) {
                     throw "削除直前に設定が変更されています。以降の削除を中止します: $($check.Name)"

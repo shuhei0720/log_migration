@@ -1,27 +1,27 @@
 [
   {
     "path": "migration/common.ps1",
-    "sha256": "801020c34d477459597a633e233e642e5ddacd14302a87105cec40f41dde48c8"
+    "sha256": "64d7081922b05b2f5faba43c1d4ef2110aa2f902285bbb6c1cfbded32d18baee"
   },
   {
     "path": "migration/precheck.ps1",
-    "sha256": "015d71c602559f9a4335f0bc99a9dff28724c30e9e57d4aeda8ab96d6bf72e01"
+    "sha256": "29c5796f390da65212a6cb1944bfc94341e1da2f6d4aa6b461dfaf792561d988"
   },
   {
     "path": "migration/step1_copy.ps1",
-    "sha256": "7b582307ccc57d11ba9a72929455d437438648cf5dca0b59c48a3f634e945658"
+    "sha256": "ff7de0b65b2a2bfd8e7ad6105fb0480ea81ce5613883dd924ad0e8e17b680e0f"
   },
   {
     "path": "migration/step2_verify.ps1",
-    "sha256": "b6fd05a78099d53fee1647b2736eebabf037cea690710eb245c867ca622bd241"
+    "sha256": "7bcdaf1bdfceca65f1f8d724c2279a90afa5b72052d04c6b58e3f692e4565abd"
   },
   {
     "path": "migration/step3_delete.ps1",
-    "sha256": "003996a000a649ca86a7972832fc31758915668e611a79a3d426a4b358bdb7f9"
+    "sha256": "66bffc6be25c2860a3a827e71cfad0ca3f69b208d99e20508d0bfa4d3d59d360"
   },
   {
     "path": "migration/rollback.ps1",
-    "sha256": "f62c01f7e1e01ca054047bc1a48b0fd88db9e10bf9bb2cdad2d445e7c9dc98c9"
+    "sha256": "65d400dde62cefd3661ccc3e52c30340bf2c3a6606fdf101b890db7f8893ba7e"
   },
   {
     "path": "tests/regression.ps1",
@@ -41,7 +41,7 @@
   },
   {
     "path": "tests/dcr-cutover-smoke.ps1",
-    "sha256": "cc207612bf27029f504b9c7d7c5555ee135942548746a37376306decb6e53ab7"
+    "sha256": "eb67232c4f694356aa0f83c9a256468e6c06f49bef420a89a9ccb2648eae9e98"
   },
   {
     "path": "tests/fixtures/baseline-shapes/dcr.json",

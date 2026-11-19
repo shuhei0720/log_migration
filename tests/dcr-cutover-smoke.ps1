@@ -2,6 +2,8 @@
 param([string]$Repository=(Join-Path (Split-Path -Parent $PSScriptRoot) 'migration'),[string]$ReportPath,[switch]$PassThru)
 $ErrorActionPreference='Stop'
 . (Join-Path $Repository 'common.ps1')
+$script:selectionProductionTargets=(Get-Item function:Get-MigrationTargets).ScriptBlock
+$script:selectionProductionPlan=(Get-Item function:Get-MigrationPlan).ScriptBlock
 $script:cutoverChecks=0
 $script:cutoverCases=[Collections.Generic.List[object]]::new()
 $script:sub1='11111111-1111-1111-1111-111111111111';$script:sub2='22222222-2222-2222-2222-222222222222';$script:outside='33333333-3333-3333-3333-333333333333'
@@ -92,6 +94,108 @@ Invoke-GetterCase '新旧DCR・関連ID衝突だけを停止' {
         Assert-Cutover $failed '大文字小文字だけ異なる衝突も停止'
     }
 }
+# --------------------------------------------------
+# CSVの作成対象選択を実際の読込関数で確認する
+# Azure CLIは対象Sub一覧、HTTPは地域略称だけを返し、設定変更の呼出しを許可しない。
+# --------------------------------------------------
+& {
+    $inputCsvPath=Join-Path ([IO.Path]::GetTempPath()) ('migration-selection-'+[guid]::NewGuid().ToString('N')+'.csv')
+    $productionGetTargets=(Get-Item function:Get-MigrationTargets).ScriptBlock
+    function Invoke-AzJson {
+        param([string[]]$Arguments)
+        if(($Arguments -join '/') -ne 'account/list/--all'){throw 'CSV選択試験で想定外のCLI呼出し'}
+        foreach($sub in @($script:sub1,$script:sub2)){[pscustomobject]@{id=$sub;name=$sub}}
+    }
+    function Invoke-RestMethod {
+        param([string]$Uri,[int]$TimeoutSec)
+        if($Uri -ne $regionNamesUrl){throw 'CSV選択試験で想定外のHTTP呼出し'}
+        $script:selectionRegionReads++
+        Write-Output -NoEnumerate @([pscustomobject]@{name='japaneast';shortName='jpe'})
+    }
+    try {
+        foreach($diagnosticDestination in @('Storage','Log','None','')) {
+            foreach($vmDestination in @('Log','None','')) {
+                Invoke-GetterCase "CSV選択 診断[$diagnosticDestination] VM[$vmDestination]" {
+                    $script:failures.Clear();$script:verificationResults.Clear();$script:selectionRegionReads=0
+                    [pscustomobject][ordered]@{
+                        SubscriptionName=$script:sub1;ResourceGroup='rg-target';StorageAccount='stjpetest1'
+                        WorkspaceName='log-new1';LogDestination=$diagnosticDestination;VmLogDestination=$vmDestination
+                    } | Export-Csv -LiteralPath $inputCsvPath -NoTypeInformation -Encoding UTF8
+                    $parsed=@(& $productionGetTargets)
+                    Assert-Cutover ($parsed.Count -eq 1 -and $script:failures.Count -eq 0) '選択値を含むCSVの1行を取得'
+                    Assert-Cutover ($parsed[0].SkipDiagnostics -eq ($diagnosticDestination -in @('None',''))) '診断設定の省略指定'
+                    Assert-Cutover ($parsed[0].SkipVm -eq ($vmDestination -in @('None',''))) 'VMログの省略指定'
+                    Assert-Cutover ($parsed[0].LogDestination -ceq $diagnosticDestination -and $parsed[0].VmLogDestination -ceq $vmDestination) '空欄とNoneを入力どおり保持'
+                    Assert-Cutover ($parsed[0].DiagnosticPlans.Count -eq 0 -and $parsed[0].Collectors.Count -eq 0 -and $parsed[0].OldAssociations.Count -eq 0) '対象一覧の初期値は0件'
+                    Assert-Cutover ($script:selectionRegionReads -eq 1) 'Storage名があれば送信指定にかかわらず地域略称を取得'
+                }
+            }
+        }
+        foreach($legacyDestination in @('Storage','Log','None')) {
+            Invoke-GetterCase "旧5列CSV [$legacyDestination]はVMログを有効にする" {
+                $script:failures.Clear();$script:verificationResults.Clear();$script:selectionRegionReads=0
+                [pscustomobject][ordered]@{
+                    SubscriptionName=$script:sub1;ResourceGroup='rg-target';StorageAccount='stjpetest1'
+                    WorkspaceName='log-new1';LogDestination=$legacyDestination
+                } | Export-Csv -LiteralPath $inputCsvPath -NoTypeInformation -Encoding UTF8
+                $parsed=@(& $productionGetTargets)
+                Assert-Cutover ($parsed.Count -eq 1 -and $script:failures.Count -eq 0) '旧CSVをそのまま読める'
+                Assert-Cutover (-not $parsed[0].SkipVm -and $parsed[0].VmLogDestination -ceq 'Log') '列省略時はVMログを有効にする'
+            }
+        }
+        foreach($valid in @(
+            @{Name='前後空白と大小文字';Destination=' lOg ';Vm=' nOnE ';Group=' rg-target ';Storage='';Workspace=' log-new1 ';SkipDiagnostics=$false;SkipVm=$true},
+            @{Name='StorageのみでもWorkspaceを指定';Destination='Storage';Vm='None';Group='rg-target';Storage='stjpetest1';Workspace='log-new1';SkipDiagnostics=$false;SkipVm=$true},
+            @{Name='LogのみではStorage不要';Destination='Log';Vm='';Group='rg-target';Storage='';Workspace='log-new1';SkipDiagnostics=$false;SkipVm=$true},
+            @{Name='VMのみでも指定Storage名を保持';Destination='None';Vm='Log';Group='rg-target';Storage='stjpetest1';Workspace='log-new1';SkipDiagnostics=$true;SkipVm=$false},
+            @{Name='両方省略でも保存先を指定';Destination='';Vm='None';Group='rg-target';Storage='stjpetest1';Workspace='log-new1';SkipDiagnostics=$true;SkipVm=$true}
+        )) {
+            Invoke-GetterCase "CSV選択 $($valid.Name)" {
+                $script:failures.Clear();$script:verificationResults.Clear();$script:selectionRegionReads=0
+                [pscustomobject][ordered]@{
+                    SubscriptionName=$script:sub1;ResourceGroup=$valid.Group;StorageAccount=$valid.Storage
+                    WorkspaceName=$valid.Workspace;LogDestination=$valid.Destination;VmLogDestination=$valid.Vm
+                } | Export-Csv -LiteralPath $inputCsvPath -NoTypeInformation -Encoding UTF8
+                $parsed=@(& $productionGetTargets)
+                Assert-Cutover ($parsed.Count -eq 1 -and $script:failures.Count -eq 0) '保存先を指定したCSVを受け付ける'
+                Assert-Cutover ($parsed[0].SkipDiagnostics -eq $valid.SkipDiagnostics -and $parsed[0].SkipVm -eq $valid.SkipVm) '空白除去後の選択結果'
+                Assert-Cutover ($parsed[0].LogDestination -ceq $valid.Destination.Trim() -and $parsed[0].VmLogDestination -ceq $valid.Vm.Trim()) '入力文字列は前後空白だけを除去'
+                Assert-Cutover (($script:selectionRegionReads -eq 1) -eq [bool]$valid.Storage) 'Storage欄に名前がある場合だけ地域略称を取得'
+            }
+        }
+        foreach($invalid in @(
+            @{Name='不正な診断宛先';Destination='EventHub';Vm='Log';Group='rg-target';Storage='stjpetest1';Workspace='log-new1';Sub=$script:sub1;Reason='LogDestination'},
+            @{Name='VMのStorage指定';Destination='Log';Vm='Storage';Group='rg-target';Storage='';Workspace='log-new1';Sub=$script:sub1;Reason='VmLogDestination'},
+            @{Name='VMの不正フラグ';Destination='None';Vm='false';Group='rg-target';Storage='';Workspace='log-new1';Sub=$script:sub1;Reason='VmLogDestination'},
+            @{Name='Sub空欄';Destination='None';Vm='None';Group='';Storage='';Workspace='';Sub=' ';Reason='SubscriptionName'},
+            @{Name='有効側のRG空欄';Destination='None';Vm='Log';Group='';Storage='';Workspace='log-new1';Sub=$script:sub1;Reason='ResourceGroup'},
+            @{Name='VM用Workspace空欄';Destination='None';Vm='Log';Group='rg-target';Storage='';Workspace='';Sub=$script:sub1;Reason='WorkspaceName'},
+            @{Name='Log診断用Workspace空欄';Destination='Log';Vm='None';Group='rg-target';Storage='';Workspace='';Sub=$script:sub1;Reason='WorkspaceName'},
+            @{Name='Storage診断用名前空欄';Destination='Storage';Vm='None';Group='rg-target';Storage='';Workspace='log-new1';Sub=$script:sub1;Reason='StorageAccount'},
+            @{Name='両方省略のRG空欄';Destination='None';Vm='None';Group='';Storage='';Workspace='log-new1';Sub=$script:sub1;Reason='ResourceGroup'},
+            @{Name='両方省略のWorkspace空欄';Destination='None';Vm='None';Group='rg-target';Storage='';Workspace='';Sub=$script:sub1;Reason='WorkspaceName'},
+            @{Name='省略側の不正Storage名';Destination='None';Vm='None';Group='rg-target';Storage='INVALID-NAME';Workspace='log-new1';Sub=$script:sub1;Reason='StorageAccount'},
+            @{Name='Log側の不正Storage名';Destination='Log';Vm='Log';Group='rg-target';Storage='INVALID-NAME';Workspace='log-new1';Sub=$script:sub1;Reason='StorageAccount'}
+        )) {
+            Invoke-GetterCase "CSV選択 $($invalid.Name)を拒否" {
+                $script:failures.Clear();$script:verificationResults.Clear();$script:selectionRegionReads=0
+                [pscustomobject][ordered]@{
+                    SubscriptionName=$invalid.Sub;ResourceGroup=$invalid.Group;StorageAccount=$invalid.Storage
+                    WorkspaceName=$invalid.Workspace;LogDestination=$invalid.Destination;VmLogDestination=$invalid.Vm
+                } | Export-Csv -LiteralPath $inputCsvPath -NoTypeInformation -Encoding UTF8
+                $parsed=@(& $productionGetTargets)
+                Assert-Cutover ($parsed.Count -eq 0 -and $script:failures.Count -eq 1) '入力不正は対象を返さずNGにする'
+                Assert-Cutover ($script:failures[0].Reason -match [regex]::Escape($invalid.Reason)) '問題の入力列をNG理由に含める'
+                Assert-Cutover ($script:selectionRegionReads -eq 0) '入力不正では地域略称を取得しない'
+            }
+        }
+    }
+    finally {
+        $script:failures.Clear();$script:verificationResults.Clear()
+        if(Test-Path -LiteralPath $inputCsvPath){Remove-Item -LiteralPath $inputCsvPath -Force}
+    }
+}
+
 # 切り戻しの状態fixtureを再利用し、旧関連の復元順序を確認します。
 $oldTokens=$null;$oldErrors=$null
 $fixtureAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot 'backup-rollback-smoke.ps1'),[ref]$oldTokens,[ref]$oldErrors)
@@ -557,6 +661,351 @@ try{
         Assert-NoAzureWrites
     }
     $script:cutoverCases.Add([pscustomobject]@{Case='後から収集対象になったSubのDCRは最初に変更する直前のBeforeを保存する';Result='PASS';Assertions=$script:checks+$script:cutoverChecks-$before})
+    # --------------------------------------------------
+    # CSVの選択を実際の探索と各工程へ通す
+    # 外部通信だけを状態fixtureへ置き換え、作成・確認・削除・切戻しは本体を実行する。
+    # --------------------------------------------------
+    & {
+        $script:selectionFixtureCli=(Get-Item function:Invoke-AzJson).ScriptBlock
+        $script:selectionFixtureArm=(Get-Item function:Invoke-ArmRequest).ScriptBlock
+        function Invoke-AzJson {
+            param([string[]]$Arguments)
+            if(($Arguments -join '/') -eq 'account/list/--all') {
+                foreach($sub in $script:subs){[pscustomobject]@{id=$sub;name=$sub}}
+                return
+            }
+            if($Arguments[0] -eq 'resource' -and $Arguments[1] -eq 'list') {
+                $sub=$Arguments[[array]::IndexOf($Arguments,'--subscription')+1]
+                foreach($id in @($script:diagnostics.Keys | Sort-Object)) {
+                    if($id.StartsWith("/subscriptions/$sub/")){[pscustomobject]@{id=$id;type='Microsoft.Test/widgets';location=$script:selectionResourceLocation}}
+                }
+                return
+            }
+            if(($Arguments[0..2] -join '/') -eq 'storage/sku/list') {
+                return [pscustomobject]@{name='Standard_ZRS';kind='StorageV2';locations=@('japaneast','japanwest','canadacentral')}
+            }
+            if(($Arguments[0..3] -join '/') -eq 'monitor/log-analytics/workspace/create') {
+                $sub=$Arguments[[array]::IndexOf($Arguments,'--subscription')+1]
+                $group=$Arguments[[array]::IndexOf($Arguments,'--resource-group')+1]
+                $name=$Arguments[[array]::IndexOf($Arguments,'--workspace-name')+1]
+                $resourceId="/subscriptions/$sub/resourceGroups/$group/providers/Microsoft.OperationalInsights/workspaces/$name"
+                if(-not $script:selectionDestinationTemplates.ContainsKey($resourceId)){throw "未知のLA作成: $resourceId"}
+                $script:writes.Add([pscustomobject]@{ResourceId=$resourceId;Method='Create';Body=$null})
+                Assert-BackupBeforeWrite -ResourceId $resourceId
+                $script:resources[$resourceId]=Copy-TestValue $script:selectionDestinationTemplates[$resourceId]
+                return Copy-TestValue $script:resources[$resourceId]
+            }
+            & $script:selectionFixtureCli @PSBoundParameters
+        }
+        function Invoke-RestMethod {
+            param([string]$Uri,[int]$TimeoutSec)
+            if($Uri -ne $regionNamesUrl){throw '選択工程試験で想定外のHTTP呼出し'}
+            Write-Output -NoEnumerate @([pscustomobject]@{name='japaneast';shortName='jpe'},[pscustomobject]@{name='canadacentral';shortName='cac'})
+        }
+        function Invoke-ArmRequest {
+            param([string]$ResourceId,[string]$Method='Get',[object]$Body,[string]$ApiVersion)
+            if($Method -eq 'Get' -and $ResourceId -match '^(.+/dataCollectionRules/[^/]+)/associations$') {
+                $ruleId=$Matches[1];$script:reads.Add($ResourceId)
+                return [pscustomobject]@{value=@(
+                    foreach($id in @($script:resources.Keys | Sort-Object)) {
+                        if($id -match '/dataCollectionRuleAssociations/[^/]+$' -and $script:resources[$id].properties.dataCollectionRuleId -eq $ruleId) {
+                            [pscustomobject]@{id=$id;properties=(Copy-TestValue $script:resources[$id].properties)}
+                        }
+                    }
+                )}
+            }
+            if($Method -ne 'Get' -and $script:selectionDestinationTemplates.ContainsKey($ResourceId)) {
+                if($Method -notin @('Put','Patch')){throw '保存先の削除は許可しない'}
+                $script:writes.Add([pscustomobject]@{ResourceId=$ResourceId;Method=$Method;Body=(Copy-TestValue $Body)})
+                Assert-BackupBeforeWrite -ResourceId $ResourceId
+                $resource=if($script:resources.ContainsKey($ResourceId)){Copy-TestValue $script:resources[$ResourceId]}else{Copy-TestValue $script:selectionDestinationTemplates[$ResourceId]}
+                $bodyCopy=Copy-TestValue $Body
+                foreach($property in $bodyCopy.PSObject.Properties) {
+                    if($property.Name -eq 'properties') {
+                        foreach($value in $property.Value.PSObject.Properties){$resource.properties | Add-Member $value.Name $value.Value -Force}
+                    } else {$resource | Add-Member $property.Name $property.Value -Force}
+                }
+                if($ResourceId -match '/tables/[^/]+$'){$resource.properties | Add-Member provisioningState 'Succeeded' -Force}
+                $script:resources[$ResourceId]=$resource
+                return Copy-TestValue $resource
+            }
+            if($Method -ne 'Get' -and $ResourceId -in $script:selectionProtectedVmBefore.Keys){$script:selectionProtectedVmWrites.Add($ResourceId)}
+            & $script:selectionFixtureArm @PSBoundParameters
+        }
+        function Get-MigrationTargets {
+            $script:targetReads++
+            & $script:selectionProductionTargets
+        }
+        function Get-MigrationPlan {
+            param([object]$Target)
+            # 変更直前のfixture状態は、既存のBefore保存監視へ渡すためだけに記録する。
+            $beforeResources=@{};$beforeDiagnostics=@{}
+            foreach($id in $script:resources.Keys){$beforeResources[$id]=Copy-TestValue $script:resources[$id]}
+            foreach($id in $script:diagnostics.Keys){$beforeDiagnostics[$id]=@{};foreach($name in $script:diagnostics[$id].Keys){$beforeDiagnostics[$id][$name]=Copy-TestValue $script:diagnostics[$id][$name]}}
+            $script:beforePlanState[$Target.SubscriptionId]=@{Resources=$beforeResources;Diagnostics=$beforeDiagnostics}
+            & $script:selectionProductionPlan -Target $Target
+        }
+        function Invoke-SelectionCopy {
+            param([bool]$ExpectFailure=$false)
+            Invoke-Entry copy -ExpectFailure $ExpectFailure
+            # DELETE時の復元順序監視にも、このケースで保存したBeforeを使う。
+            $script:savedBackup=Read-MigrationBackup -Path $migrationBackupPath
+        }
+        function Write-SelectionCsv {
+            $script:selectionRows | Export-Csv -LiteralPath $inputCsvPath -NoTypeInformation -Encoding UTF8
+        }
+        function Invoke-SelectionCase {
+            param([string]$Name,[scriptblock]$Body)
+            $before=$script:checks+$script:cutoverChecks
+            Invoke-TestCase $Name {
+                $script:oldCutoverRecords=@()
+                $script:selectionResourceLocation='japaneast'
+                # 2つ目のSubはVMSSとし、VMとVMSSを同じ選択で処理する。
+                foreach($id in @($script:resources.Keys)) {
+                    if($id.StartsWith("/subscriptions/$($script:subs[1])/") -and $id -match '/dataCollectionRuleAssociations/[^/]+$' -and $script:resources[$id].properties.dataCollectionRuleId -in $oldDcrIds){$script:resources.Remove($id)}
+                }
+                $vmssId="/subscriptions/$($script:subs[1])/resourceGroups/source/providers/Microsoft.Compute/virtualMachineScaleSets/selected-vmss"
+                $script:resources["$vmssId/providers/Microsoft.Insights/dataCollectionRuleAssociations/old-vmss"]=Copy-TestValue @{properties=@{description='VMSSの旧関連';dataCollectionRuleId=$oldDcrIds[1]}}
+                $script:selectionOldAssociationIds=@($script:resources.Keys | Where-Object {$_ -match '/dataCollectionRuleAssociations/[^/]+$' -and $script:resources[$_].properties.dataCollectionRuleId -in $oldDcrIds})
+                $script:selectionDestinationTemplates=@{}
+                foreach($id in $script:resources.Keys) {
+                    if($id -match '/providers/Microsoft.OperationalInsights/workspaces/[^/]+(/tables/(Event|Syslog))?$') {
+                        $script:selectionDestinationTemplates[$id]=Copy-TestValue $script:resources[$id]
+                    }
+                }
+                $script:selectionProtectedVmBefore=@{}
+                $script:selectionProtectedVmWrites=[Collections.Generic.List[string]]::new()
+                foreach($id in $script:resources.Keys) {
+                    if($id -match '/(dataCollectionRules|dataCollectionRuleAssociations)/[^/]+$' -and $id -notin $script:selectionOldAssociationIds) {
+                        $script:selectionProtectedVmBefore[$id]=ConvertTo-Json -InputObject $script:resources[$id] -Depth 40 -Compress
+                    }
+                }
+                $script:selectionRows=@(foreach($target in $script:targets){[pscustomobject][ordered]@{
+                    SubscriptionName=$target.SubscriptionName;ResourceGroup=$target.ResourceGroup;StorageAccount=$target.StorageAccount
+                    WorkspaceName=$target.WorkspaceName;LogDestination='Storage';VmLogDestination='Log'
+                }})
+                & $Body
+            }
+            $script:cutoverCases.Add([pscustomobject]@{Case=$Name;Result='PASS';Assertions=$script:checks+$script:cutoverChecks-$before})
+        }
+        foreach($mode in @(
+            @{Name='StorageとVM';Diagnostic='Storage';Vm='Log'},
+            @{Name='LogとVM';Diagnostic='Log';Vm='Log'},
+            @{Name='Storageのみ';Diagnostic='Storage';Vm='None'},
+            @{Name='Logのみ';Diagnostic='Log';Vm=''},
+            @{Name='VMのみ';Diagnostic='None';Vm='Log'},
+            @{Name='両方None';Diagnostic='None';Vm='None'},
+            @{Name='両方空欄';Diagnostic='';Vm=''}
+        )) {
+            Invoke-SelectionCase "送信先選択 $($mode.Name)の全工程と再実行" {
+                $skipDiagnostics=$mode.Diagnostic -in @('None','');$skipVm=$mode.Vm -in @('None','')
+                foreach($row in $script:selectionRows) {
+                    $row.LogDestination=$mode.Diagnostic;$row.VmLogDestination=$mode.Vm
+                }
+                foreach($target in $script:targets) {
+                    $script:resources.Remove($target.WorkspaceId)
+                    foreach($table in @('Event','Syslog')){$script:resources.Remove("$($target.WorkspaceId)/tables/$table")}
+                }
+                Write-SelectionCsv
+                Invoke-SelectionCopy
+                $saved=Read-MigrationBackup -CheckCsv
+                Assert-Cutover ($saved.Targets.Count -eq 2 -and @($saved.Targets.Diagnostics).Count -eq 4) '省略側も旧診断設定のBeforeを保存'
+                Assert-Cutover (@($saved.Targets.OldAssociations).Count -eq $script:selectionOldAssociationIds.Count) '省略側も旧VM・VMSS関連のBeforeを保存'
+                foreach($target in $saved.Targets) {
+                    Assert-Cutover ($target.Routing.VmLogDestination -ceq $mode.Vm) 'VM側の選択をRoutingへ保存'
+                    $savedGroupId="/subscriptions/$($target.SubscriptionId)/resourceGroups/$($target.Routing.ResourceGroup)"
+                    Assert-Cutover ($script:reads.Contains($savedGroupId)) '送信指定にかかわらず保存先RGを確認'
+                    Assert-Cutover ($target.Storages.Count -eq 1 -and $script:resources.ContainsKey($target.Storages[0].Id)) '送信指定にかかわらず指定Storageを準備'
+                    $savedWorkspaceId="/subscriptions/$($target.SubscriptionId)/resourceGroups/$($target.Routing.ResourceGroup)/providers/Microsoft.OperationalInsights/workspaces/$($target.Routing.WorkspaceName)"
+                    Assert-Cutover ($script:resources.ContainsKey($savedWorkspaceId)) '送信指定にかかわらず未作成LAを準備'
+                    foreach($table in @('Event','Syslog')) {
+                        Assert-Cutover ($script:resources["$savedWorkspaceId/tables/$table"].properties.totalRetentionInDays -eq 1095) '旧VM対象の送信を省略してもログテーブルと3年保持を準備'
+                    }
+                    Assert-Cutover (@($target.Diagnostics | Where-Object {$null -ne $_.After}).Count -eq $(if($skipDiagnostics){0}else{2})) '診断設定の作成予定は有効側だけ'
+                    Assert-Cutover (($null -eq $target.Dcr) -eq $skipVm) '新DCRの作成予定は有効側だけ'
+                    Assert-Cutover ($target.Associations.Count -eq $(if($skipVm){0}else{@($target.OldAssociations | ForEach-Object {$_.ResourceId -replace '/providers/Microsoft.Insights/dataCollectionRuleAssociations/[^/]+$',''} | Select-Object -Unique).Count})) '新関連の作成予定は有効側だけ'
+                }
+                $newDiagnosticCount=@(foreach($id in $script:diagnostics.Keys){if($script:diagnostics[$id].ContainsKey($newDiagnosticSettingName)){$id}}).Count
+                Assert-Cutover ($newDiagnosticCount -eq $(if($skipDiagnostics){0}else{4})) '新診断設定を有効側だけに作成'
+                if($skipVm){Assert-Cutover (@($script:writes | Where-Object {$_.ResourceId -match '/(dataCollectionRules|dataCollectionRuleAssociations)/'}).Count -eq 0) 'VM省略時は新DCR・関連を書き込まない'}
+                Assert-Cutover (@($script:writes | Where-Object {$_.Method -eq 'Create' -and $_.ResourceId -match '/storageAccounts/'}).Count -eq 2) '省略側を含む2Subの指定Storageを作成'
+                Assert-Cutover (@($script:writes | Where-Object {$_.Method -eq 'Create' -and $_.ResourceId -match '/workspaces/[^/]+$'}).Count -eq 2) '省略側を含む2Subの未作成LAを作成'
+                Assert-Cutover (@($script:providerReads | Where-Object Namespace -eq 'Microsoft.OperationalInsights').Count -ge 2) '全送信指定で保存先のプロバイダーを確認'
+                $beforeHash=(Get-FileHash -LiteralPath $migrationBackupPath -Algorithm SHA256).Hash
+                Reset-Observation;Invoke-SelectionCopy
+                Assert-NoAzureWrites
+                Assert-Cutover ((Get-FileHash -LiteralPath $migrationBackupPath -Algorithm SHA256).Hash -ceq $beforeHash) 'コピー再実行でもBeforeファイル不変'
+                Reset-Observation;Invoke-Entry verify
+                Assert-NoAzureWrites
+                Reset-Observation;Invoke-Entry delete
+                foreach($id in $script:diagnostics.Keys){Assert-Cutover (-not $script:diagnostics[$id].ContainsKey('old')) '新規作成を省略した側も旧診断設定を削除'}
+                foreach($id in $script:selectionOldAssociationIds){Assert-Cutover (-not $script:resources.ContainsKey($id)) '新規作成を省略したVM・VMSSの旧関連も削除'}
+                Reset-Observation;Invoke-Entry verify
+                Assert-NoAzureWrites
+                Reset-Observation;Invoke-Entry delete
+                Assert-NoAzureWrites
+                Reset-Observation;Invoke-Entry rollback
+                foreach($id in $script:diagnostics.Keys){Assert-Cutover ((Get-DiagnosticSignature $script:diagnostics[$id].old) -ceq $script:originalDiagnostics[$id]) '旧診断設定を元の収集条件・全送信先へ復元'}
+                foreach($id in $script:selectionOldAssociationIds){Assert-Cutover ($script:resources.ContainsKey($id)) '旧VM・VMSS関連を復元'}
+                Assert-Cutover (-not $script:unsafeNewDelete) '旧復元完了前に新設定を削除しない'
+                foreach($target in $saved.Targets) {
+                    Assert-Cutover ($script:resources.ContainsKey($target.Storages[0].Id)) '切戻しでも準備したStorageを保持'
+                    $savedWorkspaceId="/subscriptions/$($target.SubscriptionId)/resourceGroups/$($target.Routing.ResourceGroup)/providers/Microsoft.OperationalInsights/workspaces/$($target.Routing.WorkspaceName)"
+                    Assert-Cutover ($script:resources.ContainsKey($savedWorkspaceId)) '切戻しでも準備したLAを保持'
+                }
+                if($skipVm) {
+                    Assert-Cutover ($script:selectionProtectedVmWrites.Count -eq 0) '全工程で同名DCR・新関連への変更試行0'
+                    foreach($id in $script:selectionProtectedVmBefore.Keys) {
+                        Assert-Cutover ((ConvertTo-Json -InputObject $script:resources[$id] -Depth 40 -Compress) -ceq $script:selectionProtectedVmBefore[$id]) 'VM省略時は既存DCR・同名新関連の内容を全工程で保持'
+                    }
+                }
+                Reset-Observation;Invoke-Entry rollback
+                Assert-NoAzureWrites
+            }
+        }
+        Invoke-SelectionCase 'Canadaのみの旧設定を全削除しても確認と削除再実行でJPEを要求しない' {
+            $script:selectionResourceLocation='canadacentral'
+            foreach($row in $script:selectionRows){$row.VmLogDestination='None'}
+            foreach($row in $script:selectionRows) {
+                $oldName=$row.StorageAccount;$newName=$oldName.Replace('jpe','cac')
+                $oldId="/subscriptions/$($row.SubscriptionName)/resourceGroups/$($row.ResourceGroup)/providers/Microsoft.Storage/storageAccounts/$oldName"
+                $newId=$oldId.Replace($oldName,$newName)
+                $template=Copy-TestValue $script:storageTemplatesByName[$oldName]
+                $template.id=$newId;$template.location='canadacentral'
+                $script:storageTemplatesByName[$newName]=$template
+                foreach($id in @($script:resources.Keys | Where-Object {$_.StartsWith($oldId+'/')})) {
+                    $resource=Copy-TestValue $script:resources[$id]
+                    $newChildId=$id.Replace($oldId,$newId)
+                    if($resource.id){$resource.id=$newChildId}
+                    $script:resources[$newChildId]=$resource
+                    $script:resources.Remove($id)
+                }
+            }
+            Write-SelectionCsv;Invoke-SelectionCopy
+            $saved=Read-MigrationBackup -CheckCsv
+            foreach($target in $saved.Targets){Assert-Cutover ($target.Storages.Count -eq 1 -and $target.Storages[0].Location -eq 'canadacentral') '初回の保存先はCanadaだけ'}
+            Reset-Observation;Invoke-Entry delete
+            foreach($id in $script:diagnostics.Keys){Assert-Cutover (-not $script:diagnostics[$id].ContainsKey('old')) '旧診断設定は全て削除済み'}
+            foreach($step in @('verify','delete')) {
+                Reset-Observation;Invoke-Entry $step
+                Assert-NoAzureWrites
+                Assert-Cutover (@($script:reads | Where-Object {$_ -match '/storageAccounts/stjpetest[12](/|$)'}).Count -eq 0) '削除後の確認は記録済みCanadaだけを使いJPEへ照会しない'
+            }
+            Reset-Observation;Invoke-Entry rollback
+            foreach($id in $script:diagnostics.Keys){Assert-Cutover ((Get-DiagnosticSignature $script:diagnostics[$id].old) -ceq $script:originalDiagnostics[$id]) 'Canadaの旧診断を元どおり復元'}
+        }
+        Invoke-SelectionCase '旧診断対象0件でも指定Storageを東日本へ準備する' {
+            foreach($row in $script:selectionRows){$row.LogDestination='None';$row.VmLogDestination='None'}
+            $script:diagnostics.Clear()
+            Write-SelectionCsv;Invoke-SelectionCopy
+            $saved=Read-MigrationBackup -CheckCsv
+            foreach($target in $saved.Targets) {
+                Assert-Cutover ($target.Diagnostics.Count -eq 0 -and $target.Storages.Count -eq 1 -and $target.Storages[0].Location -eq 'japaneast') '旧診断0件でも東日本の指定Storageを保存・準備'
+                Assert-Cutover ($script:resources.ContainsKey($target.Storages[0].Id)) '指定したStorageを実際に作成'
+            }
+            Reset-Observation;Invoke-Entry verify
+            Assert-NoAzureWrites
+            Reset-Observation;Invoke-Entry delete
+            foreach($id in $script:selectionOldAssociationIds){Assert-Cutover (-not $script:resources.ContainsKey($id)) '旧VM関連は通常どおり削除'}
+            Reset-Observation;Invoke-Entry rollback
+            foreach($id in $script:selectionOldAssociationIds){Assert-Cutover ($script:resources.ContainsKey($id)) '旧VM関連は通常どおり復元'}
+            foreach($target in $saved.Targets){Assert-Cutover ($script:resources.ContainsKey($target.Storages[0].Id)) '切戻しでも保存先は保持'}
+        }
+        Invoke-SelectionCase '両方省略は同名新診断と5件上限に触れず旧設定だけを削除・復元する' {
+            foreach($row in $script:selectionRows){$row.LogDestination='None';$row.VmLogDestination='None'}
+            foreach($id in @($script:diagnostics.Keys)) {
+                foreach($name in @($newDiagnosticSettingName,'keep-2','keep-3')){Add-Setting $id $name @{workspaceId='/unrelated-workspace';logs=@();metrics=@()}}
+            }
+            Write-SelectionCsv
+            Invoke-Entry precheck
+            Assert-NoAzureWrites
+            Invoke-SelectionCopy
+            foreach($step in @('verify','delete','rollback')){Reset-Observation;Invoke-Entry $step}
+            foreach($id in $script:diagnostics.Keys) {
+                Assert-Cutover ($script:diagnostics[$id].Count -eq 5 -and $script:diagnostics[$id][$newDiagnosticSettingName].workspaceId -eq '/unrelated-workspace') '同名新設定を含む指定外4設定を保持'
+            }
+            Assert-Cutover (@($script:writes | Where-Object {$_.ResourceId -like "*/diagnosticSettings/$newDiagnosticSettingName"}).Count -eq 0) 'After=nullの同名新設定は切戻しでも削除しない'
+        }
+        Invoke-SelectionCase '両方省略なら旧診断名が新診断名と同じでも旧設定として削除・復元する' {
+            foreach($row in $script:selectionRows){$row.LogDestination='None';$row.VmLogDestination='None'}
+            foreach($id in @($script:diagnostics.Keys)) {
+                Add-Setting $id $newDiagnosticSettingName $script:diagnostics[$id].old
+                $script:diagnostics[$id].Remove('old')
+            }
+            Write-SelectionCsv
+            Invoke-Entry precheck
+            Assert-NoAzureWrites
+            Invoke-SelectionCopy
+            foreach($saved in $script:savedBackup.Targets.Diagnostics){Assert-Cutover ($saved.OldName -ceq $newDiagnosticSettingName -and $null -eq $saved.After) '同名設定を旧設定のBeforeとして保存し新設定を計画しない'}
+            Reset-Observation;Invoke-Entry verify
+            Assert-NoAzureWrites
+            Reset-Observation;Invoke-Entry delete
+            foreach($id in $script:diagnostics.Keys){Assert-Cutover (-not $script:diagnostics[$id].ContainsKey($newDiagnosticSettingName)) '旧設定と判定した同名診断を削除'}
+            Reset-Observation;Invoke-Entry rollback
+            foreach($id in $script:diagnostics.Keys){Assert-Cutover ((Get-DiagnosticSignature $script:diagnostics[$id][$newDiagnosticSettingName]) -ceq $script:originalDiagnostics[$id]) '切戻しで同名の旧診断を完全復元'}
+            Assert-Cutover (@($script:writes | Where-Object {$_.Method -eq 'Delete' -and $_.ResourceId -like "*/diagnosticSettings/$newDiagnosticSettingName"}).Count -eq 0) '復元した旧診断を新設定扱いで再削除しない'
+        }
+        foreach($changedStep in @('copy','verify','delete')) {
+            Invoke-SelectionCase "作業途中のVM選択変更は${changedStep}の変更前に停止" {
+                Write-SelectionCsv;Invoke-SelectionCopy
+                $beforeHash=(Get-FileHash -LiteralPath $migrationBackupPath -Algorithm SHA256).Hash
+                $script:selectionRows[1].VmLogDestination='None';Write-SelectionCsv
+                Reset-Observation;Invoke-Entry $changedStep -ExpectFailure $true
+                Assert-NoAzureWrites
+                Assert-Cutover ((Get-FileHash -LiteralPath $migrationBackupPath -Algorithm SHA256).Hash -ceq $beforeHash) '選択変更を拒否した際も元Beforeを保持'
+            }
+        }
+        Invoke-SelectionCase '別選択のコピー途中失敗から有効側の不足だけを再開する' {
+            $script:selectionRows[0].VmLogDestination='None'
+            $script:selectionRows[1].LogDestination='None';$script:selectionRows[1].StorageAccount=''
+            Write-SelectionCsv
+            $newId="/subscriptions/$($script:subs[1])/resourceGroups/source/providers/Microsoft.Compute/virtualMachineScaleSets/selected-vmss/providers/Microsoft.Insights/dataCollectionRuleAssociations/dcr-new2"
+            $script:failedPut=$newId
+            Invoke-SelectionCopy -ExpectFailure $true
+            $beforeHash=(Get-FileHash -LiteralPath $migrationBackupPath -Algorithm SHA256).Hash
+            foreach($id in $script:diagnostics.Keys){Assert-Cutover ($script:diagnostics[$id].ContainsKey('old')) 'コピー途中失敗では旧診断を全て保持'}
+            foreach($id in $script:selectionOldAssociationIds){Assert-Cutover ($script:resources.ContainsKey($id)) 'コピー途中失敗では旧関連を全て保持'}
+            Reset-Observation;Invoke-SelectionCopy
+            Assert-Cutover ($script:writes.Count -eq 1 -and $script:writes[0].ResourceId -eq $newId) '不足する新VMSS関連だけを補完'
+            Assert-Cutover ((Get-FileHash -LiteralPath $migrationBackupPath -Algorithm SHA256).Hash -ceq $beforeHash) '再開でも最初のBeforeを維持'
+            Reset-Observation;Invoke-Entry verify
+            Assert-NoAzureWrites
+            Reset-Observation;Invoke-Entry delete
+            Reset-Observation;Invoke-Entry rollback
+            foreach($id in $script:selectionOldAssociationIds){Assert-Cutover ($script:resources.ContainsKey($id)) '再開後の削除・切戻しで旧関連を復元'}
+        }
+        Invoke-SelectionCase '両方省略の旧関連削除失敗を再実行し元へ戻せる' {
+            foreach($row in $script:selectionRows){$row.LogDestination='None';$row.VmLogDestination='None'}
+            Write-SelectionCsv;Invoke-SelectionCopy
+            Reset-Observation;$script:failedDelete=$script:selectionOldAssociationIds[1]
+            Invoke-Entry delete -ExpectFailure $true
+            foreach($id in $script:diagnostics.Keys){Assert-Cutover ($script:diagnostics[$id].ContainsKey('old')) '旧関連の削除失敗では旧診断を全て保持'}
+            Reset-Observation;Invoke-Entry delete
+            foreach($id in $script:selectionOldAssociationIds){Assert-Cutover (-not $script:resources.ContainsKey($id)) '再実行で残りの旧関連を削除'}
+            foreach($id in $script:diagnostics.Keys){Assert-Cutover (-not $script:diagnostics[$id].ContainsKey('old')) '再実行で旧診断も削除'}
+            Reset-Observation;Invoke-Entry rollback
+            foreach($id in $script:selectionOldAssociationIds){Assert-Cutover ($script:resources.ContainsKey($id)) '省略側の削除途中からも旧関連を復元'}
+            foreach($id in $script:diagnostics.Keys){Assert-Cutover ((Get-DiagnosticSignature $script:diagnostics[$id].old) -ceq $script:originalDiagnostics[$id]) '省略側の削除途中からも旧診断を完全復元'}
+        }
+        Invoke-SelectionCase '2Subの別選択と指定Subの切戻しは交差しない' {
+            $script:selectionRows[0].VmLogDestination='None'
+            $script:selectionRows[1].LogDestination='None';$script:selectionRows[1].StorageAccount=''
+            Write-SelectionCsv;Invoke-SelectionCopy
+            $saved=Read-MigrationBackup -CheckCsv
+            $first=@($saved.Targets | Where-Object SubscriptionId -eq $script:subs[0])[0]
+            $second=@($saved.Targets | Where-Object SubscriptionId -eq $script:subs[1])[0]
+            Assert-Cutover ($first.Associations.Count -eq 0 -and @($first.Diagnostics | Where-Object {$null -ne $_.After}).Count -eq 2) '先行Subは診断設定だけを作成'
+            Assert-Cutover ($second.Associations.Count -eq 1 -and @($second.Diagnostics | Where-Object {$null -ne $_.After}).Count -eq 0) '後続SubはVMSS関連だけを作成'
+            Reset-Observation;Invoke-Entry delete
+            Reset-Observation;Invoke-Entry rollback -SelectedSubscriptions @($script:subs[0])
+            foreach($id in $script:diagnostics.Keys | Where-Object {$_.StartsWith("/subscriptions/$($script:subs[0])/")}){Assert-Cutover ($script:diagnostics[$id].ContainsKey('old') -and -not $script:diagnostics[$id].ContainsKey($newDiagnosticSettingName)) '指定Subの旧診断だけを復元'}
+            foreach($id in $script:diagnostics.Keys | Where-Object {$_.StartsWith("/subscriptions/$($script:subs[1])/")}){Assert-Cutover (-not $script:diagnostics[$id].ContainsKey('old')) '指定外Subの旧診断は復元しない'}
+            Assert-Cutover ($script:resources.ContainsKey($second.Associations[0].ResourceId)) '指定外Subの新VMSS関連を保持'
+            Assert-Cutover (@($script:writes | Where-Object {$_.ResourceId.StartsWith("/subscriptions/$($script:subs[1])/")}).Count -eq 0) '指定外Subへの書込み0'
+            Reset-Observation;Invoke-Entry rollback -SelectedSubscriptions @($script:subs[1])
+            foreach($id in $script:selectionOldAssociationIds){Assert-Cutover ($script:resources.ContainsKey($id)) '残りSubの旧関連も復元できる'}
+        }
+    }
 }finally{if(Test-Path -LiteralPath $script:scratch){Remove-Item -LiteralPath $script:scratch -Recurse -Force}}
 $result=[pscustomobject]@{Result='PASS';Checks=$script:cutoverChecks+$script:checks;CaseCount=$script:cutoverCases.Count;Cases=$script:cutoverCases;AzureRequests=0;CommonHash=(Get-FileHash (Join-Path $Repository 'common.ps1')).Hash;RollbackHash=(Get-FileHash (Join-Path $Repository 'rollback.ps1')).Hash}
 if($ReportPath){$result|ConvertTo-Json -Depth 20|Set-Content -LiteralPath $ReportPath -Encoding UTF8}

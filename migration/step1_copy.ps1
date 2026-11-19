@@ -71,15 +71,17 @@ foreach ($target in $targets) {
         # --------------------------------------------------
         # 保存済みBeforeの照合と診断設定の追記
         # CSVの送信先情報、旧診断設定の内容、旧DCR関連の参照先を保存済みの情報と照合する。
-        # 保存済みBeforeを保持し、未保存の旧診断設定をBefore、複製予定の収集条件・送信先をAfterに追記する。
+        # Beforeは最初に保存した値を保持する。作成を省略する診断設定もBeforeを保存し、Afterはnullにする。
         # --------------------------------------------------
         $stage = 'バックアップ照合・保存'
         $saved = @($backup.Targets | Where-Object SubscriptionId -eq $subscriptionId)
         $routing = @{}
         foreach ($key in @('SubscriptionName','ResourceGroup','StorageAccount','WorkspaceName','LogDestination')) { $routing[$key] = $target[$key] }
+        $routing.VmLogDestination = if ('VmLogDestination' -in $target.Keys) { $target.VmLogDestination } else { 'Log' }
         if ($saved.Count -gt 0) {
             foreach ($key in $routing.Keys) {
-                if ([string]$saved[0].Routing.$key -ne [string]$routing[$key]) { throw "CSVの$key が保存済みの設定と一致しません。" }
+                $savedValue = if ($key -eq 'VmLogDestination' -and $key -notin $saved[0].Routing.PSObject.Properties.Name) { 'Log' } else { [string]$saved[0].Routing.$key }
+                if ($savedValue -ne [string]$routing[$key]) { throw "CSVの$key が保存済みの設定と一致しません。" }
             }
             $snapshot = ConvertTo-Json -InputObject $saved[0] -Depth 40 | ConvertFrom-Json
             foreach ($original in $snapshot.Diagnostics) {
@@ -231,8 +233,8 @@ foreach ($target in $targets) {
 
         # --------------------------------------------------
         # プロバイダー登録とリソースグループの準備
-        # LA・DCR用のプロバイダーを登録し、Storageを使う場合はStorage・Securityも登録する。
-        # 登録を確認した後、CSVのリソースグループを取得し、存在しなければ指定地域に作成する。
+        # 保存先と設定に必要なプロバイダーを登録し、CSVのリソースグループを準備する。
+        # 新しい送信設定を作らない場合も、保存先の準備は省略しない。
         # --------------------------------------------------
         $namespaces = @("Microsoft.OperationalInsights", "Microsoft.Insights")
         if ($target.Storages.Count -gt 0) { $namespaces += @("Microsoft.Storage", "Microsoft.Security") }
@@ -271,6 +273,7 @@ foreach ($target in $targets) {
             Add-MigrationCheck -Target $target -ResourceId $resourceId -Stage $stage -Success $false -Message $_.Exception.Message
             throw
         }
+
 
         # --------------------------------------------------
         # 地域別Storageの作成・設定
@@ -435,12 +438,13 @@ foreach ($target in $targets) {
             Add-MigrationCheck -Target $target -ResourceId $resourceId -Stage $stage -Success $false -Message $_.Exception.Message -Expected $expected
             throw
         }
+
         # --------------------------------------------------
         # Event・Syslogの総保持期間を設定
-        # VM・VMSSの収集対象がある場合は、両テーブルの総保持期間を1095日にし、作成・更新の完了を待つ。
+        # 旧DCRに関連するVM・VMSSがあれば、新DCRを作らない指定でも両テーブルを1095日保持に設定する。
         # 既存の分析保持期間・スキーマ・プランを残し、総保持期間が1095日の明示設定か読み戻して確認する。
         # --------------------------------------------------
-        if ($target.Collectors.Count -gt 0) {
+        if ($target.OldAssociations.Count -gt 0) {
             $tablesReady = $true
             foreach ($name in @("Event", "Syslog")) {
                 $resourceId = "$($target.WorkspaceId)/tables/$name"
@@ -484,6 +488,9 @@ foreach ($target in $targets) {
                 }
             }
 
+        }
+
+        if ($target.Collectors.Count -gt 0) {
             # --------------------------------------------------
             # 新DCRの作成・設定
             # Event・Syslogテーブルの準備ができたら、新LAへ送るDCRを作成・更新する。
@@ -552,13 +559,16 @@ foreach ($target in $targets) {
         # --------------------------------------------------
         # 新診断設定の複製
         # 旧診断設定を再取得して調査時の内容と照合し、同名の新設定があれば計画と比較する。
-        # 一致する新設定は変更せず、未作成なら旧設定を残して追加・照合する。不一致や件数上限は失敗として記録する。
+        # Afterがある設定だけ追加・照合し、一致する既存の新設定は変更しない。省略した対象も旧設定はまだ残す。
         # --------------------------------------------------
         $preparationComplete = $true
         $resourceId = ''
         $stage = '複製処理'
         $expected = $null
-        Invoke-DiagnosticBatch -Items $target.DiagnosticPlans.ToArray() -SettingName $newDiagnosticSettingName -Action {
+        foreach ($plan in @($target.DiagnosticPlans | Where-Object { $null -eq $_.Expected })) {
+            Add-MigrationCheck -Target $target -ResourceId $plan.ResourceId -Stage "診断設定の作成省略" -Success $true -Message "CSV指定により新設定は作成しません。旧設定は削除工程で外します。"
+        }
+        Invoke-DiagnosticBatch -Items @($target.DiagnosticPlans | Where-Object { $null -ne $_.Expected }) -SettingName $newDiagnosticSettingName -Action {
             param($plan, $settingName)
             $settings = @(Get-DiagnosticSettings -ResourceId $plan.ResourceId)
             $source = $plan.SourceSettings[0]
@@ -605,7 +615,7 @@ foreach ($target in $targets) {
             Add-MigrationFailure -Target $target -ResourceId $resourceId -Stage $stage -Message $_.Exception.Message -Expected $expected
         }
         if (-not $preparationComplete) {
-            foreach ($plan in $target.DiagnosticPlans) {
+            foreach ($plan in @($target.DiagnosticPlans | Where-Object { $null -ne $_.Expected })) {
                 if (@($plan.NewSettings).Count -eq 1 -and
                     (Get-DiagnosticSignature -Setting $plan.NewSettings[0]) -ceq $plan.NewSignature) { continue }
                 Add-MigrationFailure -Target $target -ResourceId $plan.ResourceId -Stage "診断設定の複製未実施" `
