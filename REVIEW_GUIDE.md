@@ -13,3 +13,5 @@
 [72ケースの一覧](test-results/PROCEDURAL_CASES.md)、[Windowsでの個別結果](test-results/procedural-windows7.json)、[文字数比較](test-results/procedural-size.json)も確認できます。従来のmigration版の185ケースは旧版の記録です。
 
 最後のリソース網羅・負荷テストは、この正本のレビュー後に実施します。
+
+初心者向けに、各ブロックとPowerShellの構文を詳しく説明した[コメント拡充版](procedural-migration-commented/README.md)も用意しています。コードは正本と同じで、正本の主要6本は変更していません。
