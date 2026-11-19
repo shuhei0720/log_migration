@@ -1,121 +1,104 @@
-# 手続型の移行スクリプト
+# 移行スクリプトの使い方
 
-このフォルダが移行スクリプトの正本です。既存の `migration` と原本は比較用に残しています。このフォルダはPowerShell 7と、ログイン済みのAzure CLI 2.54以降を使用します。Windows PowerShell 5.1では実行できません。Windowsでの推奨版はPowerShell 7.6 LTSです。
+このフォルダが正本です。PowerShell 7と、ログイン済みのAzure CLIを使用します。Windows PowerShell 5.1では実行できません。コードの読み方は [学習ガイド](CODE_LEARNING.md)、検証状況は [検証結果](../test-results/REPORT.md) を参照してください。
 
-コードを上から読み進めるための説明は、[学習ガイド](CODE_LEARNING.md)にまとめています。
+## 1. 実行する環境とCSVを指定する
 
-## 読む順番
+`common.ps1`先頭の次の値を設定します。旧DCR2つとポリシー割り当て3つは、提示された本番・検証・開発の値が設定済みです。
 
-|ファイル|役割|
+|変数|指定する値|
 |---|---|
-|common.ps1|設定値、CSVの読込み、複数工程で繰り返す5つの処理|
-|precheck.ps1|任意の事前確認。Azureを変更せず、変更前記録も作らない|
-|step1_copy.ps1|Subごとの直前調査→変更前記録→適用除外→保存先→新送信設定|
-|step2_verify.ps1|現在の旧設定と、記録した保存先・新設定を全件確認|
-|step3_delete.ps1|確認版を実行し、全件成功後に旧関連→旧診断設定を削除|
-|rollback.ps1|旧設定を先に復元し、新送信設定を戻す。保存先とログは保持|
+|`$targetWorkspaceId`|移行対象となる旧診断設定のLog AnalyticsリソースID|
+|`$environment`|今回実行する環境：`prod` / `stg` / `dev`|
+|`$newDiagnosticSettingName`|追加する診断設定の共通名。既定は`storage-archive`|
 
-共通の5関数は次の用途に限定します。
+新規作成するRG、Log Analytics、新DCRの地域は東日本です。Storageは診断設定の対象がある地域ごとに作成します。地域が空または`global`の対象は東日本として扱います。
 
-|関数|共通にする理由|
-|---|---|
-|Invoke-ArmRequest|各工程で使う認証・HTTP送信・必要な再試行・更新完了待ち|
-|Test-Configuration|現在値と記録した設定値の比較|
-|Get-WritableBody|GET応答から保存・復元用の本文を取り出す|
-|Read-MigrationRecord|環境・入力の一致を確認して変更前記録を読む|
-|Get-MigrationPlan|現在の旧設定を探索し、名前・追加枠・地域を調べる|
-
-各入口には関数を置かず、処理順に記述しています。`step3_delete.ps1`は`step2_verify.ps1`の確認処理をそのまま実行するため、同じ確認コードを二重に持ちません。前日にprecheckを実行しても、copyは当日の状態を再調査します。
-
-## 並列にする処理
-
-サブスクリプションはCSVの順に処理します。各Subで、リソースごとの診断設定の調査と、新しい診断設定の複製だけを最大5件ずつ並列に実行します。PowerShell 7の`ForEach-Object -Parallel`を使い、別プロセスの起動やジョブの管理は行いません。
-
-変更前記録の保存、適用除外、保存先、新DCR・関連付けは順番に処理します。全準備が成功してから診断設定を複製します。並列処理は全件の結果が戻ったことも確認し、失敗した対象を親の処理でCSVにまとめます。削除と切り戻しも順次処理し、途中の失敗で停止します。
-
-## 設定と実行
-
-`common.ps1`先頭の移行元ワークスペースIDと環境を指定します。新しい診断設定名も同じ場所です。API版・URLの対応表は内部の固定値なので変更不要です。旧DCRとポリシー割り当ては提示された本番・検証・開発の値です。
-
-入力例を`targets.csv`へコピーし、対象サブスクリプション・保存先名を記入します。
+入力例をコピーし、対象と保存先の名前を記入します。
 
 ```powershell
 Copy-Item .\procedural-migration\targets.example.csv .\procedural-migration\targets.csv
+```
+
+|CSV列|指定する値|
+|---|---|
+|`SubscriptionName`|対象SubのID、または一意に特定できる名前。1Subにつき1行|
+|`ResourceGroup`|保存先のRG名。必須|
+|`StorageAccount`|`jpe`を1か所含む小文字英数字3～24文字の名前。Storage宛てにする行は必須|
+|`WorkspaceName`|保存先Log Analytics名。必須|
+|`LogDestination`|診断設定の宛先：`Storage` / `Log` / `None` / 空欄|
+|`VmLogDestination`|新DCRと関連付け：`Log` / `None` / 空欄。列自体がない旧CSVは`Log`|
+
+`None`と空欄は、その側の新しい送信設定を作成せず、最後のstep3で旧設定を外して送信を終了します。**保存先は作成します。** Log Analyticsは全行で準備し、Storageも名前が指定されていれば準備します。Storageの対象地域が0件の場合は東日本に1つ作成します。
+
+Storage名の`jpe`だけをMicrosoftのAzure Naming Toolで公開されている地域略称へ置き換えます。名前の空き・変換後の形式・ZRS対応を事前に確認し、初回に同名Storageがあれば停止します。
+
+## 2. 確認しながら実行する
+
+リポジトリのルートを作業フォルダとして、PowerShell 7から実行します。Azureへは対象Subの所有者としてログインしている前提です。
+
+```powershell
+az login
+
+# 任意。前日などに名前・地域・対象を確認する。
 pwsh.exe -NoProfile -File .\procedural-migration\precheck.ps1
+
+# 新設定を準備する。旧設定は残る。
 pwsh.exe -NoProfile -File .\procedural-migration\step1_copy.ps1
+
+# 現在値を確認し、verify_results.csvを人が確認する。
 pwsh.exe -NoProfile -File .\procedural-migration\step2_verify.ps1
-# 確認結果を人が確認してから実行する。
+
+# 確認後に旧設定を削除する。冒頭でも全件確認する。
 pwsh.exe -NoProfile -File .\procedural-migration\step3_delete.ps1
 ```
 
-|列|指定内容|
+|処理|実行する内容|
 |---|---|
-|SubscriptionName|対象SubのID、または一意の名前|
-|ResourceGroup|保存先のRG名。全行で必須|
-|StorageAccount|`jpe`を1か所含む小文字英数字3〜24文字。Storage宛ては必須|
-|WorkspaceName|準備するLog Analytics名。全行で必須|
-|LogDestination|新診断設定：Storage / Log / None / 空欄|
-|VmLogDestination|新DCR・VM/VMSS関連付け：Log / None / 空欄。列がない旧CSVはLog|
+|任意precheck|その時点のAzureを調査。Azureを変更せず、変更前記録も作らない|
+|step1 copy|Subごとに再調査→必要な変更前記録を保存→Waiver→保存先→新DCR・関連→新診断設定|
+|step2 verify|記録後に旧設定が増加・変更していないか、保存先・新設定が記録と一致するか確認|
+|step3 delete|全対象のverify成功後、旧DCR関連→旧診断設定の順に削除。削除直前にも旧・新設定を照合|
 
-**None・空欄は新設定を作らず、最後に旧設定を外して送信を終了する指定です。** 保存先は省略しません。Storage名があれば地域別に作成し、旧診断対象がなければ東日本に1つ準備します。Event/Syslogの総保持とStorageのappendBlob削除は1,095日です。
+copyはprecheckの結果ファイルに依存しません。診断設定は移行元ワークスペース宛てのものを対象にし、ログ・メトリックの指定を引き継いで宛先を変更します。新診断名の重複や5枠の上限は書き込み前に確認します。DCR側は環境別の旧2DCRの関連を対象にし、旧関連があるVM・VMSSに新関連を設定します。
 
-## 記録と再実行
+StorageはStorageV2・Standard_ZRSで、appendBlobの削除を1,095日後に設定します。Log Analyticsのワークスペース保持は365日、旧DCR関連の対象がある場合はEvent・Syslogの合計保持を1,095日に設定します。VM側の新設定を省略する行でも、この保存先の準備は行います。
 
-必要な変更前情報と確認する設定を、`records/<環境>/<Sub ID>.json`へ保存します。新しい形式なので、既存`migration`のバックアップとは混在させません。ログデータは記録しません。
+SubはCSVの順に処理します。診断設定の調査と新診断設定の複製だけを最大5件ずつ並列に実行し、適用除外・保存先・DCRは順に準備します。step3の削除とrollbackも順に処理し、失敗した時点で停止します。step3終了後もWaiverは残し、自動期限は設定しません。
 
-記録は`Destinations`（保存先）、`NewSettings`（新送信設定・適用除外）、`OldSettings`（旧送信設定）の3一覧です。それぞれの項目を同じ形で扱うことで、サービスごとのコピー・削除処理を増やさずに済みます。
+## 3. 途中停止と再実行
 
-|項目|意味|
+step1は、Azureへの変更前に`records/<環境>/<Sub ID>.json`へ必要な設定値を保存します。保存するのは旧診断・旧DCR関連と、今回変更する新設定・適用除外のBefore、保存先の期待値です。サブスクリプション全体やログデータのバックアップは取りません。
+
+途中で止まった場合は、**同じCSV・commonの設定・recordsを維持して**step1を再実行します。一致する設定はスキップし、最初のBeforeは上書きしません。再調査で見つかった新しい対象は記録に追記します。保存した旧設定が消失・変更している場合は停止します。
+
+|結果ファイル|確認する内容|
 |---|---|
-|Id|操作するAzureリソースID|
-|Kind|診断設定・DCR・Storageなど、このコード内の用途。API版はcommonの対応表で選ぶ|
-|Body|設定・照合・復元に使う値|
-|Before|変更前の値。元からなければnull。再実行でも最初の値を保持|
-|KeepOnRollback|新規DCR本体を切り戻し時も残す指定|
+|`precheck_results.csv`|任意事前確認のOK/NGと理由|
+|`copy_failures.csv`|copyで未完了になった対象・理由・期待値|
+|`verify_results.csv`|全件確認の結果。NGは理由と期待値を含む|
+|`delete_failures.csv`|旧設定の削除で停止した対象と理由|
+|`rollback_failures.csv`|切り戻しで停止した対象と理由|
 
-途中停止時は同じCSV・設定のままcopyを再実行します。最初のBeforeは上書きせず、新しい対象だけ追加します。既に一致する設定は書き込みません。失敗した対象と期待する値は`copy_failures.csv`、全件確認は`verify_results.csv`へ出します。
+copyで1Subが失敗しても他Subの処理は続け、最後に未完了を報告します。手動対応した場合もstep2で現在値を確認します。step3は全Subの確認が成功しなければ1件も削除しません。削除開始後の失敗では、それまでに削除した分は残り、以降の削除を停止します。
 
-初回の同名Storage・同名診断設定は事前に停止します。途中からの再実行では、自分の変更前記録に載っている対象だけを再開に使います。
+## 4. 全体または指定Subを切り戻す
+
+copyの途中・終了後、またはdeleteの途中・終了後に同じ`rollback.ps1`を使用します。環境と移行元IDなどは記録を作成したときの値に合わせます。CSVは読み直さず、recordsから対象を選びます。
 
 ```powershell
-# 全体の切り戻し
+# 全体を戻す。
 pwsh.exe -NoProfile -File .\procedural-migration\rollback.ps1
-# 指定Subだけを戻す場合は、PowerShellから呼ぶ。
+
+# 指定したSubだけを戻す。PowerShell 7から実行する。
 .\procedural-migration\rollback.ps1 -SubscriptionIds '対象Sub ID'
+
+# 複数Subを指定する場合。
+.\procedural-migration\rollback.ps1 -SubscriptionIds '対象Sub ID 1', '対象Sub ID 2'
 ```
 
-指定Subの例はPowerShell 7のコンソールから実行します。
+現在値を全件照合してから、旧DCR関連→旧診断設定を復元し、その後で新設定を変更前へ戻します。記録と異なる設定は上書きせず停止します。既に復元済みならスキップできます。
 
-切り戻しは保存先と保存済みログを残します。今回作成したDCR本体も残し、変更した既存DCR・関連付けはBeforeに戻します。新設の適用除外だけを解除し、元からある除外は残します。
+保存先と保存済みログ、新規作成したDCR本体は残します。元からあったDCR・関連付けはBeforeへ戻し、今回新設したWaiverだけを削除します。元からあったWaiverは残します。Azureポリシーの修復タスクは使用しません。
 
-## 文字数の比較
-
-コメントを除いたコード・設定値・空白・改行を、既存版と同じ条件で数えます。PowerShell Parserで通常のコメントを取り除き、文字列中の`#`や実行指示の`#Requires`は残します。日本語の説明コメントはコード内に維持します。
-
-|項目|既存版|前回の手続型版|PowerShell 7版|
-|---|---:|---:|---:|
-|コメント以外の文字数|117,245|53,864|53,646|
-|独自関数|25|5|5|
-|1行に詰めたif・foreach・while|比較対象外|0|0|
-
-コード部分は既存版から54.24％減です。前回からは218文字（0.40％）減で、並列処理と結果の件数確認を追加した分も含みます。**当初の10分の1という目標には未達です。** ユーザー確認により、機能と読みやすさを維持して可能な限り削減する方針です。変数名の短縮や1行への詰め込み、コードの別ファイルへの逃がしは行っていません。詳しい計測値は[文字数比較](../test-results/procedural-size.json)に記録しています。
-
-[PowerShell 7版の72ケース・992判定](../test-results/PROCEDURAL_CASES.md)はLinuxと[Windows上のPowerShell 7.6.10](../test-results/procedural-windows7.json)で成功しました。実際の並列runspaceから外部API応答を再生し、一部失敗後の再実行も確認しています。固定した7ファイルの前後ハッシュが一致し、構文エラーは0です。実Azureでの比較結果は以下のとおりです。この100件の比較環境は撤去し、両サブスクリプションのリソース・RG・回復可能なLAWが元の0件へ戻ったことを[確認しています](../test-results/procedural-powershell7-cleanup.json)。その後に作成した型別の開発検証環境は稼働中です。現行版の状態は[開発検証の進捗](../test-results/FINAL_TEST_PROGRESS.md)に記録し、過去の成功結果とは区別します。
-
-## 実Azureでの速度比較
-
-Windows上のPowerShell 7.6.10から、同じ100個のNSGを使って比べました。逐次側は通常のforeach、並列側は製品の最大5件の処理を使い、共通ファイルを各workerで読む時間も含めています。
-
-|100件の処理|逐次|最大5件の並列|計測|
-|---|---:|---:|---|
-|診断設定の調査|68.9秒|20.0秒|各3回の中央値|
-|初回複製と読み戻し|356.0秒|74.3秒|各1回の参考値|
-|再実行（一致してスキップ）|105.6秒|9.8秒|各1回の参考値|
-
-初回は各方式でGET 200回・PUT 100回、再実行はGET 100回・PUT 0回です。有効な計測中の再試行は0回で、元の100設定が変わっていないことも確認しました。
-
-これは診断設定の処理部分の比較です。リソース一覧の取得、保存先・適用除外・DCRの準備、変更前記録、全体確認・削除は含みません。クライアントPCの通信条件や対象種類も異なるため、全サブスクリプションの所要時間へは換算しません。
-
-最初の計測環境は同じ送信先への複製が409で拒否されたため、その複製結果を除外しました。調査24試行の成功データを保全し、製品と同じく送信先を別ワークスペースにして複製を測り直しています。比較用の逐次設定だけを照合後に削除し、並列側も同じ初期状態・同じ移行先で計測しました。削除や準備の時間は表に含めていません。
-
-[計測の個別結果](../test-results/procedural-powershell7-performance.json)に、実行別の証跡と範囲を記録しています。[従来のWindows 5.1試験](../test-results/procedural-windows51.json)は変更前の版の記録です。
+`targets.csv`・`records/`・結果CSVはGit管理の対象外です。切り戻しや再開に必要なので、作業が完了するまで同じ作業フォルダに保管してください。
