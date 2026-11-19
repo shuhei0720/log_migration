@@ -1,6 +1,23 @@
 # コード整理後の検証状況
 
-2026-11-19 JST時点。送信先選択を追加した版はLinux PowerShell 7.5.4で185ケース・1,845判定が成功しました。同じ20ファイルの凍結版をWindows PowerShell 5.1で再検証中です。[今回のLinux結果と前後ハッシュ](destination-selection-linux.json)を保存しています。
+2026-11-19 JST時点。送信先選択を追加した版は、実Windows PowerShell 5.1.20348.5773 DesktopとLinux PowerShell 7.5.4で、それぞれ185ケース・1,845判定が成功しました。同じ20ファイルの凍結版です。[Windowsの全個別結果](destination-selection-windows51.json)、[Linux結果](destination-selection-linux.json)、[全185ケースの一覧](CURRENT_FORMAL_CASES.md)を保存しています。
+
+
+## 今回のWindows PowerShell 5.1再検証
+
+|分類|ケース数|判定数|
+|---|---:|---:|
+|保存先・保持・再実行|33|163|
+|Lifecycle送信本文|6|39|
+|バックアップ・切戻し|50|326|
+|旧DCR・VMSS・送信先選択|96|1,038|
+|共通・入力・API／JSON・標準ジョブ|ケース数へ加算しない|275|
+|系統間の接続確認|ケース数へ加算しない|4|
+|合計|185|1,845|
+
+実プロセスはWindows PowerShell 5.1 Desktopです。全11本の構文エラー0、固定した20ファイルの実行前後ハッシュ一致を確認しました。原本スクリプト・原本CSVと、保存済みの実ARM応答9ファイルも変更していません。機能ソースはcommit `a1d2c1f`、マニフェストSHA-256は `10b01d2a9d241d56d0773688ec6cd7796274454ddb1cb1aad576e417cd047516` です。
+
+この回帰試験では外部APIの応答を再生し、Azureへの設定適用は行っていません。専用Windows VMなど、今回の検証用に作成された資源は[撤去結果](destination-selection-cleanup.json)で作成前の状態へ戻ったことを確認しています。以前から全検証終了時まで保留しているプロバイダー登録の扱いは変更していません。
 
 ## 送信先選択と送信終了
 

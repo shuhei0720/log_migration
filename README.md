@@ -127,7 +127,7 @@ Storage・Log Analyticsと保存済みログは残します。新規作成した
 
 Storage・Log Analyticsの構成とDCRの収集内容は原本を踏襲します。各サブスクリプションの設定前に指定環境の3件のポリシーをWaiverで除外します。最初の2件は全体、3件目は指定12参照ID。期限はなく、通常の移行工程では自動削除しません。
 
-診断設定の調査と複製にはPowerShell標準ジョブを最大5個使用します。コード整理後の確認状況は[改修後の検証状況](test-results/READABILITY_REFACTOR.md)に記載します。以前の構成の実測時間・対象は[従来の検証結果](test-results/REPORT.md)、機能追加前のケースは[136ケース一覧](test-results/CURRENT_FORMAL_CASES.md)、旧構成のケースは[以前のテスト一覧](test-results/TEST_CASES_CURRENT.md)に記載しています。
+診断設定の調査と複製にはPowerShell標準ジョブを最大5個使用します。Windows PowerShell 5.1で185ケース・1,845判定が成功しています（外部API応答を再生する回帰試験）。コード整理後の確認状況は[改修後の検証状況](test-results/READABILITY_REFACTOR.md)に記載します。以前の構成の実測時間・対象は[従来の検証結果](test-results/REPORT.md)、現在のケースは[185ケース一覧](test-results/CURRENT_FORMAL_CASES.md)、旧構成のケースは[以前のテスト一覧](test-results/TEST_CASES_CURRENT.md)に記載しています。
 
 ## 追加の56タイプ検証
 

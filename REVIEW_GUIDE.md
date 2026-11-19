@@ -1,7 +1,7 @@
 # 診断設定移行スクリプトの読み方・作業の進め方
 
 2026年11月19日（日本時間）時点の、主要6本をレビューするための説明資料です。
-送信先選択を追加した現行6本は、Linux PowerShell 7.5.4で185ケース・1,845判定が成功しました。同じ凍結版のWindows PowerShell 5.1再検証を実施中です。[今回のLinux確認結果](test-results/destination-selection-linux.json)を参照してください。
+送信先選択を追加した現行6本は、実Windows PowerShell 5.1.20348.5773 DesktopとLinux PowerShell 7.5.4で、それぞれ185ケース・1,845判定が成功しました。API／CLIの外部応答を再生する回帰試験です。[Windows個別結果](test-results/destination-selection-windows51.json)、[Linux結果](test-results/destination-selection-linux.json)、[全185ケース](test-results/CURRENT_FORMAL_CASES.md)を参照してください。
 過去のAzure実機10条件・50工程は、送信先選択を追加する前の版の実績です。今回のフラグをAzureへ適用した実績には数えません。最後の54タイプの網羅・負荷テストは、主要6本のユーザーレビュー後に実施します。
 
 コメントは区切り線付きで統一し、処理ブロックの役割と、関数の引数・戻り値・重要な条件を短く説明しています。
@@ -291,7 +291,7 @@ Sub全体は順番に処理します。[共通のバッチ処理](migration/comm
 
 ## 9. 要件とコード・テストの対応
 
-[現行136ケースの全件一覧](test-results/CURRENT_FORMAL_CASES.md)と[Excelで読めるCSV](test-results/CURRENT_FORMAL_CASES.csv)を用意しています。異常入力に対して期待どおり停止したケースもPASSです。
+[現行185ケースの全件一覧](test-results/CURRENT_FORMAL_CASES.md)と[Excelで読めるCSV](test-results/CURRENT_FORMAL_CASES.csv)を用意しています。異常入力に対して期待どおり停止したケースもPASSです。
 
 別途、Azure実機では、コピー途中/完了後・削除途中/完了後それぞれの全体/指定Sub切戻し8条件と、コピー/削除の中断からの再開2条件を確認しました。[実機10条件の全件一覧](test-results/readability-live-cases.csv)で、各条件の範囲と結果を確認できます。
 
