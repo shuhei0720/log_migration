@@ -1,6 +1,6 @@
 # 手続型の移行スクリプト
 
-既存の `migration` と原本を残し、別に書き直した版です。このフォルダはPowerShell 7と、ログイン済みのAzure CLIを使用します。Windows PowerShell 5.1では実行できません。Windowsでの推奨版はPowerShell 7.6 LTSです。
+このフォルダが移行スクリプトの正本です。既存の `migration` と原本は比較用に残しています。このフォルダはPowerShell 7と、ログイン済みのAzure CLI 2.54以降を使用します。Windows PowerShell 5.1では実行できません。Windowsでの推奨版はPowerShell 7.6 LTSです。
 
 ## 読む順番
 
@@ -98,4 +98,22 @@ pwsh.exe -NoProfile -File .\procedural-migration\rollback.ps1
 
 コード部分は既存版から54.24％減です。前回からは218文字（0.40％）減で、並列処理と結果の件数確認を追加した分も含みます。**当初の10分の1という目標には未達です。** ユーザー確認により、機能と読みやすさを維持して可能な限り削減する方針です。変数名の短縮や1行への詰め込み、コードの別ファイルへの逃がしは行っていません。詳しい計測値は[文字数比較](../test-results/procedural-size.json)に記録しています。
 
-[PowerShell 7版の72ケース・992判定](../test-results/PROCEDURAL_CASES.md)はLinuxと[Windows PowerShell 7.6.10](../test-results/procedural-windows7.json)で成功しました。実際の並列runspaceから外部API応答を再生し、一部失敗後の再実行も確認しています。固定した7ファイルの前後ハッシュが一致し、構文エラーは0です。Windows実機での速度比較は実施中です。[従来のWindows 5.1試験](../test-results/procedural-windows51.json)は変更前の版の記録です。
+[PowerShell 7版の72ケース・992判定](../test-results/PROCEDURAL_CASES.md)はLinuxと[Windows上のPowerShell 7.6.10](../test-results/procedural-windows7.json)で成功しました。実際の並列runspaceから外部API応答を再生し、一部失敗後の再実行も確認しています。固定した7ファイルの前後ハッシュが一致し、構文エラーは0です。実Azureでの比較結果は以下のとおりです。今回作った検証用Azureリソースはすべて撤去し、両サブスクリプションのリソース・RG・回復可能なLAWが元の0件へ戻ったことを[確認済みです](../test-results/procedural-powershell7-cleanup.json)。
+
+## 実Azureでの速度比較
+
+Windows上のPowerShell 7.6.10から、同じ100個のNSGを使って比べました。逐次側は通常のforeach、並列側は製品の最大5件の処理を使い、共通ファイルを各workerで読む時間も含めています。
+
+|100件の処理|逐次|最大5件の並列|計測|
+|---|---:|---:|---|
+|診断設定の調査|68.9秒|20.0秒|各3回の中央値|
+|初回複製と読み戻し|356.0秒|74.3秒|各1回の参考値|
+|再実行（一致してスキップ）|105.6秒|9.8秒|各1回の参考値|
+
+初回は各方式でGET 200回・PUT 100回、再実行はGET 100回・PUT 0回です。有効な計測中の再試行は0回で、元の100設定が変わっていないことも確認しました。
+
+これは診断設定の処理部分の比較です。リソース一覧の取得、保存先・適用除外・DCRの準備、変更前記録、全体確認・削除は含みません。クライアントPCの通信条件や対象種類も異なるため、全サブスクリプションの所要時間へは換算しません。
+
+最初の計測環境は同じ送信先への複製が409で拒否されたため、その複製結果を除外しました。調査24試行の成功データを保全し、製品と同じく送信先を別ワークスペースにして複製を測り直しています。比較用の逐次設定だけを照合後に削除し、並列側も同じ初期状態・同じ移行先で計測しました。削除や準備の時間は表に含めていません。
+
+[計測の個別結果](../test-results/procedural-powershell7-performance.json)に、実行別の証跡と範囲を記録しています。[従来のWindows 5.1試験](../test-results/procedural-windows51.json)は変更前の版の記録です。

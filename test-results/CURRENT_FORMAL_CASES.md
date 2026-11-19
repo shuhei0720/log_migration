@@ -1,4 +1,6 @@
-# 現行185ケース一覧
+# 旧Windows PowerShell 5.1版の185ケース一覧
+
+この一覧は旧`migration`版の履歴です。正本のPowerShell 7版は[72ケースの一覧](PROCEDURAL_CASES.md)を参照してください。
 
 送信先選択追加版の、実Windows PowerShell 5.1.20348.5773 Desktopで実行した個別ケースです。同じ凍結版をLinux PowerShell 7.5.4でも確認しました。両環境で185ケース・1,845判定が成功しています。
 

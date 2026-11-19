@@ -1,8 +1,8 @@
 # 手続型PowerShell 7版の72テストケース
 
-Linux PowerShell 7.5.4と実Windows PowerShell 7.6.10 Coreで、同じ版の72ケース・992判定が成功しました。実際のForEach-Object -Parallelを使い、外部CLI／HTTP／時刻だけを再生します。CSV読込み・探索・変更前記録・作成・確認・削除・切戻しには実際の6本を使います。Azureへの設定適用を通した実績とは区別します。
+Linux PowerShell 7.5.4と実Windows上のPowerShell 7.6.10 Coreで、同じ版の72ケース・992判定が成功しました。実際のForEach-Object -Parallelを使い、外部CLI／HTTP／時刻だけを再生します。CSV読込み・探索・変更前記録・作成・確認・削除・切戻しには実際の6本を使います。Azureへの設定適用を通した実績とは区別します。
 
-[Windows個別結果](procedural-windows7.json) / [Linux個別結果](procedural-powershell7-linux.json) / [CSV](PROCEDURAL_CASES.csv) / [文字数比較](procedural-size.json)。Windowsでの実Azure API性能比較は実施中です。
+[Windows個別結果](procedural-windows7.json) / [Linux個別結果](procedural-powershell7-linux.json) / [CSV](PROCEDURAL_CASES.csv) / [文字数比較](procedural-size.json)。実Azureの100リソースで、調査・初回複製・再実行を逐次と並列で比較しました。詳細は[説明資料](../procedural-migration/README.md#実azureでの速度比較)を参照してください。
 
 72ケースの個別判定は980件で、主要6本の構文・実行前後不変の12判定を加えて合計992件です。基本12判定はケース数に加算していません。実workerからHTTP再生呼出し1,143件を記録しました。判定に使うAzure API通信は0件です。
 

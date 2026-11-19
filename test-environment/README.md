@@ -3,7 +3,7 @@
 配布コードは `resource_types_fixture.ps1` と `resource_types.arm.json` の2ファイルです。
 この構成は、ユーザーの「既存サブネットにNSG・ルートテーブル・委任を追加しない」という追加条件に合わせて見直し中です。以下は従来の候補の記録で、最終版ではありません。
 実機では管理グループ作成直後の反映待ち不足で停止し、有料リソースは作成していません。専用管理グループと事前準備したVNet・NSG・ガード・追跡済みNetwork Watcherは撤去しました。
-主要6本は `migration` フォルダーでコード整理と再検証を進めています。完成版のユーザーレビュー後に、最後のリソース網羅テストへ進みます。旧原本と原本CSVは変更していません。
+主要6本の正本は [procedural-migrationのPowerShell 7版](../procedural-migration/README.md)です。正本のユーザーレビュー後に、最後のリソース網羅テストへ進みます。旧原本と原本CSVは変更していません。
 
 ## 設定と費用
 
@@ -46,7 +46,7 @@ Networkの利用登録は次のテストで再利用し、記録した元の未�
 
 ## 実行順序
 
-Windows PowerShell 5.1＋Azure CLIを想定します。Storage cleanupだけCLI同梱Python/SDKを使用します。
+fixture controller自体はWindows PowerShell 5.1以降に対応するコードです。正本6本を含む一連の検証はPowerShell 7（pwsh.exe）＋Azure CLIで実行します。Storage cleanupだけCLI同梱Python/SDKを使用します。
 別Python/SDK導入・pip・外部PowerShell module・Bicepは不要です。Deploy前にSDKをLOCAL preflightします。
 scriptは `az login` を実行しません。既存の許可済みsessionを使用します。
 利用登録解除の完了値は `NotRegistered` と `Unregistered` の両方を受理し、実際の応答値を台帳へ残します。
@@ -89,7 +89,7 @@ old-only VM/VMSSにはSourceDiagを作りません。auxLA宛の非対象設定�
 空category、汎用404、auth失敗、作成省略をPASS/安全skipへ変換しません。
 Storage宛PUTの可否はSourceLA宛成功とは別に検証してください。
 
-4. **generic6を別実行**：完成済み6本のコピーへ既存設定値だけを与えます。
+4. **正本6本を別実行**：[procedural-migration](../procedural-migration/README.md)の6本を作業用フォルダへコピーし、common.ps1の設定値とtargets.csvへラボの値を与えて、pwsh.exeから実行します。
 F1/F2とrollbackのorchestratorはこのfixtureに含めません。製品のgeneric処理は変更しません。
 実行後はCaptureをもう一度行い、製品が作った専用RG内資産と拡張設定を台帳へ含めます。
 
@@ -120,13 +120,14 @@ current版はfresh version/ETag一致時だけIf-Match BASE解除→同ID削除�
 | 同上 `managementGroupId` / `operations` | 新MGと3 policy assignmentの実PUT ID |
 | `expected-scopes.json` | 独立予定ID、存在GET、category応答 |
 | `source-diag-put-success-scopes.json` | SourceDiag PUT/GET成功scopeだけ |
-| `positive-expected-scopes.json` | 製品precheckとの独立期待集合 |
+| `positive-expected-scopes.json` | 正本copyの探索結果との独立期待集合 |
 | `scope-capabilities.json` | 成功、非対応、失敗、未解決、Storage宛未実測の区別 |
 | `untargeted-diagnostic-baseline.json` | auxLA宛設定の不変比較用原本 |
 | `external-differences.json` / `cleanup-result.json` | 外部差分と最終残存結果 |
 
-precheck後、独立positive集合と `backup.Diagnostics.ResourceId` をcase-insensitiveで
-重複排除し、**双方向完全一致**を確認します。この期待IDを製品入力へ注入してはいけません。
+precheckは記録を作りません。正本のstep1_copy実行後、作業用フォルダの `records/<環境>/<Sub ID>.json` を読みます。
+`OldSettings` の `Kind=Diagnostic` だけを選び、`Id` 末尾の `/providers/Microsoft.Insights/diagnosticSettings/設定名` を外してリソースscopeへ戻します。
+その集合と独立positive集合をcase-insensitiveで重複排除し、**双方向完全一致**を確認します。この期待IDを製品入力へ注入してはいけません。
 SQLmaster/Redis default DB等でSourceDiag成功なのにdiscoveryへ出なければ `DISCOVERY_GAP` です。
 型別分岐、manual IDs、SourceDiagの無言削除で通しません。
 

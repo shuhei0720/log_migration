@@ -1,5 +1,7 @@
 # コード整理後の検証状況
 
+この資料は旧`migration`版の整理の記録です。現在の正本は[手続型PowerShell 7版](../procedural-migration/README.md)です。
+
 2026-11-19 JST時点。送信先選択を追加した版は、実Windows PowerShell 5.1.20348.5773 DesktopとLinux PowerShell 7.5.4で、それぞれ185ケース・1,845判定が成功しました。同じ20ファイルの凍結版です。[Windowsの全個別結果](destination-selection-windows51.json)、[Linux結果](destination-selection-linux.json)、[全185ケースの一覧](CURRENT_FORMAL_CASES.md)を保存しています。
 
 
