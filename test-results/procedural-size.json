@@ -1,0 +1,53 @@
+{
+  "baselineCommit": "d640b35",
+  "countIncludes": [
+    "code",
+    "settings",
+    "Japanese comments",
+    "whitespace",
+    "newlines"
+  ],
+  "oldDirectory": "migration",
+  "newDirectory": "procedural-migration",
+  "baselineCharacters": 140946,
+  "newCharacters": 56332,
+  "reductionPercent": 60.03,
+  "initialTargetCharacters": 14000,
+  "initialTargetMet": false,
+  "priorityConfirmedByUser": "Preserve functionality and readability, then reduce as far as possible",
+  "oldFunctions": 25,
+  "newFunctions": 5,
+  "singleLineIfForeachWhile": 0,
+  "files": [
+    {
+      "file": "step3_delete.ps1",
+      "before": 18995,
+      "after": 2772
+    },
+    {
+      "file": "common.ps1",
+      "before": 48625,
+      "after": 24636
+    },
+    {
+      "file": "rollback.ps1",
+      "before": 14268,
+      "after": 5237
+    },
+    {
+      "file": "step1_copy.ps1",
+      "before": 39269,
+      "after": 20271
+    },
+    {
+      "file": "step2_verify.ps1",
+      "before": 15308,
+      "after": 2609
+    },
+    {
+      "file": "precheck.ps1",
+      "before": 4481,
+      "after": 807
+    }
+  ]
+}
