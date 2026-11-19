@@ -22,7 +22,7 @@ $PrimaryLocation = 'japaneast'
 $SecondaryLocation = 'japanwest'
 $ThirdLocation = 'canadacentral'
 $FourthLocation = 'westus2'
-$MaxLifetimeHours = 4
+$MaxLifetimeHours = 6
 # override は依存 bundle 全体へ適用します。例: 'B-R2'=@{Location='eastus';Reason='RP 提供地域を確認済み'}
 $BundleLocationOverrides = @{}
 # 空なら2 subscription の共通の元親を使用。異なる親の場合は明示してください。
@@ -97,7 +97,8 @@ function Invoke-AzJson {
     if ($exitCode -ne 0) {
         $errorCode = 'CLI_FAILED'
         $knownCodes=@('ResourceNotFound','ResourceGroupNotFound','ManagementGroupNotFound','NotFound',
-            'RoleAssignmentNotFound','DiagnosticSettingNotFound','ResourceTypeNotSupported',
+            'RoleAssignmentNotFound','DiagnosticSettingNotFound','PolicyDefinitionNotFound',
+            'PolicySetDefinitionNotFound','PolicyAssignmentNotFound','ResourceTypeNotSupported',
             'UnsupportedResourceType','DiagnosticSettingsNotSupported','AuthorizationFailed',
             'AuthenticationFailed','InvalidAuthenticationToken','MissingSubscriptionRegistration',
             'NoRegisteredProviderFound','InvalidApiVersionParameter','InvalidResourceLocation',
@@ -201,7 +202,7 @@ function Wait-ResourceGone {
     $limit = [DateTime]::UtcNow.AddMinutes($MaximumMinutes)
     do {
         $response = Invoke-Api -Method GET -Id $Id -ApiVersion $ApiVersion -MayFail
-        if (-not $response.ok -and $response.code -in @('ResourceNotFound','ResourceGroupNotFound','ManagementGroupNotFound','NotFound')) { return }
+        if (-not $response.ok -and $response.code -in @('ResourceNotFound','ResourceGroupNotFound','ManagementGroupNotFound','NotFound','RoleAssignmentNotFound')) { return }
         if (-not $response.ok) { throw ('Deletion verification unresolved: ' + $response.code) }
         if ([DateTime]::UtcNow -gt $limit) { throw ('Deletion wait timed out: ' + $Id) }
         Start-Sleep -Seconds 15
@@ -412,13 +413,15 @@ function Read-ExistingNetworks {
             $prefixes=@(@(Get-PropertyValue $p 'addressPrefix')+@(Get-PropertyValue $p 'addressPrefixes' @()) | Where-Object {$_})
             if($prefixes.Count -ne 1 -or $prefixes[0] -notmatch ('^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/'+$lengths[$i]+'$')){throw ('Existing subnet prefix must be actual IPv4 /'+$lengths[$i]+': '+$name)}
             $delegations=@(Get-PropertyValue $p 'delegations' @() | ForEach-Object {$_.properties.serviceName})
-            $expected=if($config.role -eq 'A' -and $role -eq 'Protect'){'Microsoft.Web/hostingEnvironments'}elseif($config.role -eq 'A' -and $role -eq 'VNetIntegration'){'Microsoft.App/environments'}elseif($config.role -eq 'B' -and $role -in @('Private','VNetIntegration')){'Microsoft.Databricks/workspaces'}else{''}
-            if(($expected -and ($delegations.Count -ne 1 -or $delegations[0] -ine $expected)) -or (-not $expected -and $delegations.Count -ne 0)){throw ('Unexpected existing subnet delegation: '+$name)}
+            # 選択したサービスが使う専用サブネットだけ、必要な委任を確認します。
+            $keys=$script:Ledger.plan.selectedKeys
+            $expected=if($keys -contains 'ase' -and $config.role -eq 'A' -and $role -eq 'Protect'){'Microsoft.Web/hostingEnvironments'}elseif($keys -contains 'containerEnvironment' -and $config.role -eq 'A' -and $role -eq 'VNetIntegration'){'Microsoft.App/environments'}elseif($keys -contains 'databricks' -and $config.role -eq 'B' -and $role -in @('Private','VNetIntegration')){'Microsoft.Databricks/workspaces'}else{''}
+            if($expected -and ($delegations.Count -ne 1 -or $delegations[0] -ine $expected)){throw ('Unexpected existing subnet delegation: '+$name)}
             if($CaptureBefore -and $existing.Count -eq 0 -and $expected){
                 foreach($field in @('ipConfigurations','ipConfigurationProfiles','privateEndpoints','serviceAssociationLinks','resourceNavigationLinks')){if(@(Get-PropertyValue $p $field @()).Count){throw ('Dedicated existing subnet is in use: '+$name)}}
             }
             $subnets[$role]=[pscustomobject]@{id=$raw.id;name=$raw.name;addressPrefix=$prefixes[0];properties=(Copy-ExternalNetworkValue $p);raw=(Copy-ExternalNetworkValue $raw)}
-            if($config.role -eq 'B' -and $role -in @('Private','VNetIntegration')){
+            if($keys -contains 'databricks' -and $config.role -eq 'B' -and $role -in @('Private','VNetIntegration')){
                 $nsgId=Get-PropertyValue (Get-PropertyValue $p 'networkSecurityGroup') 'id'
                 if(-not $nsgId -or $nsgId -notmatch ('^/subscriptions/'+[regex]::Escape($subscription)+'/resourceGroups/[^/]+/providers/Microsoft.Network/networkSecurityGroups/[^/]+$')){throw 'Dedicated DBR subnet requires an exact same-subscription NSG.'}
                 $nsg=Get-ExternalNetworkRaw $nsgId
@@ -717,22 +720,45 @@ function Register-RequiredProviders {
         }
     }
 }
+function Invoke-ManagementFixtureRequest {
+    param([string]$Id,[string]$ApiVersion,$Body,[string]$Purpose)
+    # 新規MG・ポリシーの反映待ち。既知の未反映だけを5秒間隔・最大60回再試行します。
+    $notReady=@('NotFound','ResourceNotFound','ManagementGroupNotFound','PolicyDefinitionNotFound','PolicySetDefinitionNotFound','PolicyAssignmentNotFound')
+    $accepted=$false
+    for($attempt=0;$attempt -lt 60;$attempt++){
+        if(-not $accepted){
+            $response=Invoke-Api -Method PUT -Id $Id -ApiVersion $ApiVersion -Body $Body -Purpose $Purpose -MayFail
+            if(-not $response.ok -and $response.code -notin $notReady){throw ('Management fixture PUT failed: '+$response.code)}
+            $accepted=$response.ok
+        }
+        if($accepted){
+            $response=Invoke-Api -Method GET -Id $Id -ApiVersion $ApiVersion -MayFail
+            if($response.ok){
+                if($null -eq $response.value){throw 'Malformed management fixture GET response.'}
+                return
+            }
+            if($response.code -notin $notReady){throw ('Management fixture GET failed: '+$response.code)}
+        }
+        if($attempt -lt 59){Start-Sleep -Seconds 5}
+    }
+    throw ('Management fixture propagation timed out: '+$Id+' / '+$response.code)
+}
 function Create-ManagementFixture {
     $mg=$script:Ledger.managementGroupId
     $before=Invoke-Api -Method GET -Id $mg -ApiVersion '2020-05-01' -MayFail
     if($before.ok -or $before.code -notin @('ManagementGroupNotFound','ResourceNotFound','NotFound')){throw 'MG creation collision or unresolved existence.'}
-    $null=Invoke-Api -Method PUT -Id $mg -ApiVersion '2020-05-01' -Body @{properties=@{displayName=('Fixture '+$RunId)
+    Invoke-ManagementFixtureRequest -Id $mg -ApiVersion '2020-05-01' -Body @{properties=@{displayName=('Fixture '+$RunId)
     details=@{parent=@{id=$script:Ledger.managementGroupParentId}}}} -Purpose 'Create run MG'
     foreach ($parent in $script:Ledger.subscriptionParents) {
         $parent.restoreStatus='MOVE_INTENT'
         Save-Ledger
-        $null=Invoke-Api -Method PUT -Id ($mg+'/subscriptions/'+$parent.subscriptionId) -ApiVersion '2020-05-01' -Body @{} -Purpose 'Move subscription to run MG'
+        Invoke-ManagementFixtureRequest -Id ($mg+'/subscriptions/'+$parent.subscriptionId) -ApiVersion '2020-05-01' -Body @{} -Purpose 'Move subscription to run MG'
         $parent.restoreStatus='RESTORE_REQUIRED'
         Save-Ledger
     }
     $definition=$mg+'/providers/Microsoft.Authorization/policyDefinitions/fx-audit'
     $initiative=$mg+'/providers/Microsoft.Authorization/policySetDefinitions/fx-initiative'
-    $null=Invoke-Api -Method PUT -Id $definition -ApiVersion '2023-04-01' -Body @{
+    Invoke-ManagementFixtureRequest -Id $definition -ApiVersion '2023-04-01' -Body @{
         properties=@{displayName='Fixture audit'
     policyType='Custom'
     mode='All'
@@ -742,13 +768,13 @@ function Create-ManagementFixture {
     } -Purpose 'Create harmless policy definition'
     $definitions=@($script:Template.metadata.policyReferenceIds | ForEach-Object {@{policyDefinitionId=$definition
     policyDefinitionReferenceId=$_}})
-    $null=Invoke-Api -Method PUT -Id $initiative -ApiVersion '2023-04-01' -Body @{properties=@{displayName='Fixture references'
+    Invoke-ManagementFixtureRequest -Id $initiative -ApiVersion '2023-04-01' -Body @{properties=@{displayName='Fixture references'
     policyType='Custom'
     policyDefinitions=$definitions}} -Purpose 'Create initiative'
     $assignmentIndex=0
     foreach ($name in $script:Template.metadata.policyAssignmentNames) {
         $definitionId=if($assignmentIndex -eq 2){$initiative}else{$definition}
-        $null=Invoke-Api -Method PUT -Id ($mg+'/providers/Microsoft.Authorization/policyAssignments/'+$name) -ApiVersion '2022-06-01' -Body @{properties=@{displayName='Fixture shared assignment'
+        Invoke-ManagementFixtureRequest -Id ($mg+'/providers/Microsoft.Authorization/policyAssignments/'+$name) -ApiVersion '2022-06-01' -Body @{properties=@{displayName='Fixture shared assignment'
         policyDefinitionId=$definitionId
         enforcementMode='DoNotEnforce'}} -Purpose 'Create shared policy assignment'
         $assignmentIndex++
