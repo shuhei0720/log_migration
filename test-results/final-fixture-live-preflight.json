@@ -1,0 +1,50 @@
+{
+  "status": "FIXTURE_PROVIDER_PREFLIGHT_PASS_PRODUCT_TEST_PENDING",
+  "runId": "fin7t261119b",
+  "templateSha256": "6a366940435e7af6225bfda24c2bf269e3fc0551dda464c263b1beab262d99d7",
+  "controllerSha256": "b97a48efe6ae5277415046cf152a750236f45259e2aa2efa149c27133edf3521",
+  "validationOnly": true,
+  "productSourceChanges": 0,
+  "corrections": [
+    {
+      "resource": "Microsoft.KeyVault/vaults",
+      "change": "omit enablePurgeProtection=false",
+      "realFoundationDeployment": "Succeeded"
+    },
+    {
+      "resource": "Microsoft.Search/searchServices",
+      "change": "Free SKU: publicNetworkAccess disabled -> enabled",
+      "skuChanged": false
+    }
+  ],
+  "bundles": [
+    {
+      "bundle": "A-R1",
+      "location": "japaneast",
+      "validationSucceeded": true,
+      "startedUtc": "2026-11-19T08:30:20.493696+00:00",
+      "finishedUtc": "2026-11-19T08:30:42.608979+00:00"
+    },
+    {
+      "bundle": "A-R3",
+      "location": "canadacentral",
+      "validationSucceeded": true,
+      "startedUtc": "2026-11-19T08:30:20.493850+00:00",
+      "finishedUtc": "2026-11-19T08:30:26.046131+00:00"
+    },
+    {
+      "bundle": "B-R2",
+      "location": "japanwest",
+      "validationSucceeded": true,
+      "startedUtc": "2026-11-19T08:30:20.495027+00:00",
+      "finishedUtc": "2026-11-19T08:30:24.267370+00:00"
+    },
+    {
+      "bundle": "B-R4",
+      "location": "westus2",
+      "validationSucceeded": true,
+      "startedUtc": "2026-11-19T08:30:20.495079+00:00",
+      "finishedUtc": "2026-11-19T08:30:24.058868+00:00"
+    }
+  ]
+}
