@@ -1,6 +1,6 @@
 {
   "status": "DEVELOPMENT_VALIDATION_FINAL_NOT_STARTED",
-  "updatedUtc": "2026-11-19T11:45:51.000228+00:00",
+  "updatedUtc": "2026-11-19T11:50:49.869868+00:00",
   "canonicalSha256": {
     "common.ps1": "12200f31323537a115fb2191079fc4a2bbb53752a0efa3e07bdfc1cf211bce5d",
     "precheck.ps1": "f406b778b82e496980c19a7eb4ddd35d5079f86b6b66d5da8d5c33a7df73d1e4",
@@ -18,8 +18,15 @@
     "azureRequests": 0
   },
   "windowsReplay": {
-    "status": "IN_PROGRESS",
-    "runtime": "7.6.10"
+    "result": "PASS",
+    "runtime": "7.6.10",
+    "cases": 75,
+    "checks": 1023,
+    "azureRequests": 0,
+    "sameCaseResultsAsLinux": true,
+    "sourceAndHarnessUnchanged": true,
+    "temporaryOutboundBlockRemoved": true,
+    "rawReportSha256": "559ab82183ec0713c9d247fcbdf9938ca402bda0efc2e8ea48c461d4d18cb063"
   },
   "realAzureDiscoveryBeforeFix": {
     "result": "FAIL",
