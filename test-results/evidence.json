@@ -1,6 +1,6 @@
 {
   "status": "DEVELOPMENT_VALIDATION_FINAL_NOT_STARTED",
-  "updatedUtc": "2026-11-19T11:42:31.006226+00:00",
+  "updatedUtc": "2026-11-19T11:45:51.000228+00:00",
   "canonicalSha256": {
     "common.ps1": "12200f31323537a115fb2191079fc4a2bbb53752a0efa3e07bdfc1cf211bce5d",
     "precheck.ps1": "f406b778b82e496980c19a7eb4ddd35d5079f86b6b66d5da8d5c33a7df73d1e4",
@@ -30,7 +30,7 @@
     "actualOldAssociations": 8,
     "resourceWrites": 0
   },
-  "redisChildFix": "Applied to common.ps1; real Azure recheck in progress",
+  "redisChildFix": "Applied to common.ps1; fresh Windows precheck and real Azure discovery passed",
   "sourceIntegrity": {
     "result": "PASS",
     "diagnostics": 66,
@@ -54,5 +54,16 @@
   "cleanup": {
     "completed": false,
     "state": "Development Azure environment is still active; restore after verification"
+  },
+  "realAzureDiscoveryAfterFix": {
+    "result": "PASS",
+    "runtime": "7.6.10",
+    "expectedDiagnostics": 66,
+    "actualDiagnostics": 66,
+    "missingDiagnostics": 0,
+    "expectedOldAssociations": 8,
+    "actualOldAssociations": 8,
+    "resourceWrites": 0,
+    "migrationRecords": 0
   }
 }
