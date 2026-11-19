@@ -98,4 +98,4 @@ pwsh.exe -NoProfile -File .\procedural-migration\rollback.ps1
 
 コード部分は既存版から54.24％減です。前回からは218文字（0.40％）減で、並列処理と結果の件数確認を追加した分も含みます。**当初の10分の1という目標には未達です。** ユーザー確認により、機能と読みやすさを維持して可能な限り削減する方針です。変数名の短縮や1行への詰め込み、コードの別ファイルへの逃がしは行っていません。詳しい計測値は[文字数比較](../test-results/procedural-size.json)に記録しています。
 
-[PowerShell 7版の72ケース・992判定](../test-results/PROCEDURAL_CASES.md)はLinuxで成功しました。実際の並列runspaceから外部API応答を再生し、一部失敗後の再実行も確認しています。Windows実機での同一版検証と速度比較を実施中です。[従来のWindows 5.1試験](../test-results/procedural-windows51.json)は変更前の版の記録です。
+[PowerShell 7版の72ケース・992判定](../test-results/PROCEDURAL_CASES.md)はLinuxと[Windows PowerShell 7.6.10](../test-results/procedural-windows7.json)で成功しました。実際の並列runspaceから外部API応答を再生し、一部失敗後の再実行も確認しています。固定した7ファイルの前後ハッシュが一致し、構文エラーは0です。Windows実機での速度比較は実施中です。[従来のWindows 5.1試験](../test-results/procedural-windows51.json)は変更前の版の記録です。
