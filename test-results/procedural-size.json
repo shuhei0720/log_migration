@@ -1,53 +1,69 @@
 {
   "baselineCommit": "d640b35",
+  "measurement": "PowerShell Parser comment tokens removed; whole comment-only lines removed; inline comments removed; strings containing # retained; #Requires directives retained",
   "countIncludes": [
     "code",
     "settings",
-    "Japanese comments",
     "whitespace",
-    "newlines"
+    "newlines",
+    "#Requires directives"
+  ],
+  "countExcludes": [
+    "ordinary comments",
+    "comment-only lines",
+    "UTF-8 BOM"
   ],
   "oldDirectory": "migration",
   "newDirectory": "procedural-migration",
-  "baselineCharacters": 140946,
-  "newCharacters": 56326,
-  "reductionPercent": 60.04,
-  "initialTargetCharacters": 14000,
-  "initialTargetMet": false,
+  "baselineCharacters": 117245,
+  "newCharacters": 53864,
+  "reductionPercent": 54.06,
+  "tenthLevelTarget": 11724.5,
+  "tenthLevelTargetMet": false,
   "priorityConfirmedByUser": "Preserve functionality and readability, then reduce as far as possible",
   "oldFunctions": 25,
   "newFunctions": 5,
   "singleLineIfForeachWhile": 0,
+  "referenceCharactersIncludingComments": {
+    "before": 140946,
+    "after": 56326
+  },
   "files": [
     {
-      "file": "step3_delete.ps1",
-      "before": 18995,
-      "after": 2772
-    },
-    {
       "file": "common.ps1",
-      "before": 48625,
-      "after": 24630
-    },
-    {
-      "file": "rollback.ps1",
-      "before": 14268,
-      "after": 5237
-    },
-    {
-      "file": "step1_copy.ps1",
-      "before": 39269,
-      "after": 20271
-    },
-    {
-      "file": "step2_verify.ps1",
-      "before": 15308,
-      "after": 2609
+      "before": 41134,
+      "after": 23393,
+      "codeSha256": "4347313c54e053b897cba248e509413df54c4b14638e9d69f0340d1f1c7363ff"
     },
     {
       "file": "precheck.ps1",
-      "before": 4481,
-      "after": 807
+      "before": 3265,
+      "after": 727,
+      "codeSha256": "6bcd7a176af39abb9c20ff5f2d61ccfcacbdcf830ef551cdd9e4163a574cfa16"
+    },
+    {
+      "file": "rollback.ps1",
+      "before": 11551,
+      "after": 5015,
+      "codeSha256": "c2ed4cb32fab9d68541ad422847363a359a7c509eb03dc6898e9c126b65e2640"
+    },
+    {
+      "file": "step1_copy.ps1",
+      "before": 33726,
+      "after": 19507,
+      "codeSha256": "d8a76bcdd67d0795233eb19288bf0b8cb6c5a451400c7bbbe8f77f130d515b20"
+    },
+    {
+      "file": "step2_verify.ps1",
+      "before": 12215,
+      "after": 2532,
+      "codeSha256": "d27496544e654d04bdd5d0120457d997c06c12d32aeddbbf61266987346286b5"
+    },
+    {
+      "file": "step3_delete.ps1",
+      "before": 15354,
+      "after": 2690,
+      "codeSha256": "1ef621b2c03f45c13ff157d1383f8cca8495c71266f55e5d80c56cb09b9ed859"
     }
   ]
 }
