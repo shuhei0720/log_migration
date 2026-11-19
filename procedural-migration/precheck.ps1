@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+﻿#Requires -Version 7.0
 . (Join-Path $PSScriptRoot 'common.ps1')
 
 # ---
@@ -23,7 +23,7 @@ $results = foreach ($target in $targets) {
         }
     }
 }
-$results | Export-Csv (Join-Path $PSScriptRoot 'precheck_results.csv') -NoTypeInformation -Encoding UTF8
+$results | Export-Csv (Join-Path $PSScriptRoot 'precheck_results.csv') -Encoding utf8BOM
 if ($results.Result -contains 'NG') {
     throw '事前確認に失敗しました。precheck_results.csvを確認してください。'
 }

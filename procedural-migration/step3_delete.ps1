@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+﻿#Requires -Version 7.0
 
 # ---
 # 全対象を確認してから、旧関連、旧診断設定の順に削除する
@@ -22,21 +22,21 @@ try {
                 }
                 $newId = ''
                 if ($kind -eq 'Diagnostic' -and $record.Target.LogDestination -in @('Storage', 'Log')) {
-                    $parentId = $resource.Id -replace '/providers/Microsoft.Insights/diagnosticSettings/[^/]+$', ''
+                    $parentId = $resource.Id -replace "$diagnosticPath/[^/]+$", ''
                     $settingName = [Uri]::EscapeDataString($newDiagnosticSettingName)
-                    $newId = "$parentId/providers/Microsoft.Insights/diagnosticSettings/$settingName"
+                    $newId = "$parentId$diagnosticPath/$settingName"
                 }
                 if ($kind -eq 'Association' -and $record.Target.VmLogDestination -eq 'Log') {
-                    $parentId = $resource.Id -replace '/providers/Microsoft.Insights/dataCollectionRuleAssociations/[^/]+$', ''
+                    $parentId = $resource.Id -replace "$associationPath/[^/]+$", ''
                     $dcrName = $record.Target.WorkspaceName -replace '^log', 'dcr'
-                    $newId = "$parentId/providers/Microsoft.Insights/dataCollectionRuleAssociations/$dcrName"
+                    $newId = "$parentId$associationPath/$dcrName"
                 }
                 if ($newId) {
                     $replacement = @($record.NewSettings | Where-Object Id -eq $newId)
                     if ($replacement.Count -ne 1) {
                         throw '新設定の記録がありません。'
                     }
-                    $currentNew = Invoke-ArmRequest $newId -ApiVersion $replacement[0].ApiVersion -Optional
+                    $currentNew = Invoke-ArmRequest -Resource $replacement[0] -Optional
                     if (-not (Test-Configuration $currentNew $replacement[0].Body -Kind $kind)) {
                         throw '削除直前の新設定が記録と一致しません。'
                     }
@@ -52,7 +52,7 @@ catch {
         ResourceId = $resource.Id
         Reason = $_.Exception.Message
         Expected = ConvertTo-Json $resource.Body -Depth 40 -Compress
-    } | Export-Csv (Join-Path $PSScriptRoot 'delete_failures.csv') -NoTypeInformation -Encoding UTF8
+    } | Export-Csv (Join-Path $PSScriptRoot 'delete_failures.csv') -Encoding utf8BOM
     throw
 }
 Write-Host '旧設定を削除しました。保存先と新設定は残しています。'

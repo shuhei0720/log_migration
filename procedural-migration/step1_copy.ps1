@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+﻿#Requires -Version 7.0
 . (Join-Path $PSScriptRoot 'common.ps1')
 $failures = @()
 $null = New-Item $recordDirectory -ItemType Directory -Force
@@ -15,25 +15,14 @@ foreach ($target in $targets) {
         $plan = Get-MigrationPlan -Target $target -Record $record
         $resourceGroupId = "/subscriptions/$subscriptionId/resourceGroups/$($target.ResourceGroup)"
         # ---
-        # 変更前のWaiverを記録し、全行で準備するRG・Log Analyticsを指定する。
+        # Waiverと、全行で準備するRG・Log Analyticsの設定値を指定する。
         # ---
         foreach ($assignment in $policyAssignments) {
             $assignmentName = ($assignment.Id -split '/')[-1]
             $exemptionId = "/subscriptions/$subscriptionId/providers/Microsoft.Authorization/policyExemptions/log-migration-$environment-$assignmentName"
-            $saved = @($Record.NewSettings | Where-Object { $_.Id -eq $exemptionId })
-            $before = $null
-            if ($saved.Count -gt 0) {
-                $before = $saved[0].Before
-            }
-            else {
-                $current = Invoke-ArmRequest -ResourceId $exemptionId -ApiVersion '2022-07-01-preview' -Optional
-                $before = Get-WritableBody -Resource $current -Kind 'Exemption'
-            }
             $plan.NewSettings += @{
                 Id = $exemptionId
                 Kind = 'Exemption'
-                ApiVersion = '2022-07-01-preview'
-                Before = $before
                 Body = @{
                     properties = @{
                         policyAssignmentId = $assignment.Id
@@ -49,13 +38,11 @@ foreach ($target in $targets) {
         $plan.Destinations += @{
             Id = $resourceGroupId
             Kind = 'Group'
-            ApiVersion = '2022-09-01'
             Body = @{ location = $location }
         }
         $plan.Destinations += @{
             Id = $Target.WorkspaceId
             Kind = 'Workspace'
-            ApiVersion = '2023-09-01'
             Body = @{
                 location = $location
                 properties = @{
@@ -78,7 +65,6 @@ foreach ($target in $targets) {
             $plan.Destinations += @{
                 Id = $storageId
                 Kind = 'Storage'
-                ApiVersion = '2023-05-01'
                 Body = @{
                     location = $storageLocation
                     kind = 'StorageV2'
@@ -101,13 +87,11 @@ foreach ($target in $targets) {
             $plan.Destinations += @{
                 Id = "$storageId/blobServices/default"
                 Kind = 'Blob'
-                ApiVersion = '2023-05-01'
                 Body = @{ properties = @{ isVersioningEnabled = $true } }
             }
             $plan.Destinations += @{
                 Id = "$storageId/managementPolicies/default"
                 Kind = 'Lifecycle'
-                ApiVersion = '2023-05-01'
                 Body = @{
                     properties = @{
                         policy = @{
@@ -127,7 +111,6 @@ foreach ($target in $targets) {
             $plan.Destinations += @{
                 Id = "$storageId/providers/Microsoft.Security/defenderForStorageSettings/current"
                 Kind = 'Defender'
-                ApiVersion = '2025-01-01'
                 Body = @{
                     properties = @{
                         isEnabled = $false
@@ -139,7 +122,7 @@ foreach ($target in $targets) {
 
         # ---
         # 旧VM対象があればテーブルを準備し、VM送信を続ける場合だけ新DCRに関連付ける。
-        # 既存DCR・関連付けは元のその他設定を残し、最初のBeforeから希望値を作る。
+        # 既存DCR・関連付けのその他の設定は、下のBefore取得で引き継ぐ。
         # ---
         $oldAssociations = @($plan.OldSettings | Where-Object { $_.Kind -eq 'Association' })
         if ($oldAssociations.Count -gt 0) {
@@ -147,7 +130,6 @@ foreach ($target in $targets) {
                 $plan.Destinations += @{
                     Id = "$($Target.WorkspaceId)/tables/$tableName"
                     Kind = 'Table'
-                    ApiVersion = '2025-07-01'
                     Body = @{
                         properties = @{
                             schema = @{ name = $tableName }
@@ -159,19 +141,10 @@ foreach ($target in $targets) {
         }
         if ($plan.Discovery.Dcr) {
             $dcrId = $plan.Discovery.Dcr.Id
-            $saved = @($Record.NewSettings | Where-Object { $_.Id -eq $dcrId })
-            $before = $null
-            if ($saved.Count -gt 0) {
-                $before = $saved[0].Before
+            $dcrBody = @{
+                location = $location
+                properties = @{}
             }
-            else {
-                $before = Get-WritableBody -Resource (Invoke-ArmRequest -ResourceId $dcrId -Optional) -Kind 'Dcr'
-            }
-            $dcrBody = Get-WritableBody -Resource $before -Kind 'Dcr'
-            if (-not $dcrBody) {
-                $dcrBody = @{ properties = @{} }
-            }
-            $dcrBody.location = $location
             $dcrBody.properties.dataSources = @{
                 windowsEventLogs = @(@{
                     name = 'eventLogsDataSource'
@@ -212,31 +185,14 @@ foreach ($target in $targets) {
             $plan.NewSettings += @{
                 Id = $dcrId
                 Kind = 'Dcr'
-                ApiVersion = '2024-03-11'
-                Before = $before
                 Body = $dcrBody
-                KeepOnRollback = $null -eq $before
             }
             foreach ($association in $plan.Discovery.Associations) {
                 $associationId = $association.Id
-                $saved = @($Record.NewSettings | Where-Object { $_.Id -eq $associationId })
-                $before = $null
-                if ($saved.Count -gt 0) {
-                    $before = $saved[0].Before
-                }
-                else {
-                    $before = Get-WritableBody -Resource (Invoke-ArmRequest -ResourceId $associationId -Optional) -Kind 'Association'
-                }
-                $associationBody = Get-WritableBody -Resource $before -Kind 'Association'
-                if (-not $associationBody) {
-                    $associationBody = @{ properties = @{} }
-                }
-                $associationBody.properties.dataCollectionRuleId = $dcrId
+                $associationBody = @{ properties = @{ dataCollectionRuleId = $dcrId } }
                 $plan.NewSettings += @{
                     Id = $associationId
                     Kind = 'Association'
-                    ApiVersion = '2024-03-11'
-                    Before = $before
                     Body = $associationBody
                 }
             }
@@ -264,9 +220,34 @@ foreach ($target in $targets) {
             $plan.NewSettings += @{
                 Id = $diagnostic.Id
                 Kind = 'Diagnostic'
-                ApiVersion = '2021-05-01-preview'
                 Before = $null
                 Body = $diagnosticBody
+            }
+        }
+        # ---
+        # Waiver・DCR・関連付けの変更前情報をまとめて取得する。
+        # 再実行は記録したBeforeを使い、DCR・関連の変更対象以外の項目も引き継ぐ。
+        # ---
+        foreach ($setting in @($plan.NewSettings | Where-Object Kind -ne 'Diagnostic')) {
+            $saved = @($record.NewSettings | Where-Object Id -eq $setting.Id)
+            if ($saved.Count) {
+                $setting.Before = $saved[0].Before
+            }
+            else {
+                $setting.Before = Get-WritableBody (Invoke-ArmRequest -Resource $setting -Optional) -Kind $setting.Kind
+            }
+            if ($setting.Kind -eq 'Dcr') {
+                $setting.KeepOnRollback = $null -eq $setting.Before
+            }
+            if ($setting.Before -and $setting.Kind -in @('Dcr', 'Association')) {
+                $body = Get-WritableBody $setting.Before -Kind $setting.Kind
+                foreach ($property in $setting.Body.properties.Keys) {
+                    $body.properties[$property] = $setting.Body.properties[$property]
+                }
+                if ($setting.Kind -eq 'Dcr') {
+                    $body.location = $location
+                }
+                $setting.Body = $body
             }
         }
         $plan.Remove('Discovery')
@@ -314,7 +295,7 @@ foreach ($target in $targets) {
         $providersReady = $false
         $resources = @($record.NewSettings | Where-Object Kind -eq 'Exemption')
         $resources += @($record.Destinations)
-        $resources += @($record.NewSettings | Where-Object Kind -ne 'Exemption')
+        $resources += @($record.NewSettings | Where-Object { $_.Kind -notin @('Exemption', 'Diagnostic') })
         foreach ($resource in $resources) {
             if (-not $providersReady -and $resource.Kind -ne 'Exemption') {
                 $namespaces = @('Microsoft.Insights', 'Microsoft.OperationalInsights')
@@ -338,15 +319,7 @@ foreach ($target in $targets) {
                 }
                 $providersReady = $true
             }
-            $current = Invoke-ArmRequest -Resource $resource -Optional
-            $deadline = (Get-Date).AddMinutes(5)
-            while ($current.properties.provisioningState -in @('Creating', 'Updating', 'Accepted')) {
-                if ((Get-Date) -ge $deadline) {
-                    throw "作成・更新が完了しません: $($resource.Id)"
-                }
-                Start-Sleep -Seconds 3
-                $current = Invoke-ArmRequest -Resource $resource -Optional
-            }
+            $current = Invoke-ArmRequest -Resource $resource -Optional -Wait
             $currentBody = Get-WritableBody $current -Kind $resource.Kind
             $expected = $resource.Body
             if ($resource.Kind -eq 'Group') {
@@ -362,12 +335,12 @@ foreach ($target in $targets) {
             if ($current -and $resource.Kind -eq 'Exemption') {
                 throw '既存の適用除外が指定内容と異なります。'
             }
-            if ($current -and $resource.Kind -in @('Diagnostic', 'Dcr', 'Association')) {
+            if ($current -and $resource.Kind -in @('Dcr', 'Association')) {
                 if (-not $resource.Before -or -not (Test-Configuration $currentBody $resource.Before -Exact)) {
                     throw "変更予定の設定が記録と異なります: $($resource.Id)"
                 }
             }
-            $body = ConvertTo-Json $resource.Body -Depth 40 | ConvertFrom-Json
+            $body = ConvertTo-Json $resource.Body -Depth 40 | ConvertFrom-Json -AsHashtable
             $method = 'Put'
 
             # ---
@@ -396,12 +369,8 @@ foreach ($target in $targets) {
                     throw '既存Log Analyticsの地域が予定と異なります。'
                 }
                 $method = 'Patch'
-                $features = @{}
-                foreach ($property in $current.properties.features.PSObject.Properties) {
-                    $features[$property.Name] = $property.Value
-                }
-                $features.enableLogAccessUsingOnlyResourcePermissions = $true
-                $body.properties.features = $features
+                $body.properties.features = $current.properties.features ?? @{}
+                $body.properties.features.enableLogAccessUsingOnlyResourcePermissions = $true
             }
             if ($resource.Kind -eq 'Lifecycle') {
                 $body.properties.policy.rules = @($current.properties.policy.rules | Where-Object {
@@ -415,6 +384,7 @@ foreach ($target in $targets) {
             # ---
             # DCRの宛先テーブルが未反映の場合だけ、5分の期限内で再送する。
             # ---
+            $deadline = (Get-Date).AddMinutes(5)
             while ($true) {
                 try {
                     $null = Invoke-ArmRequest -Resource $resource -Method $method -Body $body
@@ -429,20 +399,55 @@ foreach ($target in $targets) {
                     Start-Sleep -Seconds 10
                 }
             }
-            do {
-                $current = Invoke-ArmRequest -Resource $resource
-                if ((Get-Date) -ge $deadline) {
-                    throw "設定後の更新が完了しません: $($resource.Id)"
-                }
-                if ($current.properties.provisioningState -in @('Creating', 'Updating', 'Accepted')) {
-                    Start-Sleep -Seconds 3
-                }
-            } while ($current.properties.provisioningState -in @('Creating', 'Updating', 'Accepted'))
+            $current = Invoke-ArmRequest -Resource $resource -Wait
             if (-not (Test-Configuration $current $expected -Kind $resource.Kind) -or
                 ($resource.Kind -eq 'Table' -and $current.properties.totalRetentionInDaysAsDefault)) {
                 throw "設定後の確認が一致しません: $($resource.Id)"
             }
         }
+
+        # ---
+        # 保存先が準備できたら、診断設定を最大5件ずつ複製する。
+        # 一致する設定はスキップし、全件の結果を親へ返して失敗だけCSVにまとめる。
+        # ---
+        $accessToken = $script:accessToken
+        $diagnostics = @($record.NewSettings | Where-Object Kind -eq 'Diagnostic')
+        $copied = @($diagnostics | ForEach-Object -Parallel {
+            $resource = $_
+            $result = [pscustomobject]@{
+                SubscriptionId = $using:subscriptionId
+                ResourceId = $resource.Id
+                Reason = ''
+                Expected = ''
+            }
+            try {
+                . $using:commonScript -SkipCsv
+                $subscriptionId = $using:subscriptionId
+                $script:accessToken = $using:accessToken
+                $script:tokenSubscription = $subscriptionId
+                $current = Invoke-ArmRequest -Resource $resource -Optional
+                if (Test-Configuration $current $resource.Body -Kind 'Diagnostic') {
+                    return $result
+                }
+                if ($current) {
+                    throw '同名の診断設定が記録と異なります。'
+                }
+                $null = Invoke-ArmRequest -Resource $resource -Method Put
+                $current = Invoke-ArmRequest -Resource $resource
+                if (-not (Test-Configuration $current $resource.Body -Kind 'Diagnostic')) {
+                    throw '複製後の診断設定が一致しません。'
+                }
+            }
+            catch {
+                $result.Reason = $_.Exception.Message
+                $result.Expected = ConvertTo-Json $resource.Body -Depth 40 -Compress
+            }
+            $result
+        } -ThrottleLimit $parallelLimit)
+        if ($copied.Count -ne $diagnostics.Count) {
+            throw '診断設定の複製結果が不足しています。'
+        }
+        $failures += @($copied | Where-Object Reason)
     }
     catch {
         $failures += [pscustomobject]@{
@@ -455,7 +460,7 @@ foreach ($target in $targets) {
 }
 $failurePath = Join-Path $PSScriptRoot 'copy_failures.csv'
 if ($failures.Count) {
-    $failures | Export-Csv $failurePath -NoTypeInformation -Encoding UTF8
+    $failures | Export-Csv $failurePath -Encoding utf8BOM
     throw "未完了のSubがあります。$failurePath を確認して再実行してください。"
 }
 if (Test-Path $failurePath) {

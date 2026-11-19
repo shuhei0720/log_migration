@@ -16,8 +16,8 @@
   "oldDirectory": "migration",
   "newDirectory": "procedural-migration",
   "baselineCharacters": 117245,
-  "newCharacters": 53864,
-  "reductionPercent": 54.06,
+  "newCharacters": 53563,
+  "reductionPercent": 54.32,
   "tenthLevelTarget": 11724.5,
   "tenthLevelTargetMet": false,
   "priorityConfirmedByUser": "Preserve functionality and readability, then reduce as far as possible",
@@ -26,44 +26,48 @@
   "singleLineIfForeachWhile": 0,
   "referenceCharactersIncludingComments": {
     "before": 140946,
-    "after": 56326
+    "after": 56294
   },
   "files": [
     {
       "file": "common.ps1",
       "before": 41134,
-      "after": 23393,
-      "codeSha256": "4347313c54e053b897cba248e509413df54c4b14638e9d69f0340d1f1c7363ff"
+      "after": 23975,
+      "codeSha256": "efbf1e33a6433a580f62b78095d23e3c658fa9613eff6772378e970036f82e10"
     },
     {
       "file": "precheck.ps1",
       "before": 3265,
-      "after": 727,
-      "codeSha256": "6bcd7a176af39abb9c20ff5f2d61ccfcacbdcf830ef551cdd9e4163a574cfa16"
+      "after": 711,
+      "codeSha256": "ca841aab0e9eb7f4c451cc29faff0e5447551e612b288047f6dc32142c09e5d4"
     },
     {
       "file": "rollback.ps1",
       "before": 11551,
-      "after": 5015,
-      "codeSha256": "c2ed4cb32fab9d68541ad422847363a359a7c509eb03dc6898e9c126b65e2640"
+      "after": 4660,
+      "codeSha256": "201478703d6a3e77145cd50151c613fad11ab84674895f486bfc4caf6ac770a6"
     },
     {
       "file": "step1_copy.ps1",
       "before": 33726,
-      "after": 19507,
-      "codeSha256": "d8a76bcdd67d0795233eb19288bf0b8cb6c5a451400c7bbbe8f77f130d515b20"
+      "after": 19201,
+      "codeSha256": "c6e85da17b853ceaabe09619de44f8cb7a6b3278a84c2d0bb8a0fdd178028405"
     },
     {
       "file": "step2_verify.ps1",
       "before": 12215,
-      "after": 2532,
-      "codeSha256": "d27496544e654d04bdd5d0120457d997c06c12d32aeddbbf61266987346286b5"
+      "after": 2516,
+      "codeSha256": "838d72d6e3711c9d91e1780a8bba0b34c2c3045febf4fa2cf192d646142718e4"
     },
     {
       "file": "step3_delete.ps1",
       "before": 15354,
-      "after": 2690,
-      "codeSha256": "1ef621b2c03f45c13ff157d1383f8cca8495c71266f55e5d80c56cb09b9ed859"
+      "after": 2500,
+      "codeSha256": "5b25d0781e3ba3d9d7ccd59bcc61f531d4dfc04abc6bb371813d5e9d04644c93"
     }
-  ]
+  ],
+  "previousProceduralCharacters": 53864,
+  "targetPowerShell": "7",
+  "additionalReductionCharacters": 301,
+  "additionalReductionPercent": 0.56
 }

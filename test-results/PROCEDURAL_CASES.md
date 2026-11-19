@@ -1,12 +1,12 @@
-# 手続型版の67テストケース
+# 手続型PowerShell 7版の69テストケース
 
-実Windows PowerShell 5.1 Desktopで67ケース・910判定が成功しました。同じ固定版をLinux PowerShell 7でも確認しています。外部CLI／RESTの応答と時刻を再生し、CSV読込み・探索・変更前記録・作成・確認・削除・切戻しには実際の6本を使います。Azureへの設定適用を通した実績とは区別します。
+Linux PowerShell 7.5.4で69ケース・945判定が成功しました。実際のForEach-Object -Parallelを使い、外部CLI／HTTP／時刻だけを再生します。CSV読込み・探索・変更前記録・作成・確認・削除・切戻しには実際の6本を使います。Azureへの設定適用を通した実績とは区別します。
 
-[Windows個別結果](procedural-windows51.json) / [Linux個別結果](procedural-linux.json) / [CSV](PROCEDURAL_CASES.csv) / [撤去結果](procedural-cleanup.json) / [文字数比較](procedural-size.json)。
+[Linux個別結果](procedural-powershell7-linux.json) / [CSV](PROCEDURAL_CASES.csv) / [文字数比較](procedural-size.json)。Windows PowerShell 7.6の同一版での検証と実API性能比較は実施中です。
 
-67ケースの個別判定は898件で、主要6本の構文・実行前後不変の12判定を加えて合計910件です。基本12判定はケース数に加算していません。
+69ケースの個別判定は933件で、主要6本の構文・実行前後不変の12判定を加えて合計945件です。基本12判定はケース数に加算していません。実workerからHTTP再生呼出し1,089件を記録しました。判定に使うAzure API通信は0件です。
 
-既存`migration`版の185ケースは別の版の実績です。今回の成功件数に加算していません。PASSは期待した動作の確認で、不正入力や外部変更を拒否して停止した場合も含みます。
+変更前のWindows 5.1版67ケース、および既存migration版の185ケースは別の版の記録です。今回の成功件数に加算していません。PASSは期待した動作の確認で、不正入力や外部変更を拒否して停止した場合も含みます。
 
 |CaseID|ケース|種別|判定数|結果|
 |---|---|---|---:|---|
@@ -77,3 +77,5 @@
 |PROC-065|新診断の余分なWorkspaceとEventHubを許容しない|異常・停止確認|9|PASS|
 |PROC-066|既存DCRへの余分な収集源追加を許容せず切戻しも上書きしない|再開・切戻し|6|PASS|
 |PROC-067|未選択Subの記録JSONが壊れていても指定Subだけを切り戻せる|再開・切戻し|7|PASS|
+|PROC-068|実runspaceで5件以上の診断GETとPUTを処理する|正常・並列|15|PASS|
+|PROC-069|並列worker1件の失敗を記録し再実行で欠落だけを補う|異常・再開|20|PASS|

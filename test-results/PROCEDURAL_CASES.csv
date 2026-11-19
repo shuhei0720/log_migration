@@ -66,3 +66,5 @@ PROC-064,DCRの一般400は再試行せずそのSubを止める,異常・停止�
 PROC-065,新診断の余分なWorkspaceとEventHubを許容しない,異常・停止確認,PASS,9
 PROC-066,既存DCRへの余分な収集源追加を許容せず切戻しも上書きしない,再開・切戻し,PASS,6
 PROC-067,未選択Subの記録JSONが壊れていても指定Subだけを切り戻せる,再開・切戻し,PASS,7
+PROC-068,実runspaceで5件以上の診断GETとPUTを処理する,正常・並列,PASS,15
+PROC-069,並列worker1件の失敗を記録し再実行で欠落だけを補う,異常・再開,PASS,20

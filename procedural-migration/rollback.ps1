@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+﻿#Requires -Version 7.0
 param([string[]]$SubscriptionIds)
 $subscriptionFilterProvided = $PSBoundParameters.ContainsKey('SubscriptionIds')
 . (Join-Path $PSScriptRoot 'common.ps1') -SkipCsv
@@ -16,7 +16,7 @@ if ($subscriptionFilterProvided) {
     $recordFiles = @($recordFiles | Where-Object { $_.BaseName -in $SubscriptionIds })
 }
 $records = @(foreach ($file in $recordFiles) {
-    $saved = Get-Content $file.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
+    $saved = Get-Content $file.FullName -Raw -Encoding UTF8 | ConvertFrom-Json -AsHashtable
     if ($saved.Target.SubscriptionId -ne $file.BaseName) {
         throw '記録のSub IDとファイル名が一致しません。'
     }
@@ -80,7 +80,7 @@ try {
                     }
                     if ($kind -eq 'Diagnostic' -and $expectedBody -and -not $current) {
                         $listId = $setting.Id -replace '/diagnosticSettings/[^/]+$', '/diagnosticSettings'
-                        $existing = Invoke-ArmRequest -ResourceId $listId -ApiVersion $setting.ApiVersion
+                        $existing = Invoke-ArmRequest -ResourceId $listId -ApiVersion $apiVersions.Diagnostic
                         if (@($existing.value).Count -ge 5) {
                             throw "旧設定を戻す空きがありません: $($setting.Id)"
                         }
@@ -91,14 +91,7 @@ try {
                     else {
                         $null = Invoke-ArmRequest -Resource $setting -Method Put -Body $expectedBody
                     }
-                    $deadline = (Get-Date).AddMinutes(5)
-                    do {
-                        $current = Invoke-ArmRequest -Resource $setting -Optional
-                        if ($current.properties.provisioningState -notin @('Creating', 'Updating', 'Accepted')) {
-                            break
-                        }
-                        Start-Sleep -Seconds 2
-                    } while ((Get-Date) -lt $deadline)
+                    $current = Invoke-ArmRequest -Resource $setting -Optional -Wait
                     $current = Get-WritableBody $current $kind
                     if (-not (Test-Configuration $current $expectedBody -Exact)) {
                         throw "復元後の値を確認できません: $($setting.Id)"
@@ -113,7 +106,7 @@ catch {
         SubscriptionId = $subscriptionId
         ResourceId = $setting.Id
         Reason = $_.Exception.Message
-    } | Export-Csv $failurePath -NoTypeInformation -Encoding UTF8
+    } | Export-Csv $failurePath -Encoding utf8BOM
     throw
 }
 if (Test-Path $failurePath) {

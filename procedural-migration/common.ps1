@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+﻿#Requires -Version 7.0
 param([switch]$SkipCsv)
 
 # ---
@@ -9,6 +9,23 @@ $targetWorkspaceId = '/subscriptions/43fc6c39-e53d-449d-9871-6d66f95ed2f3/resour
 $environment = 'dev'
 $newDiagnosticSettingName = 'storage-archive'
 $location = 'japaneast'
+$parallelLimit = 5
+$commonScript = $PSCommandPath
+$diagnosticPath = '/providers/Microsoft.Insights/diagnosticSettings'
+$associationPath = '/providers/Microsoft.Insights/dataCollectionRuleAssociations'
+$apiVersions = @{
+    Exemption = '2022-07-01-preview'
+    Group = '2022-09-01'
+    Workspace = '2023-09-01'
+    Storage = '2023-05-01'
+    Blob = '2023-05-01'
+    Lifecycle = '2023-05-01'
+    Defender = '2025-01-01'
+    Table = '2025-07-01'
+    Dcr = '2024-03-11'
+    Association = '2024-03-11'
+    Diagnostic = '2021-05-01-preview'
+}
 
 # ---
 # 環境ごとの旧DCRとポリシー割り当て
@@ -74,20 +91,20 @@ $migrationContext = @{
 }
 $recordDirectory = Join-Path $PSScriptRoot "records/$environment"
 $ErrorActionPreference = 'Stop'
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $OutputEncoding = [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 $env:PYTHONIOENCODING = 'utf-8'
 
 # ---
 # ARM APIを呼び出す
-# ResourceId、またはId・ApiVersion・Bodyを持つResourceを渡し、API応答を返す。
+# ResourceId、またはId・Kind・Bodyを持つResourceを渡し、JSON応答を辞書で返す。
 # Optional時の404は値なし。認証更新と一時エラーの再試行だけを共通で処理する。
+# Waitは作成・更新の完了を最大5分待つ。既存記録のAPI版も引き続き利用できる。
 # ---
 function Invoke-ArmRequest {
-    param($ResourceId, $Method = 'Get', $Body, $ApiVersion = '2024-03-11', [switch]$Optional, $Resource)
+    param($ResourceId, $Method = 'Get', $Body, $ApiVersion = '2024-03-11', [switch]$Optional, $Resource, [switch]$Wait)
     if ($Resource) {
         $ResourceId = $Resource.Id
-        $ApiVersion = $Resource.ApiVersion
+        $ApiVersion = $Resource.ApiVersion ?? $apiVersions[$Resource.Kind]
         if ($Method -in @('Put', 'Patch', 'Post') -and -not $PSBoundParameters.ContainsKey('Body')) {
             $Body = $Resource.Body
         }
@@ -96,10 +113,11 @@ function Invoke-ArmRequest {
     if (-not $uri.StartsWith('https://')) {
         $uri = "https://management.azure.com${ResourceId}?api-version=$ApiVersion"
     }
+    $deadline = (Get-Date).AddMinutes(5)
     for ($attempt = 0; $attempt -lt 4; $attempt++) {
         if (-not $script:accessToken -or $script:tokenSubscription -ne $subscriptionId -or
             [long]$script:accessToken.expires_on -le [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() + 300) {
-            $script:accessToken = az account get-access-token --subscription $subscriptionId --output json --only-show-errors | ConvertFrom-Json
+            $script:accessToken = az account get-access-token --subscription $subscriptionId --output json --only-show-errors | ConvertFrom-Json -AsHashtable
             if ($LASTEXITCODE -ne 0 -or -not $script:accessToken.accessToken) {
                 throw 'Azureの認証情報を取得できません。az loginを確認してください。'
             }
@@ -115,39 +133,37 @@ function Invoke-ArmRequest {
         if ($null -ne $Body) {
             $request.Body = [Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $Body -Depth 40))
         }
-        try {
-            return Invoke-RestMethod @request
-        }
-        catch {
-            $status = [int]$_.Exception.Response.StatusCode
-            if ($status -eq 404 -and $Optional) {
-                return $null
-            }
-            if ($status -eq 401 -and $attempt -lt 3) {
-                $script:accessToken = $null
+        $response = Invoke-WebRequest @request -SkipHttpErrorCheck
+        $status = [int]$response.StatusCode
+        if ($status -lt 400) {
+            $result = $response.Content | ConvertFrom-Json -AsHashtable
+            if ($Wait -and $result.properties.provisioningState -in @('Creating', 'Updating', 'Accepted')) {
+                if ((Get-Date) -ge $deadline) {
+                    throw "作成・更新が完了しません: $ResourceId"
+                }
+                Start-Sleep -Seconds 3
+                $attempt = -1
                 continue
             }
-            if ($status -in @(408, 429, 500, 502, 503, 504) -and $attempt -lt 3) {
-                $delay = 2
-                $retryAfter = [string]$_.Exception.Response.Headers['Retry-After']
-                if ($retryAfter -match '^\d+$') {
-                    $delay = [Math]::Max($delay, [int]$retryAfter)
-                }
-                Start-Sleep -Seconds $delay
-                continue
-            }
-            if (-not $_.ErrorDetails.Message -and $_.Exception.Response -is [Net.WebResponse]) {
-                $reader = [IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
-                try {
-                    $detail = $reader.ReadToEnd()
-                }
-                finally {
-                    $reader.Dispose()
-                }
-                throw "ARM $Method 失敗: $ResourceId / $detail"
-            }
-            throw
+            return $result
         }
+        if ($status -eq 404 -and $Optional) {
+            return $null
+        }
+        if ($status -eq 401 -and $attempt -lt 3) {
+            $script:accessToken = $null
+            continue
+        }
+        if ($status -in @(408, 429, 500, 502, 503, 504) -and $attempt -lt 3) {
+            $delay = 2
+            $retryAfter = [string]$response.Headers['Retry-After']
+            if ($retryAfter -match '^\d+$') {
+                $delay = [Math]::Max($delay, [int]$retryAfter)
+            }
+            Start-Sleep -Seconds $delay
+            continue
+        }
+        throw "ARM $Method 失敗 ($status): $ResourceId / $($response.Content)"
     }
 }
 
@@ -201,12 +217,8 @@ function Test-Configuration {
     if ($null -eq $Actual -or $null -eq $Expected) {
         return $null -eq $Actual -and $null -eq $Expected
     }
-    if ($Expected -is [Collections.IDictionary] -or $Expected -is [pscustomobject]) {
-        $keys = @($Expected.PSObject.Properties.Name)
-        if ($Expected -is [Collections.IDictionary]) {
-            $keys = @($Expected.Keys)
-        }
-        foreach ($key in $keys) {
+    if ($Expected -is [Collections.IDictionary]) {
+        foreach ($key in $Expected.Keys) {
             if (-not (Test-Configuration $Actual.$key $Expected.$key)) {
                 return $false
             }
@@ -231,10 +243,10 @@ function Get-WritableBody {
     }
     $copy = $Resource
     if ($Kind -eq 'Dcr') {
-        $copy = ConvertTo-Json $Resource -Depth 40 | ConvertFrom-Json
+        $copy = ConvertTo-Json $Resource -Depth 40 | ConvertFrom-Json -AsHashtable
     }
     $body = @{ properties = @{} }
-    $keys = @($copy.properties.PSObject.Properties.Name)
+    $keys = @($copy.properties.Keys)
     if ($Kind -eq 'Diagnostic') {
         $keys = @('logs', 'metrics', 'workspaceId', 'storageAccountId', 'eventHubAuthorizationRuleId', 'eventHubName', 'serviceBusRuleId', 'marketplacePartnerId', 'logAnalyticsDestinationType')
     }
@@ -256,19 +268,19 @@ function Get-WritableBody {
             }
         }
         foreach ($destination in $body.properties.destinations.logAnalytics) {
-            $destination.PSObject.Properties.Remove('workspaceId')
+            $destination.Remove('workspaceId')
         }
         foreach ($destination in $body.properties.destinations.monitoringAccounts) {
-            $destination.PSObject.Properties.Remove('accountId')
+            $destination.Remove('accountId')
         }
         foreach ($destination in $body.properties.destinations.azureDataExplorer) {
-            $destination.PSObject.Properties.Remove('ingestionUri')
+            $destination.Remove('ingestionUri')
         }
         if ($body.identity) {
-            $body.identity.PSObject.Properties.Remove('principalId')
-            $body.identity.PSObject.Properties.Remove('tenantId')
-            foreach ($identity in $body.identity.userAssignedIdentities.PSObject.Properties) {
-                $identity.Value = [pscustomobject]@{}
+            $body.identity.Remove('principalId')
+            $body.identity.Remove('tenantId')
+            foreach ($identityId in @($body.identity.userAssignedIdentities.Keys)) {
+                $body.identity.userAssignedIdentities[$identityId] = @{}
             }
         }
     }
@@ -286,7 +298,7 @@ function Read-MigrationRecord {
     if (-not (Test-Path $path)) {
         return $null
     }
-    $record = Get-Content $path -Raw -Encoding UTF8 | ConvertFrom-Json
+    $record = Get-Content $path -Raw -Encoding UTF8 | ConvertFrom-Json -AsHashtable
     if (-not (Test-Configuration $record.Context $migrationContext -Exact) -or
         -not (Test-Configuration $record.Target $Target -Exact)) {
         throw "変更前記録と環境・CSVが一致しません: $path"
@@ -342,9 +354,9 @@ if (-not $SkipCsv) {
         if ($target.WorkspaceId -eq $targetWorkspaceId) {
             throw '移行元と新しいワークスペースは別に指定してください。'
         }
-        $targets += [pscustomobject]$target
+        $targets += $target
     }
-    if (-not $targets.Count -or @($targets | Group-Object SubscriptionId | Where-Object Count -gt 1).Count) {
+    if (-not $targets.Count -or @($targets | Group-Object { $_.SubscriptionId } | Where-Object Count -gt 1).Count) {
         throw 'CSVが空か、同じサブスクリプションが重複しています。'
     }
     if (@($targets | Where-Object StorageAccount).Count) {
@@ -401,39 +413,46 @@ function Get-MigrationPlan {
         }
         $resourcePage = $page.nextLink
     }
-    $diagnosticSources = @()
-    foreach ($resourceId in $resourceLocations.Keys) {
+    $accessToken = $script:accessToken
+    $sourceWorkspace = $targetWorkspaceId
+    $listedSettings = @($resourceLocations.Keys | ForEach-Object -Parallel {
+        $result = @{ ResourceId = $_; Sources = @(); Settings = @(); Error = '' }
         try {
-            $response = Invoke-ArmRequest -ResourceId "$resourceId/providers/Microsoft.Insights/diagnosticSettings" -ApiVersion '2021-05-01-preview'
+            . $using:commonScript -SkipCsv
+            $subscriptionId = $using:subscriptionId
+            $script:accessToken = $using:accessToken
+            $script:tokenSubscription = $subscriptionId
+            $response = Invoke-ArmRequest -ResourceId "$($_)$diagnosticPath" -ApiVersion '2021-05-01-preview'
+            $result.Settings = @($response.value)
+            $result.Sources = @($response.value | Where-Object { $_.properties.workspaceId -eq $using:sourceWorkspace })
         }
         catch {
-            if (($_.Exception.Message + $_.ErrorDetails.Message) -match 'ResourceTypeNotSupported') {
-                continue
+            if (($_.Exception.Message + $_.ErrorDetails.Message) -notmatch 'ResourceTypeNotSupported') {
+                $result.Error = $_.Exception.Message
             }
-            throw
         }
-        $sources = @($response.value | Where-Object { $_.properties.workspaceId -eq $targetWorkspaceId })
-        foreach ($source in $sources) {
-            $oldId = "$resourceId/providers/Microsoft.Insights/diagnosticSettings/$([Uri]::EscapeDataString($source.name))"
+        $result
+    } -ThrottleLimit $parallelLimit)
+    if ($listedSettings.Count -ne $resourceLocations.Count) {
+        throw '診断設定の調査結果が不足しています。'
+    }
+    foreach ($failed in @($listedSettings | Where-Object Error)) {
+        throw "診断設定を調査できません: $($failed.ResourceId) / $($failed.Error)"
+    }
+    $diagnosticSources = @($listedSettings | Where-Object { $_.Sources.Count })
+    foreach ($diagnostic in $diagnosticSources) {
+        foreach ($source in $diagnostic.Sources) {
             $plan.OldSettings += @{
-                Id = $oldId
+                Id = "$($diagnostic.ResourceId)$diagnosticPath/$([Uri]::EscapeDataString($source.name))"
                 Kind = 'Diagnostic'
-                ApiVersion = '2021-05-01-preview'
                 Body = Get-WritableBody -Resource $source -Kind 'Diagnostic'
             }
         }
-        if ($sources.Count -gt 0) {
-            $resourceLocation = ([string]$resourceLocations[$resourceId] -replace '\s', '').ToLowerInvariant()
-            if (-not $resourceLocation -or $resourceLocation -eq 'global') {
-                $resourceLocation = 'japaneast'
-            }
-            $diagnosticSources += @{
-                ResourceId = $resourceId
-                Location = $resourceLocation
-                Sources = $sources
-                Settings = @($response.value)
-            }
+        $resourceLocation = ([string]$resourceLocations[$diagnostic.ResourceId] -replace '\s', '').ToLowerInvariant()
+        if (-not $resourceLocation -or $resourceLocation -eq 'global') {
+            $resourceLocation = 'japaneast'
         }
+        $diagnostic.Location = $resourceLocation
     }
 
     # ---
@@ -458,7 +477,6 @@ function Get-MigrationPlan {
                 $plan.OldSettings += @{
                     Id = $association.id
                     Kind = 'Association'
-                    ApiVersion = '2024-03-11'
                     Body = Get-WritableBody -Resource $current -Kind 'Association'
                 }
             }
@@ -561,9 +579,9 @@ function Get-MigrationPlan {
             Id = $dcrId
             Name = $dcrName
         }
-        $parentIds = @($oldAssociations.Id | ForEach-Object { $_ -replace '/providers/Microsoft.Insights/dataCollectionRuleAssociations/[^/]+$', '' } | Sort-Object -Unique)
+        $parentIds = @($oldAssociations.Id | ForEach-Object { $_ -replace "$associationPath/[^/]+$", '' } | Sort-Object -Unique)
         foreach ($parentId in $parentIds) {
-            $associationId = "$parentId/providers/Microsoft.Insights/dataCollectionRuleAssociations/$dcrName"
+            $associationId = "$parentId$associationPath/$dcrName"
             if ($associationId -in $oldAssociations.Id) {
                 throw "新旧DCR関連のIDが同じです: $associationId"
             }
@@ -575,7 +593,7 @@ function Get-MigrationPlan {
             if ($diagnostic.Sources.Count -ne 1) {
                 throw "対象の旧診断設定が複数あります: $($diagnostic.ResourceId)"
             }
-            $newId = "$($diagnostic.ResourceId)/providers/Microsoft.Insights/diagnosticSettings/$([Uri]::EscapeDataString($newDiagnosticSettingName))"
+            $newId = "$($diagnostic.ResourceId)$diagnosticPath/$([Uri]::EscapeDataString($newDiagnosticSettingName))"
             if ($newId -in $plan.OldSettings.Id) {
                 throw "新旧診断設定の名前が同じです: $newId"
             }
@@ -586,7 +604,7 @@ function Get-MigrationPlan {
             if ($existing.Count -eq 0 -and $diagnostic.Settings.Count -ge 5) {
                 throw "診断設定を追加する空き枠がありません: $($diagnostic.ResourceId)"
             }
-            $oldId = "$($diagnostic.ResourceId)/providers/Microsoft.Insights/diagnosticSettings/$([Uri]::EscapeDataString($diagnostic.Sources[0].name))"
+            $oldId = "$($diagnostic.ResourceId)$diagnosticPath/$([Uri]::EscapeDataString($diagnostic.Sources[0].name))"
             $discovery.Diagnostics += @{
                 Id = $newId
                 OldId = $oldId

@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+﻿#Requires -Version 7.0
 param([switch]$PassThru)
 . (Join-Path $PSScriptRoot 'common.ps1')
 $results = @()
@@ -63,7 +63,7 @@ foreach ($target in $targets) {
         }
     }
 }
-$results | Export-Csv (Join-Path $PSScriptRoot 'verify_results.csv') -NoTypeInformation -Encoding UTF8
+$results | Export-Csv (Join-Path $PSScriptRoot 'verify_results.csv') -Encoding utf8BOM
 if ($results.Result -contains 'NG') {
     throw '未完了の設定があります。verify_results.csvを確認してください。'
 }

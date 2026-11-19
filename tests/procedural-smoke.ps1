@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+﻿#Requires -Version 7.0
 param(
     [string]$Repository = (Join-Path (Split-Path -Parent $PSScriptRoot) 'procedural-migration'),
     [string]$ReportPath,
@@ -10,16 +10,19 @@ $sourceHashes = @{}
 foreach ($name in $sourceFiles) {
     $sourceHashes[$name] = (Get-FileHash (Join-Path $Repository $name) -Algorithm SHA256).Hash
 }
-$global:ProceduralFixture = @{}
 $checks = 0
 $cases = [Collections.Generic.List[object]]::new()
 $scratch = Join-Path ([IO.Path]::GetTempPath()) ('procedural-migration-' + [guid]::NewGuid().ToString('N'))
 $null = New-Item -ItemType Directory -Path $scratch
-if (-not ('ProceduralReplay.HttpFailure' -as [type])) {
+if (-not ('ProceduralReplay.SharedFixture' -as [type])) {
     Add-Type -TypeDefinition @'
 using System;
 using System.Collections.Generic;
 namespace ProceduralReplay {
+    public static class SharedFixture {
+        public static object State;
+        public static readonly object SyncRoot = new object();
+    }
     public class Response {
         public int StatusCode;
         public Dictionary<string,string> Headers = new Dictionary<string,string>();
@@ -35,6 +38,11 @@ namespace ProceduralReplay {
 }
 '@
 }
+$global:ProceduralFixture = @{}
+[ProceduralReplay.SharedFixture]::State = $global:ProceduralFixture
+$mainRunspaceId = [Management.Automation.Runspaces.Runspace]::DefaultRunspace.InstanceId.ToString()
+$parallelRunspaceIds = [Collections.Generic.HashSet[string]]::new()
+$parallelRequestCount = 0
 
 function Assert-Replay {
     param([bool]$Condition, [string]$Message)
@@ -77,204 +85,264 @@ function Get-FixtureIds {
     }
 }
 function az {
-    $arguments = @($args)
-    $global:LASTEXITCODE = 0
-    if (($arguments[0..1] -join '/') -eq 'account/list') {
-        ConvertTo-Json -InputObject @($global:ProceduralFixture.Subscriptions | ForEach-Object {
-            @{ id = $_; name = $_ }
-        }) -Compress
-        return
-    }
-    if (($arguments[0..1] -join '/') -eq 'account/get-access-token') {
-        $global:ProceduralFixture.TokenReads++
-        if ($global:ProceduralFixture.FailToken) {
-            $global:LASTEXITCODE = 1
+    $global:ProceduralFixture = [ProceduralReplay.SharedFixture]::State
+    [Threading.Monitor]::Enter([ProceduralReplay.SharedFixture]::SyncRoot)
+    try {
+        $arguments = @($args)
+        $global:LASTEXITCODE = 0
+        if (($arguments[0..1] -join '/') -eq 'account/list') {
+            ConvertTo-Json -InputObject @($global:ProceduralFixture.Subscriptions | ForEach-Object {
+                @{ id = $_; name = $_ }
+            }) -Compress
             return
         }
-        ConvertTo-Json @{ accessToken = 'offline-test-token'; expires_on = 4102444800 } -Compress
-        return
+        if (($arguments[0..1] -join '/') -eq 'account/get-access-token') {
+            $subscriptionIndex = [Array]::IndexOf($arguments, '--subscription')
+            if ($subscriptionIndex -lt 0 -or $arguments[$subscriptionIndex + 1] -notin $global:ProceduralFixture.Subscriptions) {
+                throw 'TEST_WORKER_SUBSCRIPTION_MISSING'
+            }
+            $global:ProceduralFixture.TokenReads++
+            if ($global:ProceduralFixture.FailToken) {
+                $global:LASTEXITCODE = 1
+                return
+            }
+            ConvertTo-Json @{ accessToken = 'offline-test-token'; expires_on = 4102444800 } -Compress
+            return
+        }
+        throw "想定外CLI: $($arguments -join ' ')"
     }
-    throw "想定外CLI: $($arguments -join ' ')"
+    finally {
+        [Threading.Monitor]::Exit([ProceduralReplay.SharedFixture]::SyncRoot)
+    }
 }
 function Start-Sleep {
     param([int]$Seconds, [int]$Milliseconds)
-    $global:ProceduralFixture.SleepCalls++
-    $global:ProceduralFixture.ClockOffset += $global:ProceduralFixture.ClockStep
+    $global:ProceduralFixture = [ProceduralReplay.SharedFixture]::State
+    [Threading.Monitor]::Enter([ProceduralReplay.SharedFixture]::SyncRoot)
+    try {
+        $global:ProceduralFixture.SleepCalls++
+        $global:ProceduralFixture.ClockOffset += $global:ProceduralFixture.ClockStep
+    }
+    finally {
+        [Threading.Monitor]::Exit([ProceduralReplay.SharedFixture]::SyncRoot)
+    }
 }
 function Get-Date {
     param([string]$Format)
-    $date = [DateTime]::Now.AddSeconds($global:ProceduralFixture.ClockOffset)
-    if ($Format) {
-        return $date.ToString($Format)
+    $global:ProceduralFixture = [ProceduralReplay.SharedFixture]::State
+    [Threading.Monitor]::Enter([ProceduralReplay.SharedFixture]::SyncRoot)
+    try {
+        $date = [DateTime]::Now.AddSeconds($global:ProceduralFixture.ClockOffset)
+        if ($Format) {
+            return $date.ToString($Format)
+        }
+        return $date
     }
-    return $date
+    finally {
+        [Threading.Monitor]::Exit([ProceduralReplay.SharedFixture]::SyncRoot)
+    }
 }
 function Invoke-RestMethod {
     param($Uri, $Method = 'Get', $Headers, $ContentType, $TimeoutSec, $Body)
-    $fixture = $global:ProceduralFixture
-    if ([string]$Uri -like 'https://raw.githubusercontent.com/*') {
-        $fixture.RegionReads++
-        $regions = @(
-            [pscustomobject]@{ name = 'japaneast'; shortName = 'jpe' },
-            [pscustomobject]@{ name = 'japanwest'; shortName = 'jpw' },
-            [pscustomobject]@{ name = 'canadacentral'; shortName = 'cac' }
-        )
-        return ,$regions
-    }
-    $address = [uri]$Uri
-    if ($address.Host -ne 'management.azure.com') {
-        throw "外部通信を禁止しています: $Uri"
-    }
-    $path = [uri]::UnescapeDataString($address.AbsolutePath).TrimEnd('/')
-    $methodName = ([string]$Method).ToUpperInvariant()
-    $fixture.Reads.Add($path)
-    $fixture.Requests.Add([pscustomobject]@{ Method = $methodName; Id = $path })
-    $key = "$methodName $path"
-    if ($fixture.HttpFailures.ContainsKey($key) -and $fixture.HttpFailures[$key].Remaining -gt 0) {
-        $failure = $fixture.HttpFailures[$key]
-        $failure.Remaining--
-        throw (New-Object ProceduralReplay.HttpFailure $failure.Status, $failure.Code)
-    }
-    if ($fixture.Failures.ContainsKey($key) -and $fixture.Failures[$key] -gt 0) {
-        $fixture.Failures[$key]--
-        throw (New-Object ProceduralReplay.HttpFailure 500, "TEST_FAILURE: $key")
-    }
-    if ($fixture.UnauthorizedReads -gt 0) {
-        $fixture.UnauthorizedReads--
-        throw (New-Object ProceduralReplay.HttpFailure 401, 'TEST_EXPIRED_TOKEN')
-    }
-    if ($methodName -eq 'POST' -and $path -like '*/Microsoft.Storage/checkNameAvailability') {
-        $payload = [Text.Encoding]::UTF8.GetString($Body) | ConvertFrom-Json
-        $existingNames = @($fixture.Resources.Keys | Where-Object { $_ -match '/Microsoft.Storage/storageAccounts/[^/]+$' } | ForEach-Object { ($_ -split '/')[-1] })
-        $available = $payload.name -notin @($fixture.UnavailableNames) + $existingNames
-        return [pscustomobject]@{ nameAvailable = $available }
-    }
-    if ($methodName -eq 'GET') {
-        if ($path -match '^/subscriptions/([^/]+)/resources$') {
-            $subscription = $Matches[1]
-            $inventory = @($fixture.Inventory | Where-Object { $_.id -like "/subscriptions/$subscription/*" })
-            return [pscustomobject]@{ value = $inventory }
+    $global:ProceduralFixture = [ProceduralReplay.SharedFixture]::State
+    [Threading.Monitor]::Enter([ProceduralReplay.SharedFixture]::SyncRoot)
+    try {
+        $fixture = $global:ProceduralFixture
+        if ([string]$Uri -like 'https://raw.githubusercontent.com/*') {
+            $fixture.RegionReads++
+            $regions = @(
+                [pscustomobject]@{ name = 'japaneast'; shortName = 'jpe' },
+                [pscustomobject]@{ name = 'japanwest'; shortName = 'jpw' },
+                [pscustomobject]@{ name = 'canadacentral'; shortName = 'cac' }
+            )
+            return ,$regions
         }
-        if ($path -like '*/Microsoft.Storage/skus') {
-            return [pscustomobject]@{ value = @(
-                [pscustomobject]@{ name = 'Standard_ZRS'; kind = 'StorageV2'; locations = @($fixture.ZrsLocations) }
-            ) }
+        $address = [uri]$Uri
+        if ($address.Host -ne 'management.azure.com') {
+            throw "外部通信を禁止しています: $Uri"
         }
-        if ($path -like '*/dataCollectionRules/*/associations') {
-            $ruleId = $path.Substring(0, $path.Length - '/associations'.Length)
-            $associations = @(foreach ($id in $fixture.Resources.Keys) {
-                $resource = $fixture.Resources[$id]
-                if ($id -like '*/dataCollectionRuleAssociations/*' -and $resource.properties.dataCollectionRuleId -eq $ruleId) {
-                    [pscustomobject]@{ id = $id; properties = @{ dataCollectionRuleId = $ruleId } }
-                }
-            })
-            return [pscustomobject]@{ value = $associations }
+        $path = [uri]::UnescapeDataString($address.AbsolutePath).TrimEnd('/')
+        $methodName = ([string]$Method).ToUpperInvariant()
+        $fixture.Reads.Add($path)
+        $runspaceId = [Management.Automation.Runspaces.Runspace]::DefaultRunspace.InstanceId.ToString()
+        if ($runspaceId -ne $fixture.MainRunspaceId) {
+            $fixture.WorkerRequestCount++
+            $null = $fixture.WorkerRunspaceIds.Add($runspaceId)
         }
-        if ($path -like '*/diagnosticSettings') {
-            $parent = $path.Substring(0, $path.Length - '/providers/Microsoft.Insights/diagnosticSettings'.Length)
-            $settings = @(foreach ($id in $fixture.Resources.Keys) {
-                if ($id -like "$parent/providers/Microsoft.Insights/diagnosticSettings/*") {
-                    Copy-FixtureValue $fixture.Resources[$id]
-                }
-            })
-            return [pscustomobject]@{ value = $settings }
-        }
-        if ($path -match '^/subscriptions/[^/]+/providers/(Microsoft\.(Insights|OperationalInsights|Storage|Security))$') {
-            $state = 'Registered'
-            if ($fixture.UnregisteredProviders.ContainsKey($path)) {
-                $state = $fixture.UnregisteredProviders[$path]
-            }
-            return [pscustomobject]@{ registrationState = $state }
-        }
-        if ($path -like '*/policyAssignments') {
-            return [pscustomobject]@{ value = @($fixture.Assignments | ForEach-Object {
-                [pscustomobject]@{ id = $_.Id; properties = @{ policyDefinitionId = '/providers/Microsoft.Authorization/policySetDefinitions/offline' } }
-            }) }
-        }
-        if ($path -like '*/policyAssignments/*') {
-            return [pscustomobject]@{ id = $path; properties = @{ policyDefinitionId = '/providers/Microsoft.Authorization/policySetDefinitions/offline' } }
-        }
-        if ($path -like '*/policySetDefinitions/*') {
-            return [pscustomobject]@{ properties = @{ policyDefinitions = @($fixture.ReferenceIds | ForEach-Object {
-                [pscustomobject]@{ policyDefinitionReferenceId = $_ }
-            }) } }
-        }
-        if ($fixture.Resources.ContainsKey($path)) {
-            $value = Copy-FixtureValue $fixture.Resources[$path]
-            if ($fixture.PendingReads.ContainsKey($path) -and $fixture.PendingReads[$path] -gt 0) {
-                $fixture.PendingReads[$path]--
-                Set-FixtureProperty $value.properties 'provisioningState' 'Updating'
-            }
-            return $value
-        }
-        throw (New-Object ProceduralReplay.HttpFailure 404, "TEST_NOT_FOUND: $path")
-    }
-    if ($methodName -notin @('PUT', 'PATCH', 'DELETE', 'POST')) {
-        throw "想定外メソッド: $methodName"
-    }
-    $subscription = ($path -split '/')[2]
-    $recordPath = Join-Path $fixture.Repository "records/dev/$subscription.json"
-    if (-not (Test-Path $recordPath)) {
-        $fixture.WriteBeforeBackup = $true
-        throw 'TEST_WRITE_BEFORE_BACKUP'
-    }
-    $fixture.BackupWitnesses.Add((Get-Content $recordPath -Raw -Encoding UTF8 | ConvertFrom-Json))
-    if ($methodName -eq 'DELETE' -and $path -like '*/diagnosticSettings/storage-archive') {
-        $activeRecords = @(Get-ChildItem (Join-Path $fixture.Repository 'records/dev') -Filter '*.json' | Where-Object {
-            -not $fixture.RollbackSubscriptions -or $_.BaseName -in $fixture.RollbackSubscriptions
-        } | ForEach-Object {
-            Get-Content $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
+        $fixture.Requests.Add([pscustomobject]@{
+            Method = $methodName
+            Id = $path
+            RunspaceId = [Management.Automation.Runspaces.Runspace]::DefaultRunspace.InstanceId.ToString()
+            ThreadId = [Threading.Thread]::CurrentThread.ManagedThreadId
         })
-        $ownedNew = @($activeRecords.NewSettings | Where-Object { $_.Id -eq $path -and $_.Kind -eq 'Diagnostic' })
-        foreach ($record in @($activeRecords | Where-Object { $ownedNew.Count -gt 0 })) {
-            foreach ($old in $record.OldSettings) {
-                if (-not $fixture.Resources.ContainsKey($old.Id)) {
-                    $fixture.UnsafeNewDelete = $true
+        $key = "$methodName $path"
+        if ($fixture.HttpFailures.ContainsKey($key) -and $fixture.HttpFailures[$key].Remaining -gt 0) {
+            $failure = $fixture.HttpFailures[$key]
+            $failure.Remaining--
+            throw (New-Object ProceduralReplay.HttpFailure $failure.Status, $failure.Code)
+        }
+        if ($fixture.Failures.ContainsKey($key) -and $fixture.Failures[$key] -gt 0) {
+            $fixture.Failures[$key]--
+            throw (New-Object ProceduralReplay.HttpFailure 500, "TEST_FAILURE: $key")
+        }
+        if ($fixture.UnauthorizedReads -gt 0) {
+            $fixture.UnauthorizedReads--
+            throw (New-Object ProceduralReplay.HttpFailure 401, 'TEST_EXPIRED_TOKEN')
+        }
+        if ($methodName -eq 'POST' -and $path -like '*/Microsoft.Storage/checkNameAvailability') {
+            $payload = [Text.Encoding]::UTF8.GetString($Body) | ConvertFrom-Json
+            $existingNames = @($fixture.Resources.Keys | Where-Object { $_ -match '/Microsoft.Storage/storageAccounts/[^/]+$' } | ForEach-Object { ($_ -split '/')[-1] })
+            $available = $payload.name -notin @($fixture.UnavailableNames) + $existingNames
+            return [pscustomobject]@{ nameAvailable = $available }
+        }
+        if ($methodName -eq 'GET') {
+            if ($path -match '^/subscriptions/([^/]+)/resources$') {
+                $subscription = $Matches[1]
+                $inventory = @($fixture.Inventory | Where-Object { $_.id -like "/subscriptions/$subscription/*" })
+                return [pscustomobject]@{ value = $inventory }
+            }
+            if ($path -like '*/Microsoft.Storage/skus') {
+                return [pscustomobject]@{ value = @(
+                    [pscustomobject]@{ name = 'Standard_ZRS'; kind = 'StorageV2'; locations = @($fixture.ZrsLocations) }
+                ) }
+            }
+            if ($path -like '*/dataCollectionRules/*/associations') {
+                $ruleId = $path.Substring(0, $path.Length - '/associations'.Length)
+                $associations = @(foreach ($id in $fixture.Resources.Keys) {
+                    $resource = $fixture.Resources[$id]
+                    if ($id -like '*/dataCollectionRuleAssociations/*' -and $resource.properties.dataCollectionRuleId -eq $ruleId) {
+                        [pscustomobject]@{ id = $id; properties = @{ dataCollectionRuleId = $ruleId } }
+                    }
+                })
+                return [pscustomobject]@{ value = $associations }
+            }
+            if ($path -like '*/diagnosticSettings') {
+                $parent = $path.Substring(0, $path.Length - '/providers/Microsoft.Insights/diagnosticSettings'.Length)
+                $settings = @(foreach ($id in $fixture.Resources.Keys) {
+                    if ($id -like "$parent/providers/Microsoft.Insights/diagnosticSettings/*") {
+                        Copy-FixtureValue $fixture.Resources[$id]
+                    }
+                })
+                return [pscustomobject]@{ value = $settings }
+            }
+            if ($path -match '^/subscriptions/[^/]+/providers/(Microsoft\.(Insights|OperationalInsights|Storage|Security))$') {
+                $state = 'Registered'
+                if ($fixture.UnregisteredProviders.ContainsKey($path)) {
+                    $state = $fixture.UnregisteredProviders[$path]
+                }
+                return [pscustomobject]@{ registrationState = $state }
+            }
+            if ($path -like '*/policyAssignments') {
+                return [pscustomobject]@{ value = @($fixture.Assignments | ForEach-Object {
+                    [pscustomobject]@{ id = $_.Id; properties = @{ policyDefinitionId = '/providers/Microsoft.Authorization/policySetDefinitions/offline' } }
+                }) }
+            }
+            if ($path -like '*/policyAssignments/*') {
+                return [pscustomobject]@{ id = $path; properties = @{ policyDefinitionId = '/providers/Microsoft.Authorization/policySetDefinitions/offline' } }
+            }
+            if ($path -like '*/policySetDefinitions/*') {
+                return [pscustomobject]@{ properties = @{ policyDefinitions = @($fixture.ReferenceIds | ForEach-Object {
+                    [pscustomobject]@{ policyDefinitionReferenceId = $_ }
+                }) } }
+            }
+            if ($fixture.Resources.ContainsKey($path)) {
+                $value = Copy-FixtureValue $fixture.Resources[$path]
+                if ($fixture.PendingReads.ContainsKey($path) -and $fixture.PendingReads[$path] -gt 0) {
+                    $fixture.PendingReads[$path]--
+                    Set-FixtureProperty $value.properties 'provisioningState' 'Updating'
+                }
+                return $value
+            }
+            throw (New-Object ProceduralReplay.HttpFailure 404, "TEST_NOT_FOUND: $path")
+        }
+        if ($methodName -notin @('PUT', 'PATCH', 'DELETE', 'POST')) {
+            throw "想定外メソッド: $methodName"
+        }
+        $subscription = ($path -split '/')[2]
+        $recordPath = Join-Path $fixture.Repository "records/dev/$subscription.json"
+        if (-not (Test-Path $recordPath)) {
+            $fixture.WriteBeforeBackup = $true
+            throw 'TEST_WRITE_BEFORE_BACKUP'
+        }
+        $fixture.BackupWitnesses.Add((Get-Content $recordPath -Raw -Encoding UTF8 | ConvertFrom-Json))
+        if ($methodName -eq 'DELETE' -and $path -like '*/diagnosticSettings/storage-archive') {
+            $activeRecords = @(Get-ChildItem (Join-Path $fixture.Repository 'records/dev') -Filter '*.json' | Where-Object {
+                -not $fixture.RollbackSubscriptions -or $_.BaseName -in $fixture.RollbackSubscriptions
+            } | ForEach-Object {
+                Get-Content $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
+            })
+            $ownedNew = @($activeRecords.NewSettings | Where-Object { $_.Id -eq $path -and $_.Kind -eq 'Diagnostic' })
+            foreach ($record in @($activeRecords | Where-Object { $ownedNew.Count -gt 0 })) {
+                foreach ($old in $record.OldSettings) {
+                    if (-not $fixture.Resources.ContainsKey($old.Id)) {
+                        $fixture.UnsafeNewDelete = $true
+                    }
                 }
             }
         }
-    }
-    $payload = $null
-    if ($null -ne $Body) {
-        $payload = [Text.Encoding]::UTF8.GetString($Body) | ConvertFrom-Json
-    }
-    if ($path -like '*/managementPolicies/*' -and $payload -and @($payload.properties.policy.rules | Where-Object { $null -eq $_ }).Count -gt 0) {
-        throw (New-Object ProceduralReplay.HttpFailure 400, 'TEST_INVALID_LIFECYCLE_NULL_RULE')
-    }
-    $fixture.Writes.Add([pscustomobject]@{ Method = $methodName; Id = $path; Body = $payload })
-    if ($methodName -eq 'DELETE') {
-        if ($path -match '/(storageAccounts|workspaces)/[^/]+$') {
-            throw 'TEST_DESTINATION_DELETION'
+        $payload = $null
+        if ($null -ne $Body) {
+            $payload = [Text.Encoding]::UTF8.GetString($Body) | ConvertFrom-Json
         }
-        $fixture.Resources.Remove($path)
-        return $null
+        if ($path -like '*/managementPolicies/*' -and $payload -and @($payload.properties.policy.rules | Where-Object { $null -eq $_ }).Count -gt 0) {
+            throw (New-Object ProceduralReplay.HttpFailure 400, 'TEST_INVALID_LIFECYCLE_NULL_RULE')
+        }
+        $fixture.Writes.Add([pscustomobject]@{ Method = $methodName; Id = $path; Body = $payload })
+        if ($methodName -eq 'DELETE') {
+            if ($path -match '/(storageAccounts|workspaces)/[^/]+$') {
+                throw 'TEST_DESTINATION_DELETION'
+            }
+            $fixture.Resources.Remove($path)
+            return $null
+        }
+        if ($methodName -eq 'POST' -and $path -like '*/register') {
+            $providerPath = $path.Substring(0, $path.Length - '/register'.Length)
+            $fixture.UnregisteredProviders[$providerPath] = 'Registered'
+            return [pscustomobject]@{ registrationState = 'Registered' }
+        }
+        $current = $fixture.Resources[$path]
+        $value = Merge-FixtureBody $current $payload
+        if ($methodName -eq 'PUT' -and $path -match '/Microsoft.Insights/(dataCollectionRules|dataCollectionRuleAssociations)/') {
+            $value = Copy-FixtureValue $payload
+        }
+        Set-FixtureProperty $value 'id' $path
+        Set-FixtureProperty $value 'name' (($path -split '/')[-1])
+        if (-not $value.properties) {
+            Set-FixtureProperty $value 'properties' ([pscustomobject]@{})
+        }
+        if ($path -notlike '*/diagnosticSettings/*') {
+            Set-FixtureProperty $value.properties 'provisioningState' 'Succeeded'
+        }
+        if ($path -like '*/tables/*' -and $payload.properties.PSObject.Properties.Name -contains 'totalRetentionInDays') {
+            Set-FixtureProperty $value.properties 'totalRetentionInDaysAsDefault' $false
+        }
+        if ($path -eq $fixture.BadReadbackId) {
+            Set-FixtureProperty $value.properties 'retentionInDays' 7
+        }
+        $fixture.Resources[$path] = $value
+        return Copy-FixtureValue $value
     }
-    if ($methodName -eq 'POST' -and $path -like '*/register') {
-        $providerPath = $path.Substring(0, $path.Length - '/register'.Length)
-        $fixture.UnregisteredProviders[$providerPath] = 'Registered'
-        return [pscustomobject]@{ registrationState = 'Registered' }
+    finally {
+        [Threading.Monitor]::Exit([ProceduralReplay.SharedFixture]::SyncRoot)
     }
-    $current = $fixture.Resources[$path]
-    $value = Merge-FixtureBody $current $payload
-    if ($methodName -eq 'PUT' -and $path -match '/Microsoft.Insights/(dataCollectionRules|dataCollectionRuleAssociations)/') {
-        $value = Copy-FixtureValue $payload
+}
+function Invoke-WebRequest {
+    param($Uri, $Method = 'Get', $Headers, $ContentType, $TimeoutSec, $Body, [switch]$SkipHttpErrorCheck)
+    try {
+        $value = Invoke-RestMethod -Uri $Uri -Method $Method -Headers $Headers -ContentType $ContentType -TimeoutSec $TimeoutSec -Body $Body
+        return [pscustomobject]@{
+            StatusCode = 200
+            Headers = @{}
+            Content = ConvertTo-Json -InputObject $value -Depth 50 -Compress
+        }
     }
-    Set-FixtureProperty $value 'id' $path
-    Set-FixtureProperty $value 'name' (($path -split '/')[-1])
-    if (-not $value.properties) {
-        Set-FixtureProperty $value 'properties' ([pscustomobject]@{})
+    catch [ProceduralReplay.HttpFailure] {
+        return [pscustomobject]@{
+            StatusCode = $_.Exception.Response.StatusCode
+            Headers = $_.Exception.Response.Headers
+            Content = ConvertTo-Json @{ error = @{ code = $_.Exception.Message; message = $_.Exception.Message } } -Compress
+        }
     }
-    if ($path -notlike '*/diagnosticSettings/*') {
-        Set-FixtureProperty $value.properties 'provisioningState' 'Succeeded'
-    }
-    if ($path -like '*/tables/*' -and $payload.properties.PSObject.Properties.Name -contains 'totalRetentionInDays') {
-        Set-FixtureProperty $value.properties 'totalRetentionInDaysAsDefault' $false
-    }
-    if ($path -eq $fixture.BadReadbackId) {
-        Set-FixtureProperty $value.properties 'retentionInDays' 7
-    }
-    $fixture.Resources[$path] = $value
-    return Copy-FixtureValue $value
 }
 function Add-FixtureResource {
     param([string]$Id, $Body)
@@ -309,8 +377,17 @@ function Reset-Fixture {
     foreach ($file in $sourceFiles) {
         Copy-Item (Join-Path $Repository $file) (Join-Path $root $file)
     }
+    $commonPath = Join-Path $root 'common.ps1'
+    $externalMocks = @('Copy-FixtureValue', 'Set-FixtureProperty', 'Merge-FixtureBody', 'az', 'Start-Sleep', 'Get-Date', 'Invoke-RestMethod', 'Invoke-WebRequest')
+    $mockDefinitions = foreach ($name in $externalMocks) {
+        'function ' + $name + ' {' + (Get-Item ('function:' + $name)).Definition + '}'
+    }
+    [IO.File]::AppendAllText($commonPath, "`n# External transport replay for tests only.`n" + ($mockDefinitions -join "`n"), [Text.Encoding]::UTF8)
     $global:ProceduralFixture = @{
         Repository = $root
+        MainRunspaceId = $script:mainRunspaceId
+        WorkerRunspaceIds = [Collections.Generic.HashSet[string]]::new()
+        WorkerRequestCount = 0
         Subscriptions = @('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222')
         Inventory = @()
         Resources = @{}
@@ -337,6 +414,7 @@ function Reset-Fixture {
         ClockOffset = 0
         ClockStep = 0
     }
+    [ProceduralReplay.SharedFixture]::State = $global:ProceduralFixture
     $configuration = & {
         . (Join-Path $root 'common.ps1') -SkipCsv
         @{
@@ -444,6 +522,10 @@ function Invoke-ReplayCase {
     Reset-Fixture -Diagnostic $Diagnostic -Vm $Vm -NoSources:$NoSources
     $before = $script:checks
     & $Body
+    $script:parallelRequestCount += $global:ProceduralFixture.WorkerRequestCount
+    foreach ($runspaceId in $global:ProceduralFixture.WorkerRunspaceIds) {
+        $null = $script:parallelRunspaceIds.Add($runspaceId)
+    }
     $script:cases.Add([pscustomobject]@{
         Case = $Name
         Result = 'PASS'
@@ -1181,6 +1263,50 @@ try {
             Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id)) '指定Subは正常に旧設定へ復元'
         }
     }
+    Invoke-ReplayCase '実runspaceで5件以上の診断GETとPUTを処理する' {
+        $subscription = $global:ProceduralFixture.Subscriptions[0]
+        foreach ($number in 1..8) {
+            $parent = "/subscriptions/$subscription/resourceGroups/rg-source/providers/Microsoft.Test/widgets/parallel-$number"
+            $global:ProceduralFixture.Inventory += [pscustomobject]@{ id = $parent; type = 'Microsoft.Test/widgets'; location = 'japaneast' }
+            Add-FixtureDiagnostic $parent
+        }
+        Invoke-ReplayStep copy
+        $record = @(Get-FixtureRecords | Where-Object { $_.Target.SubscriptionId -eq $subscription })[0]
+        $diagnostics = @($record.NewSettings | Where-Object Kind -eq 'Diagnostic')
+        Assert-Replay ($diagnostics.Count -eq 9) '全9診断の新設定を記録'
+        foreach ($setting in $diagnostics) {
+            Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($setting.Id)) '並列処理に欠落なし'
+        }
+        $workers = @($global:ProceduralFixture.Requests | Where-Object { $_.RunspaceId -ne $script:mainRunspaceId })
+        Assert-Replay (@($workers | Where-Object { $_.Method -eq 'GET' -and $_.Id -like '*/diagnosticSettings' }).Count -ge 5) '別runspaceから診断GET5件以上'
+        Assert-Replay (@($workers | Where-Object { $_.Method -eq 'PUT' -and $_.Id -like '*/diagnosticSettings/storage-archive' }).Count -ge 5) '別runspaceから診断PUT5件以上'
+        Assert-Replay ($global:ProceduralFixture.WorkerRunspaceIds.Count -ge 2) '複数の実runspaceを使用'
+        Invoke-ReplayStep verify
+    }
+    Invoke-ReplayCase '並列worker1件の失敗を記録し再実行で欠落だけを補う' {
+        $subscription = $global:ProceduralFixture.Subscriptions[0]
+        foreach ($number in 1..8) {
+            $parent = "/subscriptions/$subscription/resourceGroups/rg-source/providers/Microsoft.Test/widgets/parallel-$number"
+            $global:ProceduralFixture.Inventory += [pscustomobject]@{ id = $parent; type = 'Microsoft.Test/widgets'; location = 'japaneast' }
+            Add-FixtureDiagnostic $parent
+        }
+        $failedId = "/subscriptions/$subscription/resourceGroups/rg-source/providers/Microsoft.Test/widgets/parallel-3/providers/Microsoft.Insights/diagnosticSettings/storage-archive"
+        $global:ProceduralFixture.Failures["PUT $failedId"] = 4
+        Invoke-ReplayStep copy -ExpectFailure
+        Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($failedId)) '失敗workerだけが未完了'
+        $records = @(Get-FixtureRecords)
+        foreach ($old in $records.OldSettings) {
+            Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id)) '並列失敗中も旧設定を保持'
+        }
+        Reset-Observation
+        Invoke-ReplayStep copy
+        $puts = @($global:ProceduralFixture.Writes | Where-Object { $_.Method -eq 'PUT' -and $_.Id -like '*/diagnosticSettings/storage-archive' })
+        Assert-Replay ($puts.Count -eq 1 -and $puts[0].Id -eq $failedId) '再実行は失敗1件だけPUT'
+        Invoke-ReplayStep verify
+        Invoke-ReplayStep delete
+        Invoke-ReplayStep rollback
+        Assert-Replay (-not $global:ProceduralFixture.UnsafeNewDelete) '並列後も旧復元順序を維持'
+    }
     # --------------------------------------------------
     # 構文・ソース不変と、実際に実行したケース数をまとめる。
     # --------------------------------------------------
@@ -1199,6 +1325,8 @@ try {
         AzureRequests = 0
         PowerShellVersion = $PSVersionTable.PSVersion.ToString()
         Hashes = $sourceHashes
+        RealParallelRunspaces = $parallelRunspaceIds.Count
+        RequestsFromParallelRunspaces = $parallelRequestCount
     }
     if ($ReportPath) {
         $result | ConvertTo-Json -Depth 20 | Set-Content $ReportPath -Encoding UTF8
@@ -1225,5 +1353,6 @@ finally {
     if (Test-Path $scratch) {
         Remove-Item $scratch -Recurse -Force
     }
-    Remove-Variable ProceduralFixture -Scope Global -ErrorAction SilentlyContinue
+    $global:ProceduralFixture = $null
+    [ProceduralReplay.SharedFixture]::State = $null
 }
