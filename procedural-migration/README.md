@@ -100,7 +100,7 @@ pwsh.exe -NoProfile -File .\procedural-migration\rollback.ps1
 
 コード部分は既存版から54.24％減です。前回からは218文字（0.40％）減で、並列処理と結果の件数確認を追加した分も含みます。**当初の10分の1という目標には未達です。** ユーザー確認により、機能と読みやすさを維持して可能な限り削減する方針です。変数名の短縮や1行への詰め込み、コードの別ファイルへの逃がしは行っていません。詳しい計測値は[文字数比較](../test-results/procedural-size.json)に記録しています。
 
-[PowerShell 7版の72ケース・992判定](../test-results/PROCEDURAL_CASES.md)はLinuxと[Windows上のPowerShell 7.6.10](../test-results/procedural-windows7.json)で成功しました。実際の並列runspaceから外部API応答を再生し、一部失敗後の再実行も確認しています。固定した7ファイルの前後ハッシュが一致し、構文エラーは0です。実Azureでの比較結果は以下のとおりです。今回作った検証用Azureリソースはすべて撤去し、両サブスクリプションのリソース・RG・回復可能なLAWが元の0件へ戻ったことを[確認済みです](../test-results/procedural-powershell7-cleanup.json)。
+[PowerShell 7版の72ケース・992判定](../test-results/PROCEDURAL_CASES.md)はLinuxと[Windows上のPowerShell 7.6.10](../test-results/procedural-windows7.json)で成功しました。実際の並列runspaceから外部API応答を再生し、一部失敗後の再実行も確認しています。固定した7ファイルの前後ハッシュが一致し、構文エラーは0です。実Azureでの比較結果は以下のとおりです。この100件の比較環境は撤去し、両サブスクリプションのリソース・RG・回復可能なLAWが元の0件へ戻ったことを[確認しています](../test-results/procedural-powershell7-cleanup.json)。その後に作成した型別の開発検証環境は稼働中です。現行版の状態は[開発検証の進捗](../test-results/FINAL_TEST_PROGRESS.md)に記録し、過去の成功結果とは区別します。
 
 ## 実Azureでの速度比較
 

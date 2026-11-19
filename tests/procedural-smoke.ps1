@@ -196,6 +196,9 @@ function Invoke-RestMethod {
             return [pscustomobject]@{ nameAvailable = $available }
         }
         if ($methodName -eq 'GET') {
+            if ($fixture.Pages.ContainsKey([string]$Uri)) {
+                return Copy-FixtureValue $fixture.Pages[[string]$Uri]
+            }
             if ($path -match '^/subscriptions/([^/]+)/resources$') {
                 $subscription = $Matches[1]
                 $inventory = @($fixture.Inventory | Where-Object { $_.id -like "/subscriptions/$subscription/*" })
@@ -390,6 +393,7 @@ function Reset-Fixture {
         WorkerRequestCount = 0
         Subscriptions = @('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222')
         Inventory = @()
+        Pages = @{}
         Resources = @{}
         Rows = @()
         Failures = @{}
@@ -684,6 +688,102 @@ try {
             $record = @(Get-FixtureRecords | Where-Object { $_.Target.SubscriptionId -eq $subscription })[0]
             Assert-Replay (@($record.OldSettings | Where-Object { $_.Id -like "$parent/*" }).Count -eq $services.Count) 'kindに合う子スコープを保存'
             Assert-Replay (@($record.NewSettings | Where-Object { $_.Kind -eq 'Diagnostic' -and $_.Id -like "$parent/*" }).Count -eq $services.Count) '子スコープにも新診断を追加'
+        }
+    }
+    Invoke-ReplayCase '通常一覧にないRedis子DBを親地域のStorageへ移行・復元する' -Vm 'None' -NoSources -Body {
+        $subscription = $global:ProceduralFixture.Subscriptions[0]
+        $parent = "/subscriptions/$subscription/resourceGroups/rg-source/providers/Microsoft.Cache/redisEnterprise/source"
+        $database = "$parent/databases/default"
+        $global:ProceduralFixture.Inventory += [pscustomobject]@{
+            id = $parent
+            type = 'Microsoft.Cache/redisEnterprise'
+            location = 'canadacentral'
+        }
+        # 実APIと同じく、子の応答にはlocationを持たせない。
+        $global:ProceduralFixture.Pages["https://management.azure.com$parent/databases?api-version=2025-04-01"] = @{
+            value = @(@{ id = $database; name = 'default'; type = 'Microsoft.Cache/redisEnterprise/databases'; properties = @{ provisioningState = 'Succeeded' } })
+        }
+        Add-FixtureDiagnostic $database
+        $oldId = "$database/providers/Microsoft.Insights/diagnosticSettings/old"
+        $newId = "$database/providers/Microsoft.Insights/diagnosticSettings/storage-archive"
+
+        Invoke-ReplayStep copy
+        $record = @(Get-FixtureRecords | Where-Object { $_.Target.SubscriptionId -eq $subscription })[0]
+        $old = @($record.OldSettings | Where-Object Kind -eq 'Diagnostic')
+        $new = @($record.NewSettings | Where-Object Kind -eq 'Diagnostic')
+        Assert-Replay ($old.Count -eq 1 -and $old[0].Id -eq $oldId) '通常一覧にない実在の子診断を保存'
+        Assert-Replay ($new.Count -eq 1 -and $new[0].Id -eq $newId) '子DBへ新診断を追加'
+        $storageId = "/subscriptions/$subscription/resourceGroups/rg-target/providers/Microsoft.Storage/storageAccounts/stcac1111"
+        Assert-Replay ($new[0].Body.properties.storageAccountId -eq $storageId) 'locationのない子も親のCanada宛て'
+        Assert-Replay ($global:ProceduralFixture.Resources[$storageId].location -eq 'canadacentral') '親地域にStorageを作成'
+        Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($oldId)) 'copyでは子の旧設定を維持'
+        Invoke-ReplayStep verify
+        Invoke-ReplayStep delete
+        Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($oldId)) '子の旧設定を削除'
+        Invoke-ReplayStep rollback
+        Assert-Replay ($global:ProceduralFixture.Resources[$oldId].properties.workspaceId -eq $global:ProceduralFixture.SourceWorkspace) '子の旧送信先を復元'
+        Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($newId)) '子の新設定を解除'
+    }
+    Invoke-ReplayCase 'RedisのDB一覧が空なら存在しない子を調べない' -Vm 'None' -NoSources -Body {
+        $subscription = $global:ProceduralFixture.Subscriptions[0]
+        $parent = "/subscriptions/$subscription/resourceGroups/rg-source/providers/Microsoft.Cache/redisEnterprise/empty"
+        $global:ProceduralFixture.Inventory += [pscustomobject]@{
+            id = $parent
+            type = 'Microsoft.Cache/redisEnterprise'
+            location = 'japaneast'
+        }
+        $global:ProceduralFixture.Pages["https://management.azure.com$parent/databases?api-version=2025-04-01"] = @{ value = @() }
+        Invoke-ReplayStep copy
+        $record = @(Get-FixtureRecords | Where-Object { $_.Target.SubscriptionId -eq $subscription })[0]
+        Assert-Replay ($record.OldSettings.Count -eq 0) '空のDB一覧から旧設定を捏造しない'
+        Assert-Replay (@($record.NewSettings | Where-Object Kind -eq 'Diagnostic').Count -eq 0) '対象のない新診断を作らない'
+        Assert-Replay (@($global:ProceduralFixture.Reads | Where-Object { $_ -like "$parent/databases/*/providers/Microsoft.Insights/diagnosticSettings" }).Count -eq 0) '存在しない子への照会なし'
+    }
+    Invoke-ReplayCase 'Redis子DBと通常一覧の次ページを両方移行・復元する' -Vm 'None' -NoSources -Body {
+        $subscription = $global:ProceduralFixture.Subscriptions[0]
+        $parent = "/subscriptions/$subscription/resourceGroups/rg-source/providers/Microsoft.Cache/redisEnterprise/paged"
+        $archive = "$parent/databases/archive"
+        $second = "$parent/databases/second"
+        $other = "/subscriptions/$subscription/resourceGroups/rg-source/providers/Microsoft.Network/networkSecurityGroups/next-page"
+        $resourcesPage = "https://management.azure.com/subscriptions/$subscription/resources?api-version=2021-04-01"
+        $databasesPage = "https://management.azure.com$parent/databases?api-version=2025-04-01"
+        $nextResources = $resourcesPage + '&$skiptoken=resources'
+        $nextDatabases = $databasesPage + '&$skiptoken=databases'
+        $global:ProceduralFixture.Pages[$resourcesPage] = @{
+            value = @(@{ id = $parent; type = 'Microsoft.Cache/redisEnterprise'; location = 'canadacentral' })
+            nextLink = $nextResources
+        }
+        $global:ProceduralFixture.Pages[$databasesPage] = @{
+            value = @(@{ id = $archive; name = 'archive'; type = 'Microsoft.Cache/redisEnterprise/databases' })
+            nextLink = $nextDatabases
+        }
+        $global:ProceduralFixture.Pages[$nextDatabases] = @{
+            value = @(@{ id = $second; name = 'second'; type = 'Microsoft.Cache/redisEnterprise/databases' })
+        }
+        $global:ProceduralFixture.Pages[$nextResources] = @{
+            value = @(@{ id = $other; type = 'Microsoft.Network/networkSecurityGroups'; location = 'japanwest' })
+        }
+        foreach ($resourceId in @($archive, $second, $other)) {
+            Add-FixtureDiagnostic $resourceId
+        }
+        Invoke-ReplayStep copy
+        $record = @(Get-FixtureRecords | Where-Object { $_.Target.SubscriptionId -eq $subscription })[0]
+        Assert-Replay (@($record.OldSettings | Where-Object Kind -eq 'Diagnostic').Count -eq 3) 'DB両ページと通常の次ページを保存'
+        Assert-Replay (@($record.NewSettings | Where-Object Kind -eq 'Diagnostic').Count -eq 3) '3対象すべてへ新診断を追加'
+        foreach ($resourceId in @($archive, $second, $other)) {
+            $new = @($record.NewSettings | Where-Object Id -eq "$resourceId/providers/Microsoft.Insights/diagnosticSettings/storage-archive")[0]
+            $storageName = 'stcac1111'
+            if ($resourceId -eq $other) {
+                $storageName = 'stjpw1111'
+            }
+            Assert-Replay ($new.Body.properties.storageAccountId -like "*/storageAccounts/$storageName") 'DBは親の地域、通常資源は自身の地域へ送信'
+        }
+        Invoke-ReplayStep verify
+        Invoke-ReplayStep delete
+        Invoke-ReplayStep rollback
+        foreach ($resourceId in @($archive, $second, $other)) {
+            Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey("$resourceId/providers/Microsoft.Insights/diagnosticSettings/old")) '次ページの旧設定も復元'
+            Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey("$resourceId/providers/Microsoft.Insights/diagnosticSettings/storage-archive")) '次ページの新設定も解除'
         }
     }
     foreach ($invalid in @(

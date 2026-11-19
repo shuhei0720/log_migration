@@ -1,8 +1,8 @@
 # 56 resourceTypes テスト環境候補
 
 配布コードは `resource_types_fixture.ps1` と `resource_types.arm.json` の2ファイルです。
-この構成で[正本PowerShell 7版の最終総合テストを進めています](../test-results/FINAL_TEST_PROGRESS.md)。本体は既存VNet・サブネットを参照し、NSG・ルートテーブル・委任を追加しません。Databricksは専用NSG必須条件のため今回は明示省略します。
-実機では管理グループ作成直後の反映待ち不足で停止し、有料リソースは作成していません。専用管理グループと事前準備したVNet・NSG・ガード・追跡済みNetwork Watcherは撤去しました。
+現在は[正本とテストコードの開発検証中で、最終総合テストは未開始です](../test-results/FINAL_TEST_PROGRESS.md)。本体は既存VNet・サブネットを参照し、NSG・ルートテーブル・委任を追加しません。Databricksは専用NSG必須条件のため今回は明示省略します。
+初回の管理グループ反映待ちなどを修正し、現在は2サブスクリプションに型別の開発検証環境を配置しています。旧診断66スコープ・旧DCR関連8件を実PUT/GETで確認しました。環境作成コードは、読みやすい手続型へ整理中です。
 主要6本の正本は [procedural-migrationのPowerShell 7版](../procedural-migration/README.md)です。正本のユーザーレビュー後に、最後のリソース網羅テストへ進みます。旧原本と原本CSVは変更していません。
 
 ## 設定と費用
