@@ -109,11 +109,12 @@ function Invoke-AzJson {
             $errorCode=if($Matches[1] -eq '403'){'AuthorizationFailed'}elseif($Matches[1] -eq '401'){'AuthenticationFailed'}else{'CLI_FAILED'}
         } elseif($stderr -match '(?m)^[ \t]*ERROR:[ \t]*\(([A-Za-z][A-Za-z0-9_.]*)\)(?:[ \t]|$)') {
             if($knownCodes -ccontains $Matches[1]){$errorCode=$Matches[1]}
-        } elseif($stderr -cmatch '\A[ \t]*ERROR:[ \t]*Not Found\((\{[\s\S]*\})\)[ \t\r\n]*\z') {
-            # CLIの完全な応答形式だけを解析し、本文のmessageは判定に使いません。
+        } elseif($stderr -cmatch '\A[ \t]*ERROR:[ \t]*(?:Not Found|Bad Request)\((\{[\s\S]*\})\)[ \t\r\n]*\z') {
+            # Azure CLIの400/404は2種類のJSON形状を返す。codeの既知値だけを読む。
             try {
                 $cliError=ConvertFrom-Json -InputObject $Matches[1] -ErrorAction Stop
-                if($cliError.error.code -is [string] -and $knownCodes -ccontains $cliError.error.code){$errorCode=$cliError.error.code}
+                if($cliError.PSObject.Properties['error']){$cliError=$cliError.error}
+                if($cliError.code -is [string] -and $knownCodes -ccontains $cliError.code){$errorCode=$cliError.code}
             } catch {}
         }
         if (-not $MayFail) { throw ('Azure CLI failed: ' + $errorCode) }
@@ -1242,9 +1243,9 @@ function Seed-SourceDiagnostics {
         if (-not $read.ok -or $read.value.properties.workspaceId -ine $script:Ledger.sourceWorkspaceId) {$scope.actualStatus='FAILED'
         $scope.actualErrorCode=if($read.ok){'READBACK_MISMATCH'}else{$read.code}
         continue}
-        # APIが返したenabledカテゴリーが要求と一致することを独立に照合。
-        $want=@(@($logs | ForEach-Object {'L:'+ $_.category+':'+[string]$_.enabled})+@($metrics | ForEach-Object {'M:'+ $_.category+':'+[string]$_.enabled}) | Sort-Object)
-        $got=@(@(@(Get-PropertyValue $read.value.properties 'logs' @()) | ForEach-Object {'L:'+ $_.category+':'+[string]$_.enabled})+@(@(Get-PropertyValue $read.value.properties 'metrics' @()) | ForEach-Object {'M:'+ $_.category+':'+[string]$_.enabled}) | Sort-Object)
+        # APIが補う無効カテゴリは送信対象外。有効カテゴリは欠落・追加とも認めません。
+        $want=@(@($logs | Where-Object enabled | ForEach-Object {'L:'+ $_.category})+@($metrics | Where-Object enabled | ForEach-Object {'M:'+ $_.category}) | Sort-Object)
+        $got=@(@(@(Get-PropertyValue $read.value.properties 'logs' @()) | Where-Object enabled | ForEach-Object {'L:'+ $_.category})+@(@(Get-PropertyValue $read.value.properties 'metrics' @()) | Where-Object enabled | ForEach-Object {'M:'+ $_.category}) | Sort-Object)
         if (($want -join '|') -cne ($got -join '|')) {$scope.actualStatus='FAILED'
         $scope.actualErrorCode='CATEGORY_READBACK_MISMATCH'
         continue}
