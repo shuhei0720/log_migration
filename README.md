@@ -14,7 +14,7 @@
 実行環境はPowerShell 7とAzure CLI 2.54以降です。Windows上のPowerShell 7.6.10 LTSで動作確認しています。
 
 - [設定・実行手順・コードを読むための説明](procedural-migration/README.md)
-- [初心者向けのコメント拡充版](procedural-migration-commented/README.md)（学習用コピー）
+- [正本を上から読むための学習ガイド](procedural-migration/CODE_LEARNING.md)
 - [72ケース・992判定の一覧](test-results/PROCEDURAL_CASES.md)
 - [実Azure 100リソースでの速度比較](procedural-migration/README.md#実azureでの速度比較)
 - [検証環境の撤去結果](test-results/procedural-powershell7-cleanup.json)

@@ -2,6 +2,8 @@
 
 このフォルダが移行スクリプトの正本です。既存の `migration` と原本は比較用に残しています。このフォルダはPowerShell 7と、ログイン済みのAzure CLI 2.54以降を使用します。Windows PowerShell 5.1では実行できません。Windowsでの推奨版はPowerShell 7.6 LTSです。
 
+コードを上から読み進めるための説明は、[学習ガイド](CODE_LEARNING.md)にまとめています。
+
 ## 読む順番
 
 |ファイル|役割|

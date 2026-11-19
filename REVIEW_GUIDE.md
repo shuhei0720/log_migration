@@ -14,4 +14,4 @@
 
 最後のリソース網羅・負荷テストは、この正本のレビュー後に実施します。
 
-初心者向けに、各ブロックとPowerShellの構文を詳しく説明した[コメント拡充版](procedural-migration-commented/README.md)も用意しています。コードは正本と同じで、正本の主要6本は変更していません。
+コードを順に読み進めるときは、[学習ガイド](procedural-migration/CODE_LEARNING.md)を参照してください。各ファイルの処理と、そこで使うPowerShellの書き方を説明しています。
