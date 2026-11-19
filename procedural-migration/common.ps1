@@ -306,7 +306,7 @@ function Read-MigrationRecord {
 $targets = @()
 $regionNames = @()
 if (-not $SkipCsv) {
-    $accounts = @(az account list --all --output json --only-show-errors | ConvertFrom-Json)
+    $accounts = az account list --all --output json --only-show-errors | ConvertFrom-Json
     if ($LASTEXITCODE -ne 0) {
         throw 'サブスクリプション一覧を取得できません。'
     }
@@ -348,7 +348,7 @@ if (-not $SkipCsv) {
         throw 'CSVが空か、同じサブスクリプションが重複しています。'
     }
     if (@($targets | Where-Object StorageAccount).Count) {
-        $regionNames = @(Invoke-RestMethod 'https://raw.githubusercontent.com/mspnp/AzureNamingTool/main/src/repository/resourcelocations.json')
+        $regionNames = Invoke-RestMethod 'https://raw.githubusercontent.com/mspnp/AzureNamingTool/main/src/repository/resourcelocations.json'
     }
 }
 

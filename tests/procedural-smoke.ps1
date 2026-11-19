@@ -114,11 +114,12 @@ function Invoke-RestMethod {
     $fixture = $global:ProceduralFixture
     if ([string]$Uri -like 'https://raw.githubusercontent.com/*') {
         $fixture.RegionReads++
-        return @(
+        $regions = @(
             [pscustomobject]@{ name = 'japaneast'; shortName = 'jpe' },
             [pscustomobject]@{ name = 'japanwest'; shortName = 'jpw' },
             [pscustomobject]@{ name = 'canadacentral'; shortName = 'cac' }
         )
+        return ,$regions
     }
     $address = [uri]$Uri
     if ($address.Host -ne 'management.azure.com') {

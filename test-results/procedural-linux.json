@@ -3,8 +3,8 @@
   "result": "PASS",
   "runtime": "Linux PowerShell 7.5.4",
   "nativeWindows51Executed": false,
-  "manifestSha256": "b5486a0a580fe7efebc39f0507f3329b5b23d4f2f4af5d3d24412786b7d394f0",
-  "reportSha256": "ecdc3cdc95ab8926208291291e7726498c97e4ebdf3b6499b000646f103495dd",
+  "manifestSha256": "c5487b9f5b7f560515dbda5f55312242ffb340dd8038fea75dba58ebc3784594",
+  "reportSha256": "1e244e186f307ef18dd7134de3c2746529f5f77fd911fae4445dbd4694cd1830",
   "sourcesUnchangedBeforeAfter": true,
   "existingMigrationAndOriginalFilesUnchanged": true,
   "AzureRequests": 0,
@@ -352,18 +352,18 @@
     "AzureRequests": 0,
     "PowerShellVersion": "7.5.4",
     "Hashes": {
-      "step1_copy.ps1": "700CD21557FFA21CF5BA6DAF20271EF44F55C57E9863702A073C37D75FA3EDD1",
       "step3_delete.ps1": "2869E02747153D8A8BFCB29A1D83C8E8C0B4036F0FED1F1916A6122788659DDB",
-      "rollback.ps1": "404EC6D76D123042F620564B714FEF46EA8D137ED49AB4537E6030D994DE0D4B",
+      "precheck.ps1": "01085FEC1B3087BEEB24EF3B58811474D456181039374850F774D99112402A9A",
+      "step1_copy.ps1": "700CD21557FFA21CF5BA6DAF20271EF44F55C57E9863702A073C37D75FA3EDD1",
       "step2_verify.ps1": "4F29A34309558B3EF4AA370A016242A251D03544B61DC24E6289F93949BDB8A6",
-      "common.ps1": "08BC61ABD77578D335D38A160362DB9AEFC3A735EACF449E12D49B9860FF639D",
-      "precheck.ps1": "01085FEC1B3087BEEB24EF3B58811474D456181039374850F774D99112402A9A"
+      "common.ps1": "64B16681F83A08BE19C6C99571CC39EBDC5866B5218A65EC7C3D68BA66222869",
+      "rollback.ps1": "404EC6D76D123042F620564B714FEF46EA8D137ED49AB4537E6030D994DE0D4B"
     }
   },
   "manifest": [
     {
       "path": "procedural-migration/common.ps1",
-      "sha256": "08bc61abd77578d335d38a160362db9aefc3a735eacf449e12d49b9860ff639d"
+      "sha256": "64b16681f83a08be19c6c99571cc39ebdc5866b5218a65ec7c3d68ba66222869"
     },
     {
       "path": "procedural-migration/precheck.ps1",
@@ -387,7 +387,7 @@
     },
     {
       "path": "tests/procedural-smoke.ps1",
-      "sha256": "9c13fff0fe8435fdacb9b64b3e10f1cb203609786440bb285d1f6bd1cd75e2d0"
+      "sha256": "da2d7c6dd6b0d0b3b64230def589ce54582d45467ffbbd20f9b5fa09ca95b2f8"
     }
   ]
 }

@@ -10,8 +10,8 @@
   "oldDirectory": "migration",
   "newDirectory": "procedural-migration",
   "baselineCharacters": 140946,
-  "newCharacters": 56332,
-  "reductionPercent": 60.03,
+  "newCharacters": 56326,
+  "reductionPercent": 60.04,
   "initialTargetCharacters": 14000,
   "initialTargetMet": false,
   "priorityConfirmedByUser": "Preserve functionality and readability, then reduce as far as possible",
@@ -27,7 +27,7 @@
     {
       "file": "common.ps1",
       "before": 48625,
-      "after": 24636
+      "after": 24630
     },
     {
       "file": "rollback.ps1",
