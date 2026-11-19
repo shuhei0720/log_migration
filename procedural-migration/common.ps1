@@ -137,7 +137,10 @@ function Invoke-ArmRequest {
         $status = [int]$response.StatusCode
         if ($status -lt 400) {
             $result = $response.Content | ConvertFrom-Json -AsHashtable
-            if ($Wait -and $result.properties.provisioningState -in @('Creating', 'Updating', 'Accepted')) {
+            if ($Wait -and $result.properties.provisioningState -and $result.properties.provisioningState -ne 'Succeeded') {
+                if ($result.properties.provisioningState -in @('Failed', 'Canceled')) {
+                    throw "作成・更新に失敗しました: $ResourceId / $($result.properties.provisioningState)"
+                }
                 if ((Get-Date) -ge $deadline) {
                     throw "作成・更新が完了しません: $ResourceId"
                 }

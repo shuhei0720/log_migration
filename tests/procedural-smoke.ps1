@@ -252,7 +252,8 @@ function Invoke-RestMethod {
                 $value = Copy-FixtureValue $fixture.Resources[$path]
                 if ($fixture.PendingReads.ContainsKey($path) -and $fixture.PendingReads[$path] -gt 0) {
                     $fixture.PendingReads[$path]--
-                    Set-FixtureProperty $value.properties 'provisioningState' 'Updating'
+                    $pendingState = $fixture.PendingStates[$path] ?? 'Updating'
+                    Set-FixtureProperty $value.properties 'provisioningState' $pendingState
                 }
                 return $value
             }
@@ -399,6 +400,7 @@ function Reset-Fixture {
         Failures = @{}
         HttpFailures = @{}
         PendingReads = @{}
+        PendingStates = @{}
         UnregisteredProviders = @{}
         UnavailableNames = @()
         ZrsLocations = @('japaneast', 'japanwest', 'canadacentral')
@@ -1217,6 +1219,23 @@ try {
         Assert-Replay ($global:ProceduralFixture.SleepCalls -ge 2) 'Updatingの間は待機'
         Assert-Replay ($global:ProceduralFixture.PendingReads[$ids.Dcr] -eq 0) 'Succeededの読戻しまで取得'
         Invoke-ReplayStep verify
+    }
+    foreach ($pending in @(
+        @{ Name = 'StorageのResolvingDnsを待って設定を完了する'; Kind = 'Storage'; State = 'ResolvingDns' },
+        @{ Name = 'LAWのProvisioningを待って設定を完了する'; Kind = 'Workspace'; State = 'Provisioning' }
+    )) {
+        Invoke-ReplayCase $pending.Name -Vm 'None' -NoSources -Body {
+            $ids = Get-FixtureIds $global:ProceduralFixture.Subscriptions[0]
+            $id = $ids.($pending.Kind)
+            $global:ProceduralFixture.PendingReads[$id] = 2
+            $global:ProceduralFixture.PendingStates[$id] = $pending.State
+            Invoke-ReplayStep copy
+            Assert-Replay ($global:ProceduralFixture.PendingReads[$id] -eq 0) '途中状態を通過してから完了を確認'
+            Assert-Replay ($global:ProceduralFixture.SleepCalls -ge 2) '作成中は間隔を空けて待機'
+            Assert-Replay ($global:ProceduralFixture.Resources[$id].properties.provisioningState -eq 'Succeeded') '保存先がSucceeded'
+            Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Id -eq $id -and $_.Method -eq 'PUT' }).Count -eq 1) '作成中の保存先へPUTを重ねない'
+            Invoke-ReplayStep verify
+        }
     }
     Invoke-ReplayCase '更新が完了しない保存先は期限で止め旧設定を残す' {
         Invoke-ReplayStep copy

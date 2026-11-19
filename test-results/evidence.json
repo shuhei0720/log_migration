@@ -1,76 +1,41 @@
 {
-  "status": "DEVELOPMENT_VALIDATION_FINAL_NOT_STARTED",
-  "updatedUtc": "2026-11-19T11:50:49.869868+00:00",
+  "status": "FIX_APPLIED_FINAL_TEST_NOT_STARTED",
+  "updatedUtc": "2026-11-19T12:55:14.840768+00:00",
   "canonicalSha256": {
-    "common.ps1": "12200f31323537a115fb2191079fc4a2bbb53752a0efa3e07bdfc1cf211bce5d",
+    "common.ps1": "9e946eb263cbf9622e05506b827022d8847db6db40420ab0d727113935a27740",
     "precheck.ps1": "f406b778b82e496980c19a7eb4ddd35d5079f86b6b66d5da8d5c33a7df73d1e4",
     "step1_copy.ps1": "9762847bbe83fe04309dc25e5b22098b92d5b015caf84846568a8342c7d6b51d",
     "step2_verify.ps1": "e07a7db5d9a567b8730c2cac741d1d76ce5a4b61b67a00ab365ff614f7aea603",
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
     "rollback.ps1": "e8ead03928c7abd8a4e2deadb8269ab09372e54d0a7745aa868705230e9e1b80"
   },
-  "testSha256": "58f9e03067f182ccc7839f66fb1cb0025db8d4eae7e781c17067050fb38b4c6b",
+  "testSha256": "00ecc42251d567955fb264aa48feee540c4f44f8d9185eec7cec68419fe22a53",
   "linuxReplay": {
     "result": "PASS",
     "runtime": "7.5.4",
-    "cases": 75,
-    "checks": 1023,
+    "cases": 77,
+    "checks": 1035,
     "azureRequests": 0
   },
-  "windowsReplay": {
-    "result": "PASS",
-    "runtime": "7.6.10",
-    "cases": 75,
-    "checks": 1023,
-    "azureRequests": 0,
-    "sameCaseResultsAsLinux": true,
-    "sourceAndHarnessUnchanged": true,
-    "temporaryOutboundBlockRemoved": true,
-    "rawReportSha256": "559ab82183ec0713c9d247fcbdf9938ca402bda0efc2e8ea48c461d4d18cb063"
+  "windowsCurrentVersion": {
+    "status": "NOT_RUN"
   },
-  "realAzureDiscoveryBeforeFix": {
-    "result": "FAIL",
-    "expectedDiagnostics": 66,
-    "actualDiagnostics": 65,
-    "missing": "Microsoft.Cache/redisEnterprise/databases/default",
-    "expectedOldAssociations": 8,
-    "actualOldAssociations": 8,
-    "resourceWrites": 0
-  },
-  "redisChildFix": "Applied to common.ps1; fresh Windows precheck and real Azure discovery passed",
-  "sourceIntegrity": {
-    "result": "PASS",
-    "diagnostics": 66,
-    "associations": 12,
-    "actualGets": 78,
-    "resourceWrites": 0,
-    "ledgerUnchanged": true
-  },
-  "resourceSetup": {
-    "catalogTypes": 56,
-    "createdTypesObserved": 50,
-    "existingVnetTypes": 1,
-    "omittedTypes": 5,
-    "positiveDiagnosticScopes": 66,
-    "isFinalMigrationTestResult": false
-  },
-  "finalIntegration": {
-    "started": false,
-    "loadFixture300Created": false
+  "azureIntegration": {
+    "resultBeforeFix": "FAIL",
+    "cause": "Creation polling returned during ResolvingDns or Provisioning",
+    "diagnosticOrDcraWrites": 0,
+    "oldDeletes": 0,
+    "fix": "Wait for Succeeded when provisioningState is present; fail on Failed/Canceled",
+    "reproduction": "Real Storage/LAW GET bodies reproduced the failure; both later reached Succeeded",
+    "completeFlowAfterFix": "NOT_RUN",
+    "finalTestStarted": false
   },
   "cleanup": {
-    "completed": false,
-    "state": "Development Azure environment is still active; restore after verification"
-  },
-  "realAzureDiscoveryAfterFix": {
-    "result": "PASS",
-    "runtime": "7.6.10",
-    "expectedDiagnostics": 66,
-    "actualDiagnostics": 66,
-    "missingDiagnostics": 0,
-    "expectedOldAssociations": 8,
-    "actualOldAssociations": 8,
-    "resourceWrites": 0,
-    "migrationRecords": 0
+    "status": "IN_PROGRESS",
+    "allNewCreationStopped": true,
+    "fixtureGroupsDeleteAccepted": 4,
+    "windowsGroupDeleteAccepted": true,
+    "externalFirewall3Removed": true,
+    "recoverableLawKeyVaultCognitiveZero": true
   }
 }

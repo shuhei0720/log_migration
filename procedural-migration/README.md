@@ -2,6 +2,8 @@
 
 このフォルダが正本です。PowerShell 7と、ログイン済みのAzure CLIを使用します。Windows PowerShell 5.1では実行できません。コードの読み方は [学習ガイド](CODE_LEARNING.md)、検証状況は [検証結果](../test-results/REPORT.md) を参照してください。
 
+Azureの開発検証は、旧処理の作成完了待ちで停止しました。修正後の77ケースはLinux上の再生試験で成功しています。Windowsでの新77ケースと、修正後のAzure全工程の再実行は未実施です。
+
 ## 1. 実行する環境とCSVを指定する
 
 `common.ps1`先頭の次の値を設定します。旧DCR2つとポリシー割り当て3つは、提示された本番・検証・開発の値が設定済みです。
@@ -31,7 +33,7 @@ Copy-Item .\procedural-migration\targets.example.csv .\procedural-migration\targ
 
 `None`と空欄は、その側の新しい送信設定を作成せず、最後のstep3で旧設定を外して送信を終了します。**保存先は作成します。** Log Analyticsは全行で準備し、Storageも名前が指定されていれば準備します。Storageの対象地域が0件の場合は東日本に1つ作成します。
 
-Storage名の`jpe`だけをMicrosoftのAzure Naming Toolで公開されている地域略称へ置き換えます。名前の空き・変換後の形式・ZRS対応を事前に確認し、初回に同名Storageがあれば停止します。
+Storage名の`jpe`だけをMicrosoftのAzure Naming Toolで公開されている地域略称へ置き換えます。略称の取得には`raw.githubusercontent.com`への接続を使用します。名前の空き・変換後の形式・ZRS対応を事前に確認し、初回に同名Storageがあれば停止します。
 
 ## 2. 確認しながら実行する
 
@@ -63,6 +65,8 @@ pwsh.exe -NoProfile -File .\procedural-migration\step3_delete.ps1
 copyはprecheckの結果ファイルに依存しません。診断設定は移行元ワークスペース宛てのものを対象にし、ログ・メトリックの指定を引き継いで宛先を変更します。新診断名の重複や5枠の上限は書き込み前に確認します。DCR側は環境別の旧2DCRの関連を対象にし、旧関連があるVM・VMSSに新関連を設定します。
 
 StorageはStorageV2・Standard_ZRSで、appendBlobの削除を1,095日後に設定します。Log Analyticsのワークスペース保持は365日、旧DCR関連の対象がある場合はEvent・Syslogの合計保持を1,095日に設定します。VM側の新設定を省略する行でも、この保存先の準備は行います。
+
+作成・更新後のGETにprovisioningStateがある場合は、Succeededまで最大5分、3秒間隔で待ちます。Failed/Canceledは即座に失敗として扱います。
 
 SubはCSVの順に処理します。診断設定の調査と新診断設定の複製だけを最大5件ずつ並列に実行し、適用除外・保存先・DCRは順に準備します。step3の削除とrollbackも順に処理し、失敗した時点で停止します。step3終了後もWaiverは残し、自動期限は設定しません。
 
