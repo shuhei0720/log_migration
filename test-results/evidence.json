@@ -1,6 +1,6 @@
 {
   "status": "FIX_APPLIED_FINAL_TEST_NOT_STARTED",
-  "updatedUtc": "2026-11-19T12:55:14.840768+00:00",
+  "updatedUtc": "2026-11-19T13:04:04.454142+00:00",
   "canonicalSha256": {
     "common.ps1": "9e946eb263cbf9622e05506b827022d8847db6db40420ab0d727113935a27740",
     "precheck.ps1": "f406b778b82e496980c19a7eb4ddd35d5079f86b6b66d5da8d5c33a7df73d1e4",
@@ -37,5 +37,20 @@
     "windowsGroupDeleteAccepted": true,
     "externalFirewall3Removed": true,
     "recoverableLawKeyVaultCognitiveZero": true
+  },
+  "actualAzureBodyReplay": {
+    "result": "PASS",
+    "classification": "OFFLINE_REPLAY_OF_ACTUAL_AZURE_DIAGNOSTIC_BODY_SHAPES",
+    "cases": 1,
+    "checks": 604,
+    "sourceScopes": 66,
+    "logs": 267,
+    "metrics": 75,
+    "disabledLogs": 98,
+    "disabledMetrics": 10,
+    "azureRequests": 0,
+    "sourceUnchanged": true,
+    "isActualDestinationApiProof": false,
+    "proofSha256": "50698b737fcad3403ddd1be66da4af7c8df1050ad9f333c693a8e0d3ab423178"
   }
 }
