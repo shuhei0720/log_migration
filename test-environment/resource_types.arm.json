@@ -2,1219 +2,358 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "0.1.0.0",
   "metadata": {
-    "candidateOnly": true,
-    "azureValidated": false,
-    "resourceTypeCount": 56,
     "fixtureTypes": [
       {
         "resourceType": "microsoft.codesigning/codesigningaccounts",
-        "feasibility": "skip-proposed",
-        "assignment": "—",
-        "diagnosticCandidate": "S",
         "keys": [],
-        "reason": "Propose omission from cheap throwaway tests because an empty account incurs an entire monthly SKU charge and eligible paid offer is unknown.",
-        "apiVersion": "2025-10-13",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.codesigning/2025-10-13/codesigningaccounts",
-          "https://learn.microsoft.com/en-us/azure/artifact-signing/faq",
-          "https://azure.microsoft.com/en-us/pricing/details/artifact-signing/",
-          "https://learn.microsoft.com/en-us/azure/artifact-signing/quickstart",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-codesigning-codesigningaccounts-logs"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        "skipReason": "全月料金と有料オファーの適格性が未確認のため省略。"
       },
       {
         "resourceType": "microsoft.web/sites/slots",
-        "feasibility": "feasible",
-        "assignment": "B/R4",
-        "diagnosticCandidate": "P+C",
         "keys": [
           "functionSlot",
           "slot"
-        ],
-        "reason": "Parent-child discovery path and separate child-scope settings are important coverage.",
-        "apiVersion": "2025-03-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.web/2025-03-01/sites/slots",
-          "https://learn.microsoft.com/en-us/azure/app-service/deploy-staging-slots",
-          "https://learn.microsoft.com/en-us/azure/app-service/overview-hosting-plans",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-web-sites-slots-logs"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        ]
       },
       {
         "resourceType": "microsoft.network/natgateways",
-        "feasibility": "conditional",
-        "assignment": "B/R2",
-        "diagnosticCandidate": "P",
         "keys": [
           "networkNat"
         ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2025-09-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.network/2025-09-01/natgateways",
-          "https://learn.microsoft.com/en-us/azure/nat-gateway/nat-overview",
-          "https://learn.microsoft.com/en-us/azure/nat-gateway/nat-gateway-flow-logs",
-          "https://azure.microsoft.com/en-us/pricing/details/azure-nat-gateway/",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-metrics/microsoft-network-natgateways-metrics"
-        ],
-        "unresolved": [
-          "No live deployment or subscription capability validation performed. If StandardV2 rejected, mark positive diagnostics test unavailable; Standard metric export is not a substitute."
-        ],
-        "costCaveat": "Hourly gateway billing begins at resource creation, including no subnet/public-IP attachment; partial hour billed full. Data processed + bandwidth + optional StandardV2 PIP extra. Standard and StandardV2 same price per official page. Flow-log category adds documented USD4/month prorated hourly; current subscription/region numeric gateway rate was not retrieved (pricing HTML renders $-)."
+        "conditional": true
       },
       {
         "resourceType": "microsoft.databricks/workspaces",
-        "feasibility": "conditional",
-        "assignment": "B/R2",
-        "diagnosticCandidate": "P",
         "keys": [
           "databricks"
         ],
-        "reason": "既存B VNetのPrivateとVNetIntegrationを専用の2サブネットとして明示するVNet injection。新規VNetやサブネットは作成しません。",
-        "apiVersion": "2024-05-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.databricks/2024-05-01/workspaces",
-          "https://learn.microsoft.com/en-us/azure/databricks/admin/account-settings/audit-log-delivery",
-          "https://learn.microsoft.com/en-us/azure/databricks/security/network/classic/secure-cluster-connectivity",
-          "https://learn.microsoft.com/en-us/azure/databricks/getting-started/overview",
-          "https://learn.microsoft.com/en-us/azure/databricks/admin/workspace",
-          "https://learn.microsoft.com/en-us/azure/databricks/resources/supported-regions",
-          "https://learn.microsoft.com/en-us/azure/databricks/security/network/classic/vnet-inject"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        "conditional": true
       },
       {
         "resourceType": "microsoft.app/containerapps",
-        "feasibility": "feasible",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "M",
         "keys": [
           "containerApp"
-        ],
-        "reason": "Low-cost root metrics plus environmental log-scope supplement.",
-        "apiVersion": "2025-01-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.app/2025-01-01/containerapps",
-          "https://learn.microsoft.com/en-us/azure/container-apps/log-options",
-          "https://learn.microsoft.com/en-us/azure/container-apps/billing",
-          "https://learn.microsoft.com/en-us/azure/container-apps/scale-app",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-metrics/microsoft-app-containerapps-metrics"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        ]
       },
       {
         "resourceType": "microsoft.app/jobs",
-        "feasibility": "feasible",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "M",
         "keys": [
           "containerJob"
-        ],
-        "reason": "Resource-only job tests type/scope without workload run.",
-        "apiVersion": "2025-01-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.app/2025-01-01/jobs",
-          "https://learn.microsoft.com/en-us/azure/container-apps/jobs",
-          "https://learn.microsoft.com/en-us/azure/container-apps/billing",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-metrics/microsoft-app-jobs-metrics"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        ]
       },
       {
         "resourceType": "microsoft.app/managedenvironments",
-        "feasibility": "feasible",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P+M",
         "keys": [
           "containerEnvironment"
-        ],
-        "reason": "Azure Monitor log destination avoids workspace shared-key/customerId setup and enables generic diagnostic-setting destination matrix.",
-        "apiVersion": "2025-01-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.app/2025-01-01/managedenvironments",
-          "https://learn.microsoft.com/en-us/azure/container-apps/billing",
-          "https://learn.microsoft.com/en-us/azure/container-apps/log-options",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-app-managedenvironments-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-metrics/microsoft-app-managedenvironments-metrics"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        ]
       },
       {
         "resourceType": "microsoft.servicebus/namespaces",
-        "feasibility": "feasible",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P",
         "keys": [
           "serviceBus"
-        ],
-        "reason": "Empty Basic namespace is a low-cost type/setting test; categories must be selected from actual namespace capabilities.",
-        "apiVersion": "2024-01-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.servicebus/2024-01-01/namespaces",
-          "https://azure.microsoft.com/en-us/pricing/details/service-bus/",
-          "https://learn.microsoft.com/en-us/azure/service-bus-messaging/monitor-service-bus-reference",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-servicebus-namespaces-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        ]
       },
       {
         "resourceType": "microsoft.web/hostingenvironments",
-        "feasibility": "conditional",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P",
-        "optionalSwitch": "IncludeAse",
         "keys": [
           "ase"
         ],
-        "reason": "Optional empty ASEv3: review measured JPE I1v2 floor and explicitly select IncludeAse; cost is not assumed prohibitive.",
-        "apiVersion": "2025-03-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.web/2025-03-01/hostingenvironments",
-          "https://learn.microsoft.com/en-us/azure/app-service/environment/overview",
-          "https://learn.microsoft.com/en-us/azure/app-service/environment/networking",
-          "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.web/web-app-asp-app-on-asev3-create/main.bicep",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-web-hostingenvironments-logs"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        "conditional": true,
+        "optionalSwitch": "IncludeAse"
       },
       {
         "resourceType": "microsoft.communication/communicationservices",
-        "feasibility": "feasible",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P",
         "keys": [
           "communication"
-        ],
-        "reason": "ARM-only resource can test settings without externally communicating.",
-        "apiVersion": "2023-03-31",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.communication/2023-03-31/communicationservices",
-          "https://learn.microsoft.com/en-us/azure/communication-services/concepts/privacy",
-          "https://learn.microsoft.com/en-us/azure/communication-services/concepts/analytics/enable-logging",
-          "https://azure.microsoft.com/en-us/pricing/details/communication-services/",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        ]
       },
       {
         "resourceType": "microsoft.network/dnsresolverpolicies",
-        "feasibility": "feasible",
-        "assignment": "B/R2",
-        "diagnosticCandidate": "P+M",
         "keys": [
           "networkDnsPolicy"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2025-05-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.network/2025-05-01/dnsresolverpolicies",
-          "https://learn.microsoft.com/en-us/azure/dns/dns-security-policy",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-network-dnsresolverpolicies-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-metrics/microsoft-network-dnsresolverpolicies-metrics",
-          "https://azure.microsoft.com/en-us/pricing/details/dns/"
-        ],
-        "unresolved": [
-          "No current official allowlist/preview restriction found for stable2025-05-01; actual availability and permissions remain to be checked after cleanup."
-        ],
-        "costCaveat": "Do not confuse resolver policy with separately billed Private Resolver endpoints/rulesets. Official DNS pricing lists policy queries when rules are configured and domain-list monthly per1000domains (hourly prorated), plus monitor ingestion/export/storage. Empty policy has no configured rules/domain lists; absence of a base meter is not an asserted free-price guarantee. Numeric regional price not confirmed."
+        ]
       },
       {
         "resourceType": "microsoft.network/expressroutecircuits",
-        "feasibility": "skip-proposed",
-        "assignment": "—",
-        "diagnosticCandidate": "S",
         "keys": [],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2025-01-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/expressroute/quickstart-create-expressroute-vnet-template",
-          "https://learn.microsoft.com/en-us/azure/expressroute/expressroute-howto-circuit-portal-resource-manager",
-          "https://azure.microsoft.com/en-us/pricing/details/expressroute/",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-network-expressroutecircuits-logs"
-        ],
-        "unresolved": [
-          "User may choose to include a short-lived bare circuit once provider offer + cost are concretely validated; no provider offer was queried and no numeric price verified."
-        ],
-        "costCaveat": "Skip is a proposal for high fixed cost / provider arrangement, not a claim ARM creation impossible. Microsoft billing starts when the service key is issued, before provider provisioning; it is not a free unprovisioned fixture. Billing stops after deletion request AND provider deprovisioning. A never-provisioned circuit can be deleted in Not provisioned state, but still incurs Azure prorated circuit charges. Provider contract/service charges may be separate; ExpressRoute Direct is not an inexpensive substitute."
+        "skipReason": "回線契約、プロバイダー料金と撤去条件が未確認のため省略。"
       },
       {
         "resourceType": "microsoft.automation/automationaccounts",
-        "feasibility": "feasible",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P",
         "keys": [
           "automation"
-        ],
-        "reason": "Empty Automation account supports root settings and requires no application registration.",
-        "apiVersion": "2024-10-23",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.automation/2024-10-23/automationaccounts",
-          "https://learn.microsoft.com/en-us/azure/automation/automation-create-standalone-account",
-          "https://azure.microsoft.com/en-us/pricing/details/automation/",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-automation-automationaccounts-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        ]
       },
       {
         "resourceType": "microsoft.relay/namespaces",
-        "feasibility": "feasible",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P",
         "keys": [
           "relay"
-        ],
-        "reason": "Namespace ARM resource alone is sufficient for root setting test.",
-        "apiVersion": "2024-01-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.relay/2024-01-01/namespaces",
-          "https://azure.microsoft.com/en-us/pricing/details/service-bus/",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-relay-namespaces-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        ]
       },
       {
         "resourceType": "microsoft.botservice/botservices",
-        "feasibility": "feasible",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P",
         "keys": [
           "bot"
-        ],
-        "reason": "UserAssignedMSI avoids tenant application-registration permissions and credentials.",
-        "apiVersion": "2022-09-15",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.botservice/2022-09-15/botservices",
-          "https://learn.microsoft.com/en-us/azure/bot-service/bot-service-quickstart-registration?view=azure-bot-service-4.0",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-botservice-botservices-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        ]
       },
       {
         "resourceType": "microsoft.cache/redis",
-        "feasibility": "conditional",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P?",
         "keys": [
           "redis"
         ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2024-11-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.cache/2024-11-01/redis",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-cache-redis-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/retirement-faq",
-          "https://techcommunity.microsoft.com/blog/azure-managed-redis/azure-cache-for-redis-retirement-what-to-know-and-how-to-prepare/4458721",
-          "https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/cache-monitor-diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [
-          "既存顧客条件を満たすか、対象region C0が新規作成可能か。",
-          "2026-07更新公式blogはBasic/Standard/Premiumをnew customers作成停止と記載。過去の「existingも2026-10-01停止」を今の資料から断言しない。"
-        ],
-        "costCaveat": "C0もcache存在中の時間課金。stop機能に依存せず試験完了後削除する。 2028-09-30 retirement、2028-10-01以降disabled予定。 作成拒否の場合typeをskip-proposedへ変更し理由をretirement eligibilityと記録。Managed Redisは別typeなのでredis型の代替coverageと数えない。"
+        "conditional": true
       },
       {
         "resourceType": "microsoft.sql/servers",
-        "feasibility": "feasible",
-        "assignment": "A/R3",
-        "diagnosticCandidate": "?+C",
         "keys": [
           "sqlServer"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2023-08-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.sql/2023-08-01/servers",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-sql/database/metrics-diagnostic-telemetry-logging-streaming-export-configure?view=azuresql",
-          "https://learn.microsoft.com/en-us/azure/azure-sql/database/auditing-setup?view=azuresql",
-          "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.sql/sql-auditing-server-policy-to-oms/main.bicep",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [
-          "masterに提供される実category/groupおよびserver root categoriesを確認（404/unsupportedを正常な非対応として記録）。"
-        ],
-        "costCaveat": "logical server自体の独立compute料金は通常ないがuser DB/backup/診断出力が課金対象。 masterはサービス管理。logical serverだけ存在しても課金ゼロ保証はしない。"
+        ]
       },
       {
         "resourceType": "microsoft.sql/servers/databases",
-        "feasibility": "feasible",
-        "assignment": "A/R3",
-        "diagnosticCandidate": "P+C",
         "keys": [
           "sqlDatabase"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2023-08-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.sql/2023-08-01/servers/databases",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-sql-servers-databases-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-sql/database/resource-limits-dtu-single-databases?view=azuresql",
-          "https://azure.microsoft.com/en-us/pricing/details/azure-sql-database/single/",
-          "https://learn.microsoft.com/en-us/azure/azure-sql/database/metrics-diagnostic-telemetry-logging-streaming-export-configure?view=azuresql",
-          "https://learn.microsoft.com/en-us/azure/azure-sql/database/auditing-setup?view=azuresql",
-          "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.sql/sql-auditing-server-policy-to-oms/main.bicep",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [
-          "Basicに実際に返るcategory/metric一覧とlegacy AzureDiagnostics出力を後日確認。"
-        ],
-        "costCaveat": "DB存在中はBasic provisioned容量の時間課金が継続。未使用でも課金。stop/auto-pauseなし。 Basic 5DTU/2GBがdocs記載の最小。storage/backup超過、診断destination料金は別。"
+        ]
       },
       {
         "resourceType": "microsoft.search/searchservices",
-        "feasibility": "conditional",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P?",
         "keys": [
           "search"
         ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2025-05-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.search/2025-05-01/searchservices",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-search-searchservices-logs",
-          "https://learn.microsoft.com/en-us/azure/search/search-sku-tier",
-          "https://learn.microsoft.com/en-us/azure/search/search-monitor-enable-logging"
-        ],
-        "unresolved": [
-          "各subscriptionのFree枠とregion capacity、Freeへのdiagnostic設定可否。不可なら有料Basicを採用するかskip提案。"
-        ],
-        "costCaveat": "Freeはサービスtier上の無償枠だがsubscription毎1個で未使用枠は未確認。診断export/ingestionは別途従量。 Basic fallbackは未使用でもreplica×partitionのSearch Unit時間課金、stop不可。 2026のdocsはFoundry IQ/Azure AI Search名称。Serverless新tierも記載されるがAPI/地域/単価未確認のため採用しない。"
+        "conditional": true
       },
       {
         "resourceType": "microsoft.web/serverfarms",
-        "feasibility": "feasible",
-        "assignment": "B/R4",
-        "diagnosticCandidate": "P+M",
         "keys": [
           "appPlan"
-        ],
-        "reason": "Share one Linux S1 plan in the Sub B/West US 2 placement proven by the prior fixture; current creation remains unverified.",
-        "apiVersion": "2025-03-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.web/2025-03-01/serverfarms",
-          "https://learn.microsoft.com/en-us/azure/app-service/overview-hosting-plans",
-          "https://learn.microsoft.com/en-us/azure/app-service/monitor-app-service-reference",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-web-serverfarms-logs"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        ]
       },
       {
         "resourceType": "microsoft.web/sites",
-        "feasibility": "feasible",
-        "assignment": "B/R4",
-        "diagnosticCandidate": "P",
         "keys": [
           "functionSite",
           "site"
-        ],
-        "reason": "Empty Linux Web App and disabled Linux Function App share the saved-working Linux S1 shape in Sub B/West US 2. Application execution is not part of this diagnostic-setting test.",
-        "apiVersion": "2025-03-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.web/2025-03-01/sites",
-          "https://learn.microsoft.com/en-us/azure/app-service/overview-hosting-plans",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-web-sites-logs"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        ]
       },
       {
         "resourceType": "microsoft.logic/workflows",
-        "feasibility": "feasible",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P",
         "keys": [
           "logic"
-        ],
-        "reason": "Official ARM example allows empty actions/triggers; disabled resource supports root settings.",
-        "apiVersion": "2019-05-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.logic/2019-05-01/workflows",
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.logic/2019-05-01/workflows",
-          "https://azure.microsoft.com/en-us/pricing/details/logic-apps/",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-logic-workflows-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        ]
       },
       {
         "resourceType": "microsoft.recoveryservices/vaults",
-        "feasibility": "feasible",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P",
         "keys": [
           "recoveryVault"
-        ],
-        "reason": "Empty vault is sufficient for root settings and can be removed without backup retention.",
-        "apiVersion": "2024-04-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.recoveryservices/2024-04-01/vaults",
-          "https://azure.microsoft.com/en-us/pricing/details/backup/",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-recoveryservices-vaults-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        ]
       },
       {
         "resourceType": "microsoft.web/connections",
-        "feasibility": "conditional",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "?",
         "keys": [
           "connection"
         ],
-        "reason": "Official docs distinguish deployed connection resource from later OAuth authorization, so unauthenticated resource-only creation is plausible; diag support is not established by public inventory.",
-        "apiVersion": "2016-06-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.web/2016-06-01/connections",
-          "https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-deploy-azure-resource-manager-templates",
-          "https://azure.microsoft.com/en-us/pricing/details/logic-apps/"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        "conditional": true
       },
       {
         "resourceType": "microsoft.compute/virtualmachinescalesets",
-        "feasibility": "feasible",
-        "assignment": "B/R2",
-        "diagnosticCandidate": "M",
         "keys": [
           "computeVmss"
-        ],
-        "reason": "Official FAQ explicitly supports zero-instance deployment; suitable low-cost root-scope type test.",
-        "apiVersion": "2024-07-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.compute/2024-07-01/virtualmachinescalesets",
-          "https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-faq",
-          "https://learn.microsoft.com/en-us/azure/virtual-machines/quotas",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-metrics/microsoft-compute-virtualmachinescalesets-metrics",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        ]
       },
       {
         "resourceType": "microsoft.network/loadbalancers",
-        "feasibility": "feasible",
-        "assignment": "B/R2",
-        "diagnosticCandidate": "P+M",
         "keys": [
           "networkLoadBalancer"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2025-01-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.network/loadbalancers",
-          "https://azure.microsoft.com/en-us/pricing/details/load-balancer/",
-          "https://learn.microsoft.com/en-us/azure/load-balancer/skus",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-network-loadbalancers-logs"
-        ],
-        "unresolved": [
-          "Minimal internal frontend/no-rule form is schema-based planning and has not been deployed in these subscriptions."
-        ],
-        "costCaveat": "Standard Load Balancer has no hourly charge when no load-balancing/outbound rules configured. Internal frontend avoids PIP hourly charge. Data processing/rules cost if added. Basic LB retired2025-09-30; do not use old Basic quickstarts."
+        ]
       },
       {
         "resourceType": "microsoft.compute/disks",
-        "feasibility": "conditional",
-        "assignment": "A/R3",
-        "diagnosticCandidate": "N?",
         "keys": [
           "disk"
         ],
-        "reason": "Resource creation is feasible; mark diagnostic positive unsupported/unresolved and exercise expected-failure rather than falsely count coverage.",
-        "apiVersion": "2024-03-02",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.compute/2024-03-02/disks",
-          "https://learn.microsoft.com/en-us/azure/virtual-machines/disks-types",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-metrics/microsoft-compute-disks-metrics",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        "conditional": true
       },
       {
         "resourceType": "microsoft.app/sessionpools",
-        "feasibility": "conditional",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "M?",
         "keys": [
           "sessionPool"
         ],
-        "reason": "Conditional on server accepting min-ready0; no silent fallback to5 or E16 paid pool.",
-        "apiVersion": "2025-01-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.app/2025-01-01/sessionpools",
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.app/2025-01-01/sessionpools",
-          "https://learn.microsoft.com/en-us/azure/container-apps/billing",
-          "https://learn.microsoft.com/en-us/azure/container-apps/sessions",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-metrics/microsoft-app-sessionpools-metrics",
-          "https://raw.githubusercontent.com/Azure/azure-cli-extensions/main/src/containerapp/azext_containerapp/containerapp_sessionpool_decorator.py"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        "conditional": true
       },
       {
         "resourceType": "microsoft.containerregistry/registries",
-        "feasibility": "feasible",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P",
         "keys": [
           "acr"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2025-04-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.containerregistry/2025-04-01/registries",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-containerregistry-registries-logs",
-          "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-skus",
-          "https://azure.microsoft.com/en-us/pricing/details/container-registry/",
-          "https://learn.microsoft.com/en-us/azure/container-registry/monitor-service",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [
-          "Basicの実diagnostic categories/PUT可否。"
-        ],
-        "costCaveat": "Basicでも存在中のdaily base rateあり。イメージゼロでも料金発生。通常10GiBのincluded storage（超過追加）。 TasksはCPU秒、追加storageやnetworkは別途。Premium機能を使わない。 Basicで診断category作成にtier制限がないことは公開monitor資料に制限記載なしとして設計、実際のcategories/PUTは後日確認。"
+        ]
       },
       {
         "resourceType": "microsoft.containerservice/managedclusters",
-        "feasibility": "conditional",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P",
         "keys": [
           "aks"
         ],
-        "reason": "Two unzoned D2s_v4 nodes plus two D2s_v4 VMs use 8 regional/family vCPUs in Sub A/Japan East; fresh limits are 10, including one 2-vCPU surge. Actual deployment availability remains unverified.",
-        "apiVersion": "2024-10-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.containerservice/2024-10-01/managedclusters",
-          "https://learn.microsoft.com/en-us/azure/aks/free-standard-pricing-tiers",
-          "https://learn.microsoft.com/en-us/azure/aks/use-system-pools",
-          "https://learn.microsoft.com/en-us/azure/aks/quotas-skus-regions",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-containerservice-managedclusters-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        "conditional": true
       },
       {
         "resourceType": "microsoft.insights/datacollectionrules",
-        "feasibility": "feasible",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P",
         "keys": [
           "oldDcr"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2023-03-11",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.insights/2023-03-11/datacollectionrules",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-insights-datacollectionrules-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/data-collection/data-collection-monitor",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/data-collection/data-collection-rule-create-edit",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/data-collection/data-collection-rule-samples"
-        ],
-        "unresolved": [
-          "各regionでLogErrors categoryとdestination制約を実応答で確認。公式手順はSend to Log Analytics、同じLAも選択可。Storage/EHへの個別制約は未確認。"
-        ],
-        "costCaveat": "DCR定義だけの固定compute料金は公開資料上確認できず。収集・変換・転送・保存は用途別従量で、無料保証はしない。 agent associationなしなら意図したデータ収集/変換量を発生させない。LogErrors exportはsupported-logs上Costs to export=Yes。"
+        ]
       },
       {
         "resourceType": "microsoft.monitor/accounts",
-        "feasibility": "feasible",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P",
         "keys": [
           "monitorAccount"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2023-04-03",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.monitor/2023-04-03/accounts",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-monitor-accounts-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/metrics/azure-monitor-workspace-manage",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/metrics/azure-monitor-workspace-overview"
-        ],
-        "unresolved": [
-          "対象regionの新規作成、MetricsUsageDetailsカテゴリ、managed RG自動DCRが独自診断を許可するか。"
-        ],
-        "costCaveat": "metrics ingestion/query等の使用量課金。空accountの存在だけの最低料金は公開資料から未確認、無料保証はしない。 MetricsUsageDetailsの診断exportはsupported-logs上Costs to export=Yes。18か月retention付帯は無制限無償ingestという意味ではない。"
+        ]
       },
       {
         "resourceType": "microsoft.apimanagement/service",
-        "feasibility": "conditional",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P?",
         "keys": [
           "apim"
         ],
-        "reason": "Use Developer1 only within budget to test real logs setting; Consumption may cover expected lack of logs separately.",
-        "apiVersion": "2024-05-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.apimanagement/2024-05-01/service",
-          "https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-use-azure-monitor",
-          "https://learn.microsoft.com/en-us/azure/api-management/api-management-features",
-          "https://azure.microsoft.com/en-us/pricing/details/api-management/",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-apimanagement-service-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        "conditional": true
       },
       {
         "resourceType": "microsoft.bing/accounts",
-        "feasibility": "skip-proposed",
-        "assignment": "—",
-        "diagnosticCandidate": "S",
         "keys": [],
-        "reason": "Bing Search APIs retired 2025-08-11; existing instances completely decommissioned and new signups unavailable.",
-        "apiVersion": null,
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/lifecycle/announcements/bing-search-api-retirement"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        "skipReason": "サービス退役により新規検証できないため省略。"
       },
       {
         "resourceType": "microsoft.cache/redisenterprise",
-        "feasibility": "conditional",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "M+C",
         "keys": [
           "managedRedis"
         ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2025-04-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.cache/2025-04-01/redisenterprise",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://techcommunity.microsoft.com/blog/azure-managed-redis/azure-cache-for-redis-retirement-what-to-know-and-how-to-prepare/4458721",
-          "https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/retirement-faq",
-          "https://learn.microsoft.com/en-us/azure/redis/quickstart-create-managed-redis",
-          "https://learn.microsoft.com/en-us/azure/redis/monitor-diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.cache/2025-04-01/redisenterprise/databases",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-cache-redisenterprise-databases-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-metrics/microsoft-cache-redisenterprise-metrics"
-        ],
-        "unresolved": [
-          "Balanced_B0非HAの対象2subscription/各regionでの新規可用性。",
-          "root metrics category、child ConnectionEvents categoryが実際に返るかを後日確認。"
-        ],
-        "costCaveat": "Managed Redisはcacheが存在する間のSKU時間課金。非HAは低費用選択だが無償ではない。停止による課金解除を仮定しない。 旧Enterprise/EnterpriseFlashは2026-04-01全顧客新規作成停止、2027-03-31 retirement。旧SKUをdeployしない。 Balanced_B0・非HAのregion可用性/割当quota/実単価は未確認。"
+        "conditional": true
       },
       {
         "resourceType": "microsoft.dbforpostgresql/flexibleservers",
-        "feasibility": "conditional",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P",
         "keys": [
           "postgres"
         ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2024-08-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.dbforpostgresql/2024-08-01/flexibleservers",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-dbforpostgresql-flexibleservers-logs",
-          "https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-compute",
-          "https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/overview",
-          "https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/how-to-stop-server"
-        ],
-        "unresolved": [
-          "対象regionのStandard_B1ms quota/capacity、PostgreSQL16対応。",
-          "停止状態のdiagnostic GET/PUTの挙動は試験範囲に入れるなら別途確認（先に起動中試験を実施）。"
-        ],
-        "costCaveat": "起動中はB1ms compute＋32GiB provisioned storage＋backup等課金。 stopでcompute tier billing停止。ただしstorage/backup料金は継続し、7日後自動起動。停止中は他の管理操作不可と公式docsにあるため全診断試験後に停止する。 No HA/min retentionは費用を抑える設定。空DBでも最低provisioned storage料金は残る。"
+        "conditional": true
       },
       {
         "resourceType": "microsoft.documentdb/databaseaccounts",
-        "feasibility": "feasible",
-        "assignment": "A/R3",
-        "diagnosticCandidate": "P",
         "keys": [
           "cosmos"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2024-11-15",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.documentdb/2024-11-15/databaseaccounts",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-documentdb-databaseaccounts-logs",
-          "https://learn.microsoft.com/en-us/azure/cosmos-db/serverless",
-          "https://learn.microsoft.com/en-us/azure/cosmos-db/free-tier",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [
-          "対象regionのserverless可用性およびAPI別カテゴリ提供（他API用Cassandra/Mongo等を有効にしない）。"
-        ],
-        "costCaveat": "ServerlessはRU消費量＋storage従量。公式docsはno minimum chargeと記載するが、付随storage/backup/diagnosticsや管理operation費用までゼロ保証しない。 free tierはserverless非対応。provisioned free tierは1subscription1個・作成時opt-in、1000RU/s＋25GBまでの条件付き割引。 single regionを維持。多地域/continuous backupやprovisioned throughputを不用意に追加しない。"
+        ]
       },
       {
         "resourceType": "microsoft.network/applicationgateways",
-        "feasibility": "conditional",
-        "assignment": "B/R2",
-        "diagnosticCandidate": "P+M",
         "keys": [
           "networkAppGateway"
         ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2025-01-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/application-gateway/overview-v2",
-          "https://learn.microsoft.com/en-us/azure/application-gateway/quick-create-template",
-          "https://learn.microsoft.com/en-us/azure/application-gateway/understanding-pricing",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-network-applicationgateways-logs"
-        ],
-        "unresolved": [
-          "No live minimal-empty-backend deployment performed. Basic preview eligibility/registration is not assumed. Need current rate/expected short-lived duration before estimating spend."
-        ],
-        "costCaveat": "Fixed hourly v2 charge persists even autoscale minCapacity0, plus reserved/used capacity units and PIP. This is a paid conditional fixture, promptly remove after tests. Official pricing article illustrative EastUS snapshot Standard_v2 $0.246/hr fixed + $0.008/CU-hr; article explicitly calls it a snapshot, not a current quote. Numeric live rate not retrieved."
+        "conditional": true
       },
       {
         "resourceType": "microsoft.insights/components",
-        "feasibility": "feasible",
-        "assignment": "A/R3",
-        "diagnosticCandidate": "P",
         "keys": [
           "appInsights"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2020-02-02",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.insights/2020-02-02/components",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-insights-components-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/app/export-telemetry",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [
-          "base LAとold/new destination LAを明確に分離。",
-          "Ownerが両LAを参照する試験環境ではUI duplicate telemetryがあり得るが実データ到着/UI試験は要求外。"
-        ],
-        "costCaveat": "base workspaceのingestion/retention、診断export/二重保存が課金対象。resource存在のみのcompute料金はない想定だが無償保証はしない。 workspace-based resourceのLA backing dataを診断exportすると追加取り込み/duplicate dataになり得る。"
+        ]
       },
       {
         "resourceType": "microsoft.operationalinsights/workspaces",
-        "feasibility": "feasible",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P",
         "keys": [
           "logAnalytics"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2023-09-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.operationalinsights/2023-09-01/workspaces",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-operationalinsights-workspaces-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/logs/query-audit",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [
-          "2subのold/new/base LA役割を分け、各workspaceへの診断カテゴリ応答を確認。"
-        ],
-        "costCaveat": "PerGB2018は主にingestion/retention/query等の従量でcommitment最低枠を作らない。query audit有効化自体無料と公式docs、監査data ingestion等は課金され得る。 diagnostic設定や短い保持期間のみで料金ゼロ保証はしない。"
+        ]
       },
       {
         "resourceType": "microsoft.network/azurefirewalls",
-        "feasibility": "conditional",
-        "assignment": "B/R2",
-        "diagnosticCandidate": "P+M",
         "keys": [
           "networkFirewall"
         ],
-        "reason": "既存B AzureFirewallSubnetを参照するStandard tier。管理用サブネットと管理用Public IPは追加しません。",
-        "apiVersion": "2025-01-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/firewall/deploy-firewall-basic-portal-policy",
-          "https://azure.microsoft.com/en-us/pricing/details/azure-firewall/",
-          "https://learn.microsoft.com/en-us/azure/firewall/firewall-faq",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-network-azurefirewalls-logs"
-        ],
-        "unresolved": [
-          "Current region Basic capacity/quota and numeric cost are not validated. Empty Basic-policy creation has not been exercised live."
-        ],
-        "costCaveat": "Basic is cheaper intended tier, but still deployment-hour + processed-GB pricing; two PIPs add charges. Public pricing page numeric cells $- so no live amount claimed. Azure FAQ says deallocation stops firewall billing, reallocation restarts; this does not remove PIP/other resource charges. Prefer prompt cleanup after setting tests."
+        "conditional": true
       },
       {
         "resourceType": "microsoft.network/dnszones",
-        "feasibility": "feasible",
-        "assignment": "B/R2",
-        "diagnosticCandidate": "N",
         "keys": [
           "networkPublicDns"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2018-05-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.network/dnszones",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-metrics/microsoft-network-dnszones-metrics",
-          "https://learn.microsoft.com/en-us/azure/dns/monitor-dns-reference",
-          "https://azure.microsoft.com/en-us/pricing/details/dns/"
-        ],
-        "unresolved": [
-          "No live diagnosticSettingsCategories query. If runtime unexpectedly advertises export categories, record capability and seed only those; do not force AllMetrics based on metric existence."
-        ],
-        "costCaveat": "Public DNS zones are NOT zero-cost just because undelegated/unused. Hosted-zone monthly fee (daily billing; official pricing note), plus query volume. No domain registration purchase needed. Numeric zone rate not confirmed."
+        ]
       },
       {
         "resourceType": "microsoft.network/networksecuritygroups",
-        "feasibility": "feasible",
-        "assignment": "B/R2",
-        "diagnosticCandidate": "P",
         "keys": [
           "networkNsg"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2025-01-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.network/networksecuritygroups",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-network-networksecuritygroups-logs",
-          "https://learn.microsoft.com/en-us/azure/network-watcher/nsg-flow-logs-overview"
-        ],
-        "unresolved": [
-          "No direct official NSG zero-base-charge statement captured; confirm offer if an exact zero-cost assertion is required. Diagnostic resource setting category availability should be checked later without enabling retired Network Watcher flow-log resources."
-        ],
-        "costCaveat": "NSG object has no expected standalone hourly meter (normally free); direct current official explicit zero-cost statement not obtained, so this is not a verified price quote. Diagnostics export/storage/ingestion and optional traffic analytics have separate charges."
+        ]
       },
       {
         "resourceType": "microsoft.network/privatednszones",
-        "feasibility": "feasible",
-        "assignment": "B/R2",
-        "diagnosticCandidate": "N",
         "keys": [
           "networkPrivateDns"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2024-06-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.network/privatednszones",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-metrics/microsoft-network-privatednszones-metrics",
-          "https://azure.microsoft.com/en-us/pricing/details/dns/"
-        ],
-        "unresolved": [
-          "No live diagnosticSettingsCategories query; no positive diagnostic migration case assumed for zone scope."
-        ],
-        "costCaveat": "Private DNS zones incur hosted-zone fee even when unlinked/no queries, plus query-volume costs; not a free empty object. Numeric current zone price not retrieved."
+        ]
       },
       {
         "resourceType": "microsoft.network/virtualnetworks",
-        "feasibility": "feasible",
-        "assignment": "B/R2",
-        "diagnosticCandidate": "P+M",
         "keys": [
           "networkVnet"
-        ],
-        "reason": "networkRefsの既存A/B VNetを参照します。VNetリソース定義は含めません。",
-        "apiVersion": "2025-01-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.network/virtualnetworks",
-          "https://azure.microsoft.com/en-us/pricing/details/virtual-network/",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-network-virtualnetworks-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-metrics/microsoft-network-virtualnetworks-metrics"
-        ],
-        "unresolved": [
-          "Runtime category query may have capabilities varying by subscription; no paid DDoS enablement is needed for settings configuration coverage."
-        ],
-        "costCaveat": "Azure Virtual Network itself free per official pricing page; no peering/gateway/DDoS paid plan in minimum fixture. Peering/related appliances/data transfers and exported logs billed separately.",
-        "externalReference": true
+        ]
       },
       {
         "resourceType": "microsoft.kusto/clusters",
-        "feasibility": "conditional",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "P",
         "keys": [
           "kusto"
         ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2024-04-13",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.kusto/2024-04-13/clusters",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-kusto-clusters-logs",
-          "https://learn.microsoft.com/en-us/azure/data-explorer/create-cluster-and-database",
-          "https://learn.microsoft.com/en-us/azure/data-explorer/create-cluster-and-database",
-          "https://learn.microsoft.com/en-us/azure/data-explorer/pricing-calculator",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [
-          "E2a_v4 Devのregion在庫/quota、最小1台の作成可否。",
-          "費用を理由に省略する場合はtype未実測として報告。停止中診断操作可否は未確認。"
-        ],
-        "costCaveat": "起動中はVM/engine compute＋data-management＋storage/transactions/network費用。DevはADX markup非課金という意味で、VM全体が無償ではない。 Full clusterは停止/再開可能。停止によりcompute解放、storage/保存データ等は継続課金。enableAutoStopだけで即課金停止を期待しない。 無償My ClusterはAzure subscription不要の別サービスであり、このARM resourceType coverageの代替不可。 公開pricing calculatorに地域/SKU依存とあり、正確な最小月額/時間額は未確認。"
+        "conditional": true
       },
       {
         "resourceType": "microsoft.network/privateendpoints",
-        "feasibility": "feasible",
-        "assignment": "B/R2",
-        "diagnosticCandidate": "N",
         "keys": [
           "networkPrivateEndpoint"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2025-01-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/private-link/create-private-endpoint-template",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-metrics/microsoft-network-privateendpoints-metrics",
-          "https://azure.microsoft.com/en-us/pricing/details/private-link/"
-        ],
-        "unresolved": [
-          "No live category/approval check performed. This type cannot be counted as a positive diagnostic setting case based on public metrics evidence."
-        ],
-        "costCaveat": "Private Endpoint has hourly charge even without traffic plus processed data and target-service/storage costs; partial hours billed full. Reuse planned storage fixture, do not deploy a paid service just as PE target. Numeric rate not retrieved."
+        ]
       },
       {
         "resourceType": "microsoft.compute/virtualmachines",
-        "feasibility": "conditional",
-        "assignment": "A/R1",
-        "diagnosticCandidate": "M",
         "keys": [
           "computeVm"
         ],
-        "reason": "Conditional on regional SKU/family quota; deploy briefly then delete compute and attached OS disk/NIC.",
-        "apiVersion": "2024-07-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.compute/2024-07-01/virtualmachines",
-          "https://learn.microsoft.com/en-us/azure/virtual-machines/quotas",
-          "https://learn.microsoft.com/en-us/azure/virtual-machines/states-billing",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-compute-virtualmachines-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        "conditional": true
       },
       {
         "resourceType": "microsoft.network/networkinterfaces",
-        "feasibility": "feasible",
-        "assignment": "B/R2",
-        "diagnosticCandidate": "M",
         "keys": [
           "networkNic"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2025-01-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.network/networkinterfaces",
-          "https://learn.microsoft.com/en-us/azure/virtual-network/virtual-network-network-interface",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-metrics/microsoft-network-networkinterfaces-metrics",
-          "https://azure.microsoft.com/en-us/pricing/details/virtual-network/"
-        ],
-        "unresolved": [
-          "No live unattached NIC diagnostic setting creation performed. Exact zero-base NIC rate not explicitly confirmed by captured official page."
-        ],
-        "costCaveat": "Ordinary unattached NIC has no expected standalone hourly meter (normal baseline free); this specific zero-price statement was not directly confirmed in official pricing page. No PIP, VM, virtual network TAP, or Accelerated Connections enabled. Those features/resources plus monitor export could add cost."
+        ]
       },
       {
         "resourceType": "microsoft.network/publicipaddresses",
-        "feasibility": "feasible",
-        "assignment": "B/R2",
-        "diagnosticCandidate": "M",
         "keys": [
           "networkPublicIp"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2025-01-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.network/publicipaddresses",
-          "https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/public-ip-addresses",
-          "https://azure.microsoft.com/en-us/pricing/details/ip-addresses/",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-metrics/microsoft-network-publicipaddresses-metrics",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-network-publicipaddresses-logs"
-        ],
-        "unresolved": [
-          "No live PIP quota/capability validation; use regional no explicit zones for portability."
-        ],
-        "costCaveat": "Standard static PIP has hourly cost independent of attachment/running VM. Official pricing FAQ billing starts second hour after creation and stops deletion; partial-hour billing applies. Do not assume unassociated means free. Basic SKU retired2025-09-30. Numeric current Standard rate not retrieved."
+        ]
       },
       {
         "resourceType": "microsoft.eventgrid/systemtopics",
-        "feasibility": "feasible",
-        "assignment": "A/R3",
-        "diagnosticCandidate": "P",
         "keys": [
           "eventGrid"
-        ],
-        "reason": "Resource-group source removes a paid source dependency and has official ARM example.",
-        "apiVersion": "2022-06-15",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.eventgrid/2022-06-15/systemtopics",
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.eventgrid/2022-06-15/systemtopics",
-          "https://learn.microsoft.com/en-us/azure/event-grid/system-topics",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-eventgrid-systemtopics-logs",
-          "https://azure.microsoft.com/en-us/pricing/details/event-grid/"
-        ],
-        "unresolved": [],
-        "costCaveat": "No fixed JPY quote; see reviewed estimate."
+        ]
       },
       {
         "resourceType": "microsoft.keyvault/vaults",
-        "feasibility": "feasible",
-        "assignment": "A/R3",
-        "diagnosticCandidate": "P",
         "keys": [
           "keyVault"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2024-11-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.keyvault/2024-11-01/vaults",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-keyvault-vaults-logs",
-          "https://azure.microsoft.com/en-us/pricing/details/key-vault/",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [
-          "同名soft-deleted vault残存有無、target tenantの作成policy。"
-        ],
-        "costCaveat": "Standard vaultは主にsecrets/key/certificate操作等のtransaction課金。Premium HSM key/Managed HSMの存在時間料金と混同しない。 空vaultも管理/診断出力/storage・LA費用が発生し得る。soft-delete期間/name再利用とcleanupを考慮。"
+        ]
       },
       {
         "resourceType": "microsoft.storage/storageaccounts",
-        "feasibility": "feasible",
-        "assignment": "A/R3",
-        "diagnosticCandidate": "M+C",
         "keys": [
           "storage"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2025-01-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.storage/2025-01-01/storageaccounts",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/storage/blobs/monitor-blob-storage",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-storage-storageaccounts-blobservices-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-storage-storageaccounts-fileservices-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-storage-storageaccounts-queueservices-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-storage-storageaccounts-tableservices-logs",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [
-          "各default childのGET/categories応答、2subの同一地域destination準備を後日確認。"
-        ],
-        "costCaveat": "存在だけの固定compute料金は通常なし。保存容量・冗長化・transaction・data transfer・診断export/LA ingestionは従量。 空でも管理操作/サービス生成blob/ログ出力のstorage transactionや容量が発生し得る。"
+        ]
       },
       {
         "resourceType": "microsoft.machinelearningservices/workspaces",
-        "feasibility": "feasible",
-        "assignment": "A/R3",
-        "diagnosticCandidate": "P",
         "keys": [
           "machineLearning"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2025-04-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.machinelearningservices/2025-04-01/workspaces",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-machinelearningservices-workspaces-logs",
-          "https://learn.microsoft.com/en-us/azure/machine-learning/how-to-create-workspace-template?view=azureml-api-2",
-          "https://learn.microsoft.com/en-us/azure/machine-learning/concept-plan-manage-cost?view=azureml-api-2",
-          "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.machinelearningservices/machine-learning-workspace/main.bicep",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [
-          "通常Default kind＋選択APIでのworkspace作成とdiag category提供。",
-          "Hub/project-specificのManagedNetworkEvent等は実category/setting可否を確認し、提供ログの到着は検証しない。",
-          "供給Key VaultをRBAC modeで共用する場合、workspace managed identityの必要なdata-plane権限/サービス側自動付与を作成前に確認。Owner実行者の権限とMSI権限は別。これはdeployment依存確認で、RBAC matrix試験追加ではない。"
-        ],
-        "costCaveat": "workspace本体だけの固定compute chargeは想定しないが、依存Storage/KV/AI/LA・任意ACRはそれぞれ課金され得る。 compute instance/cluster作成はVM、disk、load balancer等料金。停止compute instanceでもdisk料金等残る。 managedNetworkをprovisionするとPrivate Endpoint/Firewall/FQDN ruleで固定/時間課金が増えるためDisabledで作成。 workspace削除だけではdependenciesが残って課金し得る。root専用RG cleanupで依存全体を確認。"
+        ]
       },
       {
         "resourceType": "microsoft.cognitiveservices/accounts/projects",
-        "feasibility": "feasible",
-        "assignment": "A/R3",
-        "diagnosticCandidate": "P+C",
         "keys": [
           "aiProject"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2025-06-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/2025-06-01/accounts/projects",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-cognitiveservices-accounts-projects-logs",
-          "https://raw.githubusercontent.com/microsoft-foundry/foundry-samples/main/infrastructure/infrastructure-setup-bicep/00-basic/main.bicep",
-          "https://learn.microsoft.com/en-us/azure/ai-foundry/reference/region-support?view=foundry",
-          "https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/manage-costs?view=foundry"
-        ],
-        "unresolved": [
-          "parent/account各regionのproject API実可用性および診断scope/categories。"
-        ],
-        "costCaveat": "project本体の固定/最低料金は未確認。使用するmodel/agent/connected resource/dataの費用は親や接続先に課金され得る。 project作成だけでモデル、Search、Storage、Cosmos、agent runtimeを別途作成する必要は公式minimal sampleにない。"
+        ]
       },
       {
         "resourceType": "microsoft.cognitiveservices/accounts",
-        "feasibility": "feasible",
-        "assignment": "A/R3",
-        "diagnosticCandidate": "P",
         "keys": [
           "cognitive"
-        ],
-        "reason": "See public evidence and runtime capability probes.",
-        "apiVersion": "2025-06-01",
-        "publicReferences": [
-          "https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/2025-06-01/accounts",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
-          "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-cognitiveservices-accounts-logs",
-          "https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/create-resource-template?view=foundry",
-          "https://raw.githubusercontent.com/microsoft-foundry/foundry-samples/main/infrastructure/infrastructure-setup-bicep/00-basic/main.bicep",
-          "https://learn.microsoft.com/en-us/azure/ai-foundry/reference/region-support?view=foundry",
-          "https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/manage-costs?view=foundry",
-          "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules"
-        ],
-        "unresolved": [
-          "対象subscriptionのAIServices registration/region/policy/サービスterms、project management有効化可否。",
-          "Audit/Trace等全categoryがAIServices kindで提供されるか。"
-        ],
-        "costCaveat": "S0は無償tier名ではない。Foundryの利用サービス、token/API/model/agent/storage/network等による課金。 account/projectだけ・model無しの最低月額を公開pricingだけで確定できず、無償保証しない。 model quota/ProvisionedThroughput/Agent Standard dependentリソースの費用を増やさない。"
+        ]
       }
     ],
     "policyReferenceIds": [
@@ -1235,65 +374,7 @@
       "f6f0b49f9bd34e8fbb2c0304",
       "17fb86c1d07349769ff9b1a4",
       "0073f42c7cba4eef8454e06e"
-    ],
-    "notes": [
-      "LOCAL候補。Azure authentication/API/deploy/validationは未実行。API schema候補を実成否扱いしない。",
-      "全13型metadataを保持。ExpressRouteは契約offerと費用未決定のためresource定義なし、省略理由を保持。",
-      "B-R2 regionはjapanwest候補。NAT StandardV2/DNS resolver policy含め実subscription region/API/SKU確認が必要。regionを変更する場合network依存bundleをまとめて変更。",
-      "NAT StandardV2は未接続でPIP不要。Standardへのfallbackはしない。flow-log固定料金は診断seed後に発生。",
-      "Firewall Standardは既存AzureFirewallSubnetとStandard policy、Standard Public IP1個を使います。管理用サブネットや管理用Public IPは作りません。",
-      "PIP targetはAppGWで共有。Firewall PIP2個は同一networkFirewall keyに連動しAppGW/PIP targetと混用しない。",
-      "PEはsharedStorageId(別bundleで作成済みStorage)へ接続。auto-created NIC exact IDはproperties.networkInterfaces[].idから台帳へ加える。",
-      "DNS public/private、PEは診断非対応候補。runtime category GET/PUT/read-backの証拠なしでnegative確定やpositiveへ集計しない。",
-      "VNetとサブネットはnetworkRefsで既存ID/nameを参照します。テンプレートにVNet・サブネット作成定義はありません。",
-      {
-        "resourceType": "microsoft.network/applicationgateways",
-        "note": "Official 2025-01-01 schema requires autoscale maxCapacity >=2. Candidate min0/max2 corrects earlier design max1; it is not an autoscaling cost cap."
-      },
-      "LOCAL候補。Azure認証、CLI、管理API、deploymentは実行していない。",
-      "DCR sampleをLinux syslogへ適合。実DCRAは独立controllerがVM/VMSS exact IDsへ作成し2旧DCR重複関連とuntargeted sentinelを記録する。",
-      "VM/VMSS image/SKU、全typeのJapan/Canada region availability、quota、旧Redis資格、Managed Redis B0、Free Search診断は未確認。fallbackで課金を増やさない。",
-      "VM2台は設計要求でありduplicateでない。VMSS2個はcapacity0。Linux SSH public keyは入力値を使いprivate keyやpasswordを出力しない。",
-      "Storage default4scope、SQLmaster、Redis DB default、AI projectは独立expected scopeへ保持。SQLmasterをPUT作成しない。",
-      "Monitor accountのサービス生成managedRGをproperties.defaultIngestionSettingsから記録し親の削除後消失を待つ。KeyVault/LA/Cognitiveのsoftdelete残存はactive消失とは分離する。",
-      "VM deleteOption=Delete指定でもOSdisk/NIC exact IDsをledgerへ記録し消失を確認する。",
-      {
-        "resourceType": "microsoft.eventgrid/systemtopics",
-        "note": "Storage source follows same region; ARM research RG-source example intentionally replaced by documented Storage source. No event subscription."
-      },
-      {
-        "resourceType": "microsoft.web/hostingenvironments",
-        "note": "skip-proposed: empty ASEv3 incurs I1v2 minimum billing. Budget decision required before implementing conditional alternative."
-      },
-      {
-        "resourceType": "microsoft.codesigning/codesigningaccounts",
-        "note": "skip-proposed: full month charge and paid-offer prerequisite."
-      },
-      {
-        "resourceType": "microsoft.bing/accounts",
-        "note": "skip-proposed: retired API, no type substitution."
-      },
-      {
-        "resourceType": "microsoft.web/sites",
-        "note": "Additional disabled empty Linux Function App+stage slot share the Linux S1 plan in B-R4/West US 2. MI-based account-name settings contain no keys and add no RBAC grants. No code/invocation/host-storage permission test is claimed; diagnostic kind scope only."
-      },
-      "AKSは既存A.Privateを使うAzure CNI Overlay。専用UAMIをfoundationで作成し、既存サブネットへの権限はcontrollerがresources開始前に設定します。"
-    ],
-    "distribution": "Only this ARM JSON and the adjacent Windows PowerShell 5.1 controller are code deliverables.",
-    "runtimeGoalHours": 4,
-    "testCycleQuantities": {
-      "fixtureLogAnalyticsWorkspaces": 3,
-      "generic6NewLogAnalyticsWorkspacesPerSubscriptionPerCycle": 1,
-      "subscriptions": 2,
-      "normalCycles": 2,
-      "generic6NewLogAnalyticsWorkspacesTotal": 4,
-      "combinedLogAnalyticsWorkspaces": 7,
-      "fixtureDataCollectionRules": 3,
-      "generic6NewDataCollectionRulesTotal": 4,
-      "combinedDataCollectionRules": 7,
-      "ingestionReserveGBTotal": 0.1,
-      "note": "Generic6 EnsureBaseline creates a destination workspace per subscription per cycle, including Storage mode. These are metered resources without a fixed existence charge; reserve remains total0.1GB."
-    }
+    ]
   },
   "parameters": {
     "bundle": {
@@ -1413,18 +494,7 @@
         "fixture": {
           "key": "networkNat",
           "bundle": "B-R2",
-          "resourceType": "microsoft.network/natgateways",
-          "role": "target",
-          "dependsOnKeys": [],
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "cleanupDiscoveryPaths": [],
           "nameTemplate": "fx{runId}-nat",
-          "id": "[resourceId('Microsoft.Network/natGateways', split(variables('networkNatName'), '/')[0])]",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-09-01",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       },
@@ -1449,19 +519,7 @@
         "fixture": {
           "key": "networkDnsPolicy",
           "bundle": "B-R2",
-          "resourceType": "microsoft.network/dnsresolverpolicies",
-          "role": "target",
-          "dependsOnKeys": [],
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P+M",
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fx{runId}-dns-policy",
-          "id": "[resourceId('Microsoft.Network/dnsResolverPolicies', split(variables('networkDnsPolicyName'), '/')[0])]",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-05-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "nameTemplate": "fx{runId}-dns-policy"
         }
       },
       "properties": {},
@@ -1480,19 +538,7 @@
         "fixture": {
           "key": "networkNsg",
           "bundle": "B-R2",
-          "resourceType": "microsoft.network/networksecuritygroups",
-          "role": "target",
-          "dependsOnKeys": [],
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fx{runId}-nsg",
-          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', split(variables('networkNsgName'), '/')[0])]",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-01-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "nameTemplate": "fx{runId}-nsg"
         }
       },
       "properties": {
@@ -1513,19 +559,7 @@
         "fixture": {
           "key": "networkPublicDns",
           "bundle": "B-R2",
-          "resourceType": "microsoft.network/dnszones",
-          "role": "target",
-          "dependsOnKeys": [],
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "N",
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fx{runId}.example.test",
-          "id": "[resourceId('Microsoft.Network/dnsZones', split(variables('networkPublicDnsName'), '/')[0])]",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2018-05-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "nameTemplate": "fx{runId}.example.test"
         }
       },
       "properties": {
@@ -1542,19 +576,7 @@
         "fixture": {
           "key": "networkPrivateDns",
           "bundle": "B-R2",
-          "resourceType": "microsoft.network/privatednszones",
-          "role": "target",
-          "dependsOnKeys": [],
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "N",
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fx{runId}.internal.test",
-          "id": "[resourceId('Microsoft.Network/privateDnsZones', split(variables('networkPrivateDnsName'), '/')[0])]",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2024-06-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "nameTemplate": "fx{runId}.internal.test"
         }
       },
       "properties": {}
@@ -1569,18 +591,7 @@
         "fixture": {
           "key": "networkPublicIp",
           "bundle": "B-R2",
-          "resourceType": "microsoft.network/publicipaddresses",
-          "role": "target",
-          "dependsOnKeys": [],
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "M",
-          "cleanupDiscoveryPaths": [],
           "nameTemplate": "fx{runId}-pip",
-          "id": "[resourceId('Microsoft.Network/publicIPAddresses', split(variables('networkPublicIpName'), '/')[0])]",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-01-01",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       },
@@ -1607,21 +618,10 @@
         "fixture": {
           "key": "networkNic",
           "bundle": "B-R2",
-          "resourceType": "microsoft.network/networkinterfaces",
-          "role": "target",
+          "nameTemplate": "fx{runId}-nic",
           "dependsOnKeys": [
             "networkVnet"
-          ],
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "M",
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fx{runId}-nic",
-          "id": "[resourceId('Microsoft.Network/networkInterfaces', split(variables('networkNicName'), '/')[0])]",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-01-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          ]
         }
       },
       "properties": {
@@ -1653,20 +653,10 @@
         "fixture": {
           "key": "networkLoadBalancer",
           "bundle": "B-R2",
-          "resourceType": "microsoft.network/loadbalancers",
-          "role": "target",
+          "nameTemplate": "fx{runId}-lb",
           "dependsOnKeys": [
             "networkVnet"
           ],
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P+M",
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fx{runId}-lb",
-          "id": "[resourceId('Microsoft.Network/loadBalancers', split(variables('networkLoadBalancerName'), '/')[0])]",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-01-01",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       },
@@ -1708,27 +698,11 @@
         "fixture": {
           "key": "networkPrivateEndpoint",
           "bundle": "B-R2",
-          "resourceType": "microsoft.network/privateendpoints",
-          "role": "target",
+          "nameTemplate": "fx{runId}-pe",
           "dependsOnKeys": [
             "networkVnet",
             "storage"
-          ],
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "N",
-          "cleanupDiscoveryPaths": [
-            "properties.networkInterfaces[].id"
-          ],
-          "externalDependencyParameters": [
-            "sharedStorageId"
-          ],
-          "nameTemplate": "fx{runId}-pe",
-          "id": "[resourceId('Microsoft.Network/privateEndpoints', split(variables('networkPrivateEndpointName'), '/')[0])]",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-01-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          ]
         }
       },
       "properties": {
@@ -1762,21 +736,11 @@
         "fixture": {
           "key": "networkAppGateway",
           "bundle": "B-R2",
-          "resourceType": "microsoft.network/applicationgateways",
-          "role": "target",
+          "nameTemplate": "fx{runId}-agw",
           "dependsOnKeys": [
             "networkVnet",
             "networkPublicIp"
           ],
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P+M",
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fx{runId}-agw",
-          "id": "[resourceId('Microsoft.Network/applicationGateways', split(variables('networkAppGatewayName'), '/')[0])]",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-01-01",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       },
@@ -1888,19 +852,10 @@
         "fixture": {
           "key": "networkFirewall",
           "bundle": "B-R2",
-          "resourceType": "microsoft.network/publicipaddresses",
-          "role": "dependency",
-          "dependsOnKeys": [],
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "M",
-          "cleanupDiscoveryPaths": [],
           "nameTemplate": "fx{runId}-fw-pip",
-          "id": "[resourceId('Microsoft.Network/publicIPAddresses', split(variables('networkFirewallPublicIpName'), '/')[0])]",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-01-01",
-          "coverageTarget": false,
-          "cleanupEarly": true
+          "cleanupEarly": true,
+          "deploymentNetworkRole": "B",
+          "cleanupOrder": 20
         }
       },
       "properties": {
@@ -1926,19 +881,9 @@
         "fixture": {
           "key": "networkFirewall",
           "bundle": "B-R2",
-          "resourceType": "microsoft.network/firewallpolicies",
-          "role": "dependency",
-          "dependsOnKeys": [],
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "UNRESOLVED",
-          "cleanupDiscoveryPaths": [],
           "nameTemplate": "fx{runId}-fwpolicy",
-          "id": "[resourceId('Microsoft.Network/firewallPolicies', split(variables('networkFirewallPolicyName'), '/')[0])]",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-01-01",
-          "coverageTarget": false,
-          "cleanupEarly": false
+          "deploymentNetworkRole": "B",
+          "cleanupOrder": 10
         }
       },
       "properties": {
@@ -1962,21 +907,13 @@
         "fixture": {
           "key": "networkFirewall",
           "bundle": "B-R2",
-          "resourceType": "microsoft.network/azurefirewalls",
-          "role": "target",
+          "nameTemplate": "fx{runId}-fw",
           "dependsOnKeys": [
             "networkVnet"
           ],
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P+M",
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fx{runId}-fw",
-          "id": "[resourceId('Microsoft.Network/azureFirewalls', split(variables('networkFirewallName'), '/')[0])]",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-01-01",
-          "coverageTarget": true,
-          "cleanupEarly": true
+          "cleanupEarly": true,
+          "deploymentNetworkRole": "B",
+          "cleanupOrder": 0
         }
       },
       "properties": {
@@ -2020,21 +957,9 @@
         "fixture": {
           "key": "logAnalytics",
           "bundle": "A-R1",
-          "resourceType": "microsoft.operationalinsights/workspaces",
-          "id": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('dataSourceLAName'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "provenance": "ARM definition",
-          "role": "source-workspace",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [],
           "nameTemplate": "fx{runId}-source-la",
-          "seedSourceDiagnostic": true,
           "phase": "foundation",
-          "childApiVersion": "2023-09-01",
-          "coverageTarget": true,
-          "outputRole": "source-workspace",
-          "cleanupEarly": false
+          "role": "source-workspace"
         }
       },
       "properties": {
@@ -2060,20 +985,9 @@
         "fixture": {
           "key": "logAnalytics",
           "bundle": "A-R1",
-          "resourceType": "microsoft.operationalinsights/workspaces",
-          "id": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('dataAuxLAName'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "provenance": "ARM definition",
-          "role": "untargeted-aux-workspace",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [],
           "nameTemplate": "fx{runId}-aux-la",
-          "seedSourceDiagnostic": true,
           "phase": "foundation",
-          "childApiVersion": "2023-09-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "role": "untargeted-aux-workspace"
         }
       },
       "properties": {
@@ -2099,20 +1013,9 @@
         "fixture": {
           "key": "logAnalytics",
           "bundle": "A-R3",
-          "resourceType": "microsoft.operationalinsights/workspaces",
-          "id": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('dataBaseLAName'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "provenance": "ARM definition",
-          "role": "appinsights-base-workspace",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [],
           "nameTemplate": "fx{runId}-base-la",
-          "seedSourceDiagnostic": true,
           "phase": "foundation",
-          "childApiVersion": "2023-09-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "role": "appinsights-base-workspace"
         }
       },
       "properties": {
@@ -2138,25 +1041,15 @@
         "fixture": {
           "key": "storage",
           "bundle": "A-R3",
-          "resourceType": "microsoft.storage/storageaccounts",
-          "id": "[resourceId('Microsoft.Storage/storageAccounts', variables('dataStorageName'))]",
+          "nameTemplate": "fxst{runId}",
+          "phase": "foundation",
           "scopeSuffixes": [
             "/blobServices/default",
             "/fileServices/default",
             "/queueServices/default",
             "/tableServices/default"
           ],
-          "diagnosticCandidate": "M+C",
-          "provenance": "ARM definition",
-          "role": "storage",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fxst{runId}",
-          "seedSourceDiagnostic": true,
-          "phase": "foundation",
-          "childApiVersion": "2023-05-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "childApiVersion": "2023-05-01"
         }
       },
       "properties": {
@@ -2188,21 +1081,10 @@
         "fixture": {
           "key": "sqlServer",
           "bundle": "A-R3",
-          "resourceType": "microsoft.sql/servers",
-          "id": "[resourceId('Microsoft.Sql/servers', variables('dataSqlName'))]",
+          "nameTemplate": "fxsql{runId}",
           "scopeSuffixes": [
             "/databases/master"
           ],
-          "diagnosticCandidate": "?+C",
-          "provenance": "ARM definition",
-          "role": "sqlServer",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fxsql{runId}",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2023-08-01",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       },
@@ -2228,22 +1110,10 @@
         "fixture": {
           "key": "sqlDatabase",
           "bundle": "A-R3",
-          "resourceType": "microsoft.sql/servers/databases",
-          "id": "[resourceId('Microsoft.Sql/servers/databases', variables('dataSqlName'), 'fixturedb')]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P+C",
-          "provenance": "ARM definition",
-          "role": "sqlDatabase",
+          "nameTemplate": "fxsql{runId}/fixturedb",
           "dependsOnKeys": [
             "sqlServer"
-          ],
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fxsql{runId}/fixturedb",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2023-08-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          ]
         }
       },
       "properties": {
@@ -2274,20 +1144,7 @@
         "fixture": {
           "key": "search",
           "bundle": "A-R1",
-          "resourceType": "microsoft.search/searchservices",
-          "id": "[resourceId('Microsoft.Search/searchServices', variables('dataSearchName'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P?",
-          "provenance": "ARM definition",
-          "role": "search",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fxsearch{runId}",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-05-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "nameTemplate": "fxsearch{runId}"
         }
       },
       "properties": {
@@ -2314,19 +1171,7 @@
         "fixture": {
           "key": "redis",
           "bundle": "A-R1",
-          "resourceType": "microsoft.cache/redis",
-          "id": "[resourceId('Microsoft.Cache/redis', variables('dataRedisName'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P?",
-          "provenance": "ARM definition",
-          "role": "redis",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [],
           "nameTemplate": "fxredis{runId}",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2024-11-01",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       },
@@ -2355,21 +1200,10 @@
         "fixture": {
           "key": "managedRedis",
           "bundle": "A-R1",
-          "resourceType": "microsoft.cache/redisenterprise",
-          "id": "[resourceId('Microsoft.Cache/redisEnterprise', variables('dataManagedRedisName'))]",
+          "nameTemplate": "fxmr{runId}",
           "scopeSuffixes": [
             "/databases/default"
           ],
-          "diagnosticCandidate": "M+C",
-          "provenance": "ARM definition",
-          "role": "managedRedis",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fxmr{runId}",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-04-01",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       },
@@ -2394,20 +1228,7 @@
         "fixture": {
           "key": "managedRedis",
           "bundle": "A-R1",
-          "resourceType": "microsoft.cache/redisenterprise/databases",
-          "id": "[resourceId('Microsoft.Cache/redisEnterprise/databases', variables('dataManagedRedisName'), 'default')]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P+C",
-          "provenance": "ARM definition",
-          "role": "managed-redis-default-database",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fxmr{runId}/default",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-04-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "nameTemplate": "fxmr{runId}/default"
         }
       },
       "properties": {
@@ -2430,19 +1251,7 @@
         "fixture": {
           "key": "postgres",
           "bundle": "A-R1",
-          "resourceType": "microsoft.dbforpostgresql/flexibleservers",
-          "id": "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('dataPostgresName'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "provenance": "ARM definition",
-          "role": "postgres",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [],
           "nameTemplate": "fxpg{runId}",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2024-08-01",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       },
@@ -2484,20 +1293,7 @@
         "fixture": {
           "key": "cosmos",
           "bundle": "A-R3",
-          "resourceType": "microsoft.documentdb/databaseaccounts",
-          "id": "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('dataCosmosName'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "provenance": "ARM definition",
-          "role": "cosmos",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fxcosmos{runId}",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2024-11-15",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "nameTemplate": "fxcosmos{runId}"
         }
       },
       "properties": {
@@ -2535,19 +1331,7 @@
         "fixture": {
           "key": "kusto",
           "bundle": "A-R1",
-          "resourceType": "microsoft.kusto/clusters",
-          "id": "[resourceId('Microsoft.Kusto/clusters', variables('dataKustoName'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "provenance": "ARM definition",
-          "role": "kusto",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [],
           "nameTemplate": "fxkusto{runId}",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2024-04-13",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       },
@@ -2576,19 +1360,7 @@
         "fixture": {
           "key": "acr",
           "bundle": "A-R1",
-          "resourceType": "microsoft.containerregistry/registries",
-          "id": "[resourceId('Microsoft.ContainerRegistry/registries', variables('dataAcrName'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "provenance": "ARM definition",
-          "role": "acr",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [],
           "nameTemplate": "fxacr{runId}",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-04-01",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       },
@@ -2613,22 +1385,11 @@
         "fixture": {
           "key": "oldDcr",
           "bundle": "A-R1",
-          "resourceType": "microsoft.insights/datacollectionrules",
-          "id": "[resourceId('Microsoft.Insights/dataCollectionRules', variables('dataDcr1Name'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "provenance": "ARM definition",
-          "role": "old-dcr-1",
+          "nameTemplate": "fx{runId}-old-dcr1",
           "dependsOnKeys": [
             "logAnalytics"
           ],
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fx{runId}-old-dcr1",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2023-03-11",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "role": "old-dcr-1"
         }
       },
       "properties": {
@@ -2689,22 +1450,11 @@
         "fixture": {
           "key": "oldDcr",
           "bundle": "A-R1",
-          "resourceType": "microsoft.insights/datacollectionrules",
-          "id": "[resourceId('Microsoft.Insights/dataCollectionRules', variables('dataDcr2Name'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "provenance": "ARM definition",
-          "role": "old-dcr-2",
+          "nameTemplate": "fx{runId}-old-dcr2",
           "dependsOnKeys": [
             "logAnalytics"
           ],
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fx{runId}-old-dcr2",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2023-03-11",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "role": "old-dcr-2"
         }
       },
       "properties": {
@@ -2765,22 +1515,11 @@
         "fixture": {
           "key": "oldDcr",
           "bundle": "A-R1",
-          "resourceType": "microsoft.insights/datacollectionrules",
-          "id": "[resourceId('Microsoft.Insights/dataCollectionRules', variables('dataDcr3Name'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "provenance": "ARM definition",
-          "role": "untargeted-sentinel-dcr",
+          "nameTemplate": "fx{runId}-sentinel-dcr",
           "dependsOnKeys": [
             "logAnalytics"
           ],
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fx{runId}-sentinel-dcr",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2023-03-11",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "role": "untargeted-sentinel-dcr"
         }
       },
       "properties": {
@@ -2841,23 +1580,7 @@
         "fixture": {
           "key": "monitorAccount",
           "bundle": "A-R1",
-          "resourceType": "microsoft.monitor/accounts",
-          "id": "[resourceId('Microsoft.Monitor/accounts', variables('dataMonitorName'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "provenance": "ARM definition",
-          "role": "monitor-account-managed-rg-parent",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [
-            "properties.defaultIngestionSettings.dataCollectionRuleResourceId",
-            "properties.defaultIngestionSettings.dataCollectionEndpointResourceId"
-          ],
-          "nameTemplate": "fx{runId}-monitor",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2023-04-03",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "nameTemplate": "fx{runId}-monitor"
         }
       },
       "properties": {},
@@ -2876,22 +1599,11 @@
         "fixture": {
           "key": "appInsights",
           "bundle": "A-R3",
-          "resourceType": "microsoft.insights/components",
-          "id": "[resourceId('Microsoft.Insights/components', variables('dataInsightsName'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "provenance": "ARM definition",
-          "role": "appInsights",
+          "nameTemplate": "fx{runId}-insights",
+          "phase": "foundation",
           "dependsOnKeys": [
             "logAnalytics"
-          ],
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fx{runId}-insights",
-          "seedSourceDiagnostic": true,
-          "phase": "foundation",
-          "childApiVersion": "2020-02-02",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          ]
         }
       },
       "properties": {
@@ -2919,20 +1631,8 @@
         "fixture": {
           "key": "keyVault",
           "bundle": "A-R3",
-          "resourceType": "microsoft.keyvault/vaults",
-          "id": "[resourceId('Microsoft.KeyVault/vaults', variables('dataKeyVaultName'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "provenance": "ARM definition",
-          "role": "keyVault",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [],
           "nameTemplate": "fxkv{runId}",
-          "seedSourceDiagnostic": true,
-          "phase": "foundation",
-          "childApiVersion": "2024-11-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "phase": "foundation"
         }
       },
       "properties": {
@@ -2962,25 +1662,13 @@
         "fixture": {
           "key": "machineLearning",
           "bundle": "A-R3",
-          "resourceType": "microsoft.machinelearningservices/workspaces",
-          "id": "[resourceId('Microsoft.MachineLearningServices/workspaces', variables('dataMlName'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "provenance": "ARM definition",
-          "role": "machineLearning",
+          "nameTemplate": "fx{runId}-ml",
           "dependsOnKeys": [
             "storage",
             "keyVault",
             "appInsights",
             "logAnalytics"
-          ],
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fx{runId}-ml",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-04-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          ]
         }
       },
       "properties": {
@@ -3017,20 +1705,7 @@
         "fixture": {
           "key": "cognitive",
           "bundle": "A-R3",
-          "resourceType": "microsoft.cognitiveservices/accounts",
-          "id": "[resourceId('Microsoft.CognitiveServices/accounts', variables('dataCognitiveName'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "provenance": "ARM definition",
-          "role": "cognitive",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fxai{runId}",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-06-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "nameTemplate": "fxai{runId}"
         }
       },
       "properties": {
@@ -3061,22 +1736,10 @@
         "fixture": {
           "key": "aiProject",
           "bundle": "A-R3",
-          "resourceType": "microsoft.cognitiveservices/accounts/projects",
-          "id": "[resourceId('Microsoft.CognitiveServices/accounts/projects', variables('dataCognitiveName'), 'fixtureproject')]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P+C",
-          "provenance": "ARM definition",
-          "role": "aiProject",
+          "nameTemplate": "fxai{runId}/fixtureproject",
           "dependsOnKeys": [
             "cognitive"
-          ],
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fxai{runId}/fixtureproject",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-06-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          ]
         }
       },
       "properties": {},
@@ -3101,20 +1764,7 @@
         "fixture": {
           "key": "computeVm",
           "bundle": "A-R1",
-          "resourceType": "microsoft.network/networkinterfaces",
-          "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('dataVmNic1Name'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "M",
-          "provenance": "ARM definition",
-          "role": "vm-dependency-nic",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fx{runId}-vm-nic1",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-01-01",
-          "coverageTarget": false,
-          "cleanupEarly": false
+          "nameTemplate": "fx{runId}-vm-nic1"
         }
       },
       "properties": {
@@ -3145,22 +1795,7 @@
         "fixture": {
           "key": "computeVm",
           "bundle": "A-R1",
-          "resourceType": "microsoft.compute/virtualmachines",
-          "id": "[resourceId('Microsoft.Compute/virtualMachines', variables('dataVm1Name'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "M",
-          "provenance": "ARM definition",
-          "role": "diag-collector",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [
-            "properties.storageProfile.osDisk.managedDisk.id",
-            "properties.networkProfile.networkInterfaces[*].id"
-          ],
           "nameTemplate": "fx{runId}-vm-diag",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2024-07-01",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       },
@@ -3234,20 +1869,7 @@
         "fixture": {
           "key": "computeVm",
           "bundle": "A-R1",
-          "resourceType": "microsoft.network/networkinterfaces",
-          "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('dataVmNic2Name'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "M",
-          "provenance": "ARM definition",
-          "role": "vm-dependency-nic",
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fx{runId}-vm-nic2",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-01-01",
-          "coverageTarget": false,
-          "cleanupEarly": false
+          "nameTemplate": "fx{runId}-vm-nic2"
         }
       },
       "properties": {
@@ -3278,22 +1900,9 @@
         "fixture": {
           "key": "computeVm",
           "bundle": "A-R1",
-          "resourceType": "microsoft.compute/virtualmachines",
-          "id": "[resourceId('Microsoft.Compute/virtualMachines', variables('dataVm2Name'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "M",
-          "provenance": "ARM definition",
-          "role": "old-only-collector",
-          "seedSourceDiagnostic": false,
-          "dependsOnKeys": [],
-          "cleanupDiscoveryPaths": [
-            "properties.storageProfile.osDisk.managedDisk.id",
-            "properties.networkProfile.networkInterfaces[*].id"
-          ],
           "nameTemplate": "fx{runId}-vm-oldonly",
-          "phase": "resources",
-          "childApiVersion": "2024-07-01",
-          "coverageTarget": true,
+          "seedSourceDiagnostic": false,
+          "role": "old-only-collector",
           "cleanupEarly": true
         }
       },
@@ -3367,22 +1976,10 @@
         "fixture": {
           "key": "computeVmss",
           "bundle": "B-R2",
-          "resourceType": "microsoft.compute/virtualmachinescalesets",
-          "id": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', variables('dataVmss1Name'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "M",
-          "provenance": "ARM definition",
-          "role": "diag-collector",
+          "nameTemplate": "fx{runId}-vmss-diag",
           "dependsOnKeys": [
             "networkVnet"
-          ],
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fx{runId}-vmss-diag",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2024-07-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          ]
         }
       },
       "properties": {
@@ -3464,22 +2061,12 @@
         "fixture": {
           "key": "computeVmss",
           "bundle": "B-R2",
-          "resourceType": "microsoft.compute/virtualmachinescalesets",
-          "id": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', variables('dataVmss2Name'))]",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "M",
-          "provenance": "ARM definition",
-          "role": "old-only-collector",
-          "seedSourceDiagnostic": false,
+          "nameTemplate": "fx{runId}-vmss-oldonly",
           "dependsOnKeys": [
             "networkVnet"
           ],
-          "cleanupDiscoveryPaths": [],
-          "nameTemplate": "fx{runId}-vmss-oldonly",
-          "phase": "resources",
-          "childApiVersion": "2024-07-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "seedSourceDiagnostic": false,
+          "role": "old-only-collector"
         }
       },
       "properties": {
@@ -3567,17 +2154,7 @@
         "fixture": {
           "key": "appPlan",
           "bundle": "B-R4",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P+M",
-          "dependsOnKeys": [],
-          "resourceType": "microsoft.web/serverfarms",
           "nameTemplate": "fx{runId}plan",
-          "id": "[resourceId('Microsoft.Web/serverfarms', split(concat(variables('namePrefix'), 'plan'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-03-01",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       },
@@ -3609,19 +2186,10 @@
         "fixture": {
           "key": "site",
           "bundle": "B-R4",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
+          "nameTemplate": "fx{runId}site",
           "dependsOnKeys": [
             "appPlan"
           ],
-          "resourceType": "microsoft.web/sites",
-          "nameTemplate": "fx{runId}site",
-          "id": "[resourceId('Microsoft.Web/sites', split(concat(variables('namePrefix'), 'site'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-03-01",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       },
@@ -3648,20 +2216,11 @@
         "fixture": {
           "key": "slot",
           "bundle": "B-R4",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P+C",
+          "nameTemplate": "fx{runId}site/stage",
           "dependsOnKeys": [
             "site",
             "appPlan"
           ],
-          "resourceType": "microsoft.web/sites/slots",
-          "nameTemplate": "fx{runId}site/stage",
-          "id": "[resourceId('Microsoft.Web/sites/slots', split(concat(variables('namePrefix'), 'site/stage'), '/')[0], split(concat(variables('namePrefix'), 'site/stage'), '/')[1])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-03-01",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       },
@@ -3701,17 +2260,7 @@
         "fixture": {
           "key": "databricks",
           "bundle": "B-R2",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "dependsOnKeys": [],
-          "resourceType": "microsoft.databricks/workspaces",
           "nameTemplate": "fx{runId}dbx",
-          "id": "[resourceId('Microsoft.Databricks/workspaces', split(concat(variables('namePrefix'), 'dbx'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2024-05-01",
-          "coverageTarget": true,
           "managedResourceGroupNameTemplate": "fx-{runId}-dbx-managed",
           "cleanupEarly": true
         }
@@ -3747,18 +2296,7 @@
         "fixture": {
           "key": "containerEnvironment",
           "bundle": "A-R1",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P+M",
-          "dependsOnKeys": [],
-          "resourceType": "microsoft.app/managedenvironments",
-          "nameTemplate": "fx{runId}caenv",
-          "id": "[resourceId('Microsoft.App/managedEnvironments', split(concat(variables('namePrefix'), 'caenv'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-01-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "nameTemplate": "fx{runId}caenv"
         }
       }
     },
@@ -3796,20 +2334,10 @@
         "fixture": {
           "key": "containerApp",
           "bundle": "A-R1",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "M",
+          "nameTemplate": "fx{runId}caapp",
           "dependsOnKeys": [
             "containerEnvironment"
-          ],
-          "resourceType": "microsoft.app/containerapps",
-          "nameTemplate": "fx{runId}caapp",
-          "id": "[resourceId('Microsoft.App/containerApps', split(concat(variables('namePrefix'), 'caapp'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-01-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          ]
         }
       },
       "dependsOn": [
@@ -3854,20 +2382,10 @@
         "fixture": {
           "key": "containerJob",
           "bundle": "A-R1",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "M",
+          "nameTemplate": "fx{runId}cajob",
           "dependsOnKeys": [
             "containerEnvironment"
-          ],
-          "resourceType": "microsoft.app/jobs",
-          "nameTemplate": "fx{runId}cajob",
-          "id": "[resourceId('Microsoft.App/jobs', split(concat(variables('namePrefix'), 'cajob'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-01-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          ]
         }
       },
       "dependsOn": [
@@ -3888,18 +2406,7 @@
         "fixture": {
           "key": "serviceBus",
           "bundle": "A-R1",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "dependsOnKeys": [],
-          "resourceType": "microsoft.servicebus/namespaces",
-          "nameTemplate": "fx{runId}sb",
-          "id": "[resourceId('Microsoft.ServiceBus/namespaces', split(concat(variables('namePrefix'), 'sb'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2024-01-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "nameTemplate": "fx{runId}sb"
         }
       },
       "sku": {
@@ -3924,18 +2431,7 @@
         "fixture": {
           "key": "communication",
           "bundle": "A-R1",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "dependsOnKeys": [],
-          "resourceType": "microsoft.communication/communicationservices",
-          "nameTemplate": "fx{runId}comm",
-          "id": "[resourceId('Microsoft.Communication/communicationServices', split(concat(variables('namePrefix'), 'comm'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2023-03-31",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "nameTemplate": "fx{runId}comm"
         }
       }
     },
@@ -3958,18 +2454,7 @@
         "fixture": {
           "key": "automation",
           "bundle": "A-R1",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "dependsOnKeys": [],
-          "resourceType": "microsoft.automation/automationaccounts",
-          "nameTemplate": "fx{runId}auto",
-          "id": "[resourceId('Microsoft.Automation/automationAccounts', split(concat(variables('namePrefix'), 'auto'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2024-10-23",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "nameTemplate": "fx{runId}auto"
         }
       }
     },
@@ -3987,18 +2472,7 @@
         "fixture": {
           "key": "relay",
           "bundle": "A-R1",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "dependsOnKeys": [],
-          "resourceType": "microsoft.relay/namespaces",
-          "nameTemplate": "fx{runId}relay",
-          "id": "[resourceId('Microsoft.Relay/namespaces', split(concat(variables('namePrefix'), 'relay'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2024-01-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "nameTemplate": "fx{runId}relay"
         }
       },
       "sku": {
@@ -4019,18 +2493,7 @@
         "fixture": {
           "key": "botIdentity",
           "bundle": "A-R1",
-          "scopeSuffixes": [],
-          "dependsOnKeys": [],
-          "diagnosticCandidate": "support",
-          "resourceType": "microsoft.managedidentity/userassignedidentities",
-          "nameTemplate": "fx{runId}botid",
-          "id": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', split(concat(variables('namePrefix'), 'botid'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2023-01-31",
-          "coverageTarget": false,
-          "cleanupEarly": false
+          "nameTemplate": "fx{runId}botid"
         }
       }
     },
@@ -4055,20 +2518,10 @@
         "fixture": {
           "key": "bot",
           "bundle": "A-R1",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
+          "nameTemplate": "fx{runId}bot",
           "dependsOnKeys": [
             "botIdentity"
-          ],
-          "resourceType": "microsoft.botservice/botservices",
-          "nameTemplate": "fx{runId}bot",
-          "id": "[resourceId('Microsoft.BotService/botServices', split(concat(variables('namePrefix'), 'bot'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2022-09-15",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          ]
         }
       },
       "dependsOn": [
@@ -4103,18 +2556,7 @@
         "fixture": {
           "key": "logic",
           "bundle": "A-R1",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "dependsOnKeys": [],
-          "resourceType": "microsoft.logic/workflows",
-          "nameTemplate": "fx{runId}logic",
-          "id": "[resourceId('Microsoft.Logic/workflows', split(concat(variables('namePrefix'), 'logic'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2019-05-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "nameTemplate": "fx{runId}logic"
         }
       }
     },
@@ -4134,18 +2576,7 @@
         "fixture": {
           "key": "recoveryVault",
           "bundle": "A-R1",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "dependsOnKeys": [],
-          "resourceType": "microsoft.recoveryservices/vaults",
-          "nameTemplate": "fx{runId}rsv",
-          "id": "[resourceId('Microsoft.RecoveryServices/vaults', split(concat(variables('namePrefix'), 'rsv'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2024-04-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "nameTemplate": "fx{runId}rsv"
         }
       },
       "sku": {
@@ -4172,18 +2603,7 @@
         "fixture": {
           "key": "connection",
           "bundle": "A-R1",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "?",
-          "dependsOnKeys": [],
-          "resourceType": "microsoft.web/connections",
-          "nameTemplate": "fx{runId}conn",
-          "id": "[resourceId('Microsoft.Web/connections', split(concat(variables('namePrefix'), 'conn'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2016-06-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "nameTemplate": "fx{runId}conn"
         }
       }
     },
@@ -4206,17 +2626,7 @@
         "fixture": {
           "key": "disk",
           "bundle": "A-R3",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "N?",
-          "dependsOnKeys": [],
-          "resourceType": "microsoft.compute/disks",
           "nameTemplate": "fx{runId}disk",
-          "id": "[resourceId('Microsoft.Compute/disks', split(concat(variables('namePrefix'), 'disk'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2024-03-02",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       },
@@ -4254,18 +2664,7 @@
         "fixture": {
           "key": "sessionPool",
           "bundle": "A-R1",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "M?",
-          "dependsOnKeys": [],
-          "resourceType": "microsoft.app/sessionpools",
-          "nameTemplate": "fx{runId}sessions",
-          "id": "[resourceId('Microsoft.App/sessionPools', split(concat(variables('namePrefix'), 'sessions'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-01-01",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          "nameTemplate": "fx{runId}sessions"
         }
       }
     },
@@ -4311,19 +2710,10 @@
         "fixture": {
           "key": "aks",
           "bundle": "A-R1",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
+          "nameTemplate": "fx{runId}aks",
           "dependsOnKeys": [
             "aksIdentity"
           ],
-          "resourceType": "microsoft.containerservice/managedclusters",
-          "nameTemplate": "fx{runId}aks",
-          "id": "[resourceId('Microsoft.ContainerService/managedClusters', split(concat(variables('namePrefix'), 'aks'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2024-10-01",
-          "coverageTarget": true,
           "managedResourceGroupNameTemplate": "fx-{runId}-aks-managed",
           "cleanupEarly": true
         }
@@ -4360,17 +2750,7 @@
         "fixture": {
           "key": "apim",
           "bundle": "A-R1",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P?",
-          "dependsOnKeys": [],
-          "resourceType": "microsoft.apimanagement/service",
           "nameTemplate": "fx{runId}apim",
-          "id": "[resourceId('Microsoft.ApiManagement/service', split(concat(variables('namePrefix'), 'apim'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2024-05-01",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       },
@@ -4396,20 +2776,10 @@
         "fixture": {
           "key": "eventGrid",
           "bundle": "A-R3",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
+          "nameTemplate": "fx{runId}events",
           "dependsOnKeys": [
             "storage"
-          ],
-          "resourceType": "microsoft.eventgrid/systemtopics",
-          "nameTemplate": "fx{runId}events",
-          "id": "[resourceId('Microsoft.EventGrid/systemTopics', split(concat(variables('namePrefix'), 'events'), '/')[0])]",
-          "role": "target",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2022-06-15",
-          "coverageTarget": true,
-          "cleanupEarly": false
+          ]
         }
       }
     },
@@ -4434,17 +2804,7 @@
         "fixture": {
           "key": "ase",
           "bundle": "A-R1",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P",
-          "dependsOnKeys": [],
-          "role": "target",
-          "resourceType": "microsoft.web/hostingenvironments",
           "nameTemplate": "fx{runId}ase",
-          "id": "[resourceId('Microsoft.Web/hostingEnvironments', split(concat(variables('namePrefix'), 'ase'), '/')[0])]",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-03-01",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       }
@@ -4493,20 +2853,11 @@
         "fixture": {
           "key": "functionSite",
           "bundle": "B-R4",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P+C",
+          "nameTemplate": "fx{runId}func",
           "dependsOnKeys": [
             "appPlan",
             "storage"
           ],
-          "role": "function-kind-target",
-          "resourceType": "microsoft.web/sites",
-          "nameTemplate": "fx{runId}func",
-          "id": "[resourceId('Microsoft.Web/sites', split(concat(variables('namePrefix'), 'func'), '/')[0])]",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-03-01",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       },
@@ -4559,21 +2910,12 @@
         "fixture": {
           "key": "functionSlot",
           "bundle": "B-R4",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "P+C",
+          "nameTemplate": "fx{runId}func/stage",
           "dependsOnKeys": [
             "functionSite",
             "appPlan",
             "storage"
           ],
-          "role": "function-kind-target",
-          "resourceType": "microsoft.web/sites/slots",
-          "nameTemplate": "fx{runId}func/stage",
-          "id": "[resourceId('Microsoft.Web/sites/slots', split(concat(variables('namePrefix'), 'func/stage'), '/')[0], split(concat(variables('namePrefix'), 'func/stage'), '/')[1])]",
-          "seedSourceDiagnostic": true,
-          "phase": "resources",
-          "childApiVersion": "2025-03-01",
-          "coverageTarget": true,
           "cleanupEarly": true
         }
       }
@@ -4591,94 +2933,12 @@
         "fixture": {
           "key": "aksIdentity",
           "bundle": "A-R1",
-          "scopeSuffixes": [],
-          "diagnosticCandidate": "UNRESOLVED",
-          "dependsOnKeys": [],
-          "resourceType": "microsoft.managedidentity/userassignedidentities",
           "nameTemplate": "fx{runId}aksid",
-          "id": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', split(concat(variables('namePrefix'), 'aksid'), '/')[0])]",
-          "role": "aks-subnet-identity",
-          "seedSourceDiagnostic": false,
           "phase": "foundation",
-          "childApiVersion": "2023-01-31",
-          "coverageTarget": false,
-          "cleanupEarly": false
+          "seedSourceDiagnostic": false,
+          "role": "aks-subnet-identity"
         }
       }
     }
-  ],
-  "outputs": {
-    "fixtureResources": {
-      "type": "array",
-      "value": [
-        "[if(and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkNat')), createObject('id', resourceId('Microsoft.Network/natGateways', split(variables('networkNatName'), '/')[0]), 'key', json('\"networkNat\"'), 'resourceType', json('\"microsoft.network/natgateways\"'), 'apiVersion', json('\"2025-09-01\"'), 'childApiVersion', json('\"2025-09-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkDnsPolicy')), createObject('id', resourceId('Microsoft.Network/dnsResolverPolicies', split(variables('networkDnsPolicyName'), '/')[0]), 'key', json('\"networkDnsPolicy\"'), 'resourceType', json('\"microsoft.network/dnsresolverpolicies\"'), 'apiVersion', json('\"2025-05-01\"'), 'childApiVersion', json('\"2025-05-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkNsg')), createObject('id', resourceId('Microsoft.Network/networkSecurityGroups', split(variables('networkNsgName'), '/')[0]), 'key', json('\"networkNsg\"'), 'resourceType', json('\"microsoft.network/networksecuritygroups\"'), 'apiVersion', json('\"2025-01-01\"'), 'childApiVersion', json('\"2025-01-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkPublicDns')), createObject('id', resourceId('Microsoft.Network/dnsZones', split(variables('networkPublicDnsName'), '/')[0]), 'key', json('\"networkPublicDns\"'), 'resourceType', json('\"microsoft.network/dnszones\"'), 'apiVersion', json('\"2018-05-01\"'), 'childApiVersion', json('\"2018-05-01\"'), 'location', json('\"global\"'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkPrivateDns')), createObject('id', resourceId('Microsoft.Network/privateDnsZones', split(variables('networkPrivateDnsName'), '/')[0]), 'key', json('\"networkPrivateDns\"'), 'resourceType', json('\"microsoft.network/privatednszones\"'), 'apiVersion', json('\"2024-06-01\"'), 'childApiVersion', json('\"2024-06-01\"'), 'location', json('\"global\"'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkPublicIp')), createObject('id', resourceId('Microsoft.Network/publicIPAddresses', split(variables('networkPublicIpName'), '/')[0]), 'key', json('\"networkPublicIp\"'), 'resourceType', json('\"microsoft.network/publicipaddresses\"'), 'apiVersion', json('\"2025-01-01\"'), 'childApiVersion', json('\"2025-01-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkNic')), createObject('id', resourceId('Microsoft.Network/networkInterfaces', split(variables('networkNicName'), '/')[0]), 'key', json('\"networkNic\"'), 'resourceType', json('\"microsoft.network/networkinterfaces\"'), 'apiVersion', json('\"2025-01-01\"'), 'childApiVersion', json('\"2025-01-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkLoadBalancer')), createObject('id', resourceId('Microsoft.Network/loadBalancers', split(variables('networkLoadBalancerName'), '/')[0]), 'key', json('\"networkLoadBalancer\"'), 'resourceType', json('\"microsoft.network/loadbalancers\"'), 'apiVersion', json('\"2025-01-01\"'), 'childApiVersion', json('\"2025-01-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkPrivateEndpoint')), createObject('id', resourceId('Microsoft.Network/privateEndpoints', split(variables('networkPrivateEndpointName'), '/')[0]), 'key', json('\"networkPrivateEndpoint\"'), 'resourceType', json('\"microsoft.network/privateendpoints\"'), 'apiVersion', json('\"2025-01-01\"'), 'childApiVersion', json('\"2025-01-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkAppGateway')), createObject('id', resourceId('Microsoft.Network/applicationGateways', split(variables('networkAppGatewayName'), '/')[0]), 'key', json('\"networkAppGateway\"'), 'resourceType', json('\"microsoft.network/applicationgateways\"'), 'apiVersion', json('\"2025-01-01\"'), 'childApiVersion', json('\"2025-01-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkFirewall')), createObject('id', resourceId('Microsoft.Network/publicIPAddresses', split(variables('networkFirewallPublicIpName'), '/')[0]), 'key', json('\"networkFirewall\"'), 'resourceType', json('\"microsoft.network/publicipaddresses\"'), 'apiVersion', json('\"2025-01-01\"'), 'childApiVersion', json('\"2025-01-01\"'), 'location', parameters('location'), 'role', json('\"dependency\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkFirewall')), createObject('id', resourceId('Microsoft.Network/firewallPolicies', split(variables('networkFirewallPolicyName'), '/')[0]), 'key', json('\"networkFirewall\"'), 'resourceType', json('\"microsoft.network/firewallpolicies\"'), 'apiVersion', json('\"2025-01-01\"'), 'childApiVersion', json('\"2025-01-01\"'), 'location', parameters('location'), 'role', json('\"dependency\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkFirewall')), createObject('id', resourceId('Microsoft.Network/azureFirewalls', split(variables('networkFirewallName'), '/')[0]), 'key', json('\"networkFirewall\"'), 'resourceType', json('\"microsoft.network/azurefirewalls\"'), 'apiVersion', json('\"2025-01-01\"'), 'childApiVersion', json('\"2025-01-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'logAnalytics')), createObject('id', resourceId('Microsoft.OperationalInsights/workspaces', variables('dataSourceLAName')), 'key', json('\"logAnalytics\"'), 'resourceType', json('\"microsoft.operationalinsights/workspaces\"'), 'apiVersion', json('\"2023-09-01\"'), 'childApiVersion', json('\"2023-09-01\"'), 'location', parameters('location'), 'role', json('\"source-workspace\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'logAnalytics')), createObject('id', resourceId('Microsoft.OperationalInsights/workspaces', variables('dataAuxLAName')), 'key', json('\"logAnalytics\"'), 'resourceType', json('\"microsoft.operationalinsights/workspaces\"'), 'apiVersion', json('\"2023-09-01\"'), 'childApiVersion', json('\"2023-09-01\"'), 'location', parameters('location'), 'role', json('\"untargeted-aux-workspace\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'logAnalytics')), createObject('id', resourceId('Microsoft.OperationalInsights/workspaces', variables('dataBaseLAName')), 'key', json('\"logAnalytics\"'), 'resourceType', json('\"microsoft.operationalinsights/workspaces\"'), 'apiVersion', json('\"2023-09-01\"'), 'childApiVersion', json('\"2023-09-01\"'), 'location', parameters('location'), 'role', json('\"appinsights-base-workspace\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'storage')), createObject('id', resourceId('Microsoft.Storage/storageAccounts', variables('dataStorageName')), 'key', json('\"storage\"'), 'resourceType', json('\"microsoft.storage/storageaccounts\"'), 'apiVersion', json('\"2025-01-01\"'), 'childApiVersion', json('\"2023-05-01\"'), 'location', parameters('location'), 'role', json('\"storage\"'), 'scopeSuffixes', json('[\"/blobServices/default\",\"/fileServices/default\",\"/queueServices/default\",\"/tableServices/default\"]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'sqlServer')), createObject('id', resourceId('Microsoft.Sql/servers', variables('dataSqlName')), 'key', json('\"sqlServer\"'), 'resourceType', json('\"microsoft.sql/servers\"'), 'apiVersion', json('\"2023-08-01\"'), 'childApiVersion', json('\"2023-08-01\"'), 'location', parameters('location'), 'role', json('\"sqlServer\"'), 'scopeSuffixes', json('[\"/databases/master\"]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'sqlDatabase')), createObject('id', resourceId('Microsoft.Sql/servers/databases', variables('dataSqlName'), 'fixturedb'), 'key', json('\"sqlDatabase\"'), 'resourceType', json('\"microsoft.sql/servers/databases\"'), 'apiVersion', json('\"2023-08-01\"'), 'childApiVersion', json('\"2023-08-01\"'), 'location', parameters('location'), 'role', json('\"sqlDatabase\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'search')), createObject('id', resourceId('Microsoft.Search/searchServices', variables('dataSearchName')), 'key', json('\"search\"'), 'resourceType', json('\"microsoft.search/searchservices\"'), 'apiVersion', json('\"2025-05-01\"'), 'childApiVersion', json('\"2025-05-01\"'), 'location', parameters('location'), 'role', json('\"search\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'redis')), createObject('id', resourceId('Microsoft.Cache/redis', variables('dataRedisName')), 'key', json('\"redis\"'), 'resourceType', json('\"microsoft.cache/redis\"'), 'apiVersion', json('\"2024-11-01\"'), 'childApiVersion', json('\"2024-11-01\"'), 'location', parameters('location'), 'role', json('\"redis\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'managedRedis')), createObject('id', resourceId('Microsoft.Cache/redisEnterprise', variables('dataManagedRedisName')), 'key', json('\"managedRedis\"'), 'resourceType', json('\"microsoft.cache/redisenterprise\"'), 'apiVersion', json('\"2025-04-01\"'), 'childApiVersion', json('\"2025-04-01\"'), 'location', parameters('location'), 'role', json('\"managedRedis\"'), 'scopeSuffixes', json('[\"/databases/default\"]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'managedRedis')), createObject('id', resourceId('Microsoft.Cache/redisEnterprise/databases', variables('dataManagedRedisName'), 'default'), 'key', json('\"managedRedis\"'), 'resourceType', json('\"microsoft.cache/redisenterprise/databases\"'), 'apiVersion', json('\"2025-04-01\"'), 'childApiVersion', json('\"2025-04-01\"'), 'location', parameters('location'), 'role', json('\"managed-redis-default-database\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'postgres')), createObject('id', resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('dataPostgresName')), 'key', json('\"postgres\"'), 'resourceType', json('\"microsoft.dbforpostgresql/flexibleservers\"'), 'apiVersion', json('\"2024-08-01\"'), 'childApiVersion', json('\"2024-08-01\"'), 'location', parameters('location'), 'role', json('\"postgres\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'cosmos')), createObject('id', resourceId('Microsoft.DocumentDB/databaseAccounts', variables('dataCosmosName')), 'key', json('\"cosmos\"'), 'resourceType', json('\"microsoft.documentdb/databaseaccounts\"'), 'apiVersion', json('\"2024-11-15\"'), 'childApiVersion', json('\"2024-11-15\"'), 'location', parameters('location'), 'role', json('\"cosmos\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'kusto')), createObject('id', resourceId('Microsoft.Kusto/clusters', variables('dataKustoName')), 'key', json('\"kusto\"'), 'resourceType', json('\"microsoft.kusto/clusters\"'), 'apiVersion', json('\"2024-04-13\"'), 'childApiVersion', json('\"2024-04-13\"'), 'location', parameters('location'), 'role', json('\"kusto\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'acr')), createObject('id', resourceId('Microsoft.ContainerRegistry/registries', variables('dataAcrName')), 'key', json('\"acr\"'), 'resourceType', json('\"microsoft.containerregistry/registries\"'), 'apiVersion', json('\"2025-04-01\"'), 'childApiVersion', json('\"2025-04-01\"'), 'location', parameters('location'), 'role', json('\"acr\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'oldDcr')), createObject('id', resourceId('Microsoft.Insights/dataCollectionRules', variables('dataDcr1Name')), 'key', json('\"oldDcr\"'), 'resourceType', json('\"microsoft.insights/datacollectionrules\"'), 'apiVersion', json('\"2023-03-11\"'), 'childApiVersion', json('\"2023-03-11\"'), 'location', parameters('location'), 'role', json('\"old-dcr-1\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'oldDcr')), createObject('id', resourceId('Microsoft.Insights/dataCollectionRules', variables('dataDcr2Name')), 'key', json('\"oldDcr\"'), 'resourceType', json('\"microsoft.insights/datacollectionrules\"'), 'apiVersion', json('\"2023-03-11\"'), 'childApiVersion', json('\"2023-03-11\"'), 'location', parameters('location'), 'role', json('\"old-dcr-2\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'oldDcr')), createObject('id', resourceId('Microsoft.Insights/dataCollectionRules', variables('dataDcr3Name')), 'key', json('\"oldDcr\"'), 'resourceType', json('\"microsoft.insights/datacollectionrules\"'), 'apiVersion', json('\"2023-03-11\"'), 'childApiVersion', json('\"2023-03-11\"'), 'location', parameters('location'), 'role', json('\"untargeted-sentinel-dcr\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'monitorAccount')), createObject('id', resourceId('Microsoft.Monitor/accounts', variables('dataMonitorName')), 'key', json('\"monitorAccount\"'), 'resourceType', json('\"microsoft.monitor/accounts\"'), 'apiVersion', json('\"2023-04-03\"'), 'childApiVersion', json('\"2023-04-03\"'), 'location', parameters('location'), 'role', json('\"monitor-account-managed-rg-parent\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'appInsights')), createObject('id', resourceId('Microsoft.Insights/components', variables('dataInsightsName')), 'key', json('\"appInsights\"'), 'resourceType', json('\"microsoft.insights/components\"'), 'apiVersion', json('\"2020-02-02\"'), 'childApiVersion', json('\"2020-02-02\"'), 'location', parameters('location'), 'role', json('\"appInsights\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'keyVault')), createObject('id', resourceId('Microsoft.KeyVault/vaults', variables('dataKeyVaultName')), 'key', json('\"keyVault\"'), 'resourceType', json('\"microsoft.keyvault/vaults\"'), 'apiVersion', json('\"2024-11-01\"'), 'childApiVersion', json('\"2024-11-01\"'), 'location', parameters('location'), 'role', json('\"keyVault\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'machineLearning')), createObject('id', resourceId('Microsoft.MachineLearningServices/workspaces', variables('dataMlName')), 'key', json('\"machineLearning\"'), 'resourceType', json('\"microsoft.machinelearningservices/workspaces\"'), 'apiVersion', json('\"2025-04-01\"'), 'childApiVersion', json('\"2025-04-01\"'), 'location', parameters('location'), 'role', json('\"machineLearning\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'cognitive')), createObject('id', resourceId('Microsoft.CognitiveServices/accounts', variables('dataCognitiveName')), 'key', json('\"cognitive\"'), 'resourceType', json('\"microsoft.cognitiveservices/accounts\"'), 'apiVersion', json('\"2025-06-01\"'), 'childApiVersion', json('\"2025-06-01\"'), 'location', parameters('location'), 'role', json('\"cognitive\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'aiProject')), createObject('id', resourceId('Microsoft.CognitiveServices/accounts/projects', variables('dataCognitiveName'), 'fixtureproject'), 'key', json('\"aiProject\"'), 'resourceType', json('\"microsoft.cognitiveservices/accounts/projects\"'), 'apiVersion', json('\"2025-06-01\"'), 'childApiVersion', json('\"2025-06-01\"'), 'location', parameters('location'), 'role', json('\"aiProject\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'computeVm')), createObject('id', resourceId('Microsoft.Network/networkInterfaces', variables('dataVmNic1Name')), 'key', json('\"computeVm\"'), 'resourceType', json('\"microsoft.network/networkinterfaces\"'), 'apiVersion', json('\"2025-01-01\"'), 'childApiVersion', json('\"2025-01-01\"'), 'location', parameters('location'), 'role', json('\"vm-dependency-nic\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'computeVm')), createObject('id', resourceId('Microsoft.Compute/virtualMachines', variables('dataVm1Name')), 'key', json('\"computeVm\"'), 'resourceType', json('\"microsoft.compute/virtualmachines\"'), 'apiVersion', json('\"2024-07-01\"'), 'childApiVersion', json('\"2024-07-01\"'), 'location', parameters('location'), 'role', json('\"diag-collector\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'computeVm')), createObject('id', resourceId('Microsoft.Network/networkInterfaces', variables('dataVmNic2Name')), 'key', json('\"computeVm\"'), 'resourceType', json('\"microsoft.network/networkinterfaces\"'), 'apiVersion', json('\"2025-01-01\"'), 'childApiVersion', json('\"2025-01-01\"'), 'location', parameters('location'), 'role', json('\"vm-dependency-nic\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'computeVm')), createObject('id', resourceId('Microsoft.Compute/virtualMachines', variables('dataVm2Name')), 'key', json('\"computeVm\"'), 'resourceType', json('\"microsoft.compute/virtualmachines\"'), 'apiVersion', json('\"2024-07-01\"'), 'childApiVersion', json('\"2024-07-01\"'), 'location', parameters('location'), 'role', json('\"old-only-collector\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('false')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'computeVmss')), createObject('id', resourceId('Microsoft.Compute/virtualMachineScaleSets', variables('dataVmss1Name')), 'key', json('\"computeVmss\"'), 'resourceType', json('\"microsoft.compute/virtualmachinescalesets\"'), 'apiVersion', json('\"2024-07-01\"'), 'childApiVersion', json('\"2024-07-01\"'), 'location', parameters('location'), 'role', json('\"diag-collector\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'computeVmss')), createObject('id', resourceId('Microsoft.Compute/virtualMachineScaleSets', variables('dataVmss2Name')), 'key', json('\"computeVmss\"'), 'resourceType', json('\"microsoft.compute/virtualmachinescalesets\"'), 'apiVersion', json('\"2024-07-01\"'), 'childApiVersion', json('\"2024-07-01\"'), 'location', parameters('location'), 'role', json('\"old-only-collector\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('false')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'appPlan')), createObject('id', resourceId('Microsoft.Web/serverfarms', split(concat(variables('namePrefix'), 'plan'), '/')[0]), 'key', json('\"appPlan\"'), 'resourceType', json('\"microsoft.web/serverfarms\"'), 'apiVersion', json('\"2025-03-01\"'), 'childApiVersion', json('\"2025-03-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'site')), createObject('id', resourceId('Microsoft.Web/sites', split(concat(variables('namePrefix'), 'site'), '/')[0]), 'key', json('\"site\"'), 'resourceType', json('\"microsoft.web/sites\"'), 'apiVersion', json('\"2025-03-01\"'), 'childApiVersion', json('\"2025-03-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'slot')), createObject('id', resourceId('Microsoft.Web/sites/slots', split(concat(variables('namePrefix'), 'site/stage'), '/')[0], split(concat(variables('namePrefix'), 'site/stage'), '/')[1]), 'key', json('\"slot\"'), 'resourceType', json('\"microsoft.web/sites/slots\"'), 'apiVersion', json('\"2025-03-01\"'), 'childApiVersion', json('\"2025-03-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'databricks')), createObject('id', resourceId('Microsoft.Databricks/workspaces', split(concat(variables('namePrefix'), 'dbx'), '/')[0]), 'key', json('\"databricks\"'), 'resourceType', json('\"microsoft.databricks/workspaces\"'), 'apiVersion', json('\"2024-05-01\"'), 'childApiVersion', json('\"2024-05-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'containerEnvironment')), createObject('id', resourceId('Microsoft.App/managedEnvironments', split(concat(variables('namePrefix'), 'caenv'), '/')[0]), 'key', json('\"containerEnvironment\"'), 'resourceType', json('\"microsoft.app/managedenvironments\"'), 'apiVersion', json('\"2025-01-01\"'), 'childApiVersion', json('\"2025-01-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'containerApp')), createObject('id', resourceId('Microsoft.App/containerApps', split(concat(variables('namePrefix'), 'caapp'), '/')[0]), 'key', json('\"containerApp\"'), 'resourceType', json('\"microsoft.app/containerapps\"'), 'apiVersion', json('\"2025-01-01\"'), 'childApiVersion', json('\"2025-01-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'containerJob')), createObject('id', resourceId('Microsoft.App/jobs', split(concat(variables('namePrefix'), 'cajob'), '/')[0]), 'key', json('\"containerJob\"'), 'resourceType', json('\"microsoft.app/jobs\"'), 'apiVersion', json('\"2025-01-01\"'), 'childApiVersion', json('\"2025-01-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'serviceBus')), createObject('id', resourceId('Microsoft.ServiceBus/namespaces', split(concat(variables('namePrefix'), 'sb'), '/')[0]), 'key', json('\"serviceBus\"'), 'resourceType', json('\"microsoft.servicebus/namespaces\"'), 'apiVersion', json('\"2024-01-01\"'), 'childApiVersion', json('\"2024-01-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'communication')), createObject('id', resourceId('Microsoft.Communication/communicationServices', split(concat(variables('namePrefix'), 'comm'), '/')[0]), 'key', json('\"communication\"'), 'resourceType', json('\"microsoft.communication/communicationservices\"'), 'apiVersion', json('\"2023-03-31\"'), 'childApiVersion', json('\"2023-03-31\"'), 'location', json('\"global\"'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'automation')), createObject('id', resourceId('Microsoft.Automation/automationAccounts', split(concat(variables('namePrefix'), 'auto'), '/')[0]), 'key', json('\"automation\"'), 'resourceType', json('\"microsoft.automation/automationaccounts\"'), 'apiVersion', json('\"2024-10-23\"'), 'childApiVersion', json('\"2024-10-23\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'relay')), createObject('id', resourceId('Microsoft.Relay/namespaces', split(concat(variables('namePrefix'), 'relay'), '/')[0]), 'key', json('\"relay\"'), 'resourceType', json('\"microsoft.relay/namespaces\"'), 'apiVersion', json('\"2024-01-01\"'), 'childApiVersion', json('\"2024-01-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'botIdentity')), createObject('id', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', split(concat(variables('namePrefix'), 'botid'), '/')[0]), 'key', json('\"botIdentity\"'), 'resourceType', json('\"microsoft.managedidentity/userassignedidentities\"'), 'apiVersion', json('\"2023-01-31\"'), 'childApiVersion', json('\"2023-01-31\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'bot')), createObject('id', resourceId('Microsoft.BotService/botServices', split(concat(variables('namePrefix'), 'bot'), '/')[0]), 'key', json('\"bot\"'), 'resourceType', json('\"microsoft.botservice/botservices\"'), 'apiVersion', json('\"2022-09-15\"'), 'childApiVersion', json('\"2022-09-15\"'), 'location', json('\"global\"'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'logic')), createObject('id', resourceId('Microsoft.Logic/workflows', split(concat(variables('namePrefix'), 'logic'), '/')[0]), 'key', json('\"logic\"'), 'resourceType', json('\"microsoft.logic/workflows\"'), 'apiVersion', json('\"2019-05-01\"'), 'childApiVersion', json('\"2019-05-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'recoveryVault')), createObject('id', resourceId('Microsoft.RecoveryServices/vaults', split(concat(variables('namePrefix'), 'rsv'), '/')[0]), 'key', json('\"recoveryVault\"'), 'resourceType', json('\"microsoft.recoveryservices/vaults\"'), 'apiVersion', json('\"2024-04-01\"'), 'childApiVersion', json('\"2024-04-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'connection')), createObject('id', resourceId('Microsoft.Web/connections', split(concat(variables('namePrefix'), 'conn'), '/')[0]), 'key', json('\"connection\"'), 'resourceType', json('\"microsoft.web/connections\"'), 'apiVersion', json('\"2016-06-01\"'), 'childApiVersion', json('\"2016-06-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'disk')), createObject('id', resourceId('Microsoft.Compute/disks', split(concat(variables('namePrefix'), 'disk'), '/')[0]), 'key', json('\"disk\"'), 'resourceType', json('\"microsoft.compute/disks\"'), 'apiVersion', json('\"2024-03-02\"'), 'childApiVersion', json('\"2024-03-02\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'sessionPool')), createObject('id', resourceId('Microsoft.App/sessionPools', split(concat(variables('namePrefix'), 'sessions'), '/')[0]), 'key', json('\"sessionPool\"'), 'resourceType', json('\"microsoft.app/sessionpools\"'), 'apiVersion', json('\"2025-01-01\"'), 'childApiVersion', json('\"2025-01-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'aks')), createObject('id', resourceId('Microsoft.ContainerService/managedClusters', split(concat(variables('namePrefix'), 'aks'), '/')[0]), 'key', json('\"aks\"'), 'resourceType', json('\"microsoft.containerservice/managedclusters\"'), 'apiVersion', json('\"2024-10-01\"'), 'childApiVersion', json('\"2024-10-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'apim')), createObject('id', resourceId('Microsoft.ApiManagement/service', split(concat(variables('namePrefix'), 'apim'), '/')[0]), 'key', json('\"apim\"'), 'resourceType', json('\"microsoft.apimanagement/service\"'), 'apiVersion', json('\"2024-05-01\"'), 'childApiVersion', json('\"2024-05-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'eventGrid')), createObject('id', resourceId('Microsoft.EventGrid/systemTopics', split(concat(variables('namePrefix'), 'events'), '/')[0]), 'key', json('\"eventGrid\"'), 'resourceType', json('\"microsoft.eventgrid/systemtopics\"'), 'apiVersion', json('\"2022-06-15\"'), 'childApiVersion', json('\"2022-06-15\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'ase')), createObject('id', resourceId('Microsoft.Web/hostingEnvironments', split(concat(variables('namePrefix'), 'ase'), '/')[0]), 'key', json('\"ase\"'), 'resourceType', json('\"microsoft.web/hostingenvironments\"'), 'apiVersion', json('\"2025-03-01\"'), 'childApiVersion', json('\"2025-03-01\"'), 'location', parameters('location'), 'role', json('\"target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'functionSite')), createObject('id', resourceId('Microsoft.Web/sites', split(concat(variables('namePrefix'), 'func'), '/')[0]), 'key', json('\"functionSite\"'), 'resourceType', json('\"microsoft.web/sites\"'), 'apiVersion', json('\"2025-03-01\"'), 'childApiVersion', json('\"2025-03-01\"'), 'location', parameters('location'), 'role', json('\"function-kind-target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'functionSlot')), createObject('id', resourceId('Microsoft.Web/sites/slots', split(concat(variables('namePrefix'), 'func/stage'), '/')[0], split(concat(variables('namePrefix'), 'func/stage'), '/')[1]), 'key', json('\"functionSlot\"'), 'resourceType', json('\"microsoft.web/sites/slots\"'), 'apiVersion', json('\"2025-03-01\"'), 'childApiVersion', json('\"2025-03-01\"'), 'location', parameters('location'), 'role', json('\"function-kind-target\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('true')), json('null'))]",
-        "[if(and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'aksIdentity')), createObject('id', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', split(concat(variables('namePrefix'), 'aksid'), '/')[0]), 'key', json('\"aksIdentity\"'), 'resourceType', json('\"microsoft.managedidentity/userassignedidentities\"'), 'apiVersion', json('\"2023-01-31\"'), 'childApiVersion', json('\"2023-01-31\"'), 'location', parameters('location'), 'role', json('\"aks-subnet-identity\"'), 'scopeSuffixes', json('[]'), 'seedSourceDiagnostic', json('false')), json('null'))]"
-      ]
-    }
-  }
+  ]
 }

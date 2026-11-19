@@ -1,16 +1,12 @@
 # リソース網羅テストの環境
 
-`resource_types_fixture.ps1`と`resource_types.arm.json`で、2サブスクリプションに検証用リソースを分散配置します。現在はコードの簡素化と開発検証中です。**最終総合テストは未開始**です。新規配置は停止し、作成済みの検証環境を全撤去しています。次の配置はコード完成の報告・利用者レビュー後に行います。[検証状況](../test-results/REPORT.md)を参照してください。
+`resource_types_fixture.ps1`と`resource_types.arm.json`で、2サブスクリプションへ検証資源を分散配置します。PowerShell 7と、Ownerでログイン済みのAzure CLIを使います。現在の候補はLOCAL確認済みですが、5操作を通すAzure実機確認は未実施です。実機検証済みの完成版としては扱わないでください。追加のAzure環境作成とテストは停止しています。
 
 ## 指定する値
 
-PS1先頭で対象Subと配置リージョンを指定します。現在の公開版は`$SubscriptionIdA`・`$SubscriptionIdB`、既存VNetは`$ExistingVnetIdA`・`$ExistingVnetIdB`です。VNetは名前ではなく、次の形式のリソースIDで指定します。
+PS1先頭の`$SubscriptionIds`に2つのSub ID、同じ順番の`$ExistingVnetIds`に既存VNetのリソースID、`$Locations`に4つの配置リージョンを指定します。
 
-```text
-/subscriptions/<Sub ID>/resourceGroups/<RG名>/providers/Microsoft.Network/virtualNetworks/<VNet名>
-```
-
-既存VNetに次の5サブネットがある前提です。実際のアドレス範囲とIDをAzureから取得します。
+既存VNetには次の5サブネットが必要です。IPアドレスはAzureから取得します。
 
 |名前|サイズ|
 |---|---|
@@ -20,38 +16,61 @@ PS1先頭で対象Subと配置リージョンを指定します。現在の公�
 |VNetIntegrationSubnet|/26|
 |AzureFirewallSubnet|/26|
 
-VNet・サブネットの作成や設定変更、NSG・ルートテーブルの関連付けは行いません。必要な委任などがない場合は作成前に停止します。Firewallは参照するVNetと同じRGに配置し、その新規3資源だけを個別に追跡します。
+VNet・サブネットの作成・更新、NSGやルートテーブルの関連付けはしません。ASEを選ぶ場合はA側ProtectSubnetの`Microsoft.Web/hostingEnvironments`委任、Container Apps環境を選ぶ場合はA側VNetIntegrationSubnetの`Microsoft.App/environments`委任を事前に用意します。不足は作成前に停止します。
 
 ## 操作の流れ
 
 |Action|処理|
 |---|---|
-|Plan|対象・依存関係・正確な作成先IDを組み立てる。Azureは変更しない|
-|Deploy|元の状態を記録し、専用MG・ポリシー・RG・検証資源を作成する|
-|Capture|実在する資源と子スコープ、診断カテゴリを取得する|
-|Seed|旧診断設定と旧DCR関連、対象外の設定を作成し、実GETで照合する|
-|Cleanup|今回の資源を撤去し、元の所属先・設定と照合する|
+|Plan|対象と依存関係、作成先の正確なIDをファイルに出す。Azureへのアクセスはない|
+|Deploy|元の状態と同名不存在を記録し、専用MG・RG・ポリシーと資源を作成する|
+|Capture|実在資源・子スコープ・診断カテゴリを取得する|
+|Seed|旧診断設定、旧DCR関連、対象外の設定を作り、実GETで照合する|
+|Cleanup|今回作成した環境を撤去し、元の資源・所属・ネットワーク・認可設定と照合する|
 
-利用者はOwnerとしてログインしている前提です。初期状態と操作は`runs/<RunId>/`に保存します。同じ実行の台帳やBeforeを削除・書き換えずに使用してください。
+PlanとDeployは同じパラメーターで実行します。`RunId`は英小文字・数字8～13文字とし、別の試験には別IDを使います。
 
-承認済みの計画予算は2Sub合計6,000円、保持4時間目標・6時間計画枠です。料金の強制上限ではありません。無料リソースの負荷試験はNSGを使い、有料リソースの保持は短くします。
+```powershell
+$run = 'sample261119'
+$options = @{
+    RunId = $run
+    BudgetJPY = 6000
+    IncludeConditional = $true
+    IncludeAse = $true
+    AdminSshPublicKey = '<SSH公開鍵>'
+    LoadCount = 300
+}
+.\resource_types_fixture.ps1 -Action Plan @options
+# plan.jsonの対象と予算を確認してから作成する。
+.\resource_types_fixture.ps1 -Action Deploy @options
+.\resource_types_fixture.ps1 -Action Capture -RunId $run
+.\resource_types_fixture.ps1 -Action Seed -RunId $run
+# 移行用スクリプトを検証し、送信設定を切り戻してから撤去する。
+.\resource_types_fixture.ps1 -Action Cleanup -RunId $run
+```
+
+台帳は既定で`runs/<RunId>/`です。作成時のソース2ファイルと台帳を保管します。Capture・Seed・Cleanupはその台帳を使用するため、Beforeや台帳を書き換えないでください。SeedとCleanupは途中停止後も同じIDで再実行できます。Deployが途中で止まった場合は、同じ台帳でCapture・Cleanupを実行して撤去します。
+
+`SkipTypes`で型を省略できます。必要な依存型も省略すると事前停止します。`IncludeConditional`は有料・配置条件のある資源、`IncludeAse`はASEも選びます。`LoadCount`は追加NSG数で、NSGをサブネットへ関連付けません。`BudgetJPY`は計画予算で、請求を止める上限ではありません。新規作成は開始から6時間で停止し、Cleanupは引き続き使えます。
 
 ## 対象と制約
 
-提示された56型のうち、今回の開発環境では50型を新規配置し、VNet1型を既存参照しています。StorageのBlob/File/Queue/Table、Foundryの子プロジェクト、SQL master、Web/Functionのslot、Redis子DBも別途調べます。
+提示された56型をARMの対応表で管理します。Storageの4サービス、Foundry子プロジェクト、SQL master、Web・Functionのslot、Redis子DBも別スコープで調べます。診断非対応、配置不可、失敗、未実施は成功に加算しません。ログの実着信、サブスクリプションActivity Log、権限の試験は対象外です。
 
-|省略する型|理由|
-|---|---|
-|Code Signing|契約・利用条件により省略|
-|Bing|作成条件・提供状況により省略|
-|ExpressRoute circuit|接続・料金の制約により省略|
-|Databricks|必須のNSG関連付けが、既存サブネットを変更しない条件と両立しない|
-|旧Redis|新規作成がサービス終了に伴う制限で拒否される|
+Code Signing・Bing・ExpressRouteは契約・提供条件等により省略します。Databricksは必須のNSG関連付けが既存サブネットを変更しない条件と両立せず、旧Redisは新規作成の終了制限があるため、既定で省略します。Cosmos DBなどの地域容量不足は別リージョンの選択または`SkipTypes`で扱い、省略理由を試験記録へ残します。
 
-作成不可、診断非対応、失敗、未実施を成功に加算しません。実ログの到着確認、サブスクリプションActivity Logの設定、権限テストは行いません。
+## 未完了の確認
 
-## 撤去
+この候補でPlan→Deploy→Capture→Seed→Cleanupを通す実機確認と、categoryGroupを指定した診断設定の実PUT/GETは未実施です。LOCALの成功はこれらの実機成功を意味しません。
 
-製品の結果を回収し、送信設定を切り戻してから、テストで作成した保存先と資源を撤去します。既存VNetのRG全体を削除せず、そこに作った所有資源だけを削除します。元のポリシー・RBAC・MG所属と資源一覧を照合し、元の未登録を確認できたプロバイダーだけ登録解除します。
+既存の総合テストrunnerとの接続も未完了です。この候補はポリシーを4件作成し、うち移行対象の3件だけを`state.policyAssignmentIds`へ保存します。残る1件は新しいVNetを禁止するガードです。旧runnerが4件を移行対象として読まないよう、`policyAssignmentIds`を使う接続処理が必要です。その処理はまだ実装していません。
 
-この検証用Cleanupは、移行スクリプトの`rollback.ps1`とは目的が異なります。移行の切り戻しは保存先とログを残し、検証用Cleanupは今回のテスト環境を撤去します。
+## 撤去時の扱い
+
+新規4RGは今回の所有物として撤去します。Firewall・Public IP・Firewall Policyは参照VNetと同じ既存RGへ配置し、初期不存在と作成後の値を記録した3資源だけを削除します。既存VNetのRG全体は削除しません。
+
+通常StorageはRG削除に任せます。今回新規作成したimmutable capability有効Storageは、送信設定を停止してからBlobを空にします。一時的なアクセス設定は元へ戻します。未知のACL変更、保持ポリシー、lease、holdは解除せず停止します。
+
+全Subの資源、RG、ネットワーク、MG所属、RBAC、ポリシー割り当て、適用除外の復元を確認した後、最初に未登録を確認したプロバイダーだけ登録解除します。不明な差分があれば完了にしません。
+
+このCleanupは検証環境を撤去します。移行用の`rollback.ps1`は送信設定を戻し、保存先と保存済みログを残します。
