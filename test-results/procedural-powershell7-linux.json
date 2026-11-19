@@ -2,8 +2,8 @@
   "kind": "PowerShell 7 real-runspace regression with external CLI/HTTP replay",
   "result": "PASS",
   "runtime": "Linux PowerShell 7.5.4",
-  "manifestSha256": "06798183009636280564021939cc99046cb89aa61b5cc7eb4eddea037174a0c1",
-  "reportSha256": "346915e8f8beec4bcebf25feb9ed2021923b3953ce78d5430d1e661079f1552c",
+  "manifestSha256": "92f09d4e487f965467d67e21383d0b95f645b5b1430154c8cd4272eda4427c14",
+  "reportSha256": "007cd3327f0eaf635c1468bada25d296a04e985d17b2fa389dd4137bf97ab79f",
   "sourcesUnchangedBeforeAfter": true,
   "existingMigrationAndOriginalFilesUnchanged": true,
   "AzureRequests": 0,
@@ -354,27 +354,42 @@
         "Case": "並列worker1件の失敗を記録し再実行で欠落だけを補う",
         "Result": "PASS",
         "Assertions": 20
+      },
+      {
+        "Case": "既存DCRのIdentity[SystemAssigned]を維持して全工程と切戻しを行う",
+        "Result": "PASS",
+        "Assertions": 12
+      },
+      {
+        "Case": "既存DCRのIdentity[None]を維持して全工程と切戻しを行う",
+        "Result": "PASS",
+        "Assertions": 12
+      },
+      {
+        "Case": "既存DCRのIdentity[SystemAssigned, UserAssigned]を維持して全工程と切戻しを行う",
+        "Result": "PASS",
+        "Assertions": 23
       }
     ],
-    "CaseCount": 69,
-    "Checks": 945,
+    "CaseCount": 72,
+    "Checks": 992,
     "AzureRequests": 0,
     "PowerShellVersion": "7.5.4",
     "Hashes": {
+      "common.ps1": "7F80C7F5F47BC9D38EDD769839EEE833CE6D79FA407A63965A7E6D22F212109B",
       "step1_copy.ps1": "9762847BBE83FE04309DC25E5B22098B92D5B015CAF84846568A8342C7D6B51D",
+      "step3_delete.ps1": "0E6889E3852439C542FA2760E21B5A2CCF92EA6588F235470BAEF2EA94BAA82D",
       "rollback.ps1": "E8EAD03928C7ABD8A4E2DEADB8269AB09372E54D0A7745AA868705230E9E1B80",
       "precheck.ps1": "F406B778B82E496980C19A7EB4DDD35D5079F86B6B66D5DA8D5C33A7DF73D1E4",
-      "step2_verify.ps1": "E07A7DB5D9A567B8730C2CAC741D1D76CE5A4B61B67A00AB365FF614F7AEA603",
-      "common.ps1": "9BB4EE7DBA266E20F62684DA8EA1BA8A1ADDC89020AEE4036C273C8342280E23",
-      "step3_delete.ps1": "0E6889E3852439C542FA2760E21B5A2CCF92EA6588F235470BAEF2EA94BAA82D"
+      "step2_verify.ps1": "E07A7DB5D9A567B8730C2CAC741D1D76CE5A4B61B67A00AB365FF614F7AEA603"
     },
-    "RealParallelRunspaces": 766,
-    "RequestsFromParallelRunspaces": 1089
+    "RealParallelRunspaces": 808,
+    "RequestsFromParallelRunspaces": 1143
   },
   "manifest": [
     {
       "path": "procedural-migration/common.ps1",
-      "sha256": "9bb4ee7dba266e20f62684da8ea1ba8a1addc89020aee4036c273c8342280e23"
+      "sha256": "7f80c7f5f47bc9d38edd769839eee833ce6d79fa407a63965a7e6d22f212109b"
     },
     {
       "path": "procedural-migration/precheck.ps1",
@@ -398,7 +413,7 @@
     },
     {
       "path": "tests/procedural-smoke.ps1",
-      "sha256": "08a399f45e9670551d233d673035b4cc53227a450a3d5c22cae88b954ab10e4a"
+      "sha256": "b5f8e537e07bdffb295f2f441d17873d7c28c4a0498ac6aa94f5cfb57ea403ed"
     }
   ]
 }

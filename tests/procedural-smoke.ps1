@@ -1307,6 +1307,72 @@ try {
         Invoke-ReplayStep rollback
         Assert-Replay (-not $global:ProceduralFixture.UnsafeNewDelete) '並列後も旧復元順序を維持'
     }
+    foreach ($identityType in @('SystemAssigned', 'None', 'SystemAssigned, UserAssigned')) {
+        Invoke-ReplayCase "既存DCRのIdentity[$identityType]を維持して全工程と切戻しを行う" {
+            $subscription = $global:ProceduralFixture.Subscriptions[0]
+            $ids = Get-FixtureIds $subscription
+            $identity = @{
+                type = $identityType
+                principalId = 'readonly-system-principal'
+                tenantId = 'readonly-tenant'
+            }
+            $identityIds = @()
+            if ($identityType -like '*UserAssigned*') {
+                $identityIds = @(
+                    "/subscriptions/$subscription/resourceGroups/identity/providers/Microsoft.ManagedIdentity/userAssignedIdentities/first",
+                    "/subscriptions/$subscription/resourceGroups/identity/providers/Microsoft.ManagedIdentity/userAssignedIdentities/second"
+                )
+                $identity.userAssignedIdentities = @{}
+                foreach ($identityId in $identityIds) {
+                    $identity.userAssignedIdentities[$identityId] = @{ principalId = 'readonly-user-principal'; clientId = 'readonly-user-client' }
+                }
+            }
+            Add-FixtureResource $ids.Dcr @{
+                location = 'japaneast'
+                identity = $identity
+                properties = @{
+                    description = 'Identity確認用の既存DCR'
+                    dataSources = @{ windowsEventLogs = @(@{ name = 'before'; streams = @('Microsoft-Event'); xPathQueries = @('Application!*') }) }
+                    destinations = @{ logAnalytics = @(@{ name = 'before'; workspaceResourceId = '/old-workspace' }) }
+                    dataFlows = @(@{ streams = @('Microsoft-Event'); destinations = @('before') })
+                    provisioningState = 'Succeeded'
+                }
+            }
+            Invoke-ReplayStep copy
+            $record = @(Get-FixtureRecords | Where-Object { $_.Target.SubscriptionId -eq $subscription })[0]
+            $saved = @($record.NewSettings | Where-Object Kind -eq 'Dcr')[0]
+            Assert-Replay ($saved.Before.identity.type -ceq $identityType) '変更前のidentity.typeを保存'
+            Assert-Replay ('principalId' -notin $saved.Before.identity.PSObject.Properties.Name -and 'tenantId' -notin $saved.Before.identity.PSObject.Properties.Name) 'Beforeから読取り専用のシステムIDを除去'
+            if ($identityIds.Count) {
+                Assert-Replay (@($saved.Before.identity.userAssignedIdentities.PSObject.Properties).Count -eq 2) '複数のUserAssignedキーを保存'
+                foreach ($identityId in $identityIds) {
+                    Assert-Replay ($identityId -in $saved.Before.identity.userAssignedIdentities.PSObject.Properties.Name) 'UserAssignedのリソースIDを保持'
+                    Assert-Replay (@($saved.Before.identity.userAssignedIdentities.$identityId.PSObject.Properties).Count -eq 0) 'UserAssignedの採番済みID値を除去'
+                }
+            }
+            else {
+                Assert-Replay (-not $saved.Before.identity.userAssignedIdentities) 'UserAssignedなしでも余分なキーを作らない'
+            }
+            Invoke-ReplayStep verify
+            Invoke-ReplayStep delete
+            Invoke-ReplayStep rollback
+            $restored = $global:ProceduralFixture.Resources[$ids.Dcr].identity
+            Assert-Replay ($restored.type -ceq $identityType) '切戻し後もidentity.typeを維持'
+            if ($identityIds.Count) {
+                Assert-Replay (@($restored.userAssignedIdentities.PSObject.Properties).Count -eq 2) '切戻しでUserAssignedキーを欠落させない'
+                foreach ($identityId in $identityIds) {
+                    Assert-Replay ($identityId -in $restored.userAssignedIdentities.PSObject.Properties.Name) '切戻し後も元のUserAssignedリソースID'
+                }
+            }
+            foreach ($write in @($global:ProceduralFixture.Writes | Where-Object { $_.Method -eq 'PUT' -and $_.Id -eq $ids.Dcr })) {
+                Assert-Replay ($write.Body.identity.type -ceq $identityType) '作成・復元のPUTともidentity.typeを維持'
+                Assert-Replay ('principalId' -notin $write.Body.identity.PSObject.Properties.Name -and 'tenantId' -notin $write.Body.identity.PSObject.Properties.Name) 'PUTへ読取り専用のシステムIDを送らない'
+                foreach ($identityId in $identityIds) {
+                    Assert-Replay (@($write.Body.identity.userAssignedIdentities.$identityId.PSObject.Properties).Count -eq 0) 'PUTへUserAssignedの読取り専用値を送らない'
+                }
+            }
+        }
+    }
     # --------------------------------------------------
     # 構文・ソース不変と、実際に実行したケース数をまとめる。
     # --------------------------------------------------

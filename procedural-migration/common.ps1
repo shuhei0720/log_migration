@@ -279,8 +279,10 @@ function Get-WritableBody {
         if ($body.identity) {
             $body.identity.Remove('principalId')
             $body.identity.Remove('tenantId')
-            foreach ($identityId in @($body.identity.userAssignedIdentities.Keys)) {
-                $body.identity.userAssignedIdentities[$identityId] = @{}
+            if ($body.identity.userAssignedIdentities) {
+                foreach ($identityId in @($body.identity.userAssignedIdentities.Keys)) {
+                    $body.identity.userAssignedIdentities[$identityId] = @{}
+                }
             }
         }
     }

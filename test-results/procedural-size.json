@@ -16,8 +16,8 @@
   "oldDirectory": "migration",
   "newDirectory": "procedural-migration",
   "baselineCharacters": 117245,
-  "newCharacters": 53563,
-  "reductionPercent": 54.32,
+  "newCharacters": 53646,
+  "reductionPercent": 54.24,
   "tenthLevelTarget": 11724.5,
   "tenthLevelTargetMet": false,
   "priorityConfirmedByUser": "Preserve functionality and readability, then reduce as far as possible",
@@ -26,14 +26,14 @@
   "singleLineIfForeachWhile": 0,
   "referenceCharactersIncludingComments": {
     "before": 140946,
-    "after": 56294
+    "after": 56377
   },
   "files": [
     {
       "file": "common.ps1",
       "before": 41134,
-      "after": 23975,
-      "codeSha256": "efbf1e33a6433a580f62b78095d23e3c658fa9613eff6772378e970036f82e10"
+      "after": 24058,
+      "codeSha256": "26d9b5c75a51521c643ec029920232e4c9c303c70b3d89dc1ea0085691203c30"
     },
     {
       "file": "precheck.ps1",
@@ -68,6 +68,6 @@
   ],
   "previousProceduralCharacters": 53864,
   "targetPowerShell": "7",
-  "additionalReductionCharacters": 301,
-  "additionalReductionPercent": 0.56
+  "additionalReductionCharacters": 218,
+  "additionalReductionPercent": 0.4
 }

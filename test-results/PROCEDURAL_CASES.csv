@@ -24,7 +24,7 @@ PROC-022,CSV入力拒否: Storage名25文字,境界,PASS,2
 PROC-023,CSV入力拒否: 空Sub,異常・停止確認,PASS,2
 PROC-024,初回の既存Storage名を事前停止する,異常・停止確認,PASS,2
 PROC-025,ZRS非対応の地域を事前停止する,異常・停止確認,PASS,2
-PROC-026,初回の同名新診断を再利用しない,正常,PASS,2
+PROC-026,初回の同名新診断を再利用しない,異常・停止確認,PASS,2
 PROC-027,新診断を追加する空き5枠上限を事前停止する,境界,PASS,2
 PROC-028,両Noneは同名新診断と5件上限に触れない,正常,PASS,4
 PROC-029,関係のないVM・VMSSには新関連を作らない,正常,PASS,2
@@ -38,7 +38,7 @@ PROC-036,作業途中CSV選択変更を拒否: verify,再開・切戻し,PASS,5
 PROC-037,作業途中CSV選択変更を拒否: delete,再開・切戻し,PASS,5
 PROC-038,後続Subの未完了は全Subの旧DELETEを止める,異常・停止確認,PASS,7
 PROC-039,旧削除の途中失敗は後続を止め再実行できる,再開・切戻し,PASS,9
-PROC-040,copy後に増えた旧対象をverify/deleteが無視しない,正常,PASS,4
+PROC-040,copy後に増えた旧対象をverify/deleteが無視しない,異常・停止確認,PASS,4
 PROC-041,削除直前に旧設定が変われば以降の削除を止める,異常・停止確認,PASS,3
 PROC-042,指定Subだけを切り戻し、他Subはそのまま残す,再開・切戻し,PASS,9
 PROC-043,不明Sub指定のrollbackは変更前に拒否する,異常・停止確認,PASS,3
@@ -57,8 +57,8 @@ PROC-055,コピー途中の失敗状態から直接切り戻せる,再開・切�
 PROC-056,コピー完了後は旧設定を書き直さず切り戻せる,再開・切戻し,PASS,7
 PROC-057,旧設定を一部削除した失敗状態から直接切り戻せる,再開・切戻し,PASS,9
 PROC-058,DCR更新中の応答を待って完了を確認する,正常,PASS,4
-PROC-059,更新が完了しない保存先は期限で止め旧設定を残す,正常,PASS,6
-PROC-060,総保持が1095でも既定値フラグのままなら明示設定する,正常,PASS,7
+PROC-059,更新が完了しない保存先は期限で止め旧設定を残す,異常・停止確認,PASS,6
+PROC-060,総保持が1095でも既定値フラグのままなら明示設定する,境界,PASS,7
 PROC-061,変更前記録がなければ確認と削除を開始しない,異常・停止確認,PASS,3
 PROC-062,通常一覧にある主要タイプと子IDを同じ診断処理へ通す,正常,PASS,13
 PROC-063,DCRのInvalidOutputTableだけは反映を待って再試行する,正常,PASS,4
@@ -68,3 +68,6 @@ PROC-066,既存DCRへの余分な収集源追加を許容せず切戻しも上�
 PROC-067,未選択Subの記録JSONが壊れていても指定Subだけを切り戻せる,再開・切戻し,PASS,7
 PROC-068,実runspaceで5件以上の診断GETとPUTを処理する,正常・並列,PASS,15
 PROC-069,並列worker1件の失敗を記録し再実行で欠落だけを補う,異常・再開,PASS,20
+PROC-070,既存DCRのIdentity[SystemAssigned]を維持して全工程と切戻しを行う,境界・切戻し,PASS,12
+PROC-071,既存DCRのIdentity[None]を維持して全工程と切戻しを行う,境界・切戻し,PASS,12
+PROC-072,"既存DCRのIdentity[SystemAssigned, UserAssigned]を維持して全工程と切戻しを行う",境界・切戻し,PASS,23
