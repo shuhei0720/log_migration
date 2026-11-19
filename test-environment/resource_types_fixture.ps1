@@ -234,7 +234,7 @@ function Convert-ExternalNetworkConfig {
     $properties=Get-PropertyValue $copy 'properties'
     if($properties){$properties.PSObject.Properties.Remove('provisioningState')}
     if($Kind -eq 'Subnet'){
-        foreach($name in @('ipConfigurations','ipConfigurationProfiles','privateEndpoints','serviceAssociationLinks','resourceNavigationLinks')){
+        foreach($name in @('ipConfigurations','ipConfigurationProfiles','privateEndpoints','serviceAssociationLinks','resourceNavigationLinks','purpose')){
             $properties.PSObject.Properties.Remove($name)
         }
         foreach($delegation in @(Get-PropertyValue $properties 'delegations' @())){
@@ -439,7 +439,34 @@ function Read-ExistingNetworks {
         }else{
             if($existing.Count -ne 2 -or $stored.Count -ne 1){throw 'Existing-network Before identity/count changed.'}
             $before=$stored[0]
-            if((Get-ExternalNetworkSignature $before.networkBefore 'Vnet') -cne (Get-ExternalNetworkSignature $network 'Vnet') -or (Get-ExternalNetworkSignature $before.resourceGroupBefore 'ResourceGroup') -cne (Get-ExternalNetworkSignature $group 'ResourceGroup')){throw 'Existing VNet/subnet/RG writable configuration changed; preserved.'}
+            # AppGWが追加した参照だけを比較用コピーから除く。Beforeと実ネットワークは変更しません。
+            $comparisonNetwork=Copy-ExternalNetworkValue $network
+            foreach($subnet in @($comparisonNetwork.properties.subnets)){
+                $originalSubnet=@($before.networkBefore.properties.subnets | Where-Object {$_.id -ieq $subnet.id})
+                if($originalSubnet.Count -ne 1){throw 'Existing subnet identity changed.'}
+                $originalLinks=@(Get-PropertyValue $originalSubnet[0].properties 'applicationGatewayIPConfigurations' @())
+                $currentLinks=@(Get-PropertyValue $subnet.properties 'applicationGatewayIPConfigurations' @())
+                if(@($currentLinks | ForEach-Object {$_.id.ToLowerInvariant()} | Sort-Object -Unique).Count -ne $currentLinks.Count){throw 'Duplicate AppGW subnet references.'}
+                $keptLinks=@()
+                foreach($link in $currentLinks){
+                    if(@($originalLinks | Where-Object {$_.id -ieq $link.id}).Count){$keptLinks+=@($link);continue}
+                    if(@($link.PSObject.Properties | Where-Object {$_.Name -ne 'id'}).Count){throw 'Unknown field in new AppGW subnet reference.'}
+                    $owned=@($script:Ledger.resources | Where-Object {$_.resourceType -ieq 'microsoft.network/applicationgateways' -and $link.id.StartsWith($_.id+'/gatewayIPConfigurations/',[StringComparison]::OrdinalIgnoreCase)})
+                    if($owned.Count -ne 1){throw 'Unowned AppGW subnet reference.'}
+                    $initial=@($script:Ledger.initialState | Where-Object {$_.subscriptionId -ieq (($owned[0].id -split '/')[2])})
+                    if($initial.Count -ne 1 -or @($initial[0].resourceIds | Where-Object {$_ -ieq $owned[0].id}).Count){throw 'AppGW absence before this run is unproven.'}
+                    $actual=(Invoke-Api -Method GET -Id $owned[0].id -ApiVersion $owned[0].apiVersion).value
+                    if($actual.id -ine $owned[0].id -or (Get-PropertyValue (Get-PropertyValue $actual 'tags') 'fixtureRunId') -cne $RunId -or $actual.properties.provisioningState -ne 'Succeeded'){throw 'AppGW owner/state differs from this run.'}
+                    $configuration=@($actual.properties.gatewayIPConfigurations | Where-Object {$_.id -ieq $link.id})
+                    if($configuration.Count -ne 1 -or $configuration[0].properties.subnet.id -ine $subnet.id){throw 'AppGW reverse subnet reference differs.'}
+                }
+                if($originalSubnet[0].properties.PSObject.Properties['applicationGatewayIPConfigurations']){
+                    $subnet.properties | Add-Member -MemberType NoteProperty -Name applicationGatewayIPConfigurations -Value $keptLinks -Force
+                }else{
+                    $subnet.properties.PSObject.Properties.Remove('applicationGatewayIPConfigurations')
+                }
+            }
+            if((Get-ExternalNetworkSignature $before.networkBefore 'Vnet') -cne (Get-ExternalNetworkSignature $comparisonNetwork 'Vnet') -or (Get-ExternalNetworkSignature $before.resourceGroupBefore 'ResourceGroup') -cne (Get-ExternalNetworkSignature $group 'ResourceGroup')){throw 'Existing VNet/subnet/RG writable configuration changed; preserved.'}
             Assert-ExternalDiagnosticSnapshot $before $diagnostics
             foreach($nsg in $needed){$baseline=@($before.neededNsgBefore | Where-Object {$_.id -ieq $nsg.id});if($baseline.Count -ne 1){throw 'Existing dedicated NSG identity changed.'};Update-ValidatedDbrNetworkAfter $before $baseline[0].before $nsg.before}
         }

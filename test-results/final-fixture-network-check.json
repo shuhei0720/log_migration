@@ -1,0 +1,112 @@
+{
+  "scope": "FINAL_TEST_FIXTURE_ONLY",
+  "productCanonicalChanges": 0,
+  "controllerSha256": "CBF60DA69D377C1EC11E3D3D68A9EFBA4F2C3002F97B6DF8E2CC779C92FDC802",
+  "localCases": 13,
+  "independentLocalCases": 16,
+  "localResult": "PASS",
+  "beforeAndRawPreserved": true,
+  "networkConfigurationWrites": 0,
+  "purpose": {
+    "schemaReadOnly": true,
+    "excludedFromWritableComparison": true
+  },
+  "applicationGatewayIPConfigurations": {
+    "schemaReadOnly": false,
+    "blanketIgnored": false,
+    "acceptedOnlyForNewOwnedGatewayWithExactMutualReference": true
+  },
+  "cases": [
+    {
+      "expectedAccepted": true,
+      "beforeAndRawUnchanged": true,
+      "result": "PASS",
+      "name": "Actual snapshots: two provider usage fields and owned mutual reference",
+      "reason": ""
+    },
+    {
+      "expectedAccepted": false,
+      "beforeAndRawUnchanged": true,
+      "result": "PASS",
+      "name": "Wrong reverse subnet rejected",
+      "reason": "AppGW reverse subnet reference differs."
+    },
+    {
+      "expectedAccepted": false,
+      "beforeAndRawUnchanged": true,
+      "result": "PASS",
+      "name": "Unowned run tag rejected",
+      "reason": "AppGW owner/state differs from this run."
+    },
+    {
+      "expectedAccepted": false,
+      "beforeAndRawUnchanged": true,
+      "result": "PASS",
+      "name": "AppGW present in original baseline rejected",
+      "reason": "AppGW absence before this run is unproven."
+    },
+    {
+      "expectedAccepted": false,
+      "beforeAndRawUnchanged": true,
+      "result": "PASS",
+      "name": "Unknown gateway configuration rejected",
+      "reason": "AppGW reverse subnet reference differs."
+    },
+    {
+      "expectedAccepted": false,
+      "beforeAndRawUnchanged": true,
+      "result": "PASS",
+      "name": "Unowned AppGW reference rejected",
+      "reason": "Unowned AppGW subnet reference."
+    },
+    {
+      "expectedAccepted": false,
+      "beforeAndRawUnchanged": true,
+      "result": "PASS",
+      "name": "New reference unknown field rejected",
+      "reason": "Unknown field in new AppGW subnet reference."
+    },
+    {
+      "expectedAccepted": false,
+      "beforeAndRawUnchanged": true,
+      "result": "PASS",
+      "name": "Duplicate current reference rejected",
+      "reason": "Duplicate AppGW subnet references."
+    },
+    {
+      "expectedAccepted": false,
+      "beforeAndRawUnchanged": true,
+      "result": "PASS",
+      "name": "Unknown writable field rejected",
+      "reason": "Existing VNet/subnet/RG writable configuration changed; preserved."
+    },
+    {
+      "expectedAccepted": false,
+      "beforeAndRawUnchanged": true,
+      "result": "PASS",
+      "name": "NSG attachment rejected",
+      "reason": "Existing VNet/subnet/RG writable configuration changed; preserved."
+    },
+    {
+      "expectedAccepted": false,
+      "beforeAndRawUnchanged": true,
+      "result": "PASS",
+      "name": "Route table attachment rejected",
+      "reason": "Existing VNet/subnet/RG writable configuration changed; preserved."
+    },
+    {
+      "expectedAccepted": true,
+      "beforeAndRawUnchanged": true,
+      "result": "PASS",
+      "name": "Deleted owned gateway leaves empty array accepted",
+      "reason": ""
+    },
+    {
+      "expectedAccepted": false,
+      "beforeAndRawUnchanged": true,
+      "result": "PASS",
+      "name": "Original reference removal rejected",
+      "reason": "Existing VNet/subnet/RG writable configuration changed; preserved."
+    }
+  ]
+}

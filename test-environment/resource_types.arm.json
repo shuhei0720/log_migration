@@ -3402,7 +3402,6 @@
             },
             "osDisk": {
               "createOption": "FromImage",
-              "deleteOption": "Delete",
               "managedDisk": {
                 "storageAccountType": "Standard_LRS"
               }
@@ -3500,7 +3499,6 @@
             },
             "osDisk": {
               "createOption": "FromImage",
-              "deleteOption": "Delete",
               "managedDisk": {
                 "storageAccountType": "Standard_LRS"
               }
@@ -4129,7 +4127,9 @@
       "tags": {
         "fixtureRun": "[parameters('runId')]"
       },
-      "properties": {},
+      "properties": {
+        "publicNetworkAccess": "Enabled"
+      },
       "metadata": {
         "fixture": {
           "key": "recoveryVault",
@@ -4237,7 +4237,7 @@
         "containerType": "PythonLTS",
         "poolManagementType": "Dynamic",
         "scaleConfiguration": {
-          "maxConcurrentSessions": 1,
+          "maxConcurrentSessions": 5,
           "readySessionInstances": 0
         },
         "sessionNetworkConfiguration": {
