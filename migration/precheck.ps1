@@ -2,12 +2,19 @@
 . (Join-Path $PSScriptRoot "common.ps1")
 $script:initiativeDefinition = $null
 
-# CSVから対象サブスクリプションと移行先を読み込む。
+# --------------------------------------------------
+# CSVの読込
+# CSVの各行から対象サブスクリプションと移行先を取得する。
+# --------------------------------------------------
 $targets = @(Get-MigrationTargets)
 foreach ($target in $targets) {
     $subscriptionId = $target.SubscriptionId
     try {
-        # 対象サブスクリプションに、指定した3件のポリシー割り当てがあるか確認する。
+        # --------------------------------------------------
+        # ポリシー割り当てと参照IDの確認
+        # 対象サブスクリプションに、指定した3件の割り当てがあるか確認する。
+        # 3件目のイニシアティブから、指定した12件の参照IDを確認する。
+        # --------------------------------------------------
         $assignmentUrl = "https://management.azure.com/subscriptions/$subscriptionId/providers/Microsoft.Authorization/policyAssignments?api-version=2022-06-01&`$filter=atScope()"
         $assignments = @()
         do {
@@ -22,21 +29,30 @@ foreach ($target in $targets) {
         $definitionId = $assignment.properties.policyDefinitionId
         if (-not $definitionId -or $definitionId -notmatch '/policySetDefinitions/') { throw "3件目の割り当てからイニシアティブの定義IDを取得できません。" }
         if (-not $script:initiativeDefinition) { $script:initiativeDefinition = Invoke-ArmRequest -ResourceId $definitionId -ApiVersion "2023-04-01" }
-        # 3件目のイニシアティブに、指定した12件の参照IDがあるか確認する。
         foreach ($referenceId in $policyReferenceIds) {
             if ($referenceId -cnotin $script:initiativeDefinition.properties.policyDefinitions.policyDefinitionReferenceId) { throw "指定の参照IDがイニシアティブに存在しません: $referenceId" }
         }
-        # 現在の診断設定と地域を調べ、移行後の設定と地域別の保存先を組み立てる。
-        # 旧設定を残したまま、新設定を追加できる枠があるかも確認する。
+        # --------------------------------------------------
+        # 診断設定と保存先の調査
+        # 現在の診断設定と地域から、移行後の設定と地域別の保存先を組み立てる。
+        # 旧設定を残して新設定を追加できるか、診断設定の5件の上限も確認する。
+        # --------------------------------------------------
         $null = Get-MigrationPlan -Target $target
-        # 新しい診断設定名が既存設定と重なっていたら、エラーとして記録する。
+        # --------------------------------------------------
+        # 診断設定名の重複確認
+        # 新しい診断設定名が既存設定と重なる対象を、エラーとして記録する。
+        # --------------------------------------------------
         foreach ($plan in $target.DiagnosticPlans) {
             if (@($plan.NewSettings).Count -gt 0) {
                 Add-MigrationFailure -Target $target -ResourceId $plan.ResourceId -Stage "診断設定の事前確認" `
                     -Message "新しい診断設定名が既存設定と重複しています。初回の事前チェックを停止します。"
             }
         }
-        # 保存先の地域でStandard_ZRSを使えるか、ストレージ名を利用できるか確認する。
+        # --------------------------------------------------
+        # ストレージのSKUと名前の確認
+        # 保存先の地域でStorageV2・Standard_ZRSを利用できるか確認する。
+        # 地域別に組み立てたストレージ名の重複と、Azure上での名前の空きを確認する。
+        # --------------------------------------------------
         if ($target.Storages.Count -gt 0) {
             $skus = @(Invoke-AzJson -Arguments @("storage", "sku", "list", "--subscription", $subscriptionId))
             foreach ($storage in @($Target.Storages.Values | Sort-Object Name)) {
@@ -55,5 +71,8 @@ foreach ($target in $targets) {
     }
     catch { Add-MigrationFailure -Target $target -Stage "事前チェック" -Message $_.Exception.Message }
 }
-# 確認結果とエラーを出力する。
+# --------------------------------------------------
+# 確認結果の出力
+# 事前チェックの結果とエラーを出力する。
+# --------------------------------------------------
 Complete-MigrationStep -Step "precheck" -IncludeChecks

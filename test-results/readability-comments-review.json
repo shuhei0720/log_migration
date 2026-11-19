@@ -1,7 +1,7 @@
 {
   "kind": "CommentOnlyChangeVerification",
   "result": "PASS",
-  "verifiedAtUtc": "2026-11-19T00:51:19.5301987Z",
+  "verifiedAtUtc": "2026-11-19T01:16:14.1687649Z",
   "baselineCommit": "7c606c5",
   "testedSourceManifestSha256": "607e39695c328189aae8d39b1bc0dd9d258c8599d4e78d9b1be941a50cc53c7d",
   "verificationRuntime": "7.5.4",
@@ -9,7 +9,7 @@
     {
       "path": "migration/common.ps1",
       "beforeSha256": "3dcc368cb6971f36f3dcd4cb9da79684a7fb3520b2507c77f567b63093a72b2a",
-      "afterSha256": "9162e94f95eefc87611fd366564710d25f08353c7b59918b71adea37e82ffd9c",
+      "afterSha256": "801020c34d477459597a633e233e642e5ddacd14302a87105cec40f41dde48c8",
       "nonCommentTokensIdentical": true,
       "executableLinesIdentical": true,
       "tokenCount": 5426,
@@ -19,12 +19,12 @@
       "utf8BomPreserved": true,
       "lfPreserved": true,
       "beforeCommentCount": 44,
-      "afterCommentCount": 73
+      "afterCommentCount": 155
     },
     {
       "path": "migration/precheck.ps1",
       "beforeSha256": "3d47d77251ee26496e1db5b031a5634d4620d1a6f2d61cb9928ebdfff5e8a894",
-      "afterSha256": "7b2332127c020b123169387724d01bf281b2180ce3e29955492070d6f1bbe49c",
+      "afterSha256": "015d71c602559f9a4335f0bc99a9dff28724c30e9e57d4aeda8ab96d6bf72e01",
       "nonCommentTokensIdentical": true,
       "executableLinesIdentical": true,
       "tokenCount": 384,
@@ -34,12 +34,12 @@
       "utf8BomPreserved": true,
       "lfPreserved": true,
       "beforeCommentCount": 5,
-      "afterCommentCount": 9
+      "afterCommentCount": 28
     },
     {
       "path": "migration/step1_copy.ps1",
       "beforeSha256": "bce80e400bef75983f6e8002d588fc249413a3092035a88bbd86dd0b8edbb6f6",
-      "afterSha256": "e28fb23dc006d2838f3d9559d662f8ce850a3bbeec1ec7ffe29d80d0ec068747",
+      "afterSha256": "7b582307ccc57d11ba9a72929455d437438648cf5dca0b59c48a3f634e945658",
       "nonCommentTokensIdentical": true,
       "executableLinesIdentical": true,
       "tokenCount": 3937,
@@ -49,12 +49,12 @@
       "utf8BomPreserved": true,
       "lfPreserved": true,
       "beforeCommentCount": 13,
-      "afterCommentCount": 39
+      "afterCommentCount": 110
     },
     {
       "path": "migration/step2_verify.ps1",
       "beforeSha256": "dd764c49df8585864be012c45fd00e0a34a503459605c34e204cee471e280353",
-      "afterSha256": "d822d27ec405e15de044ced2f135bed06745c43765fadbb91ad5e3839cb620da",
+      "afterSha256": "b6fd05a78099d53fee1647b2736eebabf037cea690710eb245c867ca622bd241",
       "nonCommentTokensIdentical": true,
       "executableLinesIdentical": true,
       "tokenCount": 1407,
@@ -64,12 +64,12 @@
       "utf8BomPreserved": true,
       "lfPreserved": true,
       "beforeCommentCount": 16,
-      "afterCommentCount": 22
+      "afterCommentCount": 66
     },
     {
       "path": "migration/step3_delete.ps1",
       "beforeSha256": "367648cb937726965f88e279f363b46a5728134fc225d2c7e1bf6667930ed05a",
-      "afterSha256": "c203fdc55b5a11aa89a43fd54fda8720aeb1c3d736828b3577689030bb86eb6b",
+      "afterSha256": "003996a000a649ca86a7972832fc31758915668e611a79a3d426a4b358bdb7f9",
       "nonCommentTokensIdentical": true,
       "executableLinesIdentical": true,
       "tokenCount": 1753,
@@ -79,12 +79,12 @@
       "utf8BomPreserved": true,
       "lfPreserved": true,
       "beforeCommentCount": 19,
-      "afterCommentCount": 29
+      "afterCommentCount": 80
     },
     {
       "path": "migration/rollback.ps1",
       "beforeSha256": "c15f547f45dd4119aa0c16da75446b70a0d8e81b5773187ebe65a62adf3d3a2f",
-      "afterSha256": "2f9efe0541f8955125653e1efe33b2b59b59188b56377b351c625de9677fc9ac",
+      "afterSha256": "f62c01f7e1e01ca054047bc1a48b0fd88db9e10bf9bb2cdad2d445e7c9dc98c9",
       "nonCommentTokensIdentical": true,
       "executableLinesIdentical": true,
       "tokenCount": 1749,
@@ -94,14 +94,14 @@
       "utf8BomPreserved": true,
       "lfPreserved": true,
       "beforeCommentCount": 13,
-      "afterCommentCount": 26
+      "afterCommentCount": 63
     }
   ],
   "azureRequests": 0,
   "productScriptsExecuted": 0,
   "functionalSuitesRepeated": false,
   "note": "All executable lines, non-comment tokens, requires directives and encoding match the previously tested version.",
-  "currentSourceManifestSha256": "935ac7b1c0c694fec4b3f7444c4e2c8cf2d5dff175fba3c4b2cd244e92d080ed",
+  "currentSourceManifestSha256": "9535fc7410a390f42906650de1a8c058445556808af7a3d2e806bce53380c8fd",
   "testedManifestEntries": [
     {
       "path": "migration/common.ps1",
@@ -187,27 +187,27 @@
   "currentManifestEntries": [
     {
       "path": "migration/common.ps1",
-      "sha256": "9162e94f95eefc87611fd366564710d25f08353c7b59918b71adea37e82ffd9c"
+      "sha256": "801020c34d477459597a633e233e642e5ddacd14302a87105cec40f41dde48c8"
     },
     {
       "path": "migration/precheck.ps1",
-      "sha256": "7b2332127c020b123169387724d01bf281b2180ce3e29955492070d6f1bbe49c"
+      "sha256": "015d71c602559f9a4335f0bc99a9dff28724c30e9e57d4aeda8ab96d6bf72e01"
     },
     {
       "path": "migration/step1_copy.ps1",
-      "sha256": "e28fb23dc006d2838f3d9559d662f8ce850a3bbeec1ec7ffe29d80d0ec068747"
+      "sha256": "7b582307ccc57d11ba9a72929455d437438648cf5dca0b59c48a3f634e945658"
     },
     {
       "path": "migration/step2_verify.ps1",
-      "sha256": "d822d27ec405e15de044ced2f135bed06745c43765fadbb91ad5e3839cb620da"
+      "sha256": "b6fd05a78099d53fee1647b2736eebabf037cea690710eb245c867ca622bd241"
     },
     {
       "path": "migration/step3_delete.ps1",
-      "sha256": "c203fdc55b5a11aa89a43fd54fda8720aeb1c3d736828b3577689030bb86eb6b"
+      "sha256": "003996a000a649ca86a7972832fc31758915668e611a79a3d426a4b358bdb7f9"
     },
     {
       "path": "migration/rollback.ps1",
-      "sha256": "2f9efe0541f8955125653e1efe33b2b59b59188b56377b351c625de9677fc9ac"
+      "sha256": "f62c01f7e1e01ca054047bc1a48b0fd88db9e10bf9bb2cdad2d445e7c9dc98c9"
     },
     {
       "path": "tests/regression.ps1",
@@ -267,5 +267,6 @@
     }
   ],
   "reviewLineLinksUpdated": 22,
-  "unchangedOtherFiles": 14
+  "unchangedOtherFiles": 14,
+  "commentStyle": "Dashed block headings; concise operation descriptions and function specifications."
 }

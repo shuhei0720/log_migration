@@ -1,7 +1,13 @@
 ﻿#Requires -Version 5.1
 . (Join-Path $PSScriptRoot "common.ps1")
 
-# 現在の設定が期待値と一致すれば返し、異なる場合は更新後に読み戻して照合する。
+# --------------------------------------------------
+# ARMリソースの設定比較・書込み
+# 引数: ResourceId/ApiVersion=対象ID/API版、Body=書込み本文。
+# 引数: Expected=比較項目（省略・空ならBody）、Method=書込みメソッド（既定Put、Patchも使用）。
+# 動作・戻り値: 一致する現在のリソースを返す。未作成・不一致なら書き込んで再取得・照合したリソースを返す。
+# エラー: 作成・更新中や期待する作成状態との不一致、API失敗、読戻し不一致で例外。
+# --------------------------------------------------
 function Set-BaselineResource {
     param(
         [string]$ResourceId, [string]$ApiVersion, [hashtable]$Body,
@@ -23,7 +29,11 @@ function Set-BaselineResource {
     $current
 }
 
-# CSVから対象サブスクリプションを読み、保存済みのバックアップを開く。初回は空のバックアップを用意する。
+# --------------------------------------------------
+# 対象CSVとバックアップの読込み
+# CSVから対象サブスクリプションと送信先を読み、保存済みバックアップを開く。
+# 初回は移行元・環境・新診断設定名と、空の対象一覧を持つバックアップを用意する。
+# --------------------------------------------------
 $targets = @(Get-MigrationTargets)
 if ($script:failures.Count -gt 0) { Complete-MigrationStep -Step "copy" -IncludeChecks }
 try {
@@ -43,6 +53,11 @@ catch {
     Complete-MigrationStep -Step "copy" -IncludeChecks
 }
 
+# --------------------------------------------------
+# サブスクリプションごとの直前調査
+# 旧診断設定・旧DCR関連と送信先を調べ、このサブスクリプションの複製計画を作る。
+# 調査に失敗した場合は、このサブスクリプションの設定変更に進まない。
+# --------------------------------------------------
 foreach ($target in $targets) {
     $subscriptionId = $target.SubscriptionId
     $preparationComplete = $false
@@ -51,19 +66,21 @@ foreach ($target in $targets) {
     $stage = '複製前の調査'
     $expected = $null
     try {
-        # 旧診断設定・旧DCR関連と送信先を調べ、このサブスクリプションの複製計画を作る。
         $planReady = Get-MigrationPlan -Target $target
         if (-not $planReady -or $script:failures.Count -gt $failureCountBefore) { throw '対象の調査が完了していないため、このサブスクリプションは変更しません。' }
+        # --------------------------------------------------
+        # 保存済みBeforeの照合と診断設定の追記
+        # CSVの送信先情報、旧診断設定の内容、旧DCR関連の参照先を保存済みの情報と照合する。
+        # 保存済みBeforeを保持し、未保存の旧診断設定をBefore、複製予定の収集条件・送信先をAfterに追記する。
+        # --------------------------------------------------
         $stage = 'バックアップ照合・保存'
         $saved = @($backup.Targets | Where-Object SubscriptionId -eq $subscriptionId)
         $routing = @{}
         foreach ($key in @('SubscriptionName','ResourceGroup','StorageAccount','WorkspaceName','LogDestination')) { $routing[$key] = $target[$key] }
-        # 保存済みのサブスクリプションは、CSVの送信先情報が前回と同じか確認する。
         if ($saved.Count -gt 0) {
             foreach ($key in $routing.Keys) {
                 if ([string]$saved[0].Routing.$key -ne [string]$routing[$key]) { throw "CSVの$key が保存済みの設定と一致しません。" }
             }
-            # 保存済みのBeforeを保持し、旧診断設定の内容と旧DCR関連の参照先を照合する。
             $snapshot = ConvertTo-Json -InputObject $saved[0] -Depth 40 | ConvertFrom-Json
             foreach ($original in $snapshot.Diagnostics) {
                 $current = @($target.DiagnosticPlans | Where-Object { $_.ResourceId -eq $original.ResourceId -and $_.SourceName -eq $original.OldName })
@@ -82,7 +99,6 @@ foreach ($target in $targets) {
             }
         }
         $snapshotChanged = $saved.Count -eq 0
-        # 未保存の旧診断設定をBefore、複製予定の収集条件と送信先をAfterに追記する。
         foreach ($plan in $target.DiagnosticPlans) {
             if (@($snapshot.Diagnostics | Where-Object ResourceId -eq $plan.ResourceId).Count -gt 0) { continue }
             if (@($plan.NewSettings).Count -gt 0) { throw "新しい診断設定名が既存設定と重複しています: $($plan.ResourceId)" }
@@ -93,7 +109,11 @@ foreach ($target in $targets) {
             $snapshot.Diagnostics += @(@{ ResourceId = $plan.ResourceId; OldName = $plan.SourceName; Before = $before; After = $plan.Expected })
             $snapshotChanged = $true
         }
-        # 地域別のStorageをバックアップのID・名前・地域と照合し、未保存のものを集める。
+        # --------------------------------------------------
+        # 地域別Storageの計画と名前の確認
+        # 各StorageのID・名前・地域をバックアップと照合し、未保存のStorageを集める。
+        # 名前の重複、各地域でのStandard_ZRSの対応、名前の空きを確認して一覧に追記する。
+        # --------------------------------------------------
         $newStorages = @()
         foreach ($storage in @($target.Storages.Values | Sort-Object Name)) {
             if (-not $script:storageNames.Add($storage.Name)) { throw "変換後のストレージ名が重複しています: $($storage.Name)" }
@@ -105,7 +125,6 @@ foreach ($target in $targets) {
             if (@($backup.Targets.Storages | Where-Object { $_.Name -eq $storage.Name -and $_.Id -ne $storage.Id }).Count -gt 0) { throw "別のサブスクリプションに同じストレージ名が保存されています: $($storage.Name)" }
             $newStorages += @($storage)
         }
-        # 各地域でStandard_ZRSを使えるか、名前が空いているかを確認し、Storageの一覧に追記する。
         if ($newStorages.Count -gt 0) {
             $skus = @(Invoke-AzJson -Arguments @("storage", "sku", "list", "--subscription", $subscriptionId))
             foreach ($storage in $newStorages) {
@@ -117,7 +136,11 @@ foreach ($target in $targets) {
                 Add-MigrationCheck -Target $target -ResourceId $storage.Id -Stage 'ストレージ名の事前確認' -Success $true -Message '利用可能'
             }
         }
-        # 未保存の旧DCR関連を個別取得し、参照先・説明・DCEをBeforeに保存する。
+        # --------------------------------------------------
+        # 旧DCR関連の変更前情報を追記
+        # 未保存の旧DCR関連を個別取得し、一覧取得時から参照先が変わっていないか確認する。
+        # 参照先・説明・DCEをBeforeに保存する。
+        # --------------------------------------------------
         $newOldAssociations = @($target.OldAssociations | Where-Object { $_.ResourceId -notin @($snapshot.OldAssociations.ResourceId) })
         foreach ($result in @(Invoke-DiagnosticBatch -Items $newOldAssociations -Action {
             param($old, $unused)
@@ -129,7 +152,11 @@ foreach ($target in $targets) {
             $snapshot.OldAssociations += @(@{ ResourceId = $result.Item.ResourceId; Before = $before })
             $snapshotChanged = $true
         }
-        # 新DCRと関連付けの既存状態をBefore、作成予定の内容をAfterに保存する。
+        # --------------------------------------------------
+        # DCR・関連付けと適用除外の変更前情報
+        # 収集対象がある場合は、新DCRと関連付けの既存状態をBefore、作成予定の内容をAfterに保存する。
+        # 初回だけ、各ポリシー適用除外が既に存在するかも切戻し用に記録する。
+        # --------------------------------------------------
         if ($target.Collectors.Count -gt 0) {
             $dcrName = $target.WorkspaceName -replace '^log','dcr'
             $dcrId = "/subscriptions/$subscriptionId/resourceGroups/$($target.ResourceGroup)/providers/Microsoft.Insights/dataCollectionRules/$dcrName"
@@ -147,14 +174,17 @@ foreach ($target in $targets) {
                 $snapshotChanged = $true
             }
         }
-        # 初回だけ、各ポリシー適用除外が既に存在するかを切戻し用に記録する。
         if ($saved.Count -eq 0) {
             $snapshot.Exemptions = @(foreach ($assignment in $policyAssignments) {
                 $id = "/subscriptions/$subscriptionId/providers/Microsoft.Authorization/policyExemptions/log-migration-$environment-$($assignment.Name)"
                 @{ ResourceId = $id; Existed = [bool](Get-OptionalArmResource -ResourceId $id -ApiVersion '2022-07-01-preview') }
             })
         }
-        # Azureの設定を変える前に、追記したバックアップを一時ファイルへ書き、保存先を置き換える。
+        # --------------------------------------------------
+        # 変更前情報をバックアップへ保存
+        # 追記がある場合は、更新したバックアップを一時ファイルへ書き、保存先を置き換える。
+        # この保存が完了してから、Azureのリソースを作成・更新する。
+        # --------------------------------------------------
         if ($snapshotChanged) {
             $nextBackup = ConvertTo-Json -InputObject $backup -Depth 40 | ConvertFrom-Json
             $nextBackup.Targets = @($nextBackup.Targets | Where-Object SubscriptionId -ne $subscriptionId) + @($snapshot)
@@ -171,9 +201,13 @@ foreach ($target in $targets) {
         }
         Add-MigrationCheck -Target $target -ResourceId $migrationBackupPath -Stage '切戻し用バックアップ' -Success $true -Message '変更前の状態を保存済み'
 
+        # --------------------------------------------------
+        # ポリシー適用除外の作成・確認
+        # 指定された割り当てにWaiverの適用除外を作成し、既存なら対象・除外区分・参照IDを照合する。
+        # 適用除外を確認できないサブスクリプションは、保存先の作成に進まない。
+        # --------------------------------------------------
         $groupId = "/subscriptions/$subscriptionId/resourceGroups/$($target.ResourceGroup)"
         $ready = $true
-        # 指定されたポリシー割り当ての適用除外を作成し、既存なら対象・除外区分を照合する。
         foreach ($assignment in $policyAssignments) {
             $resourceId = "/subscriptions/$subscriptionId/providers/Microsoft.Authorization/policyExemptions/log-migration-$environment-$($assignment.Name)"
             $stage = "ポリシー適用除外"
@@ -193,10 +227,13 @@ foreach ($target in $targets) {
                 Add-MigrationCheck -Target $target -ResourceId $resourceId -Stage $stage -Success $false -Message $_.Exception.Message -Expected $expected
             }
         }
-        # 適用除外に失敗したサブスクリプションは、保存先の作成に進まない。
         if (-not $ready) { throw '保存先の準備に失敗したため、このサブスクリプションの診断設定は複製しません。' }
 
-        # LA・DCR用のプロバイダーを登録する。Storageを作る場合はStorage・Securityも登録する。
+        # --------------------------------------------------
+        # プロバイダー登録とリソースグループの準備
+        # LA・DCR用のプロバイダーを登録し、Storageを使う場合はStorage・Securityも登録する。
+        # 登録を確認した後、CSVのリソースグループを取得し、存在しなければ指定地域に作成する。
+        # --------------------------------------------------
         $namespaces = @("Microsoft.OperationalInsights", "Microsoft.Insights")
         if ($target.Storages.Count -gt 0) { $namespaces += @("Microsoft.Storage", "Microsoft.Security") }
         foreach ($namespace in $namespaces) {
@@ -218,7 +255,6 @@ foreach ($target in $targets) {
         }
         if (-not $ready) { throw '保存先の準備に失敗したため、このサブスクリプションの診断設定は複製しません。' }
 
-        # CSVで指定されたリソースグループを取得し、存在しなければ指定地域に作成する。
         $resourceId = $groupId
         $stage = "リソースグループ"
         try {
@@ -236,7 +272,11 @@ foreach ($target in $targets) {
             throw
         }
 
-        # ログ送信元の地域ごとに、ZRS・インフラ暗号化・バージョン単位の不変性を有効にしたStorageを用意する。
+        # --------------------------------------------------
+        # 地域別Storageの作成・設定
+        # ログ送信元の地域ごとに、ZRS・インフラ暗号化・バージョン単位の不変性を設定する。
+        # 地域・SKU・暗号化・不変性が一致したStorageだけ、既存のIP・仮想ネットワーク規則を残して通信条件を更新する。
+        # --------------------------------------------------
         foreach ($storagePlan in @($target.Storages.Values | Sort-Object Name)) {
             $resourceId = $storagePlan.Id
             $stage = "ストレージアカウント"
@@ -270,11 +310,9 @@ foreach ($target in $targets) {
                     )
                     $storage = Invoke-ArmRequest -ResourceId $resourceId -ApiVersion "2023-05-01"
                 }
-                # 既存Storageの地域・SKU・暗号化・不変性などが計画と違う場合は、そのStorageの処理を止める。
                 if (-not (Test-BaselineValues -Actual $storage -Expected $immutable)) {
                     throw "既存ストレージのID・リージョン・種類・SKU・インフラ暗号化・ALWが一致しません。上書きしません。"
                 }
-                # 既存のIP・仮想ネットワーク規則を残し、既定の拒否とAzureサービスの例外を設定する。
                 $networkAcls = @{}
                 foreach ($property in $storage.properties.networkAcls.PSObject.Properties) { $networkAcls[$property.Name] = $property.Value }
                 $networkAcls.defaultAction = "Deny"
@@ -291,7 +329,10 @@ foreach ($target in $targets) {
                 continue
             }
 
-            # Blobサービスのバージョン管理を有効にする。
+            # --------------------------------------------------
+            # Blobのバージョン管理
+            # 各StorageのBlobサービスでバージョン管理を有効にし、設定値を読み戻して照合する。
+            # --------------------------------------------------
             $resourceId = "$($storagePlan.Id)/blobServices/default"
             $stage = "Blobバージョン管理"
             $expected = @{ properties = @{ isVersioningEnabled = $true } }
@@ -304,7 +345,11 @@ foreach ($target in $targets) {
                 Add-MigrationCheck -Target $target -ResourceId $resourceId -Stage $stage -Success $false -Message $_.Exception.Message -Expected $expected
             }
 
-            # 最終更新から1095日を超えたappendBlobを削除するライフサイクルルールを設定する。
+            # --------------------------------------------------
+            # appendBlobの1095日ライフサイクル
+            # 最終更新から1095日を超えたappendBlobを削除するルールを設定する。
+            # log-append-365とlog-append-1095を1095日のルール1件にそろえ、他の名前のルールは残す。
+            # --------------------------------------------------
             $resourceId = "$($storagePlan.Id)/managementPolicies/default"
             $stage = "ライフサイクル"
             $expected = @{
@@ -315,12 +360,10 @@ foreach ($target in $targets) {
                 }
             }
             try {
-                # log-append-365とlog-append-1095を取得し、1095日のルール1件にそろえる。
                 $managedRuleNames = @($expected.name, "log-append-365")
                 $policy = Get-OptionalArmResource -ResourceId $resourceId -ApiVersion "2023-05-01"
                 $rules = @($policy.properties.policy.rules | Where-Object { $_.name -in $managedRuleNames })
                 if ($rules.Count -ne 1 -or -not (Test-BaselineValues -Actual $rules[0] -Expected $expected)) {
-                    # 上記2つ以外の名前のルールを残して、1095日のルールを書き戻す。
                     $rules = @($policy.properties.policy.rules | Where-Object { $null -ne $_ -and $_.name -notin $managedRuleNames }) + @($expected)
                     $null = Invoke-ArmRequest -Method Put -ResourceId $resourceId -ApiVersion "2023-05-01" -Body @{ properties = @{ policy = @{ rules = $rules } } }
                     $policy = Invoke-ArmRequest -ResourceId $resourceId -ApiVersion "2023-05-01"
@@ -334,7 +377,10 @@ foreach ($target in $targets) {
                 Add-MigrationCheck -Target $target -ResourceId $resourceId -Stage $stage -Success $false -Message $_.Exception.Message -Expected $expected
             }
 
-            # このStorageでは、サブスクリプション共通の設定にかかわらずDefender for Storageを無効にする。
+            # --------------------------------------------------
+            # Storage単位のDefender設定
+            # サブスクリプション共通の設定にかかわらず、このStorageのDefender for Storageを無効にする。
+            # --------------------------------------------------
             $resourceId = "$($storagePlan.Id)/providers/Microsoft.Security/defenderForStorageSettings/current"
             $stage = "Defender for Storage"
             $expected = @{ properties = @{ isEnabled = $false; overrideSubscriptionLevelSettings = $true } }
@@ -348,7 +394,11 @@ foreach ($target in $targets) {
             }
         }
 
-        # Log Analyticsを作成・更新し、保持365日、取込・検索アクセス、リソース権限でのログ参照を設定する。
+        # --------------------------------------------------
+        # Log Analyticsの作成・設定
+        # CSVのワークスペースを作成・更新し、保持365日、取込・検索アクセス、リソース権限でのログ参照を設定する。
+        # 既存ワークスペースの地域が違う場合は停止する。features内の他の設定は残す。
+        # --------------------------------------------------
         $resourceId = $target.WorkspaceId
         $stage = "Log Analytics"
         $expected = @{
@@ -385,7 +435,11 @@ foreach ($target in $targets) {
             Add-MigrationCheck -Target $target -ResourceId $resourceId -Stage $stage -Success $false -Message $_.Exception.Message -Expected $expected
             throw
         }
-        # VM・VMSSの収集対象がある場合は、Event・Syslogテーブルの総保持期間を1095日にする。
+        # --------------------------------------------------
+        # Event・Syslogの総保持期間を設定
+        # VM・VMSSの収集対象がある場合は、両テーブルの総保持期間を1095日にし、作成・更新の完了を待つ。
+        # 既存の分析保持期間・スキーマ・プランを残し、総保持期間が1095日の明示設定か読み戻して確認する。
+        # --------------------------------------------------
         if ($target.Collectors.Count -gt 0) {
             $tablesReady = $true
             foreach ($name in @("Event", "Syslog")) {
@@ -395,7 +449,6 @@ foreach ($target in $targets) {
                 try {
                     $table = Get-OptionalArmResource -ResourceId $resourceId -ApiVersion "2025-07-01"
                     $deadline = (Get-Date).AddMinutes(5)
-                    # 作成・更新中のテーブルは、最大5分間、完了を待ってから保持期間を設定する。
                     while ($table -and $table.properties.provisioningState -ne "Succeeded") {
                         if ((Get-Date) -ge $deadline -or $table.properties.provisioningState -in @("Failed", "Canceled", "Deleting")) {
                             throw "VMログテーブルが利用できません: state=$($table.properties.provisioningState)"
@@ -410,7 +463,6 @@ foreach ($target in $targets) {
                     }
                     elseif ($table.properties.totalRetentionInDays -ne 1095 -or
                         ($null -ne $table.properties.totalRetentionInDaysAsDefault -and $table.properties.totalRetentionInDaysAsDefault -ne $false)) {
-                        # 既存テーブルには総保持期間だけをPATCHし、分析保持期間・スキーマ・プランは残す。
                         $null = Invoke-ArmRequest -Method Patch -ResourceId $resourceId -ApiVersion "2025-07-01" -Body @{ properties = @{ totalRetentionInDays = 1095 } }
                         $table = Invoke-ArmRequest -ResourceId $resourceId -ApiVersion "2025-07-01"
                     }
@@ -432,7 +484,11 @@ foreach ($target in $targets) {
                 }
             }
 
-            # Event・Syslogを新LAへ送るDCRを作成・更新し、宛先テーブルの反映待ちなら再試行する。
+            # --------------------------------------------------
+            # 新DCRの作成・設定
+            # Event・Syslogテーブルの準備ができたら、新LAへ送るDCRを作成・更新する。
+            # InvalidOutputTableの場合は宛先テーブルの反映を待って再試行し、それ以外の失敗は記録する。
+            # --------------------------------------------------
             $dcrName = $target.WorkspaceName -replace '^log', 'dcr'
             $dcrId = "$groupId/providers/Microsoft.Insights/dataCollectionRules/$dcrName"
             $body = Get-MigrationDcrBody -Target $target
@@ -462,7 +518,11 @@ foreach ($target in $targets) {
                 $ready = $false
                 Add-MigrationCheck -Target $target -ResourceId $resourceId -Stage $stage -Success $false -Message $_.Exception.Message -Expected $expected
             }
-            # 各収集対象に新DCRを関連付け、更新完了後の参照先が新DCRか確認する。
+            # --------------------------------------------------
+            # 収集対象を新DCRに関連付け
+            # 新DCRの準備ができたら、各収集対象に関連付けを作成・更新する。
+            # 更新中なら完了を待ち、読み戻した参照先が新DCRか確認する。
+            # --------------------------------------------------
             foreach ($collectorId in $target.Collectors) {
                 $resourceId = "$collectorId/providers/Microsoft.Insights/dataCollectionRuleAssociations/$dcrName"
                 $stage = "DCR関連付け"
@@ -489,21 +549,23 @@ foreach ($target in $targets) {
             }
         }
         if (-not $ready) { throw '保存先の準備に失敗したため、このサブスクリプションの診断設定は複製しません。' }
-        # すべての保存先・DCRの準備が済んだサブスクリプションで、診断設定の複製を開始する。
+        # --------------------------------------------------
+        # 新診断設定の複製
+        # 旧診断設定を再取得して調査時の内容と照合し、同名の新設定があれば計画と比較する。
+        # 一致する新設定は変更せず、未作成なら旧設定を残して追加・照合する。不一致や件数上限は失敗として記録する。
+        # --------------------------------------------------
         $preparationComplete = $true
         $resourceId = ''
         $stage = '複製処理'
         $expected = $null
         Invoke-DiagnosticBatch -Items $target.DiagnosticPlans.ToArray() -SettingName $newDiagnosticSettingName -Action {
             param($plan, $settingName)
-            # 旧診断設定を読み直し、調査時の収集条件・送信先から変わっていないか確認する。
             $settings = @(Get-DiagnosticSettings -ResourceId $plan.ResourceId)
             $source = $plan.SourceSettings[0]
             $currentSource = @($settings | Where-Object { $_.name -eq $source.name })
             if ($currentSource.Count -ne 1 -or (Get-DiagnosticSignature -Setting $currentSource[0]) -cne $plan.SourceSignature) {
                 throw "旧設定が調査後に変更されています。古い内容では複製しません。"
             }
-            # 同名の新設定が計画と一致すればスキップし、異なればそのリソースの複製を止める。
             $existing = @($settings | Where-Object { $_.name -eq $settingName })
             if ($existing.Count -gt 0) {
                 if ($existing.Count -ne 1 -or (Get-DiagnosticSignature -Setting $existing[0]) -cne $plan.NewSignature) {
@@ -511,7 +573,6 @@ foreach ($target in $targets) {
                 }
                 return "既存設定と一致・変更なし"
             }
-            # 診断設定の件数上限を確認し、旧設定を残したまま新設定を作成して読み戻す。
             if ($settings.Count -ge 5) { throw "診断設定が上限の5件です。旧設定は残します。" }
             $newId = "$($plan.ResourceId)/providers/Microsoft.Insights/diagnosticSettings/$([Uri]::EscapeDataString($settingName))"
             $null = Invoke-ArmRequest -Method Put -ResourceId $newId -ApiVersion "2021-05-01-preview" -Body @{ properties = $plan.Expected }
@@ -521,7 +582,10 @@ foreach ($target in $targets) {
             }
             "複製・確認完了"
         } | ForEach-Object {
-            # 各リソースの複製結果を、成功記録または手動対応用の失敗記録に追加する。
+            # --------------------------------------------------
+            # リソースごとの複製結果を記録
+            # 複製の成功結果を確認一覧に、取得・作成・照合の失敗を手動対応用の失敗一覧に追加する。
+            # --------------------------------------------------
             if ($_.Error) {
                 Add-MigrationFailure -Target $target -ResourceId $_.Item.ResourceId -Stage "診断設定の複製" -Message $_.Error -Expected $_.Item.Expected
             }
@@ -532,11 +596,14 @@ foreach ($target in $targets) {
         }
     }
     catch {
+        # --------------------------------------------------
+        # サブスクリプションの失敗と未実施を記録
         # 準備項目で未記録の例外、または複製開始後の例外を失敗として記録する。
+        # 準備に失敗した場合は、一致する新設定が既にあるリソースを除き、複製未実施として記録する。
+        # --------------------------------------------------
         if ($preparationComplete -or $script:failures.Count -eq $failureCountBefore) {
             Add-MigrationFailure -Target $target -ResourceId $resourceId -Stage $stage -Message $_.Exception.Message -Expected $expected
         }
-        # 準備に失敗した場合は、一致する新設定が既にあるリソースを除き、複製未実施として記録する。
         if (-not $preparationComplete) {
             foreach ($plan in $target.DiagnosticPlans) {
                 if (@($plan.NewSettings).Count -eq 1 -and
@@ -547,6 +614,10 @@ foreach ($target in $targets) {
         }
     }
 }
-# 全サブスクリプションの確認結果・失敗を出力し、後続のverify・deleteの順序を表示する。
+# --------------------------------------------------
+# 確認結果と失敗一覧の出力
+# 確認結果・失敗をCSVへ出力し、失敗があれば例外で終了する。
+# 成功時は旧設定を保持していることと、verify・deleteの実行順を表示する。
+# --------------------------------------------------
 Complete-MigrationStep -Step "copy" -IncludeChecks
 Write-Host "旧設定を保持しています。verifyで全件確認してから、deleteを実行してください。"

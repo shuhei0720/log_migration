@@ -3,8 +3,12 @@ param([string]$BackupPath, [string[]]$SubscriptionIds)
 . (Join-Path $PSScriptRoot 'common.ps1')
 if (-not $BackupPath) { $BackupPath = $migrationBackupPath }
 
-# 診断設定を、Before（変更前）・After（移行後の設定値）と照合する。
-# -Restore指定時は、なくなった旧診断設定をBeforeから復元する。
+# --------------------------------------------------
+# 診断設定の照合と復元
+# 引数: Targetは対象Sub、Diagnosticsは対象ID・旧名・Before/Afterの保存一覧、Restoreは不足する旧設定の復元指定。
+# 処理: Restoreなしは照合のみ。指定時は旧設定をPUT・GETし、不一致や枠不足はErrorに記録する。
+# 戻り値: 対象ごとのItem/Result/Error一覧（ResultはOldPresent/NewPresent）。
+# --------------------------------------------------
 function Invoke-RollbackDiagnostics {
     param([object]$Target, [object[]]$Diagnostics, [switch]$Restore)
     $subscriptionId = $Target.SubscriptionId
@@ -13,15 +17,12 @@ function Invoke-RollbackDiagnostics {
     })
     Invoke-DiagnosticBatch -Items $items -SettingName $newDiagnosticSettingName -Action {
         param($saved, $newName)
-        # 現在の診断設定から、旧設定名と新設定名に一致するものを取り出す。
         $settings = @(Get-DiagnosticSettings -ResourceId $saved.ResourceId)
         $old = @($settings | Where-Object { $_.name -eq $saved.OldName })
         $new = @($settings | Where-Object { $_.name -eq $newName })
-        # 旧設定はBefore、新設定はAfterと比較し、復元用の空き枠も確認する。
         if ($old.Count -gt 1 -or ($old.Count -eq 1 -and (Get-DiagnosticSignature $old[0]) -cne (Get-DiagnosticSignature $saved.Before))) { throw '同名の旧診断設定が前値と異なります。上書きしません。' }
         if ($new.Count -gt 1 -or ($new.Count -eq 1 -and (Get-DiagnosticSignature $new[0]) -cne (Get-DiagnosticSignature $saved.After))) { throw '新診断設定が移行時の完成形と異なります。削除しません。' }
         if ($old.Count -eq 0 -and $settings.Count -ge 5) { throw '旧設定を復元する空きがありません。新設定は残します。' }
-        # なくなった旧設定を書き戻し、再取得した内容をBeforeと照合する。
         if ($old.Count -eq 0 -and $saved.Restore) {
             $id = "$($saved.ResourceId)/providers/Microsoft.Insights/diagnosticSettings/$([Uri]::EscapeDataString($saved.OldName))"
             $null = Invoke-ArmRequest -Method Put -ResourceId $id -ApiVersion '2021-05-01-preview' -Body @{ properties = $saved.Before }
@@ -32,15 +33,18 @@ function Invoke-RollbackDiagnostics {
     }
 }
 
-# DCR・関連付けの現在値が、移行時に保存したAfterと一致するか確認する。
+# --------------------------------------------------
+# DCR・関連付けの変更確認
+# 引数: Currentは現在値、After/Beforeは移行後/変更前の保存値。
+# 処理: Afterと部分比較し、Afterにある収集元・宛先・フローは逆向きにも比較して追加を検出する。
+# 戻り値: bool。Azure変更なし。Afterにない任意項目はBeforeとの一致を必要とする。
+# --------------------------------------------------
 function Test-RollbackAfter {
     param([object]$Current, [object]$After, [object]$Before)
     if (-not (Test-BaselineValues $Current $After)) { return $false }
-    # 収集元・宛先・フローに、移行後の追加や変更がないか比較する。
     foreach ($key in @('dataSources','destinations','dataFlows')) {
         if ($null -ne $After.properties.$key -and -not (Test-BaselineValues $After.properties.$key $Current.properties.$key)) { return $false }
     }
-    # Afterにない任意項目は、Beforeの値が残っている場合だけ許可する。
     foreach ($key in @('dataCollectionEndpointId','streamDeclarations','description')) {
         if ($null -eq $After.properties.$key -and $null -ne $Current.properties.$key -and
             -not ((Test-BaselineValues $Current.properties.$key $Before.properties.$key) -and (Test-BaselineValues $Before.properties.$key $Current.properties.$key))) { return $false }
@@ -48,7 +52,12 @@ function Test-RollbackAfter {
     $true
 }
 
-# 復元したDCR・関連付けを2秒間隔で再取得し、更新完了を待つ（最大15回）。
+# --------------------------------------------------
+# DCR・関連付けの更新待ち
+# 引数: ResourceIdは取得先ID、Associationは関連付け用の設定を返す指定。
+# 処理: 2秒間隔・最大15回GETする。Azure変更なし。更新未完了なら例外。
+# 戻り値: 読み取り専用項目を除いたPUT用設定。未取得なら$null。
+# --------------------------------------------------
 function Wait-RollbackResource {
     param([string]$ResourceId, [switch]$Association)
     for ($attempt = 0; $attempt -lt 15; $attempt++) {
@@ -59,7 +68,11 @@ function Wait-RollbackResource {
     Get-RollbackBody $restored -Association:$Association -RequireReady
 }
 
-# 1. バックアップを読み込み、指定されたサブスクリプションを選ぶ。
+# --------------------------------------------------
+# バックアップと対象サブスクリプションの読込
+# バックアップを読み込み、SubscriptionIdsで指定した対象を選ぶ。
+# 指定の空値・重複・バックアップ外のIDを確認し、指定がなければ全対象を選ぶ。
+# --------------------------------------------------
 $resourceId = $BackupPath
 $expected = $null
 try {
@@ -71,18 +84,20 @@ try {
     $targets = @($backup.Targets | Where-Object { -not $SubscriptionIds -or $_.SubscriptionId -in $SubscriptionIds })
     $states = @{}
     $resources = [Collections.Generic.List[object]]::new()
-    # 診断設定とDCR・関連付けの現在値を、Before・Afterと照合する。
+    # --------------------------------------------------
+    # 現在値と保存値の照合
+    # 旧診断設定・旧DCR関連はBefore、新診断設定はAfterと照合する。
+    # 既存DCR・関連付けの現在値をBefore・Afterと比較して復元対象を記録する。新設DCR本体は残す。
+    # --------------------------------------------------
     foreach ($target in $targets) {
         $subscriptionId = $target.SubscriptionId
         $states[$subscriptionId] = @(Invoke-RollbackDiagnostics -Target $target -Diagnostics @($target.Diagnostics))
         foreach ($result in $states[$subscriptionId]) { if ($result.Error) { $resourceId = $result.Item.ResourceId; $expected = $result.Item.Before; throw "$($result.Item.ResourceId): $($result.Error)" } }
-        # 旧DCR2本への関連が残っている場合は、Beforeと照合する。
         foreach ($oldAssociation in @($target.OldAssociations | Where-Object { $null -ne $_ })) {
             $resourceId = $oldAssociation.ResourceId; $expected = $oldAssociation.Before
             $current = Get-RollbackBody (Get-OptionalArmResource -ResourceId $resourceId) -Association -RequireReady
             if ($current -and -not ((Test-BaselineValues $current $expected) -and (Test-BaselineValues $expected $current))) { throw "旧DCR関連が前値と異なります: $resourceId" }
         }
-        # 既存DCRと関連付けを復元対象にする。今回作成したDCR本体は残す。
         $items = @($target.Dcr | Where-Object { $null -ne $_.Before }) + @($target.Associations)
         foreach ($saved in $items) {
             $resourceId = $saved.ResourceId; $expected = $saved.Before
@@ -94,7 +109,11 @@ try {
         }
     }
 
-    # 2. なくなった旧DCR関連をBeforeから復元する。
+    # --------------------------------------------------
+    # 旧DCR関連の復元と確認
+    # なくなった旧DCR関連をBeforeから復元し、更新完了を待つ。
+    # 全対象の旧DCR関連を再取得し、Beforeと一致することを確認する。
+    # --------------------------------------------------
     foreach ($target in $targets) {
         $subscriptionId = $target.SubscriptionId
         foreach ($saved in @($target.OldAssociations | Where-Object { $null -ne $_ })) {
@@ -108,7 +127,6 @@ try {
             $null = Wait-RollbackResource -ResourceId $resourceId -Association
         }
     }
-    # 全対象の旧DCR関連を再取得し、Beforeと一致することを確認する。
     foreach ($target in $targets) {
         $subscriptionId = $target.SubscriptionId
         foreach ($saved in @($target.OldAssociations | Where-Object { $null -ne $_ })) {
@@ -118,7 +136,11 @@ try {
         }
     }
 
-    # 3. なくなった旧診断設定をBeforeから復元する。
+    # --------------------------------------------------
+    # 旧診断設定の復元
+    # 最初の照合で見つからなかった旧診断設定を、Beforeから復元する。
+    # 復元後の設定を読み戻し、Beforeと一致することを確認する。
+    # --------------------------------------------------
     foreach ($target in $targets) {
         $subscriptionId = $target.SubscriptionId
         $missing = @($states[$subscriptionId] | Where-Object { -not $_.Result.OldPresent } | ForEach-Object { $_.Item })
@@ -126,7 +148,11 @@ try {
             if ($result.Error) { $resourceId = $result.Item.ResourceId; $expected = $result.Item.Before; throw "$($result.Item.ResourceId): $($result.Error)" }
         }
     }
-    # 4. 移行で変更した既存DCR・関連付けをBeforeに戻す。
+    # --------------------------------------------------
+    # 既存DCR・関連付けの切戻し
+    # 直前の現在値を再確認し、変更した既存DCR・関連付けにBeforeを書き戻す。
+    # Beforeがnullの新しい関連付けは削除し、書き戻したリソースは再取得する。
+    # --------------------------------------------------
     foreach ($item in @($resources | Where-Object Restore)) {
         $subscriptionId = $item.Target.SubscriptionId
         $saved = $item.Saved
@@ -134,18 +160,20 @@ try {
         $current = Get-RollbackBody (Get-OptionalArmResource -ResourceId $saved.ResourceId) -Association:$item.Association -RequireReady
         if ((Test-BaselineValues $current $saved.Before) -and (Test-BaselineValues $saved.Before $current)) { continue }
         if ($current -and -not (Test-RollbackAfter $current $saved.After $saved.Before)) { throw "復元直前にDCR・関連付けが変更されています: $($saved.ResourceId)" }
-        # Beforeがnullの関連付けは、今回追加したものなので削除する。
         if ($null -eq $saved.Before) {
             $null = Invoke-ArmRequest -Method Delete -ResourceId $saved.ResourceId
         }
         else {
-            # 既存のDCR・関連付けはBeforeを書き戻し、再取得する。
             $null = Invoke-ArmRequest -Method Put -ResourceId $saved.ResourceId -Body $saved.Before
             $null = Wait-RollbackResource -ResourceId $saved.ResourceId -Association:$item.Association
         }
     }
 
-    # 5. 全対象の旧診断設定とDCR・関連付けを再取得し、Beforeへの復元を確認する。
+    # --------------------------------------------------
+    # 復元結果の全件確認
+    # 全対象の旧診断設定と、復元対象のDCR・関連付けを再取得する。
+    # すべてBeforeと一致することを確認し、不一致があれば以降の削除を止める。
+    # --------------------------------------------------
     foreach ($target in $targets) {
         $states[$target.SubscriptionId] = @(Invoke-RollbackDiagnostics -Target $target -Diagnostics @($target.Diagnostics))
         foreach ($result in $states[$target.SubscriptionId]) {
@@ -160,13 +188,16 @@ try {
         if (-not ((Test-BaselineValues $current $item.Saved.Before) -and (Test-BaselineValues $item.Saved.Before $current))) { throw "DCR・関連付けの復元後の読み戻しが一致しません: $($item.Saved.ResourceId)" }
     }
 
-    # 6. 旧設定の復元確認後、新診断設定を削除する。
+    # --------------------------------------------------
+    # 新診断設定の削除
+    # 旧設定の復元を全件確認した後、移行で追加した新診断設定を削除する。
+    # 削除直前にも旧設定をBefore、新設定をAfterと照合する。
+    # --------------------------------------------------
     foreach ($target in $targets) {
         $subscriptionId = $target.SubscriptionId
         foreach ($result in @($states[$subscriptionId] | Where-Object { $_.Result.NewPresent })) {
             $saved = $result.Item
             $resourceId = $saved.ResourceId; $expected = $saved.Before
-            # 削除直前に、旧設定をBefore、新設定をAfterともう一度照合する。
             $settings = @(Get-DiagnosticSettings -ResourceId $saved.ResourceId)
             $old = @($settings | Where-Object { $_.name -eq $saved.OldName })
             $new = @($settings | Where-Object { $_.name -eq $newDiagnosticSettingName })
@@ -178,7 +209,11 @@ try {
             Write-Host "新設定削除OK: $($saved.ResourceId)"
         }
     }
-    # 7. 今回追加したポリシー適用除外（Waiver）を削除する。
+    # --------------------------------------------------
+    # 今回追加したWaiverの解除
+    # 移行前には存在しなかったポリシー適用除外だけを削除する。
+    # 削除前に対象割り当て・Waiverの条件・参照IDを確認する。
+    # --------------------------------------------------
     foreach ($target in $targets) {
         $subscriptionId = $target.SubscriptionId
         foreach ($saved in @($target.Exemptions | Where-Object { -not $_.Existed })) {
@@ -186,7 +221,6 @@ try {
             $current = Get-OptionalArmResource -ResourceId $saved.ResourceId -ApiVersion '2022-07-01-preview'
             if (-not $current) { continue }
             $assignment = @($policyAssignments | Where-Object { $saved.ResourceId.EndsWith($_.Name) })[0]
-            # 除外の対象割り当て・Waiverの条件・参照IDを確認してから削除する。
             Assert-PolicyExemption -Exemption $current -Assignment $assignment
             $null = Invoke-ArmRequest -Method Delete -ResourceId $saved.ResourceId -ApiVersion '2022-07-01-preview'
         }
@@ -195,5 +229,8 @@ try {
 catch {
     Add-MigrationFailure -Target $target -ResourceId $resourceId -Stage '切戻し' -Message $_.Exception.Message -Expected $expected
 }
-# 切戻し結果とエラーを出力する。
+# --------------------------------------------------
+# 切戻し結果の出力
+# 切戻しの結果とエラーを出力する。
+# --------------------------------------------------
 Complete-MigrationStep -Step 'rollback'
