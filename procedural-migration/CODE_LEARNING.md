@@ -98,45 +98,49 @@ Sub名またはIDに一致する候補を選び、ちょうど1件か確認し�
 
 CSVが空、または同じSubが複数行なら停止します。Storage名を指定した行があれば、MicrosoftのAzure Naming Toolの地域略称一覧を取得します。後で`jpe`を各地域のshortNameへ置き換えるためのデータです。
 
-### 374～619行：Get-MigrationPlanの中を読む
+### 374～632行：Get-MigrationPlanの中を読む
 
 **375～385行｜`$plan = @{`**
 
 入力はCSVの1行`Target`、保存済みの`Record`、旧設定だけを調べる`OnlyOldSettings`です。ContextとTargetを入れ、Destinations・NewSettings・OldSettingsを空の一覧で始めます。調査結果を足して返します。
 
-**390～417行｜`while ($resourcePage)`**
+**390～414行｜`while ($resourcePage)`**
 
-リソース一覧を1ページずつ取得します。`$resourceLocations[リソースID]=地域`の辞書に入れ、Storageなら種類に応じたBlob/File/Queue/Tableの子IDも追加します。`$page.nextLink`があれば次ページへ進み、なくなったらwhileを抜けます。
+リソース一覧を取得し、`$resourceLocations[リソースID]=地域`の辞書に入れます。Storageなら種類に応じたBlob/File/Queue/Tableの子IDも、親と同じ地域で追加します。
 
-**418～437行｜`$resourceLocations.Keys | ForEach-Object -Parallel`**
+**418～430行｜`$resource.type -eq 'Microsoft.Cache/redisEnterprise'`**
+
+通常一覧に載らないRedisの子DBは、親の`databases` API（2025-04-01）で列挙します。返された各DBのIDを親の地域とともに辞書へ追加し、`$databases.nextLink`があれば次ページも読みます。その後、`$page.nextLink`で通常一覧の次ページへ進みます。
+
+**431～450行｜`$resourceLocations.Keys | ForEach-Object -Parallel`**
 
 辞書のIDを最大5件ずつ調べます。`$_`は現在のリソースID、`$using:...`は外側から渡す値です。各処理の中でもcommonを読みますが、`-SkipCsv`でCSVの再読込みを省きます。全診断をSettingsへ、そのうち移行元ワークスペース宛てだけをSourcesへ入れ、1リソース分のresultを返します。
 
-**438～458行｜`$diagnosticSources = @($listedSettings`**
+**451～471行｜`$diagnosticSources = @($listedSettings`**
 
 結果件数の不足と調査失敗を先に確認します。診断非対応を表すResourceTypeNotSupported以外の失敗は停止します。Sourcesのあるリソースだけを選び、旧診断のId・Kind・BodyをOldSettingsへ追加します。例の`old-setting`の設定値がここに入り、地域が空/globalなら東日本にそろえます。
 
-**464～490行｜`foreach ($oldDcrId in $oldDcrIds)`**
+**477～503行｜`foreach ($oldDcrId in $oldDcrIds)`**
 
 旧DCR2つの関連一覧をページごとに読みます。このSub以外の関連は`continue`で飛ばし、このSubのものは本体も取得して参照先が同じか確認します。例の`vm-app`の旧関連をKind=AssociationでOldSettingsへ足します。`OnlyOldSettings`付きなら、ここでplanを返して後半へ進みません。
 
-**496～528行｜`atScope()`**
+**509～541行｜`atScope()`**
 
 このSubへ適用される割り当てを集め、指定3件が含まれるか確認します。3件目のイニシアティブ定義を取得し、12参照IDが実際にあるか確認します。同じ定義は変数に保持して再取得を省きます。その後、作成先のID・地域などを入れるDiscoveryを空で作ります。
 
-**533～551行｜`$storageLocations = @($diagnosticSources.Location`**
+**546～564行｜`$storageLocations = @($diagnosticSources.Location`**
 
 Storage名がある場合、旧診断対象の地域を重複なしで取り出します。対象がなければ東日本1つです。地域のshortNameで名前の`jpe`だけを置き換え、変換後の長さとZRS対応も確認します。例では東日本の`stjpearchive001`、西日本の対象もあれば`stjpwarchive001`を予定します。
 
-**552～567行｜`if ($storageId -notin @($Record.Destinations.Id))`**
+**565～580行｜`if ($storageId -notin @($Record.Destinations.Id))`**
 
 自分の記録にないStorageは、Azure全体の名前の空きを確認し、使用済みなら停止します。途中停止後の再実行では、記録に載っているIDだけこの初回チェックを省きます。Id・Name・LocationをDiscovery.Storagesへ追加します。
 
-**573～592行｜`$Target.VmLogDestination -eq 'Log'`**
+**586～605行｜`$Target.VmLogDestination -eq 'Log'`**
 
 旧関連があり、VM送信を続ける場合だけ新DCRと新関連のIDを用意します。`-replace '^log', 'dcr'`で例のlog-appはdcr-appになります。旧関連IDからVM/VMSS IDを取り出し、重複を除いて親ごとに新関連を予定します。
 
-**593～619行｜`if ($Target.LogDestination -in @('Storage', 'Log'))`**
+**606～632行｜`if ($Target.LogDestination -in @('Storage', 'Log'))`**
 
 診断送信を続ける場合だけ新診断のIDを用意します。対象旧診断が1リソースに複数ある場合、新旧同名、記録のない同名新設定、5枠満杯を拒否します。診断のId・対応するOldId・地域をDiscovery.Diagnosticsへ追加します。None/空欄ならこの一覧は空です。Discovery付きplanを返し、呼出し元へ戻ります。
 

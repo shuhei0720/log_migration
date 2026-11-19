@@ -385,7 +385,7 @@ function Get-MigrationPlan {
     }
 
     # ---
-    # 通常のリソース一覧にStorageの子サービスを加え、旧診断設定を探す。
+    # 通常のリソース一覧にStorage・Redisの子リソースを加え、旧診断設定を探す。
     # ---
     $resourceLocations = @{}
     $resourcePage = "https://management.azure.com/subscriptions/$subscriptionId/resources?api-version=2021-04-01"
@@ -410,6 +410,19 @@ function Get-MigrationPlan {
                 }
                 foreach ($service in $services) {
                     $resourceLocations["$($resource.id)/$service/default"] = $resource.location
+                }
+            }
+            # ---
+            # 一覧に出ないRedisの子DBを実APIから追加し、親のリージョンを引き継ぐ。
+            # ---
+            if ($resource.type -eq 'Microsoft.Cache/redisEnterprise') {
+                $databasePage = "https://management.azure.com$($resource.id)/databases?api-version=2025-04-01"
+                while ($databasePage) {
+                    $databases = Invoke-ArmRequest -ResourceId $databasePage
+                    foreach ($database in $databases.value) {
+                        $resourceLocations[$database.id] = $resource.location
+                    }
+                    $databasePage = $databases.nextLink
                 }
             }
         }
