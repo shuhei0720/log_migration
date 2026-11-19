@@ -1,6 +1,6 @@
 # リソース網羅テストの環境
 
-`resource_types_fixture.ps1`と`resource_types.arm.json`で、2サブスクリプションへ検証資源を分散配置します。PowerShell 7と、Ownerでログイン済みのAzure CLIを使います。現在の候補はLOCAL確認済みですが、5操作を通すAzure実機確認は未実施です。実機検証済みの完成版としては扱わないでください。追加のAzure環境作成とテストは停止しています。
+`resource_types_fixture.ps1`と`resource_types.arm.json`で、2サブスクリプションへ検証資源を分散配置します。PowerShell 7と、Ownerでログイン済みのAzure CLIを使います。現在の候補はLOCAL確認済みですが、5操作を通すAzure実機確認は未実施です。実機検証済みの完成版としては扱わないでください。追加のAzure環境作成とテストは停止しています。作成済みリソース・RGは両Subとも0件まで撤去済みで、元の登録状態への復元を仕上げています。次の配置はコード完成の報告・利用者レビュー後に行います。
 
 ## 指定する値
 
