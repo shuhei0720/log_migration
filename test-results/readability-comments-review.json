@@ -1,0 +1,271 @@
+{
+  "kind": "CommentOnlyChangeVerification",
+  "result": "PASS",
+  "verifiedAtUtc": "2026-11-19T00:51:19.5301987Z",
+  "baselineCommit": "7c606c5",
+  "testedSourceManifestSha256": "607e39695c328189aae8d39b1bc0dd9d258c8599d4e78d9b1be941a50cc53c7d",
+  "verificationRuntime": "7.5.4",
+  "files": [
+    {
+      "path": "migration/common.ps1",
+      "beforeSha256": "3dcc368cb6971f36f3dcd4cb9da79684a7fb3520b2507c77f567b63093a72b2a",
+      "afterSha256": "9162e94f95eefc87611fd366564710d25f08353c7b59918b71adea37e82ffd9c",
+      "nonCommentTokensIdentical": true,
+      "executableLinesIdentical": true,
+      "tokenCount": 5426,
+      "codeTokensSha256": "857918107b6e2b3e7670b0d2e72a57c36cd2d8387d021bfe571047f39f6abb0f",
+      "parserErrors": 0,
+      "requiresDirectiveUnchanged": true,
+      "utf8BomPreserved": true,
+      "lfPreserved": true,
+      "beforeCommentCount": 44,
+      "afterCommentCount": 73
+    },
+    {
+      "path": "migration/precheck.ps1",
+      "beforeSha256": "3d47d77251ee26496e1db5b031a5634d4620d1a6f2d61cb9928ebdfff5e8a894",
+      "afterSha256": "7b2332127c020b123169387724d01bf281b2180ce3e29955492070d6f1bbe49c",
+      "nonCommentTokensIdentical": true,
+      "executableLinesIdentical": true,
+      "tokenCount": 384,
+      "codeTokensSha256": "f1b0ab5be9f4259a1601c9236b1942202dd40b7a7de53df1e338cec3d0a54b33",
+      "parserErrors": 0,
+      "requiresDirectiveUnchanged": true,
+      "utf8BomPreserved": true,
+      "lfPreserved": true,
+      "beforeCommentCount": 5,
+      "afterCommentCount": 9
+    },
+    {
+      "path": "migration/step1_copy.ps1",
+      "beforeSha256": "bce80e400bef75983f6e8002d588fc249413a3092035a88bbd86dd0b8edbb6f6",
+      "afterSha256": "e28fb23dc006d2838f3d9559d662f8ce850a3bbeec1ec7ffe29d80d0ec068747",
+      "nonCommentTokensIdentical": true,
+      "executableLinesIdentical": true,
+      "tokenCount": 3937,
+      "codeTokensSha256": "8565a96a5e86d05925cb4e5d9e1f79a0d70afe02ebee3c87a7407acfdbe963a0",
+      "parserErrors": 0,
+      "requiresDirectiveUnchanged": true,
+      "utf8BomPreserved": true,
+      "lfPreserved": true,
+      "beforeCommentCount": 13,
+      "afterCommentCount": 39
+    },
+    {
+      "path": "migration/step2_verify.ps1",
+      "beforeSha256": "dd764c49df8585864be012c45fd00e0a34a503459605c34e204cee471e280353",
+      "afterSha256": "d822d27ec405e15de044ced2f135bed06745c43765fadbb91ad5e3839cb620da",
+      "nonCommentTokensIdentical": true,
+      "executableLinesIdentical": true,
+      "tokenCount": 1407,
+      "codeTokensSha256": "f76999130ce94847d610c6e9b844ec6c1c8ac0d2a314b8c70461f30a4a4749f9",
+      "parserErrors": 0,
+      "requiresDirectiveUnchanged": true,
+      "utf8BomPreserved": true,
+      "lfPreserved": true,
+      "beforeCommentCount": 16,
+      "afterCommentCount": 22
+    },
+    {
+      "path": "migration/step3_delete.ps1",
+      "beforeSha256": "367648cb937726965f88e279f363b46a5728134fc225d2c7e1bf6667930ed05a",
+      "afterSha256": "c203fdc55b5a11aa89a43fd54fda8720aeb1c3d736828b3577689030bb86eb6b",
+      "nonCommentTokensIdentical": true,
+      "executableLinesIdentical": true,
+      "tokenCount": 1753,
+      "codeTokensSha256": "aa8357644747dc313c9070c6e24b50e012e596b06939a19d0c16e5e47bed221c",
+      "parserErrors": 0,
+      "requiresDirectiveUnchanged": true,
+      "utf8BomPreserved": true,
+      "lfPreserved": true,
+      "beforeCommentCount": 19,
+      "afterCommentCount": 29
+    },
+    {
+      "path": "migration/rollback.ps1",
+      "beforeSha256": "c15f547f45dd4119aa0c16da75446b70a0d8e81b5773187ebe65a62adf3d3a2f",
+      "afterSha256": "2f9efe0541f8955125653e1efe33b2b59b59188b56377b351c625de9677fc9ac",
+      "nonCommentTokensIdentical": true,
+      "executableLinesIdentical": true,
+      "tokenCount": 1749,
+      "codeTokensSha256": "8b69b480be54ea918beea31108c0de3b065c30ef9da90daa8aafef138431e5bb",
+      "parserErrors": 0,
+      "requiresDirectiveUnchanged": true,
+      "utf8BomPreserved": true,
+      "lfPreserved": true,
+      "beforeCommentCount": 13,
+      "afterCommentCount": 26
+    }
+  ],
+  "azureRequests": 0,
+  "productScriptsExecuted": 0,
+  "functionalSuitesRepeated": false,
+  "note": "All executable lines, non-comment tokens, requires directives and encoding match the previously tested version.",
+  "currentSourceManifestSha256": "935ac7b1c0c694fec4b3f7444c4e2c8cf2d5dff175fba3c4b2cd244e92d080ed",
+  "testedManifestEntries": [
+    {
+      "path": "migration/common.ps1",
+      "sha256": "3dcc368cb6971f36f3dcd4cb9da79684a7fb3520b2507c77f567b63093a72b2a"
+    },
+    {
+      "path": "migration/precheck.ps1",
+      "sha256": "3d47d77251ee26496e1db5b031a5634d4620d1a6f2d61cb9928ebdfff5e8a894"
+    },
+    {
+      "path": "migration/step1_copy.ps1",
+      "sha256": "bce80e400bef75983f6e8002d588fc249413a3092035a88bbd86dd0b8edbb6f6"
+    },
+    {
+      "path": "migration/step2_verify.ps1",
+      "sha256": "dd764c49df8585864be012c45fd00e0a34a503459605c34e204cee471e280353"
+    },
+    {
+      "path": "migration/step3_delete.ps1",
+      "sha256": "367648cb937726965f88e279f363b46a5728134fc225d2c7e1bf6667930ed05a"
+    },
+    {
+      "path": "migration/rollback.ps1",
+      "sha256": "c15f547f45dd4119aa0c16da75446b70a0d8e81b5773187ebe65a62adf3d3a2f"
+    },
+    {
+      "path": "tests/regression.ps1",
+      "sha256": "dbb273dface3689c2f52faeb353fcaf17fe304523d37e4a85879c5bd3ad45923"
+    },
+    {
+      "path": "tests/baseline-smoke.ps1",
+      "sha256": "0717612af406730a22e287c82ced1c04ba2c344b368761c1a57ff972bc4af6f6"
+    },
+    {
+      "path": "tests/lifecycle-request-replay.ps1",
+      "sha256": "9c522a37ff50c3fdbf1ff888229ce42b898f8e6a4953b0d0b9b49ae99a7c51e9"
+    },
+    {
+      "path": "tests/backup-rollback-smoke.ps1",
+      "sha256": "146aa2083d303172e35e7452f10aff2878e2656551bcd8d5bd593581c5fc6783"
+    },
+    {
+      "path": "tests/dcr-cutover-smoke.ps1",
+      "sha256": "cc207612bf27029f504b9c7d7c5555ee135942548746a37376306decb6e53ab7"
+    },
+    {
+      "path": "tests/fixtures/baseline-shapes/dcr.json",
+      "sha256": "0d6fad967df98aadb846f9863b58caa0cc0026f2458e9f73bbd84f2993334589"
+    },
+    {
+      "path": "tests/fixtures/baseline-shapes/index.json",
+      "sha256": "be73ee5440619a03b7d0b7d6f010c1269b65c7016c0c3c9a55c760729a54a3c1"
+    },
+    {
+      "path": "tests/fixtures/baseline-shapes/storage-account.json",
+      "sha256": "12e4600d7c39a72c87ca9002a014ad167e22713d0eb24e10d25d8dfd11ec9c0a"
+    },
+    {
+      "path": "tests/fixtures/baseline-shapes/storage-blob.json",
+      "sha256": "72788bae92e1e46f93f8301e061f08436b51a059a9ba147cbe3b387175e51f78"
+    },
+    {
+      "path": "tests/fixtures/baseline-shapes/storage-defender.json",
+      "sha256": "3c94bb78cf54f458e0da630eae703e8ab0355ddd60d118b0251dfefb9425ffb7"
+    },
+    {
+      "path": "tests/fixtures/baseline-shapes/storage-lifecycle.json",
+      "sha256": "136d8f2fbefacef10993ab63d9824b1f4a7ef6feb846d8f51a80cd4a48e81bb3"
+    },
+    {
+      "path": "tests/fixtures/baseline-shapes/table-Event.json",
+      "sha256": "02ab149f3fface99d67b699fd4f27bd06bfb6d3bf2d20e972d29ad02b13c7da1"
+    },
+    {
+      "path": "tests/fixtures/baseline-shapes/table-Syslog.json",
+      "sha256": "4cf2d466600b49e901ef7a43f37cc10da45d763f0043e76caa0068c1a6ddd863"
+    },
+    {
+      "path": "tests/fixtures/baseline-shapes/workspace.json",
+      "sha256": "74d22e3661e410beb37f1432b0e6c695c5d5145ae7a6959c0cbeab94e652c60a"
+    }
+  ],
+  "currentManifestEntries": [
+    {
+      "path": "migration/common.ps1",
+      "sha256": "9162e94f95eefc87611fd366564710d25f08353c7b59918b71adea37e82ffd9c"
+    },
+    {
+      "path": "migration/precheck.ps1",
+      "sha256": "7b2332127c020b123169387724d01bf281b2180ce3e29955492070d6f1bbe49c"
+    },
+    {
+      "path": "migration/step1_copy.ps1",
+      "sha256": "e28fb23dc006d2838f3d9559d662f8ce850a3bbeec1ec7ffe29d80d0ec068747"
+    },
+    {
+      "path": "migration/step2_verify.ps1",
+      "sha256": "d822d27ec405e15de044ced2f135bed06745c43765fadbb91ad5e3839cb620da"
+    },
+    {
+      "path": "migration/step3_delete.ps1",
+      "sha256": "c203fdc55b5a11aa89a43fd54fda8720aeb1c3d736828b3577689030bb86eb6b"
+    },
+    {
+      "path": "migration/rollback.ps1",
+      "sha256": "2f9efe0541f8955125653e1efe33b2b59b59188b56377b351c625de9677fc9ac"
+    },
+    {
+      "path": "tests/regression.ps1",
+      "sha256": "dbb273dface3689c2f52faeb353fcaf17fe304523d37e4a85879c5bd3ad45923"
+    },
+    {
+      "path": "tests/baseline-smoke.ps1",
+      "sha256": "0717612af406730a22e287c82ced1c04ba2c344b368761c1a57ff972bc4af6f6"
+    },
+    {
+      "path": "tests/lifecycle-request-replay.ps1",
+      "sha256": "9c522a37ff50c3fdbf1ff888229ce42b898f8e6a4953b0d0b9b49ae99a7c51e9"
+    },
+    {
+      "path": "tests/backup-rollback-smoke.ps1",
+      "sha256": "146aa2083d303172e35e7452f10aff2878e2656551bcd8d5bd593581c5fc6783"
+    },
+    {
+      "path": "tests/dcr-cutover-smoke.ps1",
+      "sha256": "cc207612bf27029f504b9c7d7c5555ee135942548746a37376306decb6e53ab7"
+    },
+    {
+      "path": "tests/fixtures/baseline-shapes/dcr.json",
+      "sha256": "0d6fad967df98aadb846f9863b58caa0cc0026f2458e9f73bbd84f2993334589"
+    },
+    {
+      "path": "tests/fixtures/baseline-shapes/index.json",
+      "sha256": "be73ee5440619a03b7d0b7d6f010c1269b65c7016c0c3c9a55c760729a54a3c1"
+    },
+    {
+      "path": "tests/fixtures/baseline-shapes/storage-account.json",
+      "sha256": "12e4600d7c39a72c87ca9002a014ad167e22713d0eb24e10d25d8dfd11ec9c0a"
+    },
+    {
+      "path": "tests/fixtures/baseline-shapes/storage-blob.json",
+      "sha256": "72788bae92e1e46f93f8301e061f08436b51a059a9ba147cbe3b387175e51f78"
+    },
+    {
+      "path": "tests/fixtures/baseline-shapes/storage-defender.json",
+      "sha256": "3c94bb78cf54f458e0da630eae703e8ab0355ddd60d118b0251dfefb9425ffb7"
+    },
+    {
+      "path": "tests/fixtures/baseline-shapes/storage-lifecycle.json",
+      "sha256": "136d8f2fbefacef10993ab63d9824b1f4a7ef6feb846d8f51a80cd4a48e81bb3"
+    },
+    {
+      "path": "tests/fixtures/baseline-shapes/table-Event.json",
+      "sha256": "02ab149f3fface99d67b699fd4f27bd06bfb6d3bf2d20e972d29ad02b13c7da1"
+    },
+    {
+      "path": "tests/fixtures/baseline-shapes/table-Syslog.json",
+      "sha256": "4cf2d466600b49e901ef7a43f37cc10da45d763f0043e76caa0068c1a6ddd863"
+    },
+    {
+      "path": "tests/fixtures/baseline-shapes/workspace.json",
+      "sha256": "74d22e3661e410beb37f1432b0e6c695c5d5145ae7a6959c0cbeab94e652c60a"
+    }
+  ],
+  "reviewLineLinksUpdated": 22,
+  "unchangedOtherFiles": 14
+}

@@ -1,7 +1,7 @@
 ﻿#Requires -Version 5.1
 . (Join-Path $PSScriptRoot "common.ps1")
 
-# 同じGET・比較・結果記録を、下の各リソースの確認で繰り返し使います。
+# リソースの現在値と期待値を比較し、更新状態と照合結果を記録する。
 function Confirm-MigrationResource {
     param([object]$Target, [string]$ResourceId, [string]$ApiVersion, [object]$Expected, [string]$Stage)
     try {
@@ -17,39 +17,42 @@ function Confirm-MigrationResource {
 }
 
 
-# Ⅰで保存した全対象を、現在のAzure設定と照合します。
-# この工程ではAzureの設定を変更しません。
+# step1_copyのバックアップを読み、CSVの対象・送信先と照合する。
 try { $backup = Read-MigrationBackup -CheckCsv }
 catch {
     Add-MigrationFailure -Stage 'Ⅰのバックアップ確認' -Message $_.Exception.Message
     Complete-MigrationStep -Step 'verify'
 }
+# CSVの各対象から、現在の旧診断設定・旧DCR関連と移行先を調べる。
 $targets = @(Get-MigrationTargets)
 foreach ($target in $targets) {
     try { $null = Get-MigrationPlan -Target $target }
     catch { Add-MigrationFailure -Target $target -Stage '全件調査' -Message $_.Exception.Message }
 }
+# 調査した旧設定・旧DCR関連を、step1_copyで保存した内容と照合する。
 try {
     if (@($targets | Where-Object { $_.SubscriptionId -notin $backup.Targets.SubscriptionId }).Count -gt 0) { throw 'サブスクリプションの実IDがバックアップにありません。' }
     foreach ($target in $targets) {
         $saved = @($backup.Targets | Where-Object SubscriptionId -eq $target.SubscriptionId)[0]
         $savedCollectors = @($saved.Associations | ForEach-Object { $_.ResourceId -replace '/providers/Microsoft.Insights/dataCollectionRuleAssociations/[^/]+$','' } | Sort-Object)
-        # 削除途中の再実行では旧設定の減少だけを許し、追加・内容の変更は停止します。
+        # 残っている旧診断設定の名前・収集条件・送信先をバックアップと比較する。
         foreach ($plan in $target.DiagnosticPlans) {
             $original = @($saved.Diagnostics | Where-Object { $_.ResourceId -eq $plan.ResourceId -and $_.OldName -eq $plan.SourceName })
             if ($original.Count -ne 1 -or $plan.SourceSignature -cne (Get-DiagnosticSignature $original[0].Before) -or
                 $plan.NewSignature -cne (Get-DiagnosticSignature $original[0].After)) { throw "バックアップ外、または変更された旧診断設定です: $($plan.ResourceId)" }
         }
+        # 残っている旧DCR関連のIDと参照先をバックアップと比較する。
         foreach ($association in $target.OldAssociations) {
             $original = @($saved.OldAssociations | Where-Object ResourceId -eq $association.ResourceId)
             if ($original.Count -ne 1 -or $original[0].Before.properties.dataCollectionRuleId -ne $association.Before.properties.dataCollectionRuleId) { throw "バックアップ外、または参照先が変わった旧DCR関連です: $($association.ResourceId)" }
         }
-        # 旧関連・旧診断が削除済みでも、元の全収集対象・全保存先を確認します。
+        # 削除済みの対象も確認できるよう、収集対象と保存先をバックアップから補う。
         $target.Collectors = $savedCollectors
         foreach ($storage in $saved.Storages) { $target.Storages[$storage.Location] = $storage }
     }
 }
 catch { Add-MigrationFailure -Stage 'Ⅰのバックアップ照合' -Message $_.Exception.Message }
+# バックアップとの不一致があれば、リソースの確認に進まず終了する。
 if ($script:failures.Count -gt 0) { Complete-MigrationStep -Step 'verify' -IncludeChecks }
 foreach ($target in $targets) {
     try {
@@ -57,7 +60,7 @@ foreach ($target in $targets) {
         $savedTarget = @($backup.Targets | Where-Object SubscriptionId -eq $subscriptionId)[0]
         $groupId = "/subscriptions/$subscriptionId/resourceGroups/$($target.ResourceGroup)"
 
-        # ポリシー適用除外。既存の3件が指定した範囲のWaiverか確認します。
+        # 3件のポリシー適用除外について、対象範囲とWaiver指定を確認する。
         foreach ($assignment in $policyAssignments) {
             $resourceId = "/subscriptions/$subscriptionId/providers/Microsoft.Authorization/policyExemptions/log-migration-$environment-$($assignment.Name)"
             $expected = @{ policyAssignmentId = $assignment.Id; exemptionCategory = 'Waiver'; assignmentScopeValidation = 'Default' }
@@ -70,7 +73,7 @@ foreach ($target in $targets) {
             catch { Add-MigrationFailure -Target $target -ResourceId $resourceId -Stage 'ポリシー適用除外' -Message $_.Exception.Message -Expected $expected }
         }
 
-        # プロバイダーは登録状態の参照だけを行います。
+        # 利用するリソースプロバイダーが登録済みか確認する。
         $namespaces = @('Microsoft.OperationalInsights', 'Microsoft.Insights')
         if ($target.Storages.Count -gt 0) { $namespaces += @('Microsoft.Storage', 'Microsoft.Security') }
         foreach ($namespace in $namespaces) {
@@ -83,11 +86,11 @@ foreach ($target in $targets) {
             catch { Add-MigrationFailure -Target $target -ResourceId $resourceId -Stage 'プロバイダー登録' -Message $_.Exception.Message }
         }
 
-        # リソースグループは存在だけを確認します。
+        # 移行先のリソースグループが存在するか確認する。
         Confirm-MigrationResource -Target $target -ResourceId $groupId -ApiVersion '2022-09-01' -Expected @{} -Stage 'リソースグループ'
 
         foreach ($storagePlan in @($target.Storages.Values | Sort-Object Name)) {
-            # リージョン・暗号化・ALW・ネットワークなど、指定した保存先の全条件を確認します。
+            # 保存先の地域・ZRS・暗号化・不変ストレージ・ネットワーク設定を照合する。
             $expected = @{
                 id = $storagePlan.Id; location = $storagePlan.Location; kind = 'StorageV2'; sku = @{ name = 'Standard_ZRS' }
                 properties = @{
@@ -99,10 +102,11 @@ foreach ($target in $targets) {
                 }
             }
             Confirm-MigrationResource -Target $target -ResourceId $storagePlan.Id -ApiVersion '2023-05-01' -Expected $expected -Stage 'ストレージアカウント'
+            # Blobのバージョン管理が有効か確認する。
             $resourceId = "$($storagePlan.Id)/blobServices/default"
             Confirm-MigrationResource -Target $target -ResourceId $resourceId -ApiVersion '2023-05-01' -Expected @{ properties = @{ isVersioningEnabled = $true } } -Stage 'Blobバージョン管理'
 
-            # 対象ルールだけを確認し、別名のライフサイクルルールはそのまま保持します。
+            # appendBlobの削除条件が1095日で、旧365日ルールが残っていないか確認する。
             $resourceId = "$($storagePlan.Id)/managementPolicies/default"
             $expected = @{
                 name = 'log-append-1095'; enabled = $true; type = 'Lifecycle'
@@ -112,7 +116,6 @@ foreach ($target in $targets) {
                 }
             }
             try {
-                # 管理対象の旧365日ルールが残っていないことも確認します。
                 $managedRuleNames = @($expected.name, "log-append-365")
                 $policy = Get-OptionalArmResource -ResourceId $resourceId -ApiVersion '2023-05-01'
                 $rules = @($policy.properties.policy.rules | Where-Object { $_.name -in $managedRuleNames })
@@ -121,12 +124,13 @@ foreach ($target in $targets) {
             }
             catch { Add-MigrationFailure -Target $target -ResourceId $resourceId -Stage 'ライフサイクル' -Message $_.Exception.Message -Expected $expected }
 
+            # このStorageのDefender for Storageが無効で、サブスクリプション共通の設定より優先されるか確認する。
             $resourceId = "$($storagePlan.Id)/providers/Microsoft.Security/defenderForStorageSettings/current"
             $expected = @{ properties = @{ isEnabled = $false; overrideSubscriptionLevelSettings = $true } }
             Confirm-MigrationResource -Target $target -ResourceId $resourceId -ApiVersion '2025-01-01' -Expected $expected -Stage 'Defender for Storage'
         }
 
-        # Log Analyticsは診断設定の宛先がStorageの場合も、VMログ収集用に確認します。
+        # Log Analyticsの地域・保持期間365日・公開アクセス・権限設定を照合する。
         $expected = @{
             location = $location
             properties = @{
@@ -137,13 +141,13 @@ foreach ($target in $targets) {
         Confirm-MigrationResource -Target $target -ResourceId $target.WorkspaceId -ApiVersion '2023-09-01' -Expected $expected -Stage 'Log Analytics'
 
         if ($target.Collectors.Count -gt 0) {
-            # 旧DCRの対象だったVM・VMSSについて、テーブル→新DCR→新関連を確認します。
+            # Event・Syslogテーブルの総保持期間が1095日か確認する。
             foreach ($name in @('Event','Syslog')) {
                 $resourceId = "$($target.WorkspaceId)/tables/$name"
                 $expected = @{ properties = @{ schema = @{ name = $name }; provisioningState = 'Succeeded'; totalRetentionInDays = 1095 } }
                 try {
                     $table = Get-OptionalArmResource -ResourceId $resourceId -ApiVersion '2025-07-01'
-                    # 継承値を未設定として扱い、1095日を明示設定しているか確認します。
+                    # 総保持期間が継承値ではなく、明示設定か確認する。
                     if (-not (Test-BaselineValues -Actual $table -Expected $expected) -or
                         ($null -ne $table.properties.totalRetentionInDaysAsDefault -and $table.properties.totalRetentionInDaysAsDefault -ne $false)) {
                         throw 'テーブルが未作成、更新中、または総保持期間1095日の明示設定と一致しません。'
@@ -152,10 +156,12 @@ foreach ($target in $targets) {
                 }
                 catch { Add-MigrationFailure -Target $target -ResourceId $resourceId -Stage 'VMログテーブル' -Message $_.Exception.Message -Expected $expected }
             }
+            # 新DCRの収集条件・送信先・作成完了状態を照合する。
             $body = Get-MigrationDcrBody -Target $target
             $expected = @{ location = $body.location; properties = $body.properties.Clone() }
             $expected.properties.provisioningState = 'Succeeded'
             Confirm-MigrationResource -Target $target -ResourceId $savedTarget.Dcr.ResourceId -ApiVersion '2024-03-11' -Expected $expected -Stage 'DCR'
+            # 保存済みの各VM・VMSSに、新DCRへの関連があるか確認する。
             foreach ($collectorId in $target.Collectors) {
                 $dcrName = $target.WorkspaceName -replace '^log','dcr'
                 $resourceId = "$collectorId/providers/Microsoft.Insights/dataCollectionRuleAssociations/$dcrName"
@@ -170,7 +176,7 @@ foreach ($target in $targets) {
             }
         }
 
-        # 旧設定が削除済みでも、Ⅰで保存した全対象の新設定を確認します。
+        # バックアップの全対象について、新診断設定の収集条件・送信先を照合する。
         foreach ($saved in $savedTarget.Diagnostics) {
             $settings = @($target.CurrentSettings[$saved.ResourceId] | Where-Object { $_.name -eq $newDiagnosticSettingName })
             $matched = $settings.Count -eq 1 -and (Get-DiagnosticSignature $settings[0]) -ceq (Get-DiagnosticSignature $saved.After)

@@ -5,6 +5,8 @@
 Windows VMの命令実行機能が停止したため、WindowsからのAzure実機確認は事前チェックとコピー部分までです。Windows 5.1の136ケースはAPI応答を再生する回帰試験で、Azure全工程をWindowsから完走した実績とは区別します。
 旧版のWindows 889判定・Azure 74実行・350診断設定の検証は履歴です。現行版の実績としては数えません。最後の54タイプの網羅・負荷テストは、主要6本の完成とユーザーレビュー後に実施します。
 
+コード内のコメントは、各ブロックで何を取得・保存・変更するかが分かる表現に改訂しました。[実行コードが変更されていないことの確認結果](test-results/readability-comments-review.json)も残しています。
+
 本文では、サブスクリプションを「Sub」、リソースグループを「RG」と略します。
 
 ## 1. この処理で何を移すのか
@@ -106,7 +108,7 @@ flowchart LR
 
 ## 3. 実行前に指定する値
 
-[common.ps1冒頭](migration/common.ps1#L3)で、通常は次の2項目を指定します。
+[common.ps1冒頭](migration/common.ps1#L5)で、通常は次の2項目を指定します。
 
 ```powershell
 # 説明用の値です。対象環境の実際の移行元IDへ置き換えます。
@@ -137,7 +139,7 @@ Storageは対象リソースの実リージョン分だけ用意します。`jpe
 
 ### 任意の事前チェックは前日にも使える独立した確認
 
-[事前チェックの本体](migration/precheck.ps1#L4)は、環境のポリシー割り当て・参照ID、現在の対象、新設定名、Storage名とStandard_ZRSの利用可否、診断設定の追加枠などを確認します。同名の新診断設定・Storageは初回事前チェックで停止します。
+[事前チェックの本体](migration/precheck.ps1#L6)は、環境のポリシー割り当て・参照ID、現在の対象、新設定名、Storage名とStandard_ZRSの利用可否、診断設定の追加枠などを確認します。同名の新診断設定・Storageは初回事前チェックで停止します。
 Azureを変更せず、Beforeバックアップも作りません。既存の①バックアップも読み書きしません。前日の事前チェックが成功しても、当日の①は自分で現在値を調べ直します。
 
 ### ①はSubごとに「調査→保存→変更」
@@ -156,12 +158,12 @@ Subは順番に処理します。あるSubの準備に失敗しても他Subの�
 
 ### ②は手動修正後にも使う全件確認
 
-[②](migration/step2_verify.ps1#L20)は、現在のAzureと①の記録の両方を読みます。旧設定が既に削除済みでも、記録した全対象の新設定を確認します。記録外の旧対象の追加や設定変更は停止理由になります。
+[②](migration/step2_verify.ps1#L21)は、現在のAzureと①の記録の両方を読みます。旧設定が既に削除済みでも、記録した全対象の新設定を確認します。記録外の旧対象の追加や設定変更は停止理由になります。
 保存先だけでなく、新診断の収集条件・宛先、新DCR・関連、保持設定、Waiverまで確認します。結果をCSVへ出すだけで、Azureは変更しません。
 
 ### ③は全CSV対象の確認が通るまで削除しない
 
-[③の前半](migration/step3_delete.ps1#L20)は②に相当する確認です。実行時CSVの全Subを確認し、1件でも未完了なら最初のDELETEも行いません。
+[③の前半](migration/step3_delete.ps1#L22)は②に相当する確認です。実行時CSVの全Subを確認し、1件でも未完了なら最初のDELETEも行いません。
 確認後は、**全対象の旧DCR 2本への関連を解除してから、旧診断設定を削除**します。旧DCR本体は削除しません。削除直前も新旧設定を照合し、最初の削除失敗で以後の削除を止めます。
 ③を途中から再実行する場合も全件確認をやり直し、既にない旧設定を除いて残りを処理します。
 
@@ -198,7 +200,7 @@ $backup.Targets[0].Diagnostics | Select-Object ResourceId, OldName, Before, Afte
 | ワークスペース既定値 | `retentionInDays = 365`のまま。 | Event/Syslog以外のテーブルを一律1,095日にはしない。 |
 
 テーブルの**合計1,095日には分析保持期間も含みます**。「分析期間＋さらに1,095日」ではありません。診断設定のログ・メトリック収集条件は旧設定を引き継ぎ、上記の保存先設定で保持期間を扱います。
-実装は [①Storageルール](migration/step1_copy.ps1#L294)、[①Workspace](migration/step1_copy.ps1#L336)、[①Event/Syslog](migration/step1_copy.ps1#L372)。②・③は値の一致を確認するだけです。
+実装は [①Storageルール](migration/step1_copy.ps1#L308)、[①Workspace](migration/step1_copy.ps1#L352)、[①Event/Syslog](migration/step1_copy.ps1#L389)。②・③は値の一致を確認するだけです。
 AzureのAPI単独確認では、EventへのPUTと既存SyslogへのPATCHで合計1,095日を設定できることを確認しました。SyslogのPATCHでは分析保持30日・スキーマ・プランを維持し、Workspace既定値も365日のままでした。Eventは既存の組込テーブルとして応答しており、未存在テーブルの新規作成を確認した結果ではありません。事前チェック〜切戻しの通し確認とは別です。
 
 ## 7. 操作者の進め方と途中停止時の選択
@@ -231,7 +233,7 @@ Windows PowerShell 5.1とAzure CLIを用意し、Ownerとして`az login`済み�
 ```
 
 切戻しの基準は**各対象を①で最初に変更する直前**です。事前チェックは確認だけなので事前チェック実行時のスナップショットへ戻す処理ではありません。
-[rollbackの復元順](migration/rollback.ps1#L91)は旧DCR関連の全件復元・読戻し→旧診断設定復元・読戻し→新側の後片付けです。復元失敗時は新診断設定を残して停止し、同名の異なる設定を上書き・削除しません。
+[rollbackの復元順](migration/rollback.ps1#L98)は旧DCR関連の全件復元・読戻し→旧診断設定復元・読戻し→新側の後片付けです。復元失敗時は新診断設定を残して停止し、同名の異なる設定を上書き・削除しません。
 Storage・Log Analytics・保存済みログ・新規DCR本体は残します。保存先の保持設定も切戻し対象ではありません。以前からあった新側DCR/関連はBeforeへ戻し、今回追加した関連と新診断を外します。既存Waiverは保持し、今回新設したWaiverだけを明示的な切戻し時に削除します。通常の事前チェック〜③ではWaiverを自動削除しません。
 
 ## 8. PowerShellを読むための最小限の見方
@@ -246,7 +248,7 @@ Storage・Log Analytics・保存済みログ・新規DCR本体は残します。
 | `continue` / `throw` | 今の1件を終えて次へ / エラーとして処理を止める。catchがあればそこで記録する。 |
 | `$null = ...` / 行末のバッククォート | 戻り値を画面へ出さない / 次の行も同じ命令の続き。 |
 
-次は読解用の実コード抜粋です。[①の新対象追加](migration/step1_copy.ps1#L83)では、既に記録がある対象を飛ばし、初めての対象に同名新設定があれば止めます。
+次は読解用の実コード抜粋です。[①の新対象追加](migration/step1_copy.ps1#L86)では、既に記録がある対象を飛ばし、初めての対象に同名新設定があれば止めます。
 
 ```powershell
 foreach ($plan in $target.DiagnosticPlans) {
@@ -256,7 +258,7 @@ foreach ($plan in $target.DiagnosticPlans) {
 }
 ```
 
-[①のBlob設定](migration/step1_copy.ps1#L284)の次の表は「propertiesの中のisVersioningEnabledをtrueにする」という期待値です。`@{}`は項目名で値を取り出せる表、`@()`は順番に取り出せる複数値、と読み分けます。
+[①のBlob設定](migration/step1_copy.ps1#L297)の次の表は「propertiesの中のisVersioningEnabledをtrueにする」という期待値です。`@{}`は項目名で値を取り出せる表、`@()`は順番に取り出せる複数値、と読み分けます。
 
 ```powershell
 $expected = @{ properties = @{ isVersioningEnabled = $true } }
@@ -269,7 +271,7 @@ try { $null = Get-MigrationPlan -Target $target }
 catch { Add-MigrationFailure -Target $target -Stage '全件調査' -Message $_.Exception.Message }
 ```
 
-Sub全体は順番に処理します。[共通のバッチ処理](migration/common.ps1#L193)が診断設定の調査・複製などを最大5標準ジョブに分けます。削除も順番に行い、失敗した後の削除を止めます。
+Sub全体は順番に処理します。[共通のバッチ処理](migration/common.ps1#L192)が診断設定の調査・複製などを最大5標準ジョブに分けます。削除も順番に行い、失敗した後の削除を止めます。
 
 今回のLinux実機・2Sub/8対象では、保存先作成済みのコピーが約67～81秒、再実行が約43～54秒、確認が約34～42秒でした。再実行と確認のAzure書込みは0です。保存先やプロバイダーの初回準備は別に時間がかかります。100Subでの所要時間は、最後の網羅・負荷テストの結果も見て判断します。
 
@@ -283,11 +285,11 @@ Sub全体は順番に処理します。[共通のバッチ処理](migration/comm
 
 | 確認したい要件 | 読むコード | テストの例 |
 |---|---|---|
-| 事前チェックは独立・Before不要 | [事前チェック](migration/precheck.ps1#L4) | [backup-rollback](tests/backup-rollback-smoke.ps1#L519)：既存の①backupを読まず確認。 |
-| 各Subの変更前に保存・保存失敗なら書込み0 | [①保存](migration/step1_copy.ps1#L150) | [backup-rollback](tests/backup-rollback-smoke.ps1#L444)、[保存失敗](tests/backup-rollback-smoke.ps1#L786)。 |
-| Before不変・再開・新対象追記 | [①再開](migration/step1_copy.ps1#L60) | [backup-rollback](tests/backup-rollback-smoke.ps1#L530)、[後日追加region](tests/regression.ps1#L711)。 |
-| 初回衝突停止・自分の一致済み設定skip | [①名前](migration/step1_copy.ps1#L83)、[①複製](migration/step1_copy.ps1#L477) | [regression](tests/regression.ps1#L696)、[一致済み再実行](tests/baseline-smoke.ps1#L215)。 |
-| 全件成功後に旧関連→旧診断を削除 | [③](migration/step3_delete.ps1#L184) | [後続Sub不備で全DELETE0](tests/backup-rollback-smoke.ps1#L821)、[旧2本だけ解除](tests/dcr-cutover-smoke.ps1#L380)。 |
-| 復元を先に完了・指定外Sub保持 | [rollback](migration/rollback.ps1#L91) | [復元順序](tests/backup-rollback-smoke.ps1#L617)、[Sub選択](tests/backup-rollback-smoke.ps1#L645)。 |
-| 1,095日・既存分析保持・別名ルール保持 | [①保持設定](migration/step1_copy.ps1#L294) | [総保持だけ補完](tests/baseline-smoke.ps1#L398)、[旧365ルール置換](tests/baseline-smoke.ps1#L520)。 |
-| 最大5ジョブ・終了時に回収 | [共通バッチ](migration/common.ps1#L193) | [0/1件と上限5](tests/regression.ps1#L426)、[起動失敗](tests/regression.ps1#L489)。 |
+| 事前チェックは独立・Before不要 | [事前チェック](migration/precheck.ps1#L6) | [backup-rollback](tests/backup-rollback-smoke.ps1#L519)：既存の①backupを読まず確認。 |
+| 各Subの変更前に保存・保存失敗なら書込み0 | [①保存](migration/step1_copy.ps1#L158) | [backup-rollback](tests/backup-rollback-smoke.ps1#L444)、[保存失敗](tests/backup-rollback-smoke.ps1#L786)。 |
+| Before不変・再開・新対象追記 | [①再開](migration/step1_copy.ps1#L62) | [backup-rollback](tests/backup-rollback-smoke.ps1#L530)、[後日追加region](tests/regression.ps1#L711)。 |
+| 初回衝突停止・自分の一致済み設定skip | [①名前](migration/step1_copy.ps1#L86)、[①複製](migration/step1_copy.ps1#L497) | [regression](tests/regression.ps1#L696)、[一致済み再実行](tests/baseline-smoke.ps1#L215)。 |
+| 全件成功後に旧関連→旧診断を削除 | [③](migration/step3_delete.ps1#L191) | [後続Sub不備で全DELETE0](tests/backup-rollback-smoke.ps1#L821)、[旧2本だけ解除](tests/dcr-cutover-smoke.ps1#L380)。 |
+| 復元を先に完了・指定外Sub保持 | [rollback](migration/rollback.ps1#L98) | [復元順序](tests/backup-rollback-smoke.ps1#L617)、[Sub選択](tests/backup-rollback-smoke.ps1#L645)。 |
+| 1,095日・既存分析保持・別名ルール保持 | [①保持設定](migration/step1_copy.ps1#L308) | [総保持だけ補完](tests/baseline-smoke.ps1#L398)、[旧365ルール置換](tests/baseline-smoke.ps1#L520)。 |
+| 最大5ジョブ・終了時に回収 | [共通バッチ](migration/common.ps1#L192) | [0/1件と上限5](tests/regression.ps1#L426)、[起動失敗](tests/regression.ps1#L489)。 |
