@@ -234,7 +234,7 @@ function Test-Configuration {
 # ---
 # GET応答から保存・復元に使う本文を取り出す
 # ResourceとKindを渡し、PUT用のHashtableを返す。値なしならnull。
-# DCRの読み取り専用項目を除き、診断設定の省略された格納方式をそろえる。
+# DCRの読み取り専用項目を除き、LAW宛てだけ格納方式を比較する。
 # ---
 function Get-WritableBody {
     param($Resource, $Kind)
@@ -263,6 +263,9 @@ function Get-WritableBody {
     }
     if ($Kind -eq 'Diagnostic' -and $body.properties.workspaceId -and -not $body.properties.logAnalyticsDestinationType) {
         $body.properties.logAnalyticsDestinationType = 'AzureDiagnostics'
+    }
+    if ($Kind -eq 'Diagnostic' -and -not $body.properties.workspaceId) {
+        $body.properties.Remove('logAnalyticsDestinationType')
     }
     if ($Kind -eq 'Dcr') {
         foreach ($key in @('location', 'kind', 'tags', 'identity')) {

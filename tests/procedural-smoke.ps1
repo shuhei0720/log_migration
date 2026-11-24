@@ -619,6 +619,42 @@ try {
             Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '切戻し再実行は変更0'
         }
     }
+    Invoke-ReplayCase 'Storage宛GETのLAW既定方式付加を許容して再実行・削除・復元できる' {
+        Invoke-ReplayStep copy
+        $records = @(Get-FixtureRecords)
+        foreach ($setting in @($records.NewSettings | Where-Object Kind -eq 'Diagnostic')) {
+            $actual = $global:ProceduralFixture.Resources[$setting.Id]
+            Set-FixtureProperty $actual.properties 'logAnalyticsDestinationType' 'AzureDiagnostics'
+        }
+        Reset-Observation
+        Invoke-ReplayStep copy
+        Invoke-ReplayStep verify
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) 'Storage宛の無関係なLAW既定方式だけでは再書込みしない'
+        Invoke-ReplayStep delete
+        foreach ($old in $records.OldSettings) {
+            Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($old.Id)) 'GETの方式付加があっても旧設定を削除できる'
+        }
+        Invoke-ReplayStep rollback
+        foreach ($old in $records.OldSettings) {
+            Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id)) '切り戻しで旧設定を復元する'
+        }
+    }
+    Invoke-ReplayCase 'LAW宛の格納方式変更は許容せず既存設定を保持する' -Diagnostic 'Log' -Body {
+        Invoke-ReplayStep copy
+        $records = @(Get-FixtureRecords)
+        $setting = @($records.NewSettings | Where-Object Kind -eq 'Diagnostic')[0]
+        $actual = $global:ProceduralFixture.Resources[$setting.Id]
+        Set-FixtureProperty $actual.properties 'logAnalyticsDestinationType' 'Dedicated'
+        Reset-Observation
+        Invoke-ReplayStep copy -ExpectFailure
+        Invoke-ReplayStep verify -ExpectFailure
+        Invoke-ReplayStep delete -ExpectFailure
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) 'LAW宛の方式違いを上書きせず旧設定も削除しない'
+        Assert-Replay ($actual.properties.logAnalyticsDestinationType -eq 'Dedicated') '変更された格納方式を保持'
+        foreach ($old in $records.OldSettings) {
+            Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id)) '方式不一致なら全旧設定を保持'
+        }
+    }
     Invoke-ReplayCase '旧CSVはVM列なしをLog扱いにする' {
         Write-FixtureCsv -Legacy
         Invoke-ReplayStep copy
