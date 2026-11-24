@@ -1,6 +1,6 @@
 {
   "status": "FINAL_INTEGRATION_IN_PROGRESS",
-  "updatedUtc": "2026-11-24T16:41:04.801247+00:00",
+  "updatedUtc": "2026-11-24T16:46:53.401339+00:00",
   "canonicalSha256": {
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
     "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
@@ -55,60 +55,16 @@
       "savedActualBodiesReplayed": 10,
       "savedBodyReplayResult": "PASS",
       "savedBodyReplayIsAzureWriteProof": false,
-      "sameJournalResume": "COPY_VERIFY_DELETE_PASS_ROLLBACK_PRIVATE_TIMEOUT",
+      "sameJournalResume": "PASS_AFTER_ROLLBACK_ONLY_CONTINUATION_OLD_REVISION",
       "initialRawZipSha256": "710adfc412f7bfa8c70070d8e693b54808d3a62de14a2f69c420d549925ca3fe",
       "sameJournalCopyResume": "PASS"
     }
   },
   "cleanup": {
-    "resourcesAndGroupsRemoved": true,
-    "perSubscription": {
-      "subscription1": {
-        "resources": 0,
-        "resourceGroups": 0,
-        "policyExemptions": 0,
-        "roleAssignments": 3,
-        "originalPolicyAssignments": 3
-      },
-      "subscription2": {
-        "resources": 0,
-        "resourceGroups": 0,
-        "policyExemptions": 0,
-        "roleAssignments": 3,
-        "originalPolicyAssignments": 3
-      }
-    },
-    "originalRoleAndPolicyBodiesUnchanged": true,
-    "originalManagementGroupParentsRestored": true,
-    "recoverableLawKeyVaultCognitive": 0,
-    "allNewAzureCreationStopped": true,
-    "providers": {
-      "originalNotRegisteredProvenPairs": 32,
-      "unregisterPostsAccepted": 29,
-      "alreadyNotRegisteredBeforePosts": 3,
-      "confirmedNotRegistered": 30,
-      "pending": [
-        {
-          "subscription": "subscription1",
-          "namespace": "Microsoft.ContainerInstance",
-          "state": "Unregistering"
-        },
-        {
-          "subscription": "subscription2",
-          "namespace": "Microsoft.Network",
-          "state": "Unregistering"
-        }
-      ],
-      "retainedUnknown": [
-        {
-          "subscription": "subscription1",
-          "namespace": "Microsoft.Notebooks",
-          "reason": "Not in the original provider enumeration; retained as instructed"
-        }
-      ]
-    },
-    "registrationRestorationComplete": false,
-    "scope": "Previous run fin7t261119b; not the active 2026-11-24 validation environment"
+    "status": "PENDING_CURRENT_TESTS",
+    "runId": "fin7t261124a",
+    "resourcesAndGroupsRemoved": false,
+    "originalStateRestoreVerified": false
   },
   "actualAzureBodyReplay": {
     "result": "PASS",
@@ -152,7 +108,7 @@
   },
   "currentRun": {
     "runId": "fin7t261124a",
-    "status": "F1_RESUME_ROLLBACK_PRIVATE_TIMEOUT",
+    "status": "F1_OLD_REVISION_COMPLETE_CURRENT_REVISION_BASE_TESTS_PENDING",
     "reviewGateSkippedByUser": true,
     "baselineResourceAndGroupCounts": [
       0,
@@ -185,9 +141,26 @@
       ],
       "reason": "Private test harness 45-minute phase limit during rollback-all",
       "canonicalScriptTimeoutAdded": false,
-      "rollbackOnlyContinuation": "PENDING_COMPLETION"
+      "rollbackOnlyContinuation": "PASS"
     },
-    "newFunctionalRevisionIntegration": "PENDING_COMPLETION_F1_OLD_REVISION_KEPT_SEPARATE"
+    "newFunctionalRevisionIntegration": "PENDING_COMPLETION_F1_OLD_REVISION_KEPT_SEPARATE",
+    "f1FullFlow": {
+      "result": "PASS_AFTER_RECORDED_RETRIES",
+      "commonSha256": "36da32ad526d91aab1546b0f2a9e91d1df379e374d8e4faf4ce921eda16b21e6",
+      "copySha256": "9762847bbe83fe04309dc25e5b22098b92d5b015caf84846568a8342c7d6b51d",
+      "appliesToCurrentFunctionalRevision": false,
+      "diagnosticScopes": 365,
+      "oldDcrAssociations": 8,
+      "restoredOldSettingsVerified": 373,
+      "newSendingAndWaiverSettingsVerifiedAbsent": 375,
+      "destinationsRetained": true,
+      "rollbackRepeatResourceWrites": 0,
+      "recordedInitialFailure": "Storage-only comparison mismatch; old DELETE0",
+      "recordedSecondFailure": "Private harness 45-minute phase limit during rollback-all",
+      "continuationCases": 23,
+      "continuationZipSha256": "e07b37c76174bf9ec48a50b25ded60dbf0c639a9dbe6bcf783f32e388c9b5fa2",
+      "hostProofSha256": "28a289c0486436a446479c2743ed702a5cfdff4d6d6d75c85b1ab5aba2db959c"
+    }
   },
   "windowsPreviousVersion": {
     "status": "PASS",
@@ -265,5 +238,11 @@
     "otherFourCanonicalFilesUnchanged": true,
     "layoutEquivalenceDoesNotApply": true,
     "localProofSha256": "d0bc1053bd277c6ae523edbc86f30ff20b7660689f2d7ff31048b8135dc75764"
+  },
+  "previousRunCleanup": {
+    "runId": "fin7t261119b",
+    "resourcesAndGroupsRemoved": true,
+    "originalRoleAndPolicyBodiesUnchanged": true,
+    "originalManagementGroupParentsRestored": true
   }
 }
