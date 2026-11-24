@@ -1,6 +1,6 @@
 {
   "status": "CURRENT_COMPREHENSIVE_TESTS_COMPLETE_CLEANUP_PENDING",
-  "updatedUtc": "2026-11-24T21:57:33.492107+00:00",
+  "updatedUtc": "2026-11-24T22:38:08.137384+00:00",
   "canonicalSha256": {
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
     "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
@@ -233,8 +233,15 @@
       "hostProofSha256": "28a289c0486436a446479c2743ed702a5cfdff4d6d6d75c85b1ab5aba2db959c"
     },
     "additionalFreshNormalRun": {
-      "status": "NOT_RUN",
-      "sequence": "After current integrated tests, complete cleanup and documentation, and freeze the completed release; then run the normal procedure including precheck"
+      "status": "PENDING_USER_SCOPE_AND_BUDGET_RESPONSE_NOT_RUN",
+      "sequence": "Only after current tests, all cleanup, Root0 original-state verification, documentation completion and source freeze; fresh scope and budget approval are still pending",
+      "azureDeploymentAuthorized": false,
+      "estimateDocument": "test-results/ADDITIONAL_NORMAL_ESTIMATE.md",
+      "approvedCurrentBudgetJPY": 6000,
+      "proposedCombinedBudgetJPY": [
+        10000,
+        8000
+      ]
     },
     "currentRcFull300": {
       "result": "PASS",
@@ -663,6 +670,89 @@
       "independentRawAudit": "PASS",
       "independentRawAuditSha256": "b90333e8d5ee2f782a34a45a9ed3bef0dbd5aba71a04b9f61c6ee65082a958fb",
       "cleanupStillPending": true
+    },
+    "cheapFixtureCleanup": {
+      "status": "PASS_RESOURCE_CLEANED_RP_HELD_SOURCE_BEFORE_RESTORED",
+      "runId": "cheap261124b",
+      "completedUtc": "2026-11-24T22:20:54.915206+00:00",
+      "actualResourcesRemoved": 42,
+      "ownedResourceGroupsGet404": 4,
+      "ownedWorkspacesForceDeleted": 11,
+      "ownedRecoverableWorkspacesRemaining": 0,
+      "sourceFixtureBeforeResourceCount": 11,
+      "sourceFixtureBeforeRestored": true,
+      "sourceFixtureBeforeIsRootOriginal": false,
+      "immutableBeforeFields": 9,
+      "originalSixInputFilesUnchanged": true,
+      "newOperations": 82,
+      "failedNewOperations": 0,
+      "providerUnregisterRequests": 0,
+      "finalLedgerSha256": "42ed917511b07fa5f6541ba3739f46944ab5f18ae64e6db9fc6eec91c8682116",
+      "finalProof": "cleanup-preparation/CHEAP_FIXTURE_TEARDOWN_FINAL_PROOF.json",
+      "finalProofSha256": "e5b3f209f280ccab7dc2fec12e976ce1917e4a41f1b99e5c086445ef2c47f968",
+      "independentRawAudit": {
+        "result": "PASS_CURRENT_CHEAP_FIXTURE_TEARDOWN",
+        "path": "independent-audit/CHEAP_TEARDOWN_RAW_AUDIT.json",
+        "sha256": "005e4b383c349af905288896f9d20ac83799dcba5a9ad852577fc847e971d239",
+        "frozenEvidenceFiles": 26,
+        "azureRequestsByReviewer": 0,
+        "individualFooterResponseBodiesSeparatelyPreserved": false
+      },
+      "scope": "Current representative fixture only; restored Before11 includes preparation assets and does not prove global Root0 cleanup"
+    },
+    "rootOriginalCleanup": {
+      "status": "IN_PROGRESS",
+      "rootOriginalBaselineResourceAndGroupCounts": [
+        0,
+        0
+      ],
+      "rootOriginalRestored": false,
+      "allCurrentAssetsRemoved": false,
+      "resourceProviderRegistrationRestored": false,
+      "legacyOwnedDiagnosticRemoval": {
+        "result": "PASS_TWO_EXACT_SETTINGS_REMOVED_GET404",
+        "completedUtc": "2026-11-24T22:33:18.117316+00:00",
+        "ownedSettingsDeleted": 2,
+        "explicitGet404": 2,
+        "fixtureBeforeFilesChanged": false,
+        "journal": "baseline/orphan-diagnostics/remove-owned-two-journal.json",
+        "journalSha256": "f25181b00bde6352b10bb0d9a3fcbdd7d4d5d4131e9b552e193df1db7a6cb7cf"
+      },
+      "runtimeRestoration": {
+        "result": "PASS",
+        "temporaryRolesRemoved": 3,
+        "postSnapshotManagedCommandsRemoved": 10,
+        "proof": "windows/cheap-runtime-restoration/CHEAP_RUNTIME_RESTORED_HOST_PROOF.json",
+        "proofSha256": "a16e16ae2ca892552052f23ac862cfbf07f5229681ed3e4b0a1422e6d78fc418"
+      },
+      "remaining": [
+        "Prepared VNets/Watchers/guards removal in progress",
+        "Original Root0 pre-provider-restore comparison",
+        "Restore only proven 27 provider registrations",
+        "Final metadata and independent evidence-chain verification"
+      ],
+      "nativeWindowsRemoval": {
+        "result": "PASS_NATIVE_FIVE_IDS_AND_FOUR_ROLES_EXACT_404",
+        "completedUtc": "2026-11-24T22:36:32.122105+00:00",
+        "resourceGroupDeleteRequests": 1,
+        "roleDeleteRequests": 0,
+        "networkAndProviderWriteRequests": 0,
+        "explicitResourceAndGroupGet404": 5,
+        "explicitOwnedRoleGet404": 4,
+        "controllerResult": "windows/cleanup-result.json",
+        "controllerResultSha256": "3b6275b347dc662bc71fa671bb1996512b063691c585953ebb393edeecbdd679",
+        "postRawGetProof": "cleanup-preparation/NATIVE_POST_RAW_404.json",
+        "postRawGetProofSha256": "e18b92945d081c4837f118a9d4ec33f4e8046204a41f4d9ee865c1fa35644242"
+      },
+      "artifactRemoval": {
+        "result": "OWNED_ARTIFACT_RG_AND_ACCOUNT_ABSENT",
+        "completedUtc": "2026-11-24T22:35:57.928704+00:00",
+        "resourceGroupDeleteRequests": 1,
+        "resourceGroupGet404": true,
+        "storageAccountGet404": true,
+        "journal": "artifacts/cleanup-journal.json",
+        "journalSha256": "0bf2a59d59417e219d09ef074b2c843c64697ceae108229c140affa18ef71ba9"
+      }
     }
   },
   "windowsPreviousVersion": {
