@@ -382,7 +382,7 @@ if ($Action -in @('Plan', 'Deploy')){
         $reason = if ($type.skipReason){
             $type.skipReason
         }elseif ($type.resourceType -in $SkipTypes){
-            '利用者指定で省略'
+            'SkipTypesで省略'
         }elseif ($type.conditional -and -not $IncludeConditional){
             '条件付きリソースを省略'
         }elseif ($type.optionalSwitch -eq 'IncludeAse' -and -not $IncludeAse){
