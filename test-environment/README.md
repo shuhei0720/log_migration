@@ -65,7 +65,7 @@ Code Signing・Bing・ExpressRouteは契約・提供条件等により省略し�
 
 ## 撤去時の扱い
 
-新規4RGは今回の所有物として撤去します。Firewall・Public IP・Firewall Policyは参照VNetと同じ既存RGへ配置し、初期不存在と作成後の値を記録した3資源だけを削除します。既存VNetのRG全体は削除しません。
+新規4RGは今回の所有物として撤去します。AKS・Monitor・Databricksは先に個別削除し、他の内部資源はRGの依存関係に従って撤去します。Firewall・Public IP・Firewall Policyは参照VNetと同じ既存RGへ配置し、初期不存在と作成後の値を記録した3資源だけを削除します。Firewallの削除完了を待ってからPolicyとPublic IPを削除し、既存VNetのRG全体は削除しません。
 
 通常StorageはRG削除に任せます。今回新規作成したimmutable capability有効Storageは、送信設定を停止してからBlobを空にします。一時的なアクセス設定は元へ戻します。未知のACL変更、保持ポリシー、lease、holdは解除せず停止します。
 

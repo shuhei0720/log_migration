@@ -1,6 +1,6 @@
 {
   "status": "FINAL_INTEGRATION_IN_PROGRESS",
-  "updatedUtc": "2026-11-24T18:52:06.732735+00:00",
+  "updatedUtc": "2026-11-24T20:00:43.204871+00:00",
   "canonicalSha256": {
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
     "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
@@ -61,11 +61,10 @@
     "smallFlowAfterCreationWaitFix": "DIAGNOSTIC_14_SCOPE_PASS_DCRA_NOT_YET_RUN"
   },
   "cleanup": {
-    "status": "IN_PROGRESS_HIGH_COST_FIXTURE_RETRY",
+    "status": "FULL_FIXTURE_REMOVED_SOURCE_BEFORE_RESTORED_GLOBAL_CLEANUP_PENDING",
     "runId": "fin7t261124a",
-    "resourcesAndGroupsRemoved": false,
+    "resourcesAndGroupsRemoved": true,
     "originalStateRestoreVerified": false,
-    "publicControllerUnchanged": true,
     "resourceProviderUnregisterDeferred": true,
     "firstAttempt": {
       "result": "FAIL",
@@ -73,14 +72,55 @@
       "failureHistoryPreserved": true
     },
     "recovery": {
-      "status": "IN_PROGRESS",
+      "status": "PASS_WITH_RECORDED_RETRIES",
       "inMemoryEarlyDeleteTypes": [
         "Microsoft.ContainerService/managedClusters",
         "Microsoft.Monitor/accounts",
         "Microsoft.Databricks/workspaces"
       ],
       "remainingOwnedRootsDeletedByResourceGroupDependencyOrder": true,
-      "publicControllerSourceModified": false
+      "publicControllerSourceModified": true,
+      "historicalExecutionSourcePreserved": true
+    },
+    "scope": "Historical full fixture fin7t261124a only; not all assets created for the current suite",
+    "sourceFixtureBeforeRestored": true,
+    "sourceFixtureBeforeResourceCount": 11,
+    "rootOriginalAllAssetsZero": false,
+    "historicalControllerFrozenUnchanged": true,
+    "currentDistributedControllerModified": true,
+    "secondAttempt": {
+      "result": "FAIL",
+      "classification": "MANAGEMENT_GROUP_ENTITY_LIST_CACHE_AFTER_PARENT_RESTORATION",
+      "directParentRestorationVerified": true,
+      "failureHistoryPreserved": true
+    },
+    "completedUtc": "2026-11-24T19:47:28.461645+00:00",
+    "postGet": {
+      "total": 14,
+      "explicit404": 12,
+      "ownedRecoverableWorkspacesRemaining": 0,
+      "workspaceListResponses": 2,
+      "managedEnvironmentInfrastructureGroupExplicit404": true
+    },
+    "beforeFieldsUnchanged": 9,
+    "resourceProviderUnregisterRequests": 0,
+    "retainedAssets": [
+      "Windows VM/NIC/disk/bootstrap",
+      "prepared existing VNets/subnets and preparation resources",
+      "result artifact RG/Storage",
+      "two legacy VNet diagnostics included in the fixture Before",
+      "resource provider registrations"
+    ],
+    "frozenEvidenceFiles": 35,
+    "frozenManifestSha256": "6e9f5126fe73a6f829b2124640860b4495cc91866df0c8408382244e57008e62",
+    "finalProofSha256": "b3a45d57238f8953d9e342cddf4ac68d969273a9693a40d25fe7c9e453b8528b",
+    "independentRawAudit": {
+      "result": "PASS_INTERMEDIATE_FULL_FIXTURE_TEARDOWN",
+      "sha256": "e82ddec5eee14dc1b810f77b623ca6c52f4dd8bcf9be6ece12301b1bf392740b",
+      "checks": 943,
+      "azureRequestsByReviewer": 0,
+      "scope": "Frozen evidence consistency and original source cleanup checks; not global asset removal",
+      "individualFooterResponseBodiesSeparatelyPreserved": false
     }
   },
   "actualAzureBodyReplay": {
@@ -99,7 +139,7 @@
     "proofSha256": "50698b737fcad3403ddd1be66da4af7c8df1050ad9f333c693a8e0d3ab423178"
   },
   "testEnvironmentCode": {
-    "status": "FULL_DEPLOY_SEED_AND_F2_PASS_CLEANUP_RETRYING",
+    "status": "HISTORICAL_FULL_DEPLOY_SEED_F2_AND_TEARDOWN_PASS_CURRENT_REVISION_DEPLOYING",
     "controllerSha256": "42d3c36f8101114cfd5b7250acd28b5f4de38b94ff7b3f297d9fcfbe72db7b79",
     "templateSha256": "fd5bb83cada189d43ea28a49529251e6f354b7dc86d8de5a39c6df39bd636f81",
     "functions": 5,
@@ -121,11 +161,25 @@
     "fullFailedScopes": 0,
     "fullUnsupportedScopes": 4,
     "oldDcrAssociations": 8,
-    "sentinelAssociations": 4
+    "sentinelAssociations": 4,
+    "controllerSha256Attribution": "Historical full fixture Deploy/Capture/Seed/F1/F2; cleanup recovery used preserved in-memory variants. Local counts below are historical checks, not re-execution of the new controller.",
+    "historicalFullFixtureControllerFrozen": true,
+    "currentDistributedController": {
+      "sha256": "32e97ed2dd76717d578d28c891cee008ec1ba1ca4aee2c34ea6faeeafa99a907",
+      "commit": "6814101",
+      "templateSha256": "fd5bb83cada189d43ea28a49529251e6f354b7dc86d8de5a39c6df39bd636f81",
+      "changes": [
+        "Add Cache-Control: no-cache to ARM requests",
+        "Only AKS, Monitor, and Databricks internal roots are deleted early; other internal resources use resource-group dependency deletion"
+      ],
+      "migrationSixChanged": false,
+      "azureValidation": "REPRESENTATIVE_FIXTURE_DEPLOY_CAPTURE_SEED_IN_PROGRESS",
+      "historicalResultsReattributedToCurrentVersion": false
+    }
   },
   "currentRun": {
     "runId": "fin7t261124a",
-    "status": "FULL_F2_PASS_HIGH_COST_FIXTURE_CLEANUP_RETRYING_CHEAP_REMAINDER_PLANNING",
+    "status": "FULL_F2_AND_HIGH_COST_FIXTURE_TEARDOWN_PASS_CHEAP_REMAINDER_DEPLOYING",
     "reviewGateSkippedByUser": true,
     "baselineResourceAndGroupCounts": [
       0,
@@ -285,7 +339,7 @@
       "independentRawAudit": "PASS"
     },
     "remainingScenarioFixturePlan": {
-      "status": "LOCAL_PLANNING_NOT_DEPLOYED",
+      "status": "DEPLOY_CAPTURE_SEED_IN_PROGRESS",
       "plannedRoots": 15,
       "patternsPlanned": [
         "F1",
@@ -295,8 +349,21 @@
       ],
       "purpose": "Representative generic destination flags, interruption, rollback, and boundary cases",
       "allTypeFourRegionAndFull300ResultsRemainAttributedToOriginalFixture": true,
-      "independentBranchCoverageReview": "PASS_LOCAL_NOT_REAL_EXECUTION"
-    }
+      "independentBranchCoverageReview": "PASS_LOCAL_NOT_REAL_EXECUTION",
+      "runId": "cheap261124b",
+      "actualPlannedRegions": 3,
+      "loadCount": 0,
+      "newRequestedTypes": 7,
+      "existingReferencedTypes": 1,
+      "oldDcrAssociationsRequired": 8,
+      "virtualMachinesRequired": 2,
+      "virtualMachineScaleSetsRequired": 2,
+      "boundaryCasesActualResult": "NOT_RUN",
+      "patternsActualResult": "NOT_RUN",
+      "planSha256": "7246cf3c0216996c2800d933634e8de3e87b9d0fde41b6c21f7b5b9882e17958",
+      "controllerSha256": "32e97ed2dd76717d578d28c891cee008ec1ba1ca4aee2c34ea6faeeafa99a907"
+    },
+    "highCostFixtureCleanupComplete": true
   },
   "windowsPreviousVersion": {
     "status": "PASS",
