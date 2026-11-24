@@ -71,7 +71,9 @@ copyはprecheckの結果ファイルに依存しません。診断設定は移�
 
 StorageはStorageV2・Standard_ZRSで、appendBlobを最終更新から1,095日後に削除する設定にします。Log Analyticsのワークスペース保持は365日、旧DCR関連の対象がある場合はEvent・Syslogの合計保持を1,095日に設定します。VM側の新設定を省略する行でも、この保存先の準備は行います。
 
-作成・更新後のGETにprovisioningStateがある場合は、Succeededまで最大5分、3秒間隔で待ちます。Failed/Canceledは即座に失敗として扱います。
+作成状態は`Succeeded`になるまで3秒間隔のGETで確認し、`Failed`／`Canceled`なら停止します。利用登録と、DCRで使うEvent・Syslogの反映も完了を待ちます。
+
+通信切断・通信タイムアウトや一時的なHTTPエラーは、初回を含め最大4回試します。接続・応答ヘッダの待機は90秒、対応するPowerShellでは本文受信中の無応答も90秒に設定します。作成・反映の完了待ちには5分の一律上限を設けません。
 
 SubはCSVの順に処理します。診断設定の調査と新診断設定の複製だけを最大5件ずつ並列に実行し、適用除外・保存先・DCRは順に準備します。step3の削除とrollbackも順に処理し、失敗した時点で停止します。step3終了後もWaiverは残し、自動期限は設定しません。
 

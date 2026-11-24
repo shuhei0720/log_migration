@@ -1,21 +1,22 @@
 {
   "status": "FINAL_INTEGRATION_IN_PROGRESS",
-  "updatedUtc": "2026-11-24T14:03:28.674522+00:00",
+  "updatedUtc": "2026-11-24T16:41:04.801247+00:00",
   "canonicalSha256": {
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
-    "common.ps1": "36da32ad526d91aab1546b0f2a9e91d1df379e374d8e4faf4ce921eda16b21e6",
+    "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
     "rollback.ps1": "e8ead03928c7abd8a4e2deadb8269ab09372e54d0a7745aa868705230e9e1b80",
-    "step1_copy.ps1": "9762847bbe83fe04309dc25e5b22098b92d5b015caf84846568a8342c7d6b51d",
+    "step1_copy.ps1": "faa28e88354d878d92dd69764802a1587ee5580baf7f4fdf3676369495ffe4ab",
     "step2_verify.ps1": "e07a7db5d9a567b8730c2cac741d1d76ce5a4b61b67a00ab365ff614f7aea603",
     "precheck.ps1": "f406b778b82e496980c19a7eb4ddd35d5079f86b6b66d5da8d5c33a7df73d1e4"
   },
-  "testSha256": "c7e4e1a0ad65618d99af2285632d81705d0586d5955ec05eeb6c9be1f6101382",
+  "testSha256": "128cb62b1f3778fa74ccd7ad70b6763b2580427baa25e8e3d939ff91a3343096",
   "linuxReplay": {
     "result": "PASS",
     "runtime": "7.5.4",
-    "cases": 79,
-    "checks": 1059,
-    "azureRequests": 0
+    "cases": 89,
+    "checks": 1145,
+    "azureRequests": 0,
+    "reportSha256": "843317503efe3baeb15af606c1ed99cde9de157d46142aef57daafb9075f1062"
   },
   "azureIntegration": {
     "resultBeforeFix": "FAIL",
@@ -54,8 +55,9 @@
       "savedActualBodiesReplayed": 10,
       "savedBodyReplayResult": "PASS",
       "savedBodyReplayIsAzureWriteProof": false,
-      "sameJournalResume": "PENDING",
-      "initialRawZipSha256": "710adfc412f7bfa8c70070d8e693b54808d3a62de14a2f69c420d549925ca3fe"
+      "sameJournalResume": "COPY_VERIFY_DELETE_PASS_ROLLBACK_PRIVATE_TIMEOUT",
+      "initialRawZipSha256": "710adfc412f7bfa8c70070d8e693b54808d3a62de14a2f69c420d549925ca3fe",
+      "sameJournalCopyResume": "PASS"
     }
   },
   "cleanup": {
@@ -150,7 +152,7 @@
   },
   "currentRun": {
     "runId": "fin7t261124a",
-    "status": "F1_COPY_COMPARISON_FIX_RECHECK",
+    "status": "F1_RESUME_ROLLBACK_PRIVATE_TIMEOUT",
     "reviewGateSkippedByUser": true,
     "baselineResourceAndGroupCounts": [
       0,
@@ -171,7 +173,21 @@
     "oldDcrAssociations": 8,
     "sentinelAssociations": 4,
     "firstF1Result": "FAIL",
-    "firstF1OldDeletes": 0
+    "firstF1OldDeletes": 0,
+    "f1Resume": {
+      "result": "FAIL",
+      "completedPhases": [
+        "copy-complete",
+        "copy-repeat-zero-resource-writes",
+        "verify",
+        "delete-complete",
+        "delete-repeat-zero-resource-writes"
+      ],
+      "reason": "Private test harness 45-minute phase limit during rollback-all",
+      "canonicalScriptTimeoutAdded": false,
+      "rollbackOnlyContinuation": "PENDING_COMPLETION"
+    },
+    "newFunctionalRevisionIntegration": "PENDING_COMPLETION_F1_OLD_REVISION_KEPT_SEPARATE"
   },
   "windowsPreviousVersion": {
     "status": "PASS",
@@ -189,6 +205,20 @@
   "windowsCurrentVersion": {
     "status": "PASS",
     "runtime": "7.6.10",
+    "cases": 89,
+    "checks": 1145,
+    "azureRequests": 0,
+    "isWindows": true,
+    "canonicalHashesMatched": true,
+    "testHashMatched": true,
+    "caseNamesResultsAndAssertionCountsMatchLinux": true,
+    "executionProofSha256": "1be05ddac562914acf78b403aa7a75b236d8099b18f3e227bf3cad232d887347",
+    "artifactZipSha256": "cb52c9a970c46580b3fabf94d670c89ccad3946ab600965fd10fc07d1a3af802",
+    "hostProofSha256": "e421a5ca02911537b0c2b19dab1b8130df5d0600561237a6aff747d14b83dcea"
+  },
+  "windowsAzureExecutionVersion": {
+    "status": "PASS",
+    "runtime": "7.6.10",
     "cases": 79,
     "checks": 1059,
     "azureRequests": 0,
@@ -198,6 +228,42 @@
     "caseNamesResultsAndAssertionCountsMatchLinux": true,
     "executionProofSha256": "fdd91edaf7dd0f2c6f3fda441c085d66b84d7e428a4e611b011a085b115b83be",
     "artifactZipSha256": "4a24e78b8f1f02eb6a0e001f6978d52de974940b8e40db3794ecc8098eed66ae",
-    "hostProofSha256": "798503e2b94c0d784d9b97ed6072998713943b55f7397c66c808771b814ccfe1"
+    "hostProofSha256": "798503e2b94c0d784d9b97ed6072998713943b55f7397c66c808771b814ccfe1",
+    "commonSha256": "36da32ad526d91aab1546b0f2a9e91d1df379e374d8e4faf4ce921eda16b21e6"
+  },
+  "previousLayoutEquivalence": {
+    "result": "PASS",
+    "beforeCommonSha256": "36da32ad526d91aab1546b0f2a9e91d1df379e374d8e4faf4ce921eda16b21e6",
+    "afterCommonSha256": "6ed982607bdab8ad37e8eeb5debc8f8e6aaaba787217f1270a9ed375f38f086a",
+    "userVariableExpressionsUnchanged": true,
+    "functionBodiesByteIdentical": 5,
+    "otherFiveCanonicalFilesUnchanged": true,
+    "remainingStatementsInOriginalOrder": true,
+    "sideEffectsOrCrossedDependenciesAdded": false,
+    "proofSha256": "540f483c48b4a7703d4d104c056e75f9f59d3bb3db9f16559963c834587b3626",
+    "azureExecutedHashAndDeliveredHashKeptSeparate": true,
+    "appliesToCurrentFunctionalRevision": false
+  },
+  "f1ExecutedCanonicalSha256": {
+    "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
+    "common.ps1": "36da32ad526d91aab1546b0f2a9e91d1df379e374d8e4faf4ce921eda16b21e6",
+    "rollback.ps1": "e8ead03928c7abd8a4e2deadb8269ab09372e54d0a7745aa868705230e9e1b80",
+    "step1_copy.ps1": "9762847bbe83fe04309dc25e5b22098b92d5b015caf84846568a8342c7d6b51d",
+    "step2_verify.ps1": "e07a7db5d9a567b8730c2cac741d1d76ce5a4b61b67a00ab365ff614f7aea603",
+    "precheck.ps1": "f406b778b82e496980c19a7eb4ddd35d5079f86b6b66d5da8d5c33a7df73d1e4"
+  },
+  "functionalRevision": {
+    "result": "LOCAL_LINUX_AND_WINDOWS_PASS_AZURE_IN_PROGRESS",
+    "changes": [
+      "Retry recognized connection and response-read failures up to four attempts",
+      "GET polling until terminal provisioning state; remove fixed five-minute creation, provider registration, and built-in table propagation limits",
+      "Keep Failed/Canceled, permanent TLS, explicit cancellation, malformed JSON, and unknown DCR table failures as immediate errors",
+      "Treat 404 as completed only after losing the DELETE response within the same request call"
+    ],
+    "functionCount": 5,
+    "userConfigurationExpressionsUnchanged": true,
+    "otherFourCanonicalFilesUnchanged": true,
+    "layoutEquivalenceDoesNotApply": true,
+    "localProofSha256": "d0bc1053bd277c6ae523edbc86f30ff20b7660689f2d7ff31048b8135dc75764"
   }
 }
