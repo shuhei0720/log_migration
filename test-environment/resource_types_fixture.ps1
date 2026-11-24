@@ -1542,9 +1542,12 @@ if ($Action -eq 'Cleanup' -and -not $state.resourceCleanupComplete) {
         $null = Invoke-Arm DELETE $role.id '2022-04-01' -Optional
     }
     # 所有RGを先に全てDELETE開始し、その後に待つ。既存VNet RGは含めない。
-    $groupIds = @($state.plan.bundles | ForEach-Object {
+    $groupIds = @(
+        $state.plan.bundles | ForEach-Object {
             '/subscriptions/' + $_.subscriptionId + '/resourceGroups/' + $_.resourceGroup
-    }) + @($state.managedGroups.id)
+        }
+        $state.managedGroups | ForEach-Object id
+    ) | Sort-Object -Unique
     foreach ($groupId in $groupIds) {
         $null = Invoke-Arm DELETE $groupId '2022-09-01' -Optional
     }
