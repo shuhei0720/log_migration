@@ -51,7 +51,7 @@ $options = @{
 
 台帳は既定で`runs/<RunId>/`です。作成時のソース2ファイルと台帳を保管します。Capture・Seed・Cleanupはその台帳を使用するため、Beforeや台帳を書き換えないでください。SeedとCleanupは途中停止後も同じIDで再実行できます。Deployが途中で止まった場合は、同じ台帳でCapture・Cleanupを実行して撤去します。
 
-`SkipTypes`で型を省略できます。必要な依存型も省略すると事前停止します。`IncludeConditional`は有料・配置条件のある資源、`IncludeAse`はASEも選びます。`LoadCount`は追加NSG数で、NSGをサブネットへ関連付けません。`BudgetJPY`は計画予算で、請求を止める上限ではありません。新規作成は開始から6時間で停止し、Cleanupは引き続き使えます。
+`SkipTypes`で型を省略できます。必要な依存型も省略すると事前停止します。`IncludeConditional`は有料・配置条件のある資源、`IncludeAse`はASEも選びます。`LoadCount`は追加NSG数で、NSGをサブネットへ関連付けません。`BudgetJPY`は計画予算で、請求を止める上限ではありません。開始から6時間を過ぎると、Cleanup以外のAzureへの設定変更は開始しません。Cleanupは引き続き使えます。
 
 ## 対象と制約
 

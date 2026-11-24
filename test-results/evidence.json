@@ -1,6 +1,6 @@
 {
   "status": "FINAL_INTEGRATION_IN_PROGRESS",
-  "updatedUtc": "2026-11-24T16:46:53.401339+00:00",
+  "updatedUtc": "2026-11-24T17:04:52.634981+00:00",
   "canonicalSha256": {
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
     "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
@@ -25,7 +25,6 @@
     "oldDeletes": 0,
     "fix": "Wait for Succeeded when provisioningState is present; fail on Failed/Canceled",
     "reproduction": "Real Storage/LAW GET bodies reproduced the failure; both later reached Succeeded",
-    "completeFlowAfterFix": "DIAGNOSTIC_14_SCOPE_PASS_DCRA_NOT_YET_RUN",
     "finalTestStarted": true,
     "smallDiagnosticFlow": {
       "result": "PASS_AFTER_RETRY",
@@ -58,7 +57,8 @@
       "sameJournalResume": "PASS_AFTER_ROLLBACK_ONLY_CONTINUATION_OLD_REVISION",
       "initialRawZipSha256": "710adfc412f7bfa8c70070d8e693b54808d3a62de14a2f69c420d549925ca3fe",
       "sameJournalCopyResume": "PASS"
-    }
+    },
+    "smallFlowAfterCreationWaitFix": "DIAGNOSTIC_14_SCOPE_PASS_DCRA_NOT_YET_RUN"
   },
   "cleanup": {
     "status": "PENDING_CURRENT_TESTS",
@@ -95,7 +95,7 @@
     "finalRunnerPolicyAdapter": "IMPLEMENTED_LOCAL_PASS",
     "newAzureDeploymentStopped": false,
     "localEmptyManagedGroupsCases": 5,
-    "cleanupEmptyManagedGroupsFix": "Applied; same ledger cleanup resuming; original before fields preserved",
+    "cleanupEmptyManagedGroupsFix": "Applied; small-run cleanup completed with original Before fields preserved",
     "httpErrorShapeCases": 15,
     "apimPurgeLocalCases": 10,
     "fullDeployment": "PASS_7_DEPLOYMENTS_SUCCEEDED",
@@ -160,6 +160,10 @@
       "continuationCases": 23,
       "continuationZipSha256": "e07b37c76174bf9ec48a50b25ded60dbf0c639a9dbe6bcf783f32e388c9b5fa2",
       "hostProofSha256": "28a289c0486436a446479c2743ed702a5cfdff4d6d6d75c85b1ab5aba2db959c"
+    },
+    "additionalFreshNormalRun": {
+      "status": "NOT_RUN",
+      "sequence": "After current integrated tests, complete cleanup and documentation, and freeze the completed release; then run the normal procedure including precheck"
     }
   },
   "windowsPreviousVersion": {
