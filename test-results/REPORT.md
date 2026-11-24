@@ -8,7 +8,7 @@
 |実Azureの作成途中状態|StorageのResolvingDns、LAWのProvisioningを実GETで再現|
 |正本の修正|状態がある場合はSucceededまで待つ。Failed/Canceledは停止。5分期限・3秒間隔を維持|
 |実GET保存データ66件の再生確認|1ケース・604判定成功。ログ267項目・メトリック75項目を保持し、地域別宛先・旧設定復元を確認。実Azure書き込み0件|
-|現行版のWindows再生試験|Windows PowerShell 7.6.10で77ケース・1,035判定成功。正本6本のSHA一致、Azureへの設定変更0件|
+|現行版のWindows再生試験|Windows上のPowerShell 7.6.10で77ケース・1,035判定成功。正本6本のSHA一致、Azureへの設定変更0件|
 |修正後のAzure全工程確認|未実施|
 |環境作成コード|5関数の手続型。LOCAL確認済み。実行側の3ポリシー選別を修正しLOCAL成功。5操作の実機一巡とcategoryGroupの実PUT/GETは未完了|
 |最終の複合・負荷テスト|未開始|
