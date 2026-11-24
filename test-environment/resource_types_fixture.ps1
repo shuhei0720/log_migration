@@ -1626,7 +1626,11 @@ if ($Action -eq 'Cleanup' -and -not $state.resourceCleanupComplete) {
                 '2023-04-01'
             }
             $prefix = $state.managementGroupId + '/providers/Microsoft.Authorization/' + $collection + '/'
-            $entries = Invoke-Arm GET ($state.managementGroupId + '/providers/Microsoft.Authorization/' + $collection) $api
+            $listId = $state.managementGroupId + '/providers/Microsoft.Authorization/' + $collection
+            if ($collection -eq 'policyAssignments') {
+                $listId += '?$filter=atExactScope()'
+            }
+            $entries = Invoke-Arm GET $listId $api
             foreach ($entry in @($entries.value | Where-Object { $_.id.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase) })) {
                 $null = Invoke-Arm DELETE $entry.id $api -Optional
             }
