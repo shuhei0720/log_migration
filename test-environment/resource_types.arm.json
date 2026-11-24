@@ -1284,7 +1284,7 @@
       }
     },
     {
-      "condition": "[and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'cosmos'))]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'cosmos'))]",
       "type": "Microsoft.DocumentDB/databaseAccounts",
       "apiVersion": "2024-11-15",
       "name": "[variables('dataCosmosName')]",
@@ -1292,7 +1292,7 @@
       "metadata": {
         "fixture": {
           "key": "cosmos",
-          "bundle": "A-R3",
+          "bundle": "A-R1",
           "nameTemplate": "fxcosmos{runId}"
         }
       },
