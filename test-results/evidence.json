@@ -1,6 +1,6 @@
 {
   "status": "FINAL_INTEGRATION_IN_PROGRESS",
-  "updatedUtc": "2026-11-24T17:04:52.634981+00:00",
+  "updatedUtc": "2026-11-24T17:42:14.868605+00:00",
   "canonicalSha256": {
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
     "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
@@ -108,7 +108,7 @@
   },
   "currentRun": {
     "runId": "fin7t261124a",
-    "status": "F1_OLD_REVISION_COMPLETE_CURRENT_REVISION_BASE_TESTS_PENDING",
+    "status": "CURRENT_RC_FULL300_AND_RETIRE_PASS_F2_PRIVATE_HELPER_STOP",
     "reviewGateSkippedByUser": true,
     "baselineResourceAndGroupCounts": [
       0,
@@ -143,7 +143,7 @@
       "canonicalScriptTimeoutAdded": false,
       "rollbackOnlyContinuation": "PASS"
     },
-    "newFunctionalRevisionIntegration": "PENDING_COMPLETION_F1_OLD_REVISION_KEPT_SEPARATE",
+    "newFunctionalRevisionIntegration": "F2_FIRST_ATTEMPT_INCOMPLETE_N1_N2_BOUNDARIES_NOT_RUN",
     "f1FullFlow": {
       "result": "PASS_AFTER_RECORDED_RETRIES",
       "commonSha256": "36da32ad526d91aab1546b0f2a9e91d1df379e374d8e4faf4ce921eda16b21e6",
@@ -164,7 +164,78 @@
     "additionalFreshNormalRun": {
       "status": "NOT_RUN",
       "sequence": "After current integrated tests, complete cleanup and documentation, and freeze the completed release; then run the normal procedure including precheck"
-    }
+    },
+    "currentRcFull300": {
+      "result": "PASS",
+      "classification": "ROLLBACK_REPEAT_READ_ONLY_WITH_300_LOAD_NSGS",
+      "canonicalSha256": {
+        "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
+        "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
+        "rollback.ps1": "e8ead03928c7abd8a4e2deadb8269ab09372e54d0a7745aa868705230e9e1b80",
+        "step1_copy.ps1": "faa28e88354d878d92dd69764802a1587ee5580baf7f4fdf3676369495ffe4ab",
+        "step2_verify.ps1": "e07a7db5d9a567b8730c2cac741d1d76ce5a4b61b67a00ab365ff614f7aea603",
+        "precheck.ps1": "f406b778b82e496980c19a7eb4ddd35d5079f86b6b66d5da8d5c33a7df73d1e4"
+      },
+      "loadNsgCount": 300,
+      "armGets": 1496,
+      "resourceWrites": 0,
+      "oldSettingsVerifiedPresent": 373,
+      "newSettingsVerifiedAbsent": 375,
+      "productPhaseSeconds": 1289.0699139,
+      "wrapperSeconds": 1453.394176,
+      "beforeOriginalFilesAndCopiedRecordsPreserved": true,
+      "destinationsAndUnrelatedAssertedBeforeAndAfter": true,
+      "artifactSha256": "b4b93002435bccc729a3d80db3a750aa60dc61f21db22cdcf2f50b7e7536b51f",
+      "hostProofSha256": "7d4d6d4e93902ad4c1f7d95b089d72b5262cbd369518c4a4986e47e42b67dbec",
+      "independentRawAudit": "PASS"
+    },
+    "retire300": {
+      "result": "PASS",
+      "planSeconds": 4.11869,
+      "planResourceWrites": 0,
+      "applySeconds": 84.121366,
+      "exactOwnedRootDeletes": 300,
+      "deleteResponseStatuses": {
+        "202": 300
+      },
+      "explicitRootGet404": 300,
+      "sourceLedgerAndOriginalF1RawPreserved": true,
+      "remainingPositiveDiagnosticScopes": 65,
+      "remainingPlanResourceTypesIncludingAuxiliary": 53,
+      "projectionFilesShaMatched": 5,
+      "planArtifactSha256": "d9dea371a551325a494e8e04420dbeeaeff1299f6dcdd65ab6a93e1967276b52",
+      "applyArtifactSha256": "7c720dbd0e37b272c30a35301dfd75bcd54dc384273efc88431419ccbafd1a8f",
+      "hostProofSha256": "e15036b15a9cde3b18071638fe8575eba28a6c0003e10dc147346f3da4b14c26",
+      "independentRawAudit": "PASS"
+    },
+    "f2FirstAttempt": {
+      "result": "FAIL",
+      "classification": "PRIVATE_EXTERNAL_DIAGNOSTIC_OWNERSHIP_REGISTRATION_STOP_AFTER_PRODUCT_COPY_SUCCESS",
+      "canonicalFilesChanged": false,
+      "productCopyCompleteExitCode": 0,
+      "productCopyCompleteSeconds": 297.3774365,
+      "precheckSeconds": 39.486758,
+      "copyFailuresCsvExists": false,
+      "oldSettings": 73,
+      "oldSettingWriteRequests": {
+        "PUT": 0,
+        "PATCH": 0,
+        "POST": 0,
+        "DELETE": 0
+      },
+      "cause": "Private ownership-registration helper retained the previous scenario destination and rejected the legitimate same-name VNet diagnostic destination switch after product copy succeeded",
+      "originalFailurePreserved": true,
+      "scenarioPass": false,
+      "recoveryStatus": "PRIVATE_HELPER_FIX_AND_RESUME_PREPARATION",
+      "artifactSha256": "62ffe4c16edc5e394297ab39667a27880cd8b99480cf1f2b656ac117979a094e",
+      "hostProofSha256": "eda900c1fa31ed45a41aa68a005b3d5d46a3fbf6f892e7d4d844a52c4eb7eeaa",
+      "independentFailureAuditSha256": "a3b68a1283fd65618df28ecf2dc9327e9cc33ee63135ecba13f5e66a50a8b6ac"
+    },
+    "remainingPositiveDiagnosticScopes": 65,
+    "retiredLoadNsgCount": 300,
+    "n1": "NOT_RUN",
+    "n2": "NOT_RUN",
+    "abnormalBoundaries": "NOT_RUN"
   },
   "windowsPreviousVersion": {
     "status": "PASS",
