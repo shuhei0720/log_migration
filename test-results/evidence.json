@@ -1,6 +1,6 @@
 {
-  "status": "FINAL_INTEGRATION_IN_PROGRESS",
-  "updatedUtc": "2026-11-24T21:18:29.886835+00:00",
+  "status": "CURRENT_COMPREHENSIVE_TESTS_COMPLETE_CLEANUP_PENDING",
+  "updatedUtc": "2026-11-24T21:57:33.492107+00:00",
   "canonicalSha256": {
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
     "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
@@ -179,7 +179,7 @@
   },
   "currentRun": {
     "runId": "fin7t261124a",
-    "status": "FOUR_CHEAP_PATTERNS_PASS_BOUNDARY_FIRST_ATTEMPT_FAIL_HELPER_ONLY_RECOVERY_PENDING",
+    "status": "CURRENT_COMPREHENSIVE_FOUR_PATTERNS_SIX_BOUNDARIES_PASS_CLEANUP_PENDING",
     "reviewGateSkippedByUser": true,
     "baselineResourceAndGroupCounts": [
       0,
@@ -214,7 +214,7 @@
       "canonicalScriptTimeoutAdded": false,
       "rollbackOnlyContinuation": "PASS"
     },
-    "newFunctionalRevisionIntegration": "FULL_F2_CHEAP_FOUR_PATTERNS_PASS_BOUNDARY_HELPER_RECOVERY_PENDING",
+    "newFunctionalRevisionIntegration": "FULL_F2_AND_CHEAP_ALL_FOUR_PATTERNS_SIX_BOUNDARIES_PASS",
     "f1FullFlow": {
       "result": "PASS_AFTER_RECORDED_RETRIES",
       "commonSha256": "36da32ad526d91aab1546b0f2a9e91d1df379e374d8e4faf4ce921eda16b21e6",
@@ -306,7 +306,7 @@
     "retiredLoadNsgCount": 300,
     "n1": "PASS_REPRESENTATIVE_RIG",
     "n2": "PASS_REPRESENTATIVE_RIG",
-    "abnormalBoundaries": "FIRST_ATTEMPT_FAIL_FT22_TO_FT25_PASS_FT26_FT27_PRODUCT_NOT_RUN",
+    "abnormalBoundaries": "PASS_AFTER_PRESERVED_FIRST_FAILURE",
     "f2Continuation": {
       "result": "PASS",
       "cases": 33,
@@ -339,7 +339,7 @@
       "independentRawAudit": "PASS"
     },
     "remainingScenarioFixturePlan": {
-      "status": "ALL_FOUR_PATTERNS_PASS_BOUNDARY_HELPER_RECOVERY_PENDING",
+      "status": "COMPLETED_ALL_FOUR_PATTERNS_AND_SIX_BOUNDARIES_PASS",
       "plannedRoots": 15,
       "patternsPlanned": [
         "F1",
@@ -358,7 +358,7 @@
       "oldDcrAssociationsRequired": 8,
       "virtualMachinesRequired": 2,
       "virtualMachineScaleSetsRequired": 2,
-      "boundaryCasesActualResult": "FIRST_ATTEMPT_FAIL_WITH_FT22_TO_FT25_PASS",
+      "boundaryCasesActualResult": "PASS_AFTER_PRESERVED_FIRST_FAILURE",
       "patternsActualResult": "F1_F2_N1_N2_PASS",
       "planSha256": "7246cf3c0216996c2800d933634e8de3e87b9d0fde41b6c21f7b5b9882e17958",
       "controllerSha256": "32e97ed2dd76717d578d28c891cee008ec1ba1ca4aee2c34ea6faeeafa99a907",
@@ -606,7 +606,63 @@
       "failureCauseIndependentAudit": "PASS_FAILURE_EVIDENCE_AUDIT",
       "failureCauseIndependentAuditSha256": "59bfd643249462e5f3259590e936629cc5903106a70685cfedf540d477adb202",
       "originalFailurePreserved": true,
-      "recoveryStatus": "LOCAL_EXPECTED_BODY_FIX_IN_PROGRESS_SEPARATE_RERUN_NOT_STARTED"
+      "recoveryStatus": "SEPARATE_SIX_CASE_RERUN_PASS_ORIGINAL_FAILURE_PRESERVED"
+    },
+    "currentComprehensiveTestsComplete": true,
+    "cheapBoundariesRecovery": {
+      "result": "PASS",
+      "classification": "REPRESENTATIVE_CURRENT_FINAL_SUITE_NOT_ADDITIONAL_FRESH_NORMAL",
+      "runId": "cheap261124b",
+      "runtime": "PowerShell 7.6.10 on Windows",
+      "cases": 6,
+      "productPhases": 18,
+      "canonicalFilesChanged": false,
+      "boundaryHelperSha256": "8f6eb352179aa23f32d8980d593869b508132621f6ab5f404001ad1ec3826b8b",
+      "strictComparisonUnchanged": true,
+      "preparationReset": {
+        "newDeletes": 28,
+        "oldPuts": 0,
+        "old27BodyUnchangedAfterReset": true,
+        "separateFromProductPhases": true
+      },
+      "finalOldSettingsVerifiedRestored": 27,
+      "finalNewSettingsVerifiedAbsent": 29,
+      "unrelatedSettingsPreserved": 8,
+      "destinationsAndNewDcrBodiesRetained": 22,
+      "ownedInjectionRestored": true,
+      "journalBeforeUnchanged": true,
+      "originalFailureFilesPreserved": 485,
+      "originalFailureZipPreserved": true,
+      "allFourPriorPatternRootFilesPreserved": true,
+      "runtimeStageFilesVerified": 10,
+      "phaseSeconds": {
+        "FT22-copy": 12.9253606,
+        "FT22-precheck": 12.7191829,
+        "FT23-copy": 9.682407,
+        "FT23-precheck": 10.4227429,
+        "FT24-five-copy": 10.845101,
+        "FT24-five-precheck": 11.1226253,
+        "FT24-four-copy": 82.2381592,
+        "FT25-copy-failure": 48.4908685,
+        "FT25-delete-blocked": 44.5609797,
+        "FT25-recovered-copy": 44.9901933,
+        "FT25-recovered-verify": 48.0413295,
+        "FT25-verify-failure": 40.8216094,
+        "FT26-delete-old-change": 33.8974517,
+        "FT26-recovered-verify": 39.717395,
+        "FT26-verify-old-change": 43.5421939,
+        "FT27-recovered-rollback": 98.7974452,
+        "FT27-rollback-conflict": 16.1474591,
+        "baseline-verify": 49.3279195
+      },
+      "wrapperSeconds": 900.319213,
+      "executionStartedUtc": "2026-11-24T21:35:03.6020957Z",
+      "executionFinishedUtc": "2026-11-24T21:50:03.9213088Z",
+      "artifactSha256": "3113d4be9d735450d51c6bcbec4a331c9662d566d82f6e1cada984b08d8b77a4",
+      "hostProofSha256": "d48d6e31c0e72dd26c6da3e753daa0841cdfdeab2d090b1c64edb31cf04495f7",
+      "independentRawAudit": "PASS",
+      "independentRawAuditSha256": "b90333e8d5ee2f782a34a45a9ed3bef0dbd5aba71a04b9f61c6ee65082a958fb",
+      "cleanupStillPending": true
     }
   },
   "windowsPreviousVersion": {
