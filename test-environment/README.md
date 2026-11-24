@@ -1,6 +1,6 @@
 # リソース網羅テストの環境
 
-`resource_types_fixture.ps1`と`resource_types.arm.json`で、2サブスクリプションへ検証資源を分散配置します。PowerShell 7と、Ownerでログイン済みのAzure CLIを使います。現在の候補はLOCAL確認済みですが、5操作を通すAzure実機確認は未実施です。実機検証済みの完成版としては扱わないでください。前回の作成済みリソース・RGは両Subとも0件まで撤去済みです。レビュー待ちを省いて最後まで進める指示に基づき、少数の資源での実機確認から順に再開します。
+`resource_types_fixture.ps1`と`resource_types.arm.json`で、2サブスクリプションへ検証資源を分散配置します。PowerShell 7と、Ownerでログイン済みのAzure CLIを使います。少数の8リソース構成では、Plan→Deploy→Capture→Seed→Cleanupの5操作を実Azureで確認しました。51タイプ・追加NSG300件を含む全体構成は、配置の確認を進めています。検証範囲と結果は[検証結果](../test-results/REPORT.md)を参照してください。
 
 ## 指定する値
 
@@ -61,7 +61,7 @@ Code Signing・Bing・ExpressRouteは契約・提供条件等により省略し�
 
 ## 未完了の確認
 
-この候補でPlan→Deploy→Capture→Seed→Cleanupを通す実機確認と、categoryGroupを指定した診断設定の実PUT/GETは未実施です。LOCALの成功はこれらの実機成功を意味しません。
+少数構成では5操作とNSGの`categoryGroup=allLogs`の実PUT/GETを確認済みです。全体構成の作成・撤去と、VM・VMSSを含む移行全工程・複合負荷ケースは引き続き確認を進めています。Cosmos DBは作成実績のある東日本へ配置し、SQL・StorageなどはCanada Centralに残して4地域を維持します。
 
 ポリシーは4件作成し、うち移行対象の3件だけを`state.policyAssignmentIds`へ保存します。残る1件は新しいVNetを禁止するガードです。総合テストの実行側もこの3件を使う処理へ対応済みで、LOCAL確認に成功しています。実機での接続確認はこれから行います。
 
