@@ -203,6 +203,11 @@
 元状態への最終復元,LEGACY-TWO-REMOVED,1,後片付け,前回由来で所有記録と一致する旧VNet診断2件だけを削除しGET404を確認,旧診断2件,PASS,,所有記録に基づく個別削除,DELETE2件・GET404各1件。factory Beforeは不変。全環境の撤去は続行中,remove-owned-two-journal.json
 元状態への最終復元,NATIVE-WINDOWS-REMOVED,1,後片付け,所有Windows RGを削除しRG・VM・NIC・disk・bootstrapと所有ロール4件のGET404を確認,Windowsの5ID・所有ロール4件,PASS,,所有記録に基づくRG削除,RG DELETE1件・role DELETE0件・network/RP書き込み0件。全環境の撤去は続行中,NATIVE_POST_RAW_404.json
 元状態への最終復元,ARTIFACT-STORAGE-REMOVED,1,後片付け,結果を回収済みの所有artifact RGを削除しRGとStorageのGET404を確認,artifact RG・Storage各1件,PASS,,所有記録に基づくRG削除,RG DELETE1件。全環境のRoot0復元は後続,artifacts/cleanup-journal.json
+元状態への最終復元,PREP-NETWORK-REMOVED,1,後片付け,所有VNet・Watcher・guard・RGなど準備資源を撤去し15IDのGET404を確認,所有DELETE12件・確認15ID,PASS,,所有記録に基づく削除,利用登録変更0件。元の資源・RG・ポリシーと照合,NETWORK_POST_RAW_404.json
+元状態への最終復元,ROOT0-PRE-PROVIDERS,1,後片付け,利用登録復元前に資源・RG各0件と元のロール・ポリシー本文・MG所属・削除済み残存を照合,2Sub・21確認,PASS,,読み取り専用,サービスAPI確認を含む。利用登録の復元完了を示す結果ではない,finalpre261124b-verification.json
+元状態への最終復元,RP27-PRE-GUARD-STOP,1,停止履歴,27件計画外の元未登録1件を事前検出しAzure要求前に停止,A Microsoft.ContainerInstance,STOP（履歴保持・実解除0件）,,private復元補助・正本変更0,Azure要求0件・journal未作成。元27計画と停止履歴を保持し、後続の28件復元と分離,RP_RESTORE_AND_POST_EXECUTION.json
+元状態への最終復元,RP28-UNREGISTER-REQUESTS,1,後片付け,元の未登録が証明される28件へ各1回POSTし全件受理・初回待機後26件NotRegisteredを確認,A22件・B6件,処理中（26完了・2反映待ち）,,private復元補助・正本変更0,独立レビューと実行許可後に実施。初回900秒待機後B Network・ComputeがUnregistering。再POST0件,provider-restore-journal-first-wait.json
+元状態への最終復元,RP28-GET-ONLY-CONTINUATION,1,継続待機,初回journalとpollの先頭履歴を保持してprovider metadataのGETだけで反映を確認,B Microsoft.Network・Microsoft.Compute,処理中（最終照合未実施）,,private継続補助・正本変更0,再POST0件・解除開始後のサービスAPI呼び出し0件。Root全復元は未完了,provider-metadata-poll-audit.json
 負荷資源の退役,RETIRE-PLAN,1,後片付け,所有ID/GUIDを固定した300NSGの削除計画を照合（変更0件）,NSG300件,PASS,4.12,試験補助,,retirement300
 負荷資源の退役,RETIRE-APPLY,1,後片付け,所有ID/GUIDを固定した300NSGの削除と全300件の404を確認し型別代表を保持,NSG300件,PASS,84.12,試験補助,,retirement300
 代表構成の境界・初回,FT22,1,異常・境界,precheckとcopyで既存Storage名を検出し新規記録や設定書き込み前に停止,BのNSG・実作成した保存先,PASS,,正本fedad825・境界補助9650194e,,境界初回/cases.json

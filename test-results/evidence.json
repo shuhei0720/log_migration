@@ -1,6 +1,6 @@
 {
-  "status": "CURRENT_COMPREHENSIVE_TESTS_COMPLETE_CLEANUP_PENDING",
-  "updatedUtc": "2026-11-24T22:38:08.137384+00:00",
+  "status": "CURRENT_COMPREHENSIVE_TESTS_AND_ASSET_CLEANUP_COMPLETE_PROVIDER_RESTORE_PENDING",
+  "updatedUtc": "2026-11-24T23:10:44.773316+00:00",
   "canonicalSha256": {
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
     "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
@@ -179,13 +179,13 @@
   },
   "currentRun": {
     "runId": "fin7t261124a",
-    "status": "CURRENT_COMPREHENSIVE_FOUR_PATTERNS_SIX_BOUNDARIES_PASS_CLEANUP_PENDING",
+    "status": "CURRENT_TESTS_PASS_ASSETS_ZERO_PROVIDER_RESTORE_PENDING",
     "reviewGateSkippedByUser": true,
     "baselineResourceAndGroupCounts": [
       0,
       0
     ],
-    "temporaryNetworkAndWindowsEnvironmentActive": true,
+    "temporaryNetworkAndWindowsEnvironmentActive": false,
     "cleanupComplete": false,
     "selectedRequestedTypes": 51,
     "newRequestedTypes": 50,
@@ -701,13 +701,13 @@
       "scope": "Current representative fixture only; restored Before11 includes preparation assets and does not prove global Root0 cleanup"
     },
     "rootOriginalCleanup": {
-      "status": "IN_PROGRESS",
+      "status": "ASSETS_ZERO_PROVIDER28_POSTS_ACCEPTED_26_NOTREGISTERED_2_PENDING",
       "rootOriginalBaselineResourceAndGroupCounts": [
         0,
         0
       ],
       "rootOriginalRestored": false,
-      "allCurrentAssetsRemoved": false,
+      "allCurrentAssetsRemoved": true,
       "resourceProviderRegistrationRestored": false,
       "legacyOwnedDiagnosticRemoval": {
         "result": "PASS_TWO_EXACT_SETTINGS_REMOVED_GET404",
@@ -726,10 +726,8 @@
         "proofSha256": "a16e16ae2ca892552052f23ac862cfbf07f5229681ed3e4b0a1422e6d78fc418"
       },
       "remaining": [
-        "Prepared VNets/Watchers/guards removal in progress",
-        "Original Root0 pre-provider-restore comparison",
-        "Restore only proven 27 provider registrations",
-        "Final metadata and independent evidence-chain verification"
+        "Wait for B Microsoft.Network and Microsoft.Compute to reach NotRegistered using metadata GET only",
+        "Post-restoration metadata and independent evidence-chain verification"
       ],
       "nativeWindowsRemoval": {
         "result": "PASS_NATIVE_FIVE_IDS_AND_FOUR_ROLES_EXACT_404",
@@ -752,6 +750,90 @@
         "storageAccountGet404": true,
         "journal": "artifacts/cleanup-journal.json",
         "journalSha256": "0bf2a59d59417e219d09ef074b2c843c64697ceae108229c140affa18ef71ba9"
+      },
+      "networkRemoval": {
+        "result": "PASS_ALL_FIFTEEN_PREP_IDS_EXACT_404",
+        "completedUtc": "2026-11-24T22:39:54.696946+00:00",
+        "ownedDeleteRequests": 12,
+        "explicitGet404": 15,
+        "providerWriteRequests": 0,
+        "postRawGetProof": "cleanup-preparation/NETWORK_POST_RAW_404.json",
+        "postRawGetProofSha256": "41d819c127722a49594cdb76cd29ae1dedede4412258d7f072ec37ee492e8f68",
+        "controllerResult": "network/run/cleanup-result.json",
+        "controllerResultSha256": "1e9b0a66af7fff16ad97e7ae867c6a5f2d2e01444e550fa95af6774ef4b31662"
+      },
+      "preProviderRestoreVerification": {
+        "result": "PASS",
+        "label": "finalpre261124b",
+        "verifiedUtc": "2026-11-24T22:40:10.607693+00:00",
+        "checks": 21,
+        "failedChecks": 0,
+        "serviceApiProofIncluded": true,
+        "resourcesAndResourceGroupsBySubscription": [
+          0,
+          0
+        ],
+        "originalRoleAndPolicyBodiesAndMgParentsMatched": true,
+        "deletedServiceResidues": 0,
+        "ownedPriorAndCurrentApimGet404": 2,
+        "index": "baseline/final-restore/finalpre261124b-index.json",
+        "indexSha256": "1db64b8894e5bf1bfea357430747e9f1c8b30b7d6c441799e103cf0cb6a64506",
+        "verification": "baseline/final-restore/finalpre261124b-verification.json",
+        "verificationSha256": "65bae98625a7c6d83c5760da25d7b6b424dcbeab4eb55693110b27a7e6c7717f",
+        "ownedApimAbsenceProof": "baseline/final-restore/finalpre261124b-owned-apim-absence.json",
+        "ownedApimAbsenceProofSha256": "c86e37feea3d62be89bdcc2d6a2d7ef378a296c523b5ef2137bce429f9d78cb0"
+      },
+      "providerRestoration": {
+        "status": "UNREGISTER_PENDING_GET_ONLY_CONTINUATION",
+        "restored": false,
+        "initialExactPlanPairs": 27,
+        "initialAttemptResult": "STOP_PRE_GUARD_BEFORE_AZURE_REQUESTS",
+        "initialAttemptAzureRequests": 0,
+        "initialAttemptJournalCreated": false,
+        "extraOriginalNotRegisteredPair": "A Microsoft.ContainerInstance",
+        "original27PlanAndStopHistoryPreserved": true,
+        "proposedProvenOriginalNotRegisteredPairs": 28,
+        "newExecuteGoAuthorized": true,
+        "executionHistory": "cleanup-preparation/RP_RESTORE_AND_POST_EXECUTION.json",
+        "executionHistorySha256": "753b64eba54408f817e94c68abe60a7413dec0b712bfaf90283e4719530bfab4",
+        "provenOriginalNotRegisteredPairs": 28,
+        "rootGo": "PROVIDER_28_RESTORE_ROOT_GO.json",
+        "rootGoSha256": "9837d2335fe60d4349253a3d296683b72a5c26d97afa166ff5c0aa22c40755b7",
+        "independentLocalCodeReview": "independent-audit/PROVIDER_28_CODE_REVIEW.json",
+        "independentLocalCodeReviewSha256": "bb15bbd7f512e3888b16ff1efa47a20def59740d5b43bc7679ac721648147e7c",
+        "postCount": 28,
+        "acceptedPostCount": 28,
+        "postCountBySubscription": {
+          "A": 22,
+          "B": 6
+        },
+        "postRetransmissionCount": 0,
+        "confirmedNotRegisteredCount": 26,
+        "pendingPairs": [
+          {
+            "subscription": "B",
+            "namespace": "Microsoft.Network",
+            "state": "Unregistering"
+          },
+          {
+            "subscription": "B",
+            "namespace": "Microsoft.Compute",
+            "state": "Unregistering"
+          }
+        ],
+        "latestLocallyObservedUtc": "2026-11-24T23:10:14.576918+00:00",
+        "firstWaitSeconds": 900,
+        "firstWaitStatus": "UNREGISTER_PENDING",
+        "frozenFirstWaitJournal": "baseline/final-restore/provider-restore-journal-first-wait.json",
+        "frozenFirstWaitJournalSha256": "65821c108c664389bfa0a149aa83e6ddb5d650c4110aed9c445e023568d3e35f",
+        "frozenFirstWaitPostsAndPollPrefixPreserved": true,
+        "latestJournal": "baseline/final-restore/provider-restore-journal.json",
+        "getOnlyPollHelper": "baseline/final-restore/continue-provider-metadata-poll.py",
+        "getOnlyPollHelperSha256": "c3897b6ae16f47009e67246fe0e82040fdb7cbf9d87c1afc9a197097e49add90",
+        "independentPollCodeReview": "independent-audit/PROVIDER_METADATA_POLL_CODE_REVIEW.json",
+        "independentPollCodeReviewSha256": "fc0c1f78f9269ec8a6f920f5d6b8ce3adf1b8c5f0db1186e934a2a454a8f56fd",
+        "serviceApiCallsAfterFirstUnregister": 0,
+        "postRestorationVerificationRun": false
       }
     }
   },
