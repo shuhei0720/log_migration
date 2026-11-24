@@ -1,32 +1,21 @@
 {
-  "status": "FIX_APPLIED_FINAL_TEST_NOT_STARTED",
-  "updatedUtc": "2026-11-24T12:50:08.132722+00:00",
+  "status": "FINAL_INTEGRATION_IN_PROGRESS",
+  "updatedUtc": "2026-11-24T14:03:28.674522+00:00",
   "canonicalSha256": {
-    "common.ps1": "9e946eb263cbf9622e05506b827022d8847db6db40420ab0d727113935a27740",
-    "precheck.ps1": "f406b778b82e496980c19a7eb4ddd35d5079f86b6b66d5da8d5c33a7df73d1e4",
+    "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
+    "common.ps1": "36da32ad526d91aab1546b0f2a9e91d1df379e374d8e4faf4ce921eda16b21e6",
+    "rollback.ps1": "e8ead03928c7abd8a4e2deadb8269ab09372e54d0a7745aa868705230e9e1b80",
     "step1_copy.ps1": "9762847bbe83fe04309dc25e5b22098b92d5b015caf84846568a8342c7d6b51d",
     "step2_verify.ps1": "e07a7db5d9a567b8730c2cac741d1d76ce5a4b61b67a00ab365ff614f7aea603",
-    "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
-    "rollback.ps1": "e8ead03928c7abd8a4e2deadb8269ab09372e54d0a7745aa868705230e9e1b80"
+    "precheck.ps1": "f406b778b82e496980c19a7eb4ddd35d5079f86b6b66d5da8d5c33a7df73d1e4"
   },
-  "testSha256": "00ecc42251d567955fb264aa48feee540c4f44f8d9185eec7cec68419fe22a53",
+  "testSha256": "c7e4e1a0ad65618d99af2285632d81705d0586d5955ec05eeb6c9be1f6101382",
   "linuxReplay": {
     "result": "PASS",
     "runtime": "7.5.4",
-    "cases": 77,
-    "checks": 1035,
+    "cases": 79,
+    "checks": 1059,
     "azureRequests": 0
-  },
-  "windowsCurrentVersion": {
-    "status": "PASS",
-    "runtime": "7.6.10",
-    "cases": 77,
-    "checks": 1035,
-    "azureRequests": 0,
-    "isWindows": true,
-    "atUtc": "2026-11-24T10:45:09.9193284Z",
-    "canonicalHashesMatched": true,
-    "executionProofSha256": "85b328f5f7e030a734d67321be4413e68dd0e77051e9ace058df6b2df6e2c30f"
   },
   "azureIntegration": {
     "resultBeforeFix": "FAIL",
@@ -36,7 +25,7 @@
     "fix": "Wait for Succeeded when provisioningState is present; fail on Failed/Canceled",
     "reproduction": "Real Storage/LAW GET bodies reproduced the failure; both later reached Succeeded",
     "completeFlowAfterFix": "DIAGNOSTIC_14_SCOPE_PASS_DCRA_NOT_YET_RUN",
-    "finalTestStarted": false,
+    "finalTestStarted": true,
     "smallDiagnosticFlow": {
       "result": "PASS_AFTER_RETRY",
       "scopes": 14,
@@ -53,6 +42,20 @@
       "testHelperArrayIssueFixed": true,
       "canonicalUnchanged": true,
       "flowProofSha256": "e8ae384ac8fb9bb0e90d64bce60bbc6f5da04027078ba31d6f11db445ee40aab"
+    },
+    "storageOnlyComparisonFix": {
+      "initialResult": "FAIL",
+      "initialMismatches": 10,
+      "initialOldDeletes": 0,
+      "cause": "Azure GET may add logAnalyticsDestinationType=AzureDiagnostics with workspaceId=null for a storage-only destination",
+      "fix": "Ignore logAnalyticsDestinationType only when workspaceId is absent; keep exact LAW mode comparison",
+      "codeLinesAdded": 3,
+      "otherFiveCanonicalFilesUnchanged": true,
+      "savedActualBodiesReplayed": 10,
+      "savedBodyReplayResult": "PASS",
+      "savedBodyReplayIsAzureWriteProof": false,
+      "sameJournalResume": "PENDING",
+      "initialRawZipSha256": "710adfc412f7bfa8c70070d8e693b54808d3a62de14a2f69c420d549925ca3fe"
     }
   },
   "cleanup": {
@@ -121,7 +124,7 @@
     "proofSha256": "50698b737fcad3403ddd1be66da4af7c8df1050ad9f333c693a8e0d3ab423178"
   },
   "testEnvironmentCode": {
-    "status": "REVIEW_CANDIDATE_NOT_LIVE_VALIDATED",
+    "status": "FULL_DEPLOY_AND_SEED_PASS_CLEANUP_PENDING",
     "controllerSha256": "42d3c36f8101114cfd5b7250acd28b5f4de38b94ff7b3f297d9fcfbe72db7b79",
     "templateSha256": "fd5bb83cada189d43ea28a49529251e6f354b7dc86d8de5a39c6df39bd636f81",
     "functions": 5,
@@ -138,11 +141,16 @@
     "httpErrorShapeCases": 15,
     "apimPurgeLocalCases": 10,
     "fullDeployment": "PASS_7_DEPLOYMENTS_SUCCEEDED",
-    "fullSeed": "IN_PROGRESS"
+    "fullSeed": "PASS_365_DIAGNOSTIC_PUT_GET",
+    "fullUnresolvedScopes": 0,
+    "fullFailedScopes": 0,
+    "fullUnsupportedScopes": 4,
+    "oldDcrAssociations": 8,
+    "sentinelAssociations": 4
   },
   "currentRun": {
     "runId": "fin7t261124a",
-    "status": "FULL_SOURCE_SETTINGS_SEEDING",
+    "status": "F1_COPY_COMPARISON_FIX_RECHECK",
     "reviewGateSkippedByUser": true,
     "baselineResourceAndGroupCounts": [
       0,
@@ -156,6 +164,40 @@
     "auxiliaryTypes": 3,
     "plannedRoots": 365,
     "loadCount": 300,
-    "actualInventory": 369
+    "actualInventory": 369,
+    "fullDeployment": "PASS",
+    "fullSeed": "PASS",
+    "positiveDiagnosticScopes": 365,
+    "oldDcrAssociations": 8,
+    "sentinelAssociations": 4,
+    "firstF1Result": "FAIL",
+    "firstF1OldDeletes": 0
+  },
+  "windowsPreviousVersion": {
+    "status": "PASS",
+    "runtime": "7.6.10",
+    "cases": 77,
+    "checks": 1035,
+    "azureRequests": 0,
+    "isWindows": true,
+    "atUtc": "2026-11-24T10:45:09.9193284Z",
+    "canonicalHashesMatched": true,
+    "executionProofSha256": "85b328f5f7e030a734d67321be4413e68dd0e77051e9ace058df6b2df6e2c30f",
+    "commonSha256": "9e946eb263cbf9622e05506b827022d8847db6db40420ab0d727113935a27740",
+    "scope": "Before the storage-only diagnostic comparison fix"
+  },
+  "windowsCurrentVersion": {
+    "status": "PASS",
+    "runtime": "7.6.10",
+    "cases": 79,
+    "checks": 1059,
+    "azureRequests": 0,
+    "isWindows": true,
+    "canonicalHashesMatched": true,
+    "testHashMatched": true,
+    "caseNamesResultsAndAssertionCountsMatchLinux": true,
+    "executionProofSha256": "fdd91edaf7dd0f2c6f3fda441c085d66b84d7e428a4e611b011a085b115b83be",
+    "artifactZipSha256": "4a24e78b8f1f02eb6a0e001f6978d52de974940b8e40db3794ecc8098eed66ae",
+    "hostProofSha256": "798503e2b94c0d784d9b97ed6072998713943b55f7397c66c808771b814ccfe1"
   }
 }

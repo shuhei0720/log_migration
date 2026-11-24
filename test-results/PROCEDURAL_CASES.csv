@@ -76,3 +76,5 @@ PROC-074,RedisのDB一覧が空なら存在しない子を調べない,境界,4,
 PROC-075,Redis子DBと通常一覧の次ページを両方移行・復元する,正常・切戻し,15,PASS
 PROC-076,StorageのResolvingDnsを待って設定を完了する,正常・作成待ち,6,PASS
 PROC-077,LAWのProvisioningを待って設定を完了する,正常・作成待ち,6,PASS
+PROC-078,Storage宛GETのLAW既定方式付加を許容して再実行・削除・復元できる,正常・再開・切戻し,14,PASS
+PROC-079,LAW宛の格納方式変更は許容せず既存設定を保持する,異常・停止確認,10,PASS
