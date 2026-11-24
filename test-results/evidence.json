@@ -1,6 +1,6 @@
 {
   "status": "FINAL_INTEGRATION_IN_PROGRESS",
-  "updatedUtc": "2026-11-24T20:00:43.204871+00:00",
+  "updatedUtc": "2026-11-24T20:25:14.639768+00:00",
   "canonicalSha256": {
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
     "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
@@ -179,7 +179,7 @@
   },
   "currentRun": {
     "runId": "fin7t261124a",
-    "status": "FULL_F2_AND_HIGH_COST_FIXTURE_TEARDOWN_PASS_CHEAP_REMAINDER_DEPLOYING",
+    "status": "FULL_F2_AND_HIGH_COST_TEARDOWN_AND_CHEAP_F1_PASS_CHEAP_F2_RUNNING",
     "reviewGateSkippedByUser": true,
     "baselineResourceAndGroupCounts": [
       0,
@@ -214,7 +214,7 @@
       "canonicalScriptTimeoutAdded": false,
       "rollbackOnlyContinuation": "PASS"
     },
-    "newFunctionalRevisionIntegration": "F2_PASS_N1_N2_BOUNDARIES_NOT_RUN",
+    "newFunctionalRevisionIntegration": "FULL_F2_AND_CHEAP_F1_PASS_N1_N2_BOUNDARIES_NOT_RUN",
     "f1FullFlow": {
       "result": "PASS_AFTER_RECORDED_RETRIES",
       "commonSha256": "36da32ad526d91aab1546b0f2a9e91d1df379e374d8e4faf4ce921eda16b21e6",
@@ -339,7 +339,7 @@
       "independentRawAudit": "PASS"
     },
     "remainingScenarioFixturePlan": {
-      "status": "DEPLOY_CAPTURE_SEED_IN_PROGRESS",
+      "status": "SEEDED_F1_PASS_F2_RUNNING",
       "plannedRoots": 15,
       "patternsPlanned": [
         "F1",
@@ -359,11 +359,50 @@
       "virtualMachinesRequired": 2,
       "virtualMachineScaleSetsRequired": 2,
       "boundaryCasesActualResult": "NOT_RUN",
-      "patternsActualResult": "NOT_RUN",
+      "patternsActualResult": "F1_PASS_F2_RUNNING_N1_N2_NOT_RUN",
       "planSha256": "7246cf3c0216996c2800d933634e8de3e87b9d0fde41b6c21f7b5b9882e17958",
-      "controllerSha256": "32e97ed2dd76717d578d28c891cee008ec1ba1ca4aee2c34ea6faeeafa99a907"
+      "controllerSha256": "32e97ed2dd76717d578d28c891cee008ec1ba1ca4aee2c34ea6faeeafa99a907",
+      "positiveDiagnosticScopes": 19
     },
-    "highCostFixtureCleanupComplete": true
+    "highCostFixtureCleanupComplete": true,
+    "cheapF1": {
+      "result": "PASS",
+      "classification": "REPRESENTATIVE_CURRENT_FINAL_SUITE_NOT_ADDITIONAL_FRESH_NORMAL",
+      "runId": "cheap261124b",
+      "runtime": "PowerShell 7.6.10 on Windows",
+      "plannedRoots": 15,
+      "regions": 3,
+      "loadCount": 0,
+      "diagnosticScopes": 19,
+      "oldDcrAssociations": 8,
+      "oldSettingsVerifiedRestored": 27,
+      "newSettingsVerifiedAbsent": 29,
+      "cases": 25,
+      "productPhases": 9,
+      "commonSha256": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
+      "sixCanonicalHashesMatched": true,
+      "eventSyslogTotalRetentionDays": 1095,
+      "journalBeforeUnchanged": true,
+      "destinationsAndUnrelatedSettingsRetained": true,
+      "copyDeleteRollbackRepeatResourceWrites": 0,
+      "phaseSeconds": {
+        "precheck": 26.7155372,
+        "copy-interrupted": 106.2289341,
+        "copy-complete": 113.2775481,
+        "copy-repeat": 36.9514341,
+        "verify": 34.6612814,
+        "delete-complete": 108.7712537,
+        "delete-repeat": 42.0096764,
+        "rollback-all": 193.27275,
+        "rollback-repeat": 49.5698363
+      },
+      "wrapperSeconds": 745.31872,
+      "artifactSha256": "00a199c67cc22cc2e75492f6c427f208bebb6b4bf1fcec6dd52728a513b36705",
+      "hostProofSha256": "6392ecff187653851493b2a8aaaf9e3864b859d53967e8b4131bb1775dbdf431",
+      "independentRawAudit": "PASS",
+      "independentRawAuditSha256": "1f87182e42630db7260f56e256796dcdc0cbcf7cae8acb068119aded64fcf69a",
+      "scenarioWallSeconds": 744.7570764
+    }
   },
   "windowsPreviousVersion": {
     "status": "PASS",

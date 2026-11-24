@@ -1,0 +1,65 @@
+﻿区分,リソースタイプ,構成,明示作成数,既存参照数,診断対象数_負荷込みF1,診断対象数_現行F2,診断非対応数,診断対象外数,リージョン,確認結果,補足
+依頼型,microsoft.codesigning/codesigningaccounts,省略,0,0,0,0,0,0,,未実施,全月料金と有料オファーの適格性が未確認のため省略。
+依頼型,microsoft.web/sites/slots,新規作成,2,0,2,2,0,0,westus2,旧F1・現行F2を確認,Web AppとAzure Functionsのslot各1。
+依頼型,microsoft.network/natgateways,新規作成,1,0,1,1,0,0,japanwest,旧F1・現行F2を確認,
+依頼型,microsoft.databricks/workspaces,省略,0,0,0,0,0,0,,未実施,必須NSG関連付けが既存サブネットを変更しない条件と両立しないため省略。
+依頼型,microsoft.app/containerapps,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.app/jobs,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.app/managedenvironments,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.servicebus/namespaces,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.web/hostingenvironments,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.communication/communicationservices,新規作成,1,0,1,1,0,0,global,旧F1・現行F2を確認,
+依頼型,microsoft.network/dnsresolverpolicies,新規作成,1,0,1,1,0,0,japanwest,旧F1・現行F2を確認,
+依頼型,microsoft.network/expressroutecircuits,省略,0,0,0,0,0,0,,未実施,回線契約、プロバイダー料金と撤去条件が未確認のため省略。
+依頼型,microsoft.automation/automationaccounts,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.relay/namespaces,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.botservice/botservices,新規作成,1,0,1,1,0,0,global,旧F1・現行F2を確認,
+依頼型,microsoft.cache/redis,省略,0,0,0,0,0,0,,未実施,新規作成の終了制限により省略。
+依頼型,microsoft.sql/servers,新規作成,1,0,1,1,0,0,canadacentral,旧F1・現行F2を確認,親1。master DBは別行。
+依頼型,microsoft.sql/servers/databases,新規作成,1,0,1,1,0,0,canadacentral,旧F1・現行F2を確認,明示作成したユーザーDB。組込みmasterは子scopeの別行。
+依頼型,microsoft.search/searchservices,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.web/serverfarms,新規作成,1,0,1,1,0,0,westus2,旧F1・現行F2を確認,
+依頼型,microsoft.web/sites,新規作成,2,0,2,2,0,0,westus2,旧F1・現行F2を確認,Web AppとAzure Functions各1。
+依頼型,microsoft.logic/workflows,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.recoveryservices/vaults,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.web/connections,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.compute/virtualmachinescalesets,新規作成,2,0,1,1,0,1,japanwest,旧F1・現行F2を確認,診断対象1・診断対象外1。両方の旧DCR関連を移行し、診断設定がなくてもVM側の対象となることを確認。
+依頼型,microsoft.network/loadbalancers,新規作成,1,0,1,1,0,0,japanwest,旧F1・現行F2を確認,
+依頼型,microsoft.compute/disks,新規作成,1,0,1,1,0,0,canadacentral,旧F1・現行F2を確認,
+依頼型,microsoft.app/sessionpools,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.containerregistry/registries,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.containerservice/managedclusters,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.insights/datacollectionrules,新規作成,3,0,3,3,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.monitor/accounts,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.apimanagement/service,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.bing/accounts,省略,0,0,0,0,0,0,,未実施,サービス退役により新規検証できないため省略。
+依頼型,microsoft.cache/redisenterprise,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,Managed Redis親。default DBは補助型・子scopeの別行。
+依頼型,microsoft.dbforpostgresql/flexibleservers,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.documentdb/databaseaccounts,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.network/applicationgateways,新規作成,1,0,1,1,0,0,japanwest,旧F1・現行F2を確認,
+依頼型,microsoft.insights/components,新規作成,1,0,1,1,0,0,canadacentral,旧F1・現行F2を確認,
+依頼型,microsoft.operationalinsights/workspaces,新規作成,3,0,3,3,0,0,canadacentral / japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.network/azurefirewalls,新規作成,1,0,1,1,0,0,japanwest,旧F1・現行F2を確認,
+依頼型,microsoft.network/dnszones,新規作成,1,0,0,0,1,0,global,診断非対応を確認,実Categories APIがResourceTypeNotSupported。診断設定移行の成功件数へ加算しない。
+依頼型,microsoft.network/networksecuritygroups,新規作成,301,0,301,1,0,0,japaneast / japanwest,旧F1・現行F2を確認,基本1＋負荷300。現行F2前に負荷300だけ撤去。NSGをサブネットへ関連付けない。
+依頼型,microsoft.network/privatednszones,新規作成,1,0,0,0,1,0,global,診断非対応を確認,実Categories APIがResourceTypeNotSupported。診断設定移行の成功件数へ加算しない。
+依頼型,microsoft.network/virtualnetworks,既存参照,0,2,2,2,0,0,japaneast / japanwest,旧F1・現行F2を確認,事前準備済みVNet2件を参照。fixtureはVNet/Subnet/NSG/UDR設定を変更しない。
+依頼型,microsoft.kusto/clusters,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
+依頼型,microsoft.network/privateendpoints,新規作成,1,0,1,1,0,0,japanwest,旧F1・現行F2を確認,
+依頼型,microsoft.compute/virtualmachines,新規作成,2,0,1,1,0,1,japaneast,旧F1・現行F2を確認,診断対象1・診断対象外1。両方の旧DCR関連を移行し、診断設定がなくてもVM側の対象となることを確認。
+依頼型,microsoft.network/networkinterfaces,新規作成,3,0,3,3,0,0,japaneast / japanwest,旧F1・現行F2を確認,
+依頼型,microsoft.network/publicipaddresses,新規作成,2,0,2,2,0,0,japanwest,旧F1・現行F2を確認,
+依頼型,microsoft.eventgrid/systemtopics,新規作成,1,0,1,1,0,0,canadacentral,旧F1・現行F2を確認,
+依頼型,microsoft.keyvault/vaults,新規作成,1,0,1,1,0,0,canadacentral,旧F1・現行F2を確認,
+依頼型,microsoft.storage/storageaccounts,新規作成,1,0,1,1,0,0,canadacentral,旧F1・現行F2を確認,親1。Blob/File/Queue/Tableの4scopeは別行。
+依頼型,microsoft.machinelearningservices/workspaces,新規作成,1,0,1,1,0,0,canadacentral,旧F1・現行F2を確認,
+依頼型,microsoft.cognitiveservices/accounts/projects,新規作成,1,0,1,1,0,0,canadacentral,旧F1・現行F2を確認,Foundry子プロジェクト。依頼型に含むため子scope追加行へ重複計上しない。
+依頼型,microsoft.cognitiveservices/accounts,新規作成,1,0,1,1,0,0,canadacentral,旧F1・現行F2を確認,
+補助型・子scope,microsoft.cache/redisenterprise/databases,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,Managed Redisのdefault DB。子scope6件のうち1件。
+補助型,microsoft.managedidentity/userassignedidentities,新規作成,2,0,0,0,1,1,japaneast,診断非対応を確認,AKS/Bot依存。非対応1・対象外1を区別。
+補助型,microsoft.network/firewallpolicies,新規作成,1,0,0,0,1,0,japanwest,診断非対応を確認,Firewall依存。実Categories APIがResourceTypeNotSupported。
+子scope,microsoft.storage/storageaccounts/blobservices,組込み子scope,0,0,1,1,0,0,canadacentral,旧F1・現行F2を確認,StorageのBlob service。親の件数へ重複計上しない。
+子scope,microsoft.storage/storageaccounts/fileservices,組込み子scope,0,0,1,1,0,0,canadacentral,旧F1・現行F2を確認,StorageのFile service。親の件数へ重複計上しない。
+子scope,microsoft.storage/storageaccounts/queueservices,組込み子scope,0,0,1,1,0,0,canadacentral,旧F1・現行F2を確認,StorageのQueue service。親の件数へ重複計上しない。
+子scope,microsoft.storage/storageaccounts/tableservices,組込み子scope,0,0,1,1,0,0,canadacentral,旧F1・現行F2を確認,StorageのTable service。親の件数へ重複計上しない。
+子scope,microsoft.sql/servers/databases,組込み子scope,0,0,1,1,0,0,canadacentral,旧F1・現行F2を確認,SQL Serverの組込みmaster DB。ユーザーDBとは別scope。
