@@ -1,6 +1,6 @@
 {
   "status": "FINAL_INTEGRATION_IN_PROGRESS",
-  "updatedUtc": "2026-11-24T17:42:14.868605+00:00",
+  "updatedUtc": "2026-11-24T18:52:06.732735+00:00",
   "canonicalSha256": {
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
     "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
@@ -61,10 +61,27 @@
     "smallFlowAfterCreationWaitFix": "DIAGNOSTIC_14_SCOPE_PASS_DCRA_NOT_YET_RUN"
   },
   "cleanup": {
-    "status": "PENDING_CURRENT_TESTS",
+    "status": "IN_PROGRESS_HIGH_COST_FIXTURE_RETRY",
     "runId": "fin7t261124a",
     "resourcesAndGroupsRemoved": false,
-    "originalStateRestoreVerified": false
+    "originalStateRestoreVerified": false,
+    "publicControllerUnchanged": true,
+    "resourceProviderUnregisterDeferred": true,
+    "firstAttempt": {
+      "result": "FAIL",
+      "classification": "NAT_PUBLIC_IP_DELETE_DEPENDENCY_400",
+      "failureHistoryPreserved": true
+    },
+    "recovery": {
+      "status": "IN_PROGRESS",
+      "inMemoryEarlyDeleteTypes": [
+        "Microsoft.ContainerService/managedClusters",
+        "Microsoft.Monitor/accounts",
+        "Microsoft.Databricks/workspaces"
+      ],
+      "remainingOwnedRootsDeletedByResourceGroupDependencyOrder": true,
+      "publicControllerSourceModified": false
+    }
   },
   "actualAzureBodyReplay": {
     "result": "PASS",
@@ -82,7 +99,7 @@
     "proofSha256": "50698b737fcad3403ddd1be66da4af7c8df1050ad9f333c693a8e0d3ab423178"
   },
   "testEnvironmentCode": {
-    "status": "FULL_DEPLOY_AND_SEED_PASS_CLEANUP_PENDING",
+    "status": "FULL_DEPLOY_SEED_AND_F2_PASS_CLEANUP_RETRYING",
     "controllerSha256": "42d3c36f8101114cfd5b7250acd28b5f4de38b94ff7b3f297d9fcfbe72db7b79",
     "templateSha256": "fd5bb83cada189d43ea28a49529251e6f354b7dc86d8de5a39c6df39bd636f81",
     "functions": 5,
@@ -108,7 +125,7 @@
   },
   "currentRun": {
     "runId": "fin7t261124a",
-    "status": "CURRENT_RC_FULL300_AND_RETIRE_PASS_F2_PRIVATE_HELPER_STOP",
+    "status": "FULL_F2_PASS_HIGH_COST_FIXTURE_CLEANUP_RETRYING_CHEAP_REMAINDER_PLANNING",
     "reviewGateSkippedByUser": true,
     "baselineResourceAndGroupCounts": [
       0,
@@ -143,7 +160,7 @@
       "canonicalScriptTimeoutAdded": false,
       "rollbackOnlyContinuation": "PASS"
     },
-    "newFunctionalRevisionIntegration": "F2_FIRST_ATTEMPT_INCOMPLETE_N1_N2_BOUNDARIES_NOT_RUN",
+    "newFunctionalRevisionIntegration": "F2_PASS_N1_N2_BOUNDARIES_NOT_RUN",
     "f1FullFlow": {
       "result": "PASS_AFTER_RECORDED_RETRIES",
       "commonSha256": "36da32ad526d91aab1546b0f2a9e91d1df379e374d8e4faf4ce921eda16b21e6",
@@ -226,7 +243,7 @@
       "cause": "Private ownership-registration helper retained the previous scenario destination and rejected the legitimate same-name VNet diagnostic destination switch after product copy succeeded",
       "originalFailurePreserved": true,
       "scenarioPass": false,
-      "recoveryStatus": "PRIVATE_HELPER_FIX_AND_RESUME_PREPARATION",
+      "recoveryStatus": "CONTINUATION_PASS_ORIGINAL_FAILURE_PRESERVED",
       "artifactSha256": "62ffe4c16edc5e394297ab39667a27880cd8b99480cf1f2b656ac117979a094e",
       "hostProofSha256": "eda900c1fa31ed45a41aa68a005b3d5d46a3fbf6f892e7d4d844a52c4eb7eeaa",
       "independentFailureAuditSha256": "a3b68a1283fd65618df28ecf2dc9327e9cc33ee63135ecba13f5e66a50a8b6ac"
@@ -235,7 +252,51 @@
     "retiredLoadNsgCount": 300,
     "n1": "NOT_RUN",
     "n2": "NOT_RUN",
-    "abnormalBoundaries": "NOT_RUN"
+    "abnormalBoundaries": "NOT_RUN",
+    "f2Continuation": {
+      "result": "PASS",
+      "cases": 33,
+      "diagnosticScopes": 65,
+      "oldDcrAssociations": 8,
+      "finalOldSettingsVerifiedPresent": 73,
+      "finalNewSettingsVerifiedAbsent": 75,
+      "retainedDcrBodies": 2,
+      "retainedDestinationEntries": 24,
+      "copyRepeatWrites": 0,
+      "verifyWrites": 0,
+      "rollbackRepeatWrites": 0,
+      "firstRecordBeforeImmutable": true,
+      "originalFailureFilesPreserved": 40,
+      "originalRetirementInputFilesPreserved": 5,
+      "originalCopyCompleteReexecuted": false,
+      "derivedFixtureOnlyOwnershipMetadataChanged": true,
+      "privateSupportSha256": "8bfaed3bb709eb34e0376cd61fe01a6c5f9ec15e7d6fcb6c51fe25d98f6e67e4",
+      "phaseSeconds": {
+        "rollback-repeat": 146.5806885,
+        "rollback-after-delete-A-only": 193.1328593,
+        "rollback-all": 203.1092929,
+        "delete-interrupted": 115.7260853,
+        "copy-repeat": 59.8558134,
+        "verify": 79.8099168
+      },
+      "wrapperSeconds": 870.366154,
+      "artifactSha256": "4ca4dbb95cfc2f18be80725604abe3b936653475dabc30f859a3656363ac5f77",
+      "hostProofSha256": "9fb01fe3eb8b70546d195643d3051712abb8ff31eff470c41e5af8d26165df22",
+      "independentRawAudit": "PASS"
+    },
+    "remainingScenarioFixturePlan": {
+      "status": "LOCAL_PLANNING_NOT_DEPLOYED",
+      "plannedRoots": 15,
+      "patternsPlanned": [
+        "F1",
+        "F2",
+        "N1",
+        "N2"
+      ],
+      "purpose": "Representative generic destination flags, interruption, rollback, and boundary cases",
+      "allTypeFourRegionAndFull300ResultsRemainAttributedToOriginalFixture": true,
+      "independentBranchCoverageReview": "PASS_LOCAL_NOT_REAL_EXECUTION"
+    }
   },
   "windowsPreviousVersion": {
     "status": "PASS",
