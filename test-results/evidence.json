@@ -1,6 +1,6 @@
 {
   "status": "FINAL_INTEGRATION_IN_PROGRESS",
-  "updatedUtc": "2026-11-24T21:03:48.903795+00:00",
+  "updatedUtc": "2026-11-24T21:18:29.886835+00:00",
   "canonicalSha256": {
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
     "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
@@ -179,7 +179,7 @@
   },
   "currentRun": {
     "runId": "fin7t261124a",
-    "status": "FULL_F2_AND_HIGH_COST_TEARDOWN_AND_CHEAP_FOUR_PATTERNS_PASS_BOUNDARIES_PENDING",
+    "status": "FOUR_CHEAP_PATTERNS_PASS_BOUNDARY_FIRST_ATTEMPT_FAIL_HELPER_ONLY_RECOVERY_PENDING",
     "reviewGateSkippedByUser": true,
     "baselineResourceAndGroupCounts": [
       0,
@@ -214,7 +214,7 @@
       "canonicalScriptTimeoutAdded": false,
       "rollbackOnlyContinuation": "PASS"
     },
-    "newFunctionalRevisionIntegration": "FULL_F2_AND_CHEAP_F1_F2_N1_N2_PASS_BOUNDARIES_PENDING",
+    "newFunctionalRevisionIntegration": "FULL_F2_CHEAP_FOUR_PATTERNS_PASS_BOUNDARY_HELPER_RECOVERY_PENDING",
     "f1FullFlow": {
       "result": "PASS_AFTER_RECORDED_RETRIES",
       "commonSha256": "36da32ad526d91aab1546b0f2a9e91d1df379e374d8e4faf4ce921eda16b21e6",
@@ -306,7 +306,7 @@
     "retiredLoadNsgCount": 300,
     "n1": "PASS_REPRESENTATIVE_RIG",
     "n2": "PASS_REPRESENTATIVE_RIG",
-    "abnormalBoundaries": "NOT_RUN",
+    "abnormalBoundaries": "FIRST_ATTEMPT_FAIL_FT22_TO_FT25_PASS_FT26_FT27_PRODUCT_NOT_RUN",
     "f2Continuation": {
       "result": "PASS",
       "cases": 33,
@@ -339,7 +339,7 @@
       "independentRawAudit": "PASS"
     },
     "remainingScenarioFixturePlan": {
-      "status": "SEEDED_ALL_FOUR_PATTERNS_PASS_BOUNDARIES_PENDING",
+      "status": "ALL_FOUR_PATTERNS_PASS_BOUNDARY_HELPER_RECOVERY_PENDING",
       "plannedRoots": 15,
       "patternsPlanned": [
         "F1",
@@ -358,7 +358,7 @@
       "oldDcrAssociationsRequired": 8,
       "virtualMachinesRequired": 2,
       "virtualMachineScaleSetsRequired": 2,
-      "boundaryCasesActualResult": "NOT_RUN",
+      "boundaryCasesActualResult": "FIRST_ATTEMPT_FAIL_WITH_FT22_TO_FT25_PASS",
       "patternsActualResult": "F1_F2_N1_N2_PASS",
       "planSha256": "7246cf3c0216996c2800d933634e8de3e87b9d0fde41b6c21f7b5b9882e17958",
       "controllerSha256": "32e97ed2dd76717d578d28c891cee008ec1ba1ca4aee2c34ea6faeeafa99a907",
@@ -560,6 +560,53 @@
       "hostProofSha256": "82143e895cb0bfd9e9db8b5fe1e4301778b3fe162913ec76941ed2cba5abfbd7",
       "independentRawAudit": "PASS",
       "independentRawAuditSha256": "a52fe5e7b1a48ecad016604a69a496108b543c9cdb225b27e0136351b74db0e1"
+    },
+    "cheapBoundariesFirstAttempt": {
+      "result": "FAIL",
+      "classification": "FAIL_PRIVATE_INJECTION_READBACK_BEFORE_FT26_PRODUCT",
+      "runId": "cheap261124b",
+      "completedCases": {
+        "FT22": "PASS",
+        "FT23": "PASS",
+        "FT24": "PASS",
+        "FT25": "PASS"
+      },
+      "productCasesNotRun": [
+        "FT26",
+        "FT27"
+      ],
+      "productPhases": 13,
+      "canonicalFilesChanged": false,
+      "boundaryHelperSha256": "9650194e7c2a392e389a09cafca201c9691e51aa59333978e69da9929608133e",
+      "expectedCategoryEntries": 1,
+      "actualCategoryEntries": 2,
+      "allOtherWritableFieldsMatched": true,
+      "productOldDeleteStarts": 0,
+      "ownedInjectionFinallyRestored": true,
+      "wholeBasePatternRollbackComplete": false,
+      "remainingNewSettingsExpected": 28,
+      "remainingNewSettingsEvidenceLimit": "28 are inferred from verified base copy plus final representative DELETE; a fresh all-ID GET is needed before any state-dependent continuation.",
+      "phaseSeconds": {
+        "FT22-copy": 13.6968088,
+        "FT22-precheck": 14.1422507,
+        "FT23-copy": 10.2609452,
+        "FT23-precheck": 10.0118663,
+        "FT24-five-copy": 10.7501453,
+        "FT24-five-precheck": 40.3728323,
+        "FT24-four-copy": 95.3160411,
+        "FT25-copy-failure": 46.2114391,
+        "FT25-delete-blocked": 39.9554681,
+        "FT25-recovered-copy": 44.5082423,
+        "FT25-recovered-verify": 46.7292546,
+        "FT25-verify-failure": 50.0727739,
+        "baseline-verify": 47.8386643
+      },
+      "artifactSha256": "4a0af573c698f51f03f652e35bbb2f95d95f8e29f22d917ae3bcbafbb995ab01",
+      "hostProofSha256": "15220ba40cec3db052b5176522cb463681a412103741c64bd434d7b30bede039",
+      "failureCauseIndependentAudit": "PASS_FAILURE_EVIDENCE_AUDIT",
+      "failureCauseIndependentAuditSha256": "59bfd643249462e5f3259590e936629cc5903106a70685cfedf540d477adb202",
+      "originalFailurePreserved": true,
+      "recoveryStatus": "LOCAL_EXPECTED_BODY_FIX_IN_PROGRESS_SEPARATE_RERUN_NOT_STARTED"
     }
   },
   "windowsPreviousVersion": {
