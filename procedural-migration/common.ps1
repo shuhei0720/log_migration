@@ -3,29 +3,12 @@ param([switch]$SkipCsv)
 
 # ---
 # 利用者が指定する値
-# 移行元のワークスペースと、今回作業する環境を指定する。
+# locationは新しいRG・Log Analytics・DCRの配置先。
 # ---
 $targetWorkspaceId = '/subscriptions/43fc6c39-e53d-449d-9871-6d66f95ed2f3/resourcegroups/rg-hub-sand-resource-01/providers/microsoft.operationalinsights/workspaces/log-hub-sand-collection-01'
 $environment = 'dev'
 $newDiagnosticSettingName = 'storage-archive'
 $location = 'japaneast'
-$parallelLimit = 5
-$commonScript = $PSCommandPath
-$diagnosticPath = '/providers/Microsoft.Insights/diagnosticSettings'
-$associationPath = '/providers/Microsoft.Insights/dataCollectionRuleAssociations'
-$apiVersions = @{
-    Exemption = '2022-07-01-preview'
-    Group = '2022-09-01'
-    Workspace = '2023-09-01'
-    Storage = '2023-05-01'
-    Blob = '2023-05-01'
-    Lifecycle = '2023-05-01'
-    Defender = '2025-01-01'
-    Table = '2025-07-01'
-    Dcr = '2024-03-11'
-    Association = '2024-03-11'
-    Diagnostic = '2021-05-01-preview'
-}
 
 # ---
 # 環境ごとの旧DCRとポリシー割り当て
@@ -68,6 +51,27 @@ $policyReferenceIds = @(
     'Blob service の診断設定を監査する_1'
     'Queue service の診断設定を監査する_1'
 )
+
+# ---
+# 共通処理で使う値
+# ---
+$parallelLimit = 5
+$commonScript = $PSCommandPath
+$diagnosticPath = '/providers/Microsoft.Insights/diagnosticSettings'
+$associationPath = '/providers/Microsoft.Insights/dataCollectionRuleAssociations'
+$apiVersions = @{
+    Exemption = '2022-07-01-preview'
+    Group = '2022-09-01'
+    Workspace = '2023-09-01'
+    Storage = '2023-05-01'
+    Blob = '2023-05-01'
+    Lifecycle = '2023-05-01'
+    Defender = '2025-01-01'
+    Table = '2025-07-01'
+    Dcr = '2024-03-11'
+    Association = '2024-03-11'
+    Diagnostic = '2021-05-01-preview'
+}
 $settings = $environmentSettings[$environment]
 if (-not $settings) {
     throw 'environmentはprod・stg・devから指定してください。'
