@@ -1,6 +1,6 @@
 {
   "status": "FINAL_INTEGRATION_IN_PROGRESS",
-  "updatedUtc": "2026-11-24T20:36:57.093048+00:00",
+  "updatedUtc": "2026-11-24T20:49:28.861332+00:00",
   "canonicalSha256": {
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
     "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
@@ -179,7 +179,7 @@
   },
   "currentRun": {
     "runId": "fin7t261124a",
-    "status": "FULL_F2_AND_HIGH_COST_TEARDOWN_AND_CHEAP_F1_F2_PASS_N1_RUNNING",
+    "status": "FULL_F2_AND_HIGH_COST_TEARDOWN_AND_CHEAP_F1_F2_N1_PASS_N2_RUNNING",
     "reviewGateSkippedByUser": true,
     "baselineResourceAndGroupCounts": [
       0,
@@ -214,7 +214,7 @@
       "canonicalScriptTimeoutAdded": false,
       "rollbackOnlyContinuation": "PASS"
     },
-    "newFunctionalRevisionIntegration": "FULL_F2_AND_CHEAP_F1_F2_PASS_N1_RUNNING_N2_BOUNDARIES_NOT_RUN",
+    "newFunctionalRevisionIntegration": "FULL_F2_AND_CHEAP_F1_F2_N1_PASS_N2_RUNNING_BOUNDARIES_NOT_RUN",
     "f1FullFlow": {
       "result": "PASS_AFTER_RECORDED_RETRIES",
       "commonSha256": "36da32ad526d91aab1546b0f2a9e91d1df379e374d8e4faf4ce921eda16b21e6",
@@ -304,8 +304,8 @@
     },
     "remainingPositiveDiagnosticScopes": 65,
     "retiredLoadNsgCount": 300,
-    "n1": "IN_PROGRESS",
-    "n2": "NOT_RUN",
+    "n1": "PASS_REPRESENTATIVE_RIG",
+    "n2": "IN_PROGRESS",
     "abnormalBoundaries": "NOT_RUN",
     "f2Continuation": {
       "result": "PASS",
@@ -339,7 +339,7 @@
       "independentRawAudit": "PASS"
     },
     "remainingScenarioFixturePlan": {
-      "status": "SEEDED_F1_F2_PASS_N1_RUNNING",
+      "status": "SEEDED_F1_F2_N1_PASS_N2_RUNNING",
       "plannedRoots": 15,
       "patternsPlanned": [
         "F1",
@@ -359,7 +359,7 @@
       "virtualMachinesRequired": 2,
       "virtualMachineScaleSetsRequired": 2,
       "boundaryCasesActualResult": "NOT_RUN",
-      "patternsActualResult": "F1_F2_PASS_N1_RUNNING_N2_NOT_RUN",
+      "patternsActualResult": "F1_F2_N1_PASS_N2_RUNNING",
       "planSha256": "7246cf3c0216996c2800d933634e8de3e87b9d0fde41b6c21f7b5b9882e17958",
       "controllerSha256": "32e97ed2dd76717d578d28c891cee008ec1ba1ca4aee2c34ea6faeeafa99a907",
       "positiveDiagnosticScopes": 19
@@ -443,6 +443,63 @@
       "hostProofSha256": "6ae10e7c24a66c2eb2bf7c32b67c88bc34fd4451d892a9c4ce932ad832137af1",
       "independentRawAudit": "PASS",
       "independentRawAuditSha256": "7dbdfd86d492ab6a6ce83135118a60ee0e4b05eb095ed492433516c89405b421"
+    },
+    "cheapN1": {
+      "result": "PASS",
+      "classification": "REPRESENTATIVE_CURRENT_FINAL_SUITE_NOT_ADDITIONAL_FRESH_NORMAL",
+      "runId": "cheap261124b",
+      "runtime": "PowerShell 7.6.10 on Windows",
+      "plannedRoots": 15,
+      "regions": 3,
+      "loadCount": 0,
+      "diagnosticScopes": 19,
+      "oldDcrAssociations": 8,
+      "sendingBySubscription": {
+        "A": {
+          "diagnostic": "None",
+          "vm": "Log",
+          "newDiagnostics": 0,
+          "newAssociations": 2,
+          "newDcrBodies": 1
+        },
+        "B": {
+          "diagnostic": "Log",
+          "vm": "None",
+          "newDiagnostics": 4,
+          "newAssociations": 0,
+          "newDcrBodies": 0
+        }
+      },
+      "oldSettingsVerifiedRestored": 27,
+      "newSettingsVerifiedAbsent": 12,
+      "cases": 29,
+      "productPhases": 10,
+      "commonSha256": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
+      "sixCanonicalHashesMatched": true,
+      "journalBeforeUnchanged": true,
+      "destinationsCreatedEvenWhenSendingSkipped": true,
+      "eventSyslogTotalRetentionDays": 1095,
+      "destinationsAndUnrelatedSettingsRetained": true,
+      "copyDeleteRollbackRepeatResourceWrites": 0,
+      "priorPatternFilesPreserved": 164,
+      "phaseSeconds": {
+        "precheck": 31.3747329,
+        "copy-complete": 187.4234608,
+        "copy-repeat": 40.6961801,
+        "verify": 37.8522242,
+        "delete-interrupted": 50.3330572,
+        "delete-complete": 86.4473027,
+        "delete-repeat": 39.7107528,
+        "rollback-interrupted": 16.3499511,
+        "rollback-all": 143.8874179,
+        "rollback-repeat": 29.8046737
+      },
+      "scenarioWallSeconds": 689.8117698,
+      "wrapperSeconds": 690.425831,
+      "artifactSha256": "0b166fec72d374ac82e056b9ac16d5f88445fb28ff0a32e16c2174c203e6c56b",
+      "hostProofSha256": "57bde7fea27f95e225eca1c3267581488bd1b4a539e2756df0fa07e67ccd8ee6",
+      "independentRawAudit": "PASS",
+      "independentRawAuditSha256": "10e8cc91afd4c0d83606fdf9f33a8896048b1ad9464f3a3962ef8a7adbe2a610"
     }
   },
   "windowsPreviousVersion": {
