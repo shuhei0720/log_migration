@@ -307,13 +307,9 @@ foreach ($target in $targets) {
                     $provider = Invoke-ArmRequest $providerId -ApiVersion '2021-04-01'
                     if ($provider.registrationState -ne 'Registered') {
                         $null = Invoke-ArmRequest "$providerId/register" -Method Post -ApiVersion '2021-04-01'
-                        $deadline = (Get-Date).AddMinutes(5)
                         do {
                             Start-Sleep -Seconds 3
                             $provider = Invoke-ArmRequest $providerId -ApiVersion '2021-04-01'
-                            if ((Get-Date) -ge $deadline) {
-                                throw "プロバイダー登録が完了しません: $namespace"
-                            }
                         } while ($provider.registrationState -ne 'Registered')
                     }
                 }
@@ -382,9 +378,8 @@ foreach ($target in $targets) {
                 $body = @{ properties = @{ totalRetentionInDays = 1095 } }
             }
             # ---
-            # DCRの宛先テーブルが未反映の場合だけ、5分の期限内で再送する。
+            # 組み込みEvent・Syslogテーブルの反映待ちだけ再送する。
             # ---
-            $deadline = (Get-Date).AddMinutes(5)
             while ($true) {
                 try {
                     $null = Invoke-ArmRequest -Resource $resource -Method $method -Body $body
@@ -392,8 +387,9 @@ foreach ($target in $targets) {
                 }
                 catch {
                     $message = $_.Exception.Message + $_.ErrorDetails.Message
-                    if ($resource.Kind -ne 'Dcr' -or $message -notmatch 'InvalidOutputTable' -or
-                        (Get-Date).AddSeconds(10) -ge $deadline) {
+                    $outputTables = @([regex]::Matches($message, '(?i)\b(?:output table|table|output stream)\s+\\?[''"](?<table>[^''"\\]+)\\?[''"]') | ForEach-Object { $_.Groups['table'].Value })
+                    if ($resource.Kind -ne 'Dcr' -or $message -notmatch 'InvalidOutputTable' -or -not $outputTables -or
+                        @($outputTables | Where-Object { $_ -notin @('Event', 'Syslog', 'Microsoft-Event', 'Microsoft-Syslog') }).Count) {
                         throw
                     }
                     Start-Sleep -Seconds 10

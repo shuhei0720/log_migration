@@ -101,8 +101,8 @@ $env:PYTHONIOENCODING = 'utf-8'
 # ---
 # ARM APIを呼び出す
 # ResourceId、またはId・Kind・Bodyを持つResourceを渡し、JSON応答を辞書で返す。
-# Optional時の404は値なし。認証更新と一時エラーの再試行だけを共通で処理する。
-# Waitは作成・更新の完了を最大5分待つ。既存記録のAPI版も引き続き利用できる。
+# Optional時の404は値なし。通信切断・通信timeoutと一時HTTPエラーは最大4回試す。
+# Waitは終端状態までGETで待ち、失敗状態なら止める。既存記録のAPI版も利用する。
 # ---
 function Invoke-ArmRequest {
     param($ResourceId, $Method = 'Get', $Body, $ApiVersion = '2024-03-11', [switch]$Optional, $Resource, [switch]$Wait)
@@ -117,7 +117,7 @@ function Invoke-ArmRequest {
     if (-not $uri.StartsWith('https://')) {
         $uri = "https://management.azure.com${ResourceId}?api-version=$ApiVersion"
     }
-    $deadline = (Get-Date).AddMinutes(5)
+    $deleteResponseLost = $false
     for ($attempt = 0; $attempt -lt 4; $attempt++) {
         if (-not $script:accessToken -or $script:tokenSubscription -ne $subscriptionId -or
             [long]$script:accessToken.expires_on -le [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() + 300) {
@@ -137,7 +137,32 @@ function Invoke-ArmRequest {
         if ($null -ne $Body) {
             $request.Body = [Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $Body -Depth 40))
         }
-        $response = Invoke-WebRequest @request -SkipHttpErrorCheck
+        if ((Get-Command Invoke-WebRequest).Parameters.ContainsKey('OperationTimeoutSeconds')) {
+            $request.OperationTimeoutSeconds = 90
+        }
+        try {
+            $response = Invoke-WebRequest @request -SkipHttpErrorCheck
+        }
+        catch [System.Net.Http.HttpRequestException], [System.IO.IOException], [System.TimeoutException], [System.Threading.Tasks.TaskCanceledException] {
+            $transportError = $_.Exception
+            $cause = $transportError.GetBaseException()
+            $networkError = [string]$transportError.HttpRequestError
+            $retryTransport = $transportError -is [System.TimeoutException] -or
+                $transportError.InnerException -is [System.TimeoutException] -or
+                $networkError -in @('ConnectionError', 'ResponseEnded', 'NameResolutionError') -or
+                ($cause -is [System.Net.Sockets.SocketException] -and [string]$cause.SocketErrorCode -in @('ConnectionAborted', 'ConnectionReset', 'NetworkReset', 'TimedOut', 'HostNotFound', 'TryAgain', 'NoData')) -or
+                ($transportError -is [System.Net.Http.HttpRequestException] -and $networkError -in @('', 'Unknown') -and $cause -is [System.IO.IOException])
+            if ($transportError.StatusCode -or $transportError.Response -or
+                ($transportError -is [System.Threading.Tasks.TaskCanceledException] -and $transportError.InnerException -isnot [System.TimeoutException]) -or
+                -not $retryTransport -or $attempt -eq 3) {
+                throw
+            }
+            if ($Method -eq 'Delete') {
+                $deleteResponseLost = $true
+            }
+            Start-Sleep -Seconds 2
+            continue
+        }
         $status = [int]$response.StatusCode
         if ($status -lt 400) {
             $result = $response.Content | ConvertFrom-Json -AsHashtable
@@ -145,16 +170,15 @@ function Invoke-ArmRequest {
                 if ($result.properties.provisioningState -in @('Failed', 'Canceled')) {
                     throw "作成・更新に失敗しました: $ResourceId / $($result.properties.provisioningState)"
                 }
-                if ((Get-Date) -ge $deadline) {
-                    throw "作成・更新が完了しません: $ResourceId"
-                }
+                $Method = 'Get'
+                $Body = $null
                 Start-Sleep -Seconds 3
                 $attempt = -1
                 continue
             }
             return $result
         }
-        if ($status -eq 404 -and $Optional) {
+        if ($status -eq 404 -and ($Optional -or $deleteResponseLost)) {
             return $null
         }
         if ($status -eq 401 -and $attempt -lt 3) {

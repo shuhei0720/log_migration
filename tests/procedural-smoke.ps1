@@ -27,6 +27,10 @@ namespace ProceduralReplay {
         public int StatusCode;
         public Dictionary<string,string> Headers = new Dictionary<string,string>();
     }
+    public class NetworkIOException : System.IO.IOException {
+        public string HttpRequestError { get; private set; }
+        public NetworkIOException(string error) : base("TEST_NETWORK_FAILURE") { HttpRequestError = error; }
+    }
     public class HttpFailure : Exception {
         public Response Response;
         public HttpFailure(int status, string message) : base(message) {
@@ -121,6 +125,7 @@ function Start-Sleep {
     [Threading.Monitor]::Enter([ProceduralReplay.SharedFixture]::SyncRoot)
     try {
         $global:ProceduralFixture.SleepCalls++
+        $global:ProceduralFixture.SleepSeconds.Add($Seconds)
         $global:ProceduralFixture.ClockOffset += $global:ProceduralFixture.ClockStep
     }
     finally {
@@ -174,12 +179,32 @@ function Invoke-RestMethod {
             Id = $path
             RunspaceId = [Management.Automation.Runspaces.Runspace]::DefaultRunspace.InstanceId.ToString()
             ThreadId = [Threading.Thread]::CurrentThread.ManagedThreadId
+            HasBody = ($null -ne $Body)
         })
         $key = "$methodName $path"
+        if ($fixture.TransportFailures.ContainsKey($key) -and $fixture.TransportFailures[$key].Remaining -gt 0) {
+            $failure = $fixture.TransportFailures[$key]
+            $failure.Remaining--
+            switch ($failure.Type) {
+                Disconnect { throw [System.Net.Http.HttpRequestException]::new('TEST_CONNECTION_LOST', [System.IO.IOException]::new('TEST_SOCKET_ENDED')) }
+                BodyEnded { throw [ProceduralReplay.NetworkIOException]::new('ResponseEnded') }
+                Dns { throw [ProceduralReplay.NetworkIOException]::new('NameResolutionError') }
+                LegacyDns { throw [System.Net.Http.HttpRequestException]::new('TEST_DNS_FAILURE', [System.Net.Sockets.SocketException]::new([int][System.Net.Sockets.SocketError]::HostNotFound)) }
+                Timeout { throw [System.Threading.Tasks.TaskCanceledException]::new('TEST_TIMEOUT', [System.TimeoutException]::new('TEST_CONNECTION_TIMEOUT')) }
+                OperationTimeout { throw [System.TimeoutException]::new('TEST_BODY_TIMEOUT') }
+                Tls { throw [System.Net.Http.HttpRequestException]::new('TEST_TLS', [System.Security.Authentication.AuthenticationException]::new('TEST_CERTIFICATE')) }
+                Cancel { throw [System.Threading.Tasks.TaskCanceledException]::new('TEST_USER_CANCEL') }
+                CancelSocket { throw [System.Threading.Tasks.TaskCanceledException]::new('TEST_USER_CANCEL', [System.Net.Sockets.SocketException]::new([int][System.Net.Sockets.SocketError]::ConnectionReset)) }
+                OperationCancel { throw [System.OperationCanceledException]::new('TEST_USER_CANCEL') }
+                OtherIo { throw [System.IO.IOException]::new('TEST_NOT_NETWORK_IO') }
+            }
+        }
         if ($fixture.HttpFailures.ContainsKey($key) -and $fixture.HttpFailures[$key].Remaining -gt 0) {
             $failure = $fixture.HttpFailures[$key]
             $failure.Remaining--
-            throw (New-Object ProceduralReplay.HttpFailure $failure.Status, $failure.Code)
+            $httpFailure = New-Object ProceduralReplay.HttpFailure $failure.Status, $failure.Code
+            if ($failure.RetryAfter) { $httpFailure.Response.Headers['Retry-After'] = [string]$failure.RetryAfter }
+            throw $httpFailure
         }
         if ($fixture.Failures.ContainsKey($key) -and $fixture.Failures[$key] -gt 0) {
             $fixture.Failures[$key]--
@@ -232,6 +257,10 @@ function Invoke-RestMethod {
                 $state = 'Registered'
                 if ($fixture.UnregisteredProviders.ContainsKey($path)) {
                     $state = $fixture.UnregisteredProviders[$path]
+                }
+                if ($state -eq 'Registering' -and $fixture.ProviderPendingReads.ContainsKey($path)) {
+                    if ($fixture.ProviderPendingReads[$path] -gt 0) { $fixture.ProviderPendingReads[$path]-- }
+                    else { $state = 'Registered'; $fixture.UnregisteredProviders[$path] = $state }
                 }
                 return [pscustomobject]@{ registrationState = $state }
             }
@@ -291,17 +320,24 @@ function Invoke-RestMethod {
         if ($path -like '*/managementPolicies/*' -and $payload -and @($payload.properties.policy.rules | Where-Object { $null -eq $_ }).Count -gt 0) {
             throw (New-Object ProceduralReplay.HttpFailure 400, 'TEST_INVALID_LIFECYCLE_NULL_RULE')
         }
+        if ($methodName -eq 'DELETE' -and -not $fixture.Resources.ContainsKey($path)) {
+            throw (New-Object ProceduralReplay.HttpFailure 404, "TEST_NOT_FOUND: $path")
+        }
         $fixture.Writes.Add([pscustomobject]@{ Method = $methodName; Id = $path; Body = $payload })
         if ($methodName -eq 'DELETE') {
             if ($path -match '/(storageAccounts|workspaces)/[^/]+$') {
                 throw 'TEST_DESTINATION_DELETION'
             }
             $fixture.Resources.Remove($path)
+            if ($path -eq $fixture.LoseDeleteResponseId) {
+                $fixture.LoseDeleteResponseId = ''
+                throw [System.Net.Http.HttpRequestException]::new('TEST_DELETE_RESPONSE_LOST', [System.IO.IOException]::new('TEST_SOCKET_ENDED'))
+            }
             return $null
         }
         if ($methodName -eq 'POST' -and $path -like '*/register') {
             $providerPath = $path.Substring(0, $path.Length - '/register'.Length)
-            $fixture.UnregisteredProviders[$providerPath] = 'Registered'
+            $fixture.UnregisteredProviders[$providerPath] = if ($fixture.ProviderPendingReads.ContainsKey($providerPath)) { 'Registering' } else { 'Registered' }
             return [pscustomobject]@{ registrationState = 'Registered' }
         }
         $current = $fixture.Resources[$path]
@@ -324,16 +360,22 @@ function Invoke-RestMethod {
             Set-FixtureProperty $value.properties 'retentionInDays' 7
         }
         $fixture.Resources[$path] = $value
-        return Copy-FixtureValue $value
+        $response = Copy-FixtureValue $value
+        if ($fixture.PendingWriteStates.ContainsKey($path)) { Set-FixtureProperty $response.properties 'provisioningState' $fixture.PendingWriteStates[$path] }
+        return $response
     }
     finally {
         [Threading.Monitor]::Exit([ProceduralReplay.SharedFixture]::SyncRoot)
     }
 }
 function Invoke-WebRequest {
-    param($Uri, $Method = 'Get', $Headers, $ContentType, $TimeoutSec, $Body, [switch]$SkipHttpErrorCheck)
+    param($Uri, $Method = 'Get', $Headers, $ContentType, $TimeoutSec, $Body, [switch]$SkipHttpErrorCheck, $OperationTimeoutSeconds)
+    $global:ProceduralFixture = [ProceduralReplay.SharedFixture]::State
     try {
+        $global:ProceduralFixture.OperationTimeoutValues.Add([int]$OperationTimeoutSeconds)
         $value = Invoke-RestMethod -Uri $Uri -Method $Method -Headers $Headers -ContentType $ContentType -TimeoutSec $TimeoutSec -Body $Body
+        $key = ([string]$Method).ToUpperInvariant() + ' ' + ([uri]$Uri).AbsolutePath
+        if ($key -in $global:ProceduralFixture.InvalidJsonKeys) { return [pscustomobject]@{ StatusCode = 200; Headers = @{}; Content = '{invalid-json' } }
         return [pscustomobject]@{
             StatusCode = 200
             Headers = @{}
@@ -399,6 +441,12 @@ function Reset-Fixture {
         Rows = @()
         Failures = @{}
         HttpFailures = @{}
+        TransportFailures = @{}
+        InvalidJsonKeys = @()
+        LoseDeleteResponseId = ''
+        PendingWriteStates = @{}
+        ProviderPendingReads = @{}
+        OperationTimeoutValues = [Collections.Concurrent.ConcurrentBag[int]]::new()
         PendingReads = @{}
         PendingStates = @{}
         UnregisteredProviders = @{}
@@ -417,6 +465,7 @@ function Reset-Fixture {
         WriteBeforeBackup = $false
         UnsafeNewDelete = $false
         SleepCalls = 0
+        SleepSeconds = [Collections.Generic.List[int]]::new()
         ClockOffset = 0
         ClockStep = 0
     }
@@ -1129,6 +1178,110 @@ try {
         Invoke-ReplayStep delete -ExpectFailure
         Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '読戻し不一致のまま旧を削除しない'
     }
+    # ---
+    # 通信断と本文timeoutだけ再試行し、恒久エラーやユーザー中断は再送しない。
+    # ---
+    Invoke-ReplayCase '接続断・本文切断・通信timeoutから同じ要求で復旧する' {
+        $path = "/subscriptions/$($global:ProceduralFixture.Subscriptions[0])/resources"
+        foreach ($type in @('Disconnect', 'BodyEnded', 'Dns', 'LegacyDns', 'Timeout', 'OperationTimeout')) {
+            $global:ProceduralFixture.TransportFailures["GET $path"] = @{ Type = $type; Remaining = 1 }
+            $beforeSleep = $global:ProceduralFixture.SleepCalls
+            Reset-Observation
+            Invoke-ReplayStep precheck
+            Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object Id -eq $path).Count -eq 2) '失われた通信だけ再試行'
+            Assert-Replay ($global:ProceduralFixture.SleepCalls -eq $beforeSleep + 1) '再試行前に待機'
+            Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '接続回復でも資源変更なし'
+        }
+    }
+    Invoke-ReplayCase '通信断が続けば最大4回で止まり旧設定を残す' {
+        $path = "/subscriptions/$($global:ProceduralFixture.Subscriptions[0])/resources"
+        $global:ProceduralFixture.TransportFailures["GET $path"] = @{ Type = 'Disconnect'; Remaining = 10 }
+        Invoke-ReplayStep precheck -ExpectFailure
+        Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object Id -eq $path).Count -eq 4) '通信再試行は4回まで'
+        Assert-Replay ($global:ProceduralFixture.SleepCalls -eq 3) '失敗した最後の試行後は待機しない'
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '通信失敗で書込みなし'
+    }
+    Invoke-ReplayCase 'TLS・明示中断・非通信IO・JSON不正を再試行しない' {
+        $path = "/subscriptions/$($global:ProceduralFixture.Subscriptions[0])/resources"
+        foreach ($type in @('Tls', 'Cancel', 'CancelSocket', 'OperationCancel', 'OtherIo')) {
+            $global:ProceduralFixture.TransportFailures["GET $path"] = @{ Type = $type; Remaining = 10 }
+            Reset-Observation
+            Invoke-ReplayStep precheck -ExpectFailure
+            Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object Id -eq $path).Count -eq 1) '通信回復対象外は再送しない'
+            Assert-Replay ($global:ProceduralFixture.SleepCalls -eq 0) '中断や恒久失敗は待機しない'
+        }
+        $global:ProceduralFixture.TransportFailures.Clear()
+        $global:ProceduralFixture.InvalidJsonKeys = @("GET $path")
+        Reset-Observation
+        Invoke-ReplayStep precheck -ExpectFailure
+        Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object Id -eq $path).Count -eq 1) 'JSON不正はIWRの外で失敗し再送しない'
+    }
+    Invoke-ReplayCase '429・503はRetryAfterを守って従来どおり再試行する' {
+        $path = "/subscriptions/$($global:ProceduralFixture.Subscriptions[0])/resources"
+        foreach ($status in @(429, 503)) {
+            $global:ProceduralFixture.HttpFailures["GET $path"] = @{ Status = $status; Code = 'TEST_TRANSIENT'; Remaining = 1; RetryAfter = 3 }
+            Reset-Observation
+            Invoke-ReplayStep precheck
+            Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object Id -eq $path).Count -eq 2) '一時HTTPだけ再試行'
+            Assert-Replay ($global:ProceduralFixture.SleepSeconds[-1] -eq 3) '指定されたRetryAfter秒待つ'
+        }
+    }
+    Invoke-ReplayCase 'DELETE応答喪失後の404だけを削除済みとして継続する' {
+        Invoke-ReplayStep copy
+        $records = @(Get-FixtureRecords)
+        $deleted = @($records.OldSettings | Where-Object Kind -eq 'Association')[0]
+        $global:ProceduralFixture.LoseDeleteResponseId = $deleted.Id
+        Reset-Observation
+        Invoke-ReplayStep delete
+        Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object { $_.Method -eq 'DELETE' -and $_.Id -eq $deleted.Id }).Count -eq 2) '削除実行後の応答喪失と404再確認'
+        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Method -eq 'DELETE' -and $_.Id -eq $deleted.Id }).Count -eq 1) '実体の削除は1回だけ'
+        foreach ($old in $records.OldSettings) { Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($old.Id)) '全旧設定を削除済み' }
+        . (Join-Path $global:ProceduralFixture.Repository 'common.ps1') -SkipCsv
+        $subscriptionId = $global:ProceduralFixture.Subscriptions[0]
+        $failed = $false
+        try { $null = Invoke-ArmRequest -Resource $deleted -Method Delete } catch { $failed = $true }
+        Assert-Replay $failed '初回404を一律成功にはしない'
+        $failed = $false
+        try { $null = Invoke-ArmRequest -Resource $deleted } catch { $failed = $true }
+        Assert-Replay $failed '非DELETEの404へ喪失フラグを引き継がない'
+    }
+    Invoke-ReplayCase 'Wait付きPUTは1回だけ送信し以後はBody無しGETで待つ' {
+        Invoke-ReplayStep copy
+        $ids = Get-FixtureIds $global:ProceduralFixture.Subscriptions[0]
+        $global:ProceduralFixture.PendingWriteStates[$ids.Workspace] = 'Updating'
+        $global:ProceduralFixture.PendingReads[$ids.Workspace] = 6
+        $global:ProceduralFixture.ClockStep = 60
+        Reset-Observation
+        . (Join-Path $global:ProceduralFixture.Repository 'common.ps1') -SkipCsv
+        $subscriptionId = $global:ProceduralFixture.Subscriptions[0]
+        $null = Invoke-ArmRequest $ids.Workspace -Method Put -ApiVersion '2023-09-01' -Body @{ location = 'japaneast'; properties = @{ retentionInDays = 365 } } -Wait
+        $requests = @($global:ProceduralFixture.Requests | Where-Object Id -eq $ids.Workspace)
+        Assert-Replay (@($requests | Where-Object Method -eq 'PUT').Count -eq 1) 'PUTを繰り返して作成を再開始しない'
+        Assert-Replay (@($requests | Where-Object Method -eq 'GET').Count -eq 7) '5分後もSucceededまでGETを続ける'
+        Assert-Replay (@($requests | Where-Object { $_.Method -eq 'GET' -and $_.HasBody }).Count -eq 0) 'GETへ書込み本文を持ち越さない'
+    }
+    Invoke-ReplayCase '作成待ちのFailed・Canceledは即停止する' {
+        Invoke-ReplayStep copy
+        $ids = Get-FixtureIds $global:ProceduralFixture.Subscriptions[0]
+        foreach ($state in @('Failed', 'Canceled')) {
+            $global:ProceduralFixture.PendingReads[$ids.Workspace] = 1
+            $global:ProceduralFixture.PendingStates[$ids.Workspace] = $state
+            Reset-Observation
+            Invoke-ReplayStep copy -ExpectFailure
+            Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '終端失敗状態には追加書込みしない'
+            Assert-Replay ($global:ProceduralFixture.SleepCalls -eq 0) '終端失敗は待ち続けない'
+        }
+    }
+    Invoke-ReplayCase '対応IWRだけ本文timeoutを設定し未対応環境へ余計なparameterを送らない' {
+        . (Join-Path $global:ProceduralFixture.Repository 'common.ps1') -SkipCsv
+        $subscriptionId = $global:ProceduralFixture.Subscriptions[0]
+        $id = $global:ProceduralFixture.Inventory[0].id + '/providers/Microsoft.Insights/diagnosticSettings/old'
+        $null = Invoke-ArmRequest $id -ApiVersion '2021-05-01-preview'
+        Assert-Replay (@($global:ProceduralFixture.OperationTimeoutValues | Where-Object { $_ -eq 90 }).Count -eq 1) '対応IWRには本文timeout90秒を渡す'
+        function Get-Command { param($Name) [pscustomobject]@{ Parameters = @{} } }
+        $null = Invoke-ArmRequest $id -ApiVersion '2021-05-01-preview'
+        Assert-Replay (@($global:ProceduralFixture.OperationTimeoutValues | Where-Object { $_ -eq 0 }).Count -eq 1) '未対応IWRへ新しいparameterを渡さない'
+    }
     Invoke-ReplayCase '一時的な401は認証を更新して再試行する' {
         $global:ProceduralFixture.UnauthorizedReads = 1
         Invoke-ReplayStep precheck
@@ -1139,9 +1292,12 @@ try {
         $subscription = $global:ProceduralFixture.Subscriptions[0]
         $provider = "/subscriptions/$subscription/providers/Microsoft.Storage"
         $global:ProceduralFixture.UnregisteredProviders[$provider] = 'NotRegistered'
+        $global:ProceduralFixture.ProviderPendingReads[$provider] = 6
+        $global:ProceduralFixture.ClockStep = 60
         Invoke-ReplayStep copy
         Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Id -eq "$provider/register" }).Count -eq 1) '必要providerを1回登録'
         Assert-Replay (-not $global:ProceduralFixture.WriteBeforeBackup) '登録より前に記録保存'
+        Assert-Replay ($global:ProceduralFixture.ProviderPendingReads[$provider] -eq 0) '5分を超えてもRegisteredまで状態確認'
     }
     Invoke-ReplayCase '旧診断名と新診断名が同じでもNone側は旧を削除・復元する' -Diagnostic 'None' -Vm 'None' -Body {
         $parent = $global:ProceduralFixture.Inventory[0].id
@@ -1273,17 +1429,17 @@ try {
             Invoke-ReplayStep verify
         }
     }
-    Invoke-ReplayCase '更新が完了しない保存先は期限で止め旧設定を残す' {
+    Invoke-ReplayCase '保存先の作成待ちは5分を超えても成功までGETだけで待つ' {
         Invoke-ReplayStep copy
         $ids = Get-FixtureIds $global:ProceduralFixture.Subscriptions[0]
         $global:ProceduralFixture.PendingReads[$ids.Workspace] = 100
         $global:ProceduralFixture.ClockStep = 60
         Reset-Observation
-        Invoke-ReplayStep copy -ExpectFailure
-        Assert-Replay ($global:ProceduralFixture.SleepCalls -le 6) '待機を無限に続けない'
-        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '未完了保存先への追加更新なし'
-        Invoke-ReplayStep delete -ExpectFailure
-        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '未完了のまま旧削除なし'
+        Invoke-ReplayStep copy
+        Assert-Replay ($global:ProceduralFixture.SleepCalls -ge 100) '固定5分を超えても状態を確認する'
+        Assert-Replay ($global:ProceduralFixture.PendingReads[$ids.Workspace] -eq 0) '成功の読戻しまで待機'
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '待機中は保存先を書き直さない'
+        Invoke-ReplayStep verify
     }
     Invoke-ReplayCase '総保持が1095でも既定値フラグのままなら明示設定する' {
         Invoke-ReplayStep copy
@@ -1334,13 +1490,30 @@ try {
         $ids = Get-FixtureIds $global:ProceduralFixture.Subscriptions[0]
         $global:ProceduralFixture.HttpFailures["PUT $($ids.Dcr)"] = @{
             Status = 400
-            Code = 'InvalidOutputTable: Event is not ready'
+            Code = 'InvalidOutputTable: OUTPUT TABLE "Event" is not ready'
             Remaining = 1
         }
         Invoke-ReplayStep copy
         Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object { $_.Method -eq 'PUT' -and $_.Id -eq $ids.Dcr }).Count -eq 2) '一時的なDCRエラーの後だけ再PUT'
         Assert-Replay ($global:ProceduralFixture.SleepCalls -ge 1) '出力Tableの反映を待つ'
         Invoke-ReplayStep verify
+    }
+    Invoke-ReplayCase '組み込みSyslogの反映遅延が5分を超えてもDCRを完了する' {
+        $ids = Get-FixtureIds $global:ProceduralFixture.Subscriptions[0]
+        $global:ProceduralFixture.HttpFailures["PUT $($ids.Dcr)"] = @{ Status = 400; Code = 'InvalidOutputTable: The table for the output stream "Microsoft-Syslog" is not available'; Remaining = 40 }
+        $global:ProceduralFixture.ClockStep = 10
+        Invoke-ReplayStep copy
+        Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object { $_.Method -eq 'PUT' -and $_.Id -eq $ids.Dcr }).Count -eq 41) '既知のテーブル反映だけ期限で打ち切らない'
+        Invoke-ReplayStep verify
+    }
+    Invoke-ReplayCase 'custom tableのInvalidOutputTableを反映待ちと誤認しない' {
+        $ids = Get-FixtureIds $global:ProceduralFixture.Subscriptions[0]
+        foreach ($message in @('InvalidOutputTable: Custom_CL is invalid', 'InvalidOutputTable: output table "Custom_CL" is invalid; collected stream "Microsoft-Event"', 'InvalidOutputTable: collected stream "Microsoft-Event" is invalid', 'InvalidOutputTable: output stream "Microsoft-Event" uses table "Custom_CL" which is invalid')) {
+            Reset-Observation
+            $global:ProceduralFixture.HttpFailures["PUT $($ids.Dcr)"] = @{ Status = 400; Code = $message; Remaining = 10 }
+            Invoke-ReplayStep copy -ExpectFailure
+            Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object { $_.Method -eq 'PUT' -and $_.Id -eq $ids.Dcr }).Count -eq 1) 'custom tableや収集streamの言及だけでは再試行しない'
+        }
     }
     Invoke-ReplayCase 'DCRの一般400は再試行せずそのSubを止める' {
         $subscription = $global:ProceduralFixture.Subscriptions[0]
