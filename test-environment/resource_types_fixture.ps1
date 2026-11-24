@@ -103,7 +103,10 @@ function Invoke-Arm {
         $request = @{
             Uri = $uri
             Method = $Method
-            Headers = @{Authorization = ('Bearer ' + $script:accessToken)}
+            Headers = @{
+                Authorization = ('Bearer ' + $script:accessToken)
+                'Cache-Control' = 'no-cache'
+            }
             SkipHttpErrorCheck = $true
             TimeoutSec = 120
         }
@@ -1297,7 +1300,11 @@ if ($Action -eq 'Cleanup' -and -not $state.resourceCleanupComplete) {
         $null = Invoke-Arm DELETE $association.id $association.apiVersion -Optional
     }
     $earlyRoots = @($state.resources | Where-Object {
-            ($_.cleanupEarly -or $_.resourceType -in @('microsoft.containerservice/managedclusters','microsoft.monitor/accounts','microsoft.databricks/workspaces')) -and -not $_.external
+        $_.resourceType -in @(
+            'microsoft.containerservice/managedclusters',
+            'microsoft.monitor/accounts',
+            'microsoft.databricks/workspaces'
+        ) -and -not $_.external
     })
     foreach ($root in $earlyRoots) {
         $null = Invoke-Arm DELETE $root.id $root.apiVersion -Optional
