@@ -2,7 +2,7 @@
 
 このフォルダが正本です。PowerShell 7と、ログイン済みのAzure CLIを使用します。Windows PowerShell 5.1では実行できません。コードの読み方は [学習ガイド](CODE_LEARNING.md)、検証状況は [検証結果](../test-results/REPORT.md) を参照してください。
 
-Azureの開発検証は、旧処理の作成完了待ちで停止しました。修正後の77ケースはLinux上の再生試験で成功しています。Windowsでの新77ケースと、修正後のAzure全工程の再実行は未実施です。
+作成完了待ちを修正した現行版は、LinuxとWindowsのPowerShell 7で各77ケースの再生試験に成功しています。修正後のAzure全工程と最終総合テストは、引き続き確認を進めています。
 
 ## 1. 実行する環境とCSVを指定する
 

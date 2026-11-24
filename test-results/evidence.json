@@ -1,6 +1,6 @@
 {
   "status": "FIX_APPLIED_FINAL_TEST_NOT_STARTED",
-  "updatedUtc": "2026-11-19T13:48:38.258176+00:00",
+  "updatedUtc": "2026-11-24T10:46:49.060890+00:00",
   "canonicalSha256": {
     "common.ps1": "9e946eb263cbf9622e05506b827022d8847db6db40420ab0d727113935a27740",
     "precheck.ps1": "f406b778b82e496980c19a7eb4ddd35d5079f86b6b66d5da8d5c33a7df73d1e4",
@@ -18,7 +18,15 @@
     "azureRequests": 0
   },
   "windowsCurrentVersion": {
-    "status": "NOT_RUN"
+    "status": "PASS",
+    "runtime": "7.6.10",
+    "cases": 77,
+    "checks": 1035,
+    "azureRequests": 0,
+    "isWindows": true,
+    "atUtc": "2026-11-24T10:45:09.9193284Z",
+    "canonicalHashesMatched": true,
+    "executionProofSha256": "85b328f5f7e030a734d67321be4413e68dd0e77051e9ace058df6b2df6e2c30f"
   },
   "azureIntegration": {
     "resultBeforeFix": "FAIL",
@@ -77,7 +85,8 @@
         }
       ]
     },
-    "registrationRestorationComplete": false
+    "registrationRestorationComplete": false,
+    "scope": "Previous run fin7t261119b; not the active 2026-11-24 validation environment"
   },
   "actualAzureBodyReplay": {
     "result": "PASS",
@@ -96,7 +105,7 @@
   },
   "testEnvironmentCode": {
     "status": "REVIEW_CANDIDATE_NOT_LIVE_VALIDATED",
-    "controllerSha256": "b48c9d7e3bb506ef524bee507cd8da165bbd62d9250e9e62ca283730ed19b715",
+    "controllerSha256": "55e1043150ada1b5fe7b91f17077cee3c21eae8dd6c6426810025a0ad8b66a7a",
     "templateSha256": "0830351d32052e821eccf22fb12f130fea65892d46dbbf4e18077dedcbfe09a8",
     "functions": 5,
     "localControllerChecks": 24,
@@ -105,7 +114,18 @@
     "independentSafetyProbes": 6,
     "allFiveActionsLiveRun": "NOT_RUN",
     "categoryGroupLivePutGet": "NOT_RUN",
-    "finalRunnerPolicyAdapter": "NOT_IMPLEMENTED",
-    "newAzureDeploymentStopped": true
+    "finalRunnerPolicyAdapter": "IMPLEMENTED_LOCAL_PASS",
+    "newAzureDeploymentStopped": false
+  },
+  "currentRun": {
+    "runId": "fin7t261124a",
+    "status": "LIVE_VALIDATION_PREPARATION",
+    "reviewGateSkippedByUser": true,
+    "baselineResourceAndGroupCounts": [
+      0,
+      0
+    ],
+    "temporaryNetworkAndWindowsEnvironmentActive": true,
+    "cleanupComplete": false
   }
 }

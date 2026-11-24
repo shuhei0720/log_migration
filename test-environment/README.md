@@ -63,7 +63,7 @@ Code Signing・Bing・ExpressRouteは契約・提供条件等により省略し�
 
 この候補でPlan→Deploy→Capture→Seed→Cleanupを通す実機確認と、categoryGroupを指定した診断設定の実PUT/GETは未実施です。LOCALの成功はこれらの実機成功を意味しません。
 
-既存の総合テストrunnerとの接続も未完了です。この候補はポリシーを4件作成し、うち移行対象の3件だけを`state.policyAssignmentIds`へ保存します。残る1件は新しいVNetを禁止するガードです。旧runnerが4件を移行対象として読まないよう、`policyAssignmentIds`を使う接続処理が必要です。その処理はまだ実装していません。
+ポリシーは4件作成し、うち移行対象の3件だけを`state.policyAssignmentIds`へ保存します。残る1件は新しいVNetを禁止するガードです。総合テストの実行側もこの3件を使う処理へ対応済みで、LOCAL確認に成功しています。実機での接続確認はこれから行います。
 
 ## 撤去時の扱い
 
