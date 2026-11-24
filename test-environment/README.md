@@ -1,6 +1,6 @@
 # リソース網羅テストの環境
 
-`resource_types_fixture.ps1`と`resource_types.arm.json`で、2サブスクリプションへ検証資源を分散配置します。PowerShell 7と、Ownerでログイン済みのAzure CLIを使います。少数の8リソース構成では、Plan→Deploy→Capture→Seed→Cleanupの5操作を実Azureで確認しました。51タイプ・追加NSG300件を含む全体構成は、配置の確認を進めています。検証範囲と結果は[検証結果](../test-results/REPORT.md)を参照してください。
+`resource_types_fixture.ps1`と`resource_types.arm.json`で、2サブスクリプションへ検証資源を分散配置します。PowerShell 7と、Ownerでログイン済みのAzure CLIを使います。実施した構成・テスト・撤去の結果は[検証結果](../test-results/REPORT.md)を参照してください。
 
 ## 指定する値
 
@@ -59,11 +59,9 @@ $options = @{
 
 Code Signing・Bing・ExpressRouteは契約・提供条件等により省略します。Databricksは必須のNSG関連付けが既存サブネットを変更しない条件と両立せず、旧Redisは新規作成の終了制限があるため、既定で省略します。Cosmos DBなどの地域容量不足は別リージョンの選択または`SkipTypes`で扱い、省略理由を試験記録へ残します。
 
-## 未完了の確認
+## テスト用ポリシー
 
-少数構成では5操作とNSGの`categoryGroup=allLogs`の実PUT/GETを確認済みです。全体構成の作成・撤去と、VM・VMSSを含む移行全工程・複合負荷ケースは引き続き確認を進めています。Cosmos DBは作成実績のある東日本へ配置し、SQL・StorageなどはCanada Centralに残して4地域を維持します。
-
-ポリシーは4件作成し、うち移行対象の3件だけを`state.policyAssignmentIds`へ保存します。残る1件は新しいVNetを禁止するガードです。総合テストの実行側もこの3件を使う処理へ対応済みで、LOCAL確認に成功しています。実機での接続確認はこれから行います。
+この環境作成コードは、試験専用MGと4件のポリシー割り当てを作ります。移行対象の3件だけを`state.policyAssignmentIds`へ保存し、残る1件は新しいVNetを禁止するために使います。本番で使う移行スクリプトは、指定済みの既存MG・ポリシー割り当てを参照します。
 
 ## 撤去時の扱い
 
