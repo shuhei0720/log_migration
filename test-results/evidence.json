@@ -1,6 +1,6 @@
 {
   "status": "FIX_APPLIED_FINAL_TEST_NOT_STARTED",
-  "updatedUtc": "2026-11-24T11:35:29.796116+00:00",
+  "updatedUtc": "2026-11-24T12:50:08.132722+00:00",
   "canonicalSha256": {
     "common.ps1": "9e946eb263cbf9622e05506b827022d8847db6db40420ab0d727113935a27740",
     "precheck.ps1": "f406b778b82e496980c19a7eb4ddd35d5079f86b6b66d5da8d5c33a7df73d1e4",
@@ -122,29 +122,40 @@
   },
   "testEnvironmentCode": {
     "status": "REVIEW_CANDIDATE_NOT_LIVE_VALIDATED",
-    "controllerSha256": "a739a3a39a09ca108669aaf235e133c50b312899310b76d966fdb4ced95fd1d0",
-    "templateSha256": "0830351d32052e821eccf22fb12f130fea65892d46dbbf4e18077dedcbfe09a8",
+    "controllerSha256": "42d3c36f8101114cfd5b7250acd28b5f4de38b94ff7b3f297d9fcfbe72db7b79",
+    "templateSha256": "fd5bb83cada189d43ea28a49529251e6f354b7dc86d8de5a39c6df39bd636f81",
     "functions": 5,
-    "localControllerChecks": 24,
+    "localControllerChecks": 36,
     "localSeedCases": 6,
     "localStorageProtectionCases": 15,
     "independentSafetyProbes": 6,
-    "allFiveActionsLiveRun": "CLEANUP_IN_PROGRESS",
+    "allFiveActionsLiveRun": "SMALL_8_ROOTS_CLEANED",
     "categoryGroupLivePutGet": "PASS",
     "finalRunnerPolicyAdapter": "IMPLEMENTED_LOCAL_PASS",
     "newAzureDeploymentStopped": false,
     "localEmptyManagedGroupsCases": 5,
-    "cleanupEmptyManagedGroupsFix": "Applied; same ledger cleanup resuming; original before fields preserved"
+    "cleanupEmptyManagedGroupsFix": "Applied; same ledger cleanup resuming; original before fields preserved",
+    "httpErrorShapeCases": 15,
+    "apimPurgeLocalCases": 10,
+    "fullDeployment": "PASS_7_DEPLOYMENTS_SUCCEEDED",
+    "fullSeed": "IN_PROGRESS"
   },
   "currentRun": {
     "runId": "fin7t261124a",
-    "status": "SMALL_FIXTURE_CLEANUP_RESUMING",
+    "status": "FULL_SOURCE_SETTINGS_SEEDING",
     "reviewGateSkippedByUser": true,
     "baselineResourceAndGroupCounts": [
       0,
       0
     ],
     "temporaryNetworkAndWindowsEnvironmentActive": true,
-    "cleanupComplete": false
+    "cleanupComplete": false,
+    "selectedRequestedTypes": 51,
+    "newRequestedTypes": 50,
+    "existingReferencedTypes": 1,
+    "auxiliaryTypes": 3,
+    "plannedRoots": 365,
+    "loadCount": 300,
+    "actualInventory": 369
   }
 }

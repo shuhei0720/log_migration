@@ -135,6 +135,7 @@ function Invoke-Arm {
             throw ('ARM returned non-JSON HTTP ' + $response.StatusCode)
         }
         if ([int]$response.StatusCode -ge 400){
+            $page = @{ error = ($page.error ?? $page) }
             if ($operation){
                 $operation.status = 'FAILED'
                 $operation.errorCode = $page.error.code
@@ -1002,8 +1003,10 @@ if ($Action -in @('Deploy', 'Capture', 'Seed')) {
                 'EXPECTED_UNSUPPORTED'
             } elseif ($categories.error) {
                 'FAILED'
-            } elseif (-not $categories.value.Count) {
+            } elseif ($categories -isnot [Collections.IDictionary] -or -not $categories.ContainsKey('value') -or $categories.value -isnot [array]) {
                 'UNRESOLVED'
+            } elseif (-not $categories.value.Count) {
+                'NO_EXPORTABLE_CATEGORIES'
             } else {
                 'CATEGORIES_ONLY'
             }
@@ -1555,7 +1558,7 @@ if ($Action -eq 'Cleanup' -and -not $state.resourceCleanupComplete) {
         Wait-Resource $groupId '2022-09-01' -Gone
     }
     foreach ($item in @($state.inventory | Where-Object {
-                $_.type -in @('Microsoft.KeyVault/vaults', 'Microsoft.CognitiveServices/accounts')
+                $_.type -in @('Microsoft.KeyVault/vaults', 'Microsoft.CognitiveServices/accounts', 'Microsoft.ApiManagement/service')
     })) {
         $parts = $item.id.Split('/')
         if ($item.type -eq 'Microsoft.KeyVault/vaults') {
@@ -1564,12 +1567,25 @@ if ($Action -eq 'Cleanup' -and -not $state.resourceCleanupComplete) {
                 $null = Invoke-Arm POST ($deletedId + '/purge') '2023-07-01'
             }
             Wait-Resource $deletedId '2023-07-01' -Gone
-        } else {
+        } elseif ($item.type -eq 'Microsoft.CognitiveServices/accounts') {
             $deletedId = '/subscriptions/' + $parts[2] + '/providers/Microsoft.CognitiveServices/locations/' + $item.location + '/resourceGroups/' + $parts[4] + '/deletedAccounts/' + $parts[-1]
             if (Invoke-Arm GET $deletedId '2025-06-01' -Optional) {
                 $null = Invoke-Arm DELETE $deletedId '2025-06-01'
             }
             Wait-Resource $deletedId '2025-06-01' -Gone
+        } else {
+            # ---
+            # 今回のAPIMと元IDが一致する削除保留だけを完全削除する。
+            # ---
+            $deletedId = '/subscriptions/' + $parts[2] + '/providers/Microsoft.ApiManagement/locations/' + $item.location + '/deletedservices/' + $parts[-1]
+            $deletedService = Invoke-Arm GET $deletedId '2024-05-01' -Optional
+            if ($deletedService) {
+                if ($deletedService.properties.serviceId -ine $item.id) {
+                    throw 'Deleted APIM service ID differs from the owned resource.'
+                }
+                $null = Invoke-Arm DELETE $deletedId '2024-05-01'
+            }
+            Wait-Resource $deletedId '2024-05-01' -Gone
         }
     }
     foreach ($initial in $state.initialState) {
