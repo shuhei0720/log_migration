@@ -1,6 +1,6 @@
 {
   "status": "TESTS_PASS_ALL_RESOURCES_AUTH_RESTORED_26_REGISTRATIONS_RESTORED_TWO_AZURE_PENDING",
-  "updatedUtc": "2026-11-25T13:51:58.356105+00:00",
+  "updatedUtc": "2026-11-25T09:49:40.312200+00:00",
   "canonicalSha256": {
     "rollback.ps1": "cafe6ccc395f48a76cf609b14d9300a60c558a8d2db42913b1bd628714c0497a",
     "step3_delete.ps1": "4b848b0b1a1ca1f3c5f765b83425db32a2154ffe596c8fe2045494ee737c5689",
@@ -2634,131 +2634,6 @@
     "proofSha256": {
       "SOURCE_QA.json": "4ff18298c768927fb7f6067544a0035082829a6d13c705d6e1ba641c83046024",
       "DOC_QA.json": "debda54b23cd5b8cc3044bbd499bbe5c48732df8660482594ae424eabb5bf522"
-    }
-  },
-  "readableRefactor": {
-    "status": "PASS_SEPARATE_FUNCTION_BASED_COMPARISON_VERSION",
-    "directory": "readable-migration",
-    "baseCommit": "fb9ff688abdf13615d8344e5287f6cd360cd8e1a",
-    "canonicalFilesAndOriginalsUnchanged": true,
-    "commonFunctionCount": 38,
-    "functionParameterHelpCount": 78,
-    "stepFunctionDefinitions": 0,
-    "stepLines": {
-      "precheck.ps1": 29,
-      "step1_copy.ps1": 73,
-      "step2_verify.ps1": 49,
-      "step3_delete.ps1": 30,
-      "rollback.ps1": 55
-    },
-    "scriptFiles": 6,
-    "runtime": "7.5.4",
-    "testHarnessSha256": "37bef30539f3791280d21c1e17d93d3a6f6c5f236266833aee1a8a3e9873ceb2",
-    "caseCount": 90,
-    "assertions": 1304,
-    "allCaseNamesResultsAndAssertionCountsMatchCanonical": true,
-    "realParallelRunspaces": 974,
-    "requestsFromParallelRunspaces": 1339,
-    "azureRequests": 0,
-    "commonLoadExternalCalls": 0,
-    "azureExecutionRerun": false,
-    "executedSourceSha256": {
-      "step1_copy.ps1": "010faa71e75362b2a0c80f71ebd5c5ac1971c618e8f957a6942003ff26de9b82",
-      "step2_verify.ps1": "058a75193dd9783937fa06ad7fcb2847406ce3955a7b7568ece045c6195308b6",
-      "precheck.ps1": "fa4aa034da1f821f73ca5aa687157da696da8f975445ba1c0b5d910547fb1fba",
-      "common.ps1": "8429c9e7625660d0713a9123d061bb75b2b91921ba5b8d4a7f754b6f2f04cfbd",
-      "step3_delete.ps1": "c808a8684c95d56d4b64dbe57e8d5b165fb4e39ae8f122e1a271fe067632dcad",
-      "rollback.ps1": "76c3639013f54317a73204a50f70ae90c260d4af7317dcbcd0949467593ef7a3"
-    },
-    "submittedSourceSha256": {
-      "common.ps1": "8429c9e7625660d0713a9123d061bb75b2b91921ba5b8d4a7f754b6f2f04cfbd",
-      "precheck.ps1": "fa4aa034da1f821f73ca5aa687157da696da8f975445ba1c0b5d910547fb1fba",
-      "step1_copy.ps1": "c7137079a9c4289af5ffd4631f82c474a3a54b9f987089e8dfacce382bc0cef8",
-      "step2_verify.ps1": "058a75193dd9783937fa06ad7fcb2847406ce3955a7b7568ece045c6195308b6",
-      "step3_delete.ps1": "c808a8684c95d56d4b64dbe57e8d5b165fb4e39ae8f122e1a271fe067632dcad",
-      "rollback.ps1": "ca8166dc01fc9b6c772f3ec9ef5e01f3e83450eebac58df088853a9c67578a96"
-    },
-    "submittedExecutableCodeMatchesReplay": true,
-    "afterReplayEdits": "Two explanatory comments only; non-comment tokens compared for all six scripts",
-    "protectedSourceFileCount": 12,
-    "documentLinksChecked": 28,
-    "privateProofDirectory": "/tmp/log-migration-readable-refactor",
-    "proofSha256": {
-      "READABLE_REPLAY.json": "569c6282b4cb29f72a5cc1cc1c6ff13f8fb075df8f0da5674e47ef1342eda997",
-      "STRUCTURE_QA.json": "bb366ee8d85efb6551fc07e7e478d02e40e433db054e33f6d2167b3f0932eb20",
-      "REPLAY_EQUIVALENCE.json": "a7428f7d8840fe1537fe7640e29a6edd46c3e1d8f8180423c10ad22f99ebcc49",
-      "PROTECTED_BEFORE.json": "1860462df365c25293b357579c36b3610da2ef7672b866cd91a7413c9f8ef310"
-    }
-  },
-  "clearRedesign": {
-    "status": "PASS_EXPLICIT_DATA_FLOW_READABILITY_REDESIGN",
-    "directory": "clear-migration",
-    "baseCommit": "fe4054d580054f5f9024d8e8a74b7a28ce902d62",
-    "protectedFilesUnchanged": true,
-    "protectedFileCount": 20,
-    "commonFunctions": 42,
-    "nativeHelpParametersChecked": 92,
-    "stepLines": {
-      "precheck.ps1": 36,
-      "step1_copy.ps1": 100,
-      "step2_verify.ps1": 50,
-      "step3_delete.ps1": 29,
-      "rollback.ps1": 55
-    },
-    "sourceSha256": {
-      "common.ps1": "baa7221768d4d6c36e852ae15f9e30bbc3b1445e60f46bec11a70dbd4f7fcf15",
-      "precheck.ps1": "27b4030d03fb0c0126919b2c971947a08490281812d43a88e3e1e8ef348555f3",
-      "step1_copy.ps1": "6c6ad844a9a3358c03418fa24bb2b0b778471fa36daef7a47933e7a696df7c1f",
-      "step2_verify.ps1": "91dca2dcae3f9289b267ae6db6fac842f244f1b2dd889000821694f98794f6a9",
-      "step3_delete.ps1": "a7133019bec77b40bdef7970c6d6babd87f2ceaa5d107b4d76def10596a021e2",
-      "rollback.ps1": "2f11bf6f309bc842c555de16790e8126e51fb4f091831d9a9e254ce8c23f4c6c"
-    },
-    "submittedSourceExactlyMatchesReplay": true,
-    "nonCommentCharacters": 62895,
-    "nonCommentNonWhitespaceCharacters": 45362,
-    "runtime": "7.5.4",
-    "replayCases": 90,
-    "replayAssertions": 1304,
-    "allCaseNamesResultsAndAssertionCountsMatchCanonical": true,
-    "additionalContractAssertions": 59,
-    "allApiCallSitesHaveExplicitSubscriptionId": true,
-    "apiCallSites": 30,
-    "functionStateWrites": [
-      "$script:accessToken",
-      "$script:initiativeDefinition",
-      "$script:initiativeDefinitionId",
-      "$script:tokenSubscription"
-    ],
-    "statePurpose": "Internal authentication and policy-definition caches only",
-    "sourceLoadExternalCalls": 0,
-    "realParallelRunspaces": 974,
-    "requestsFromParallelRunspaces": 1339,
-    "azureRequests": 0,
-    "azureExecutionRerun": false,
-    "existingHarnessSha256": "37bef30539f3791280d21c1e17d93d3a6f6c5f236266833aee1a8a3e9873ceb2",
-    "testLauncher": "tests/clear-smoke.ps1",
-    "testLauncherSha256": "f208a574f80af91aa33046cdaed8d85225b375b1d6bd8cea03b873a4dfab0cb5",
-    "testAdapterChanges": "Only an explicit SubscriptionId argument added to the five direct API calls; assertions and mocks unchanged",
-    "contractTests": "tests/clear-contracts.ps1",
-    "contractTestsSha256": "523dcd3ac6beb37ec25d8e901109541ea7533f735cc6abd51ad7dfacba57b43f",
-    "firstAttempt": {
-      "result": "FAIL_BEFORE_WRITES",
-      "cause": "Region API collection forwarded as one nested array",
-      "writes": 0,
-      "fixed": "Assign response to a local variable and enumerate the returned region list",
-      "fullReplayAfterFix": "PASS"
-    },
-    "documentLinksChecked": 27,
-    "documentSha256": "a6d59336d79c88e0d3700307425c5c0faacc9340c16ef6810fb4b1562996315c",
-    "proofDirectory": "/tmp/log-migration-clear-redesign",
-    "proofSha256": {
-      "CLEAR_REPLAY.json": "77c44e61eb72c19c371fbc3dcb0a506b6c6aa6a42c2f0abc65b4208cdd240427",
-      "CLEAR_CONTRACTS.json": "88de87351e201951734ada46cde54acd007f2251966ea5fcb87747f0177c762a",
-      "SUBMISSION_QA.json": "210a7105bb36914d1c26c5153102ccad5940b84d2a6302dbe5b78598591e274f",
-      "HARNESS_ADAPTER_QA.json": "39a5bd6231ad06246edadab981f8170bec0869cd27e808b3e8ab4314ef1ed013",
-      "SMOKE_LAUNCHER_QA.json": "9b2c2f00f08972ac74051ecf79bb33d7eb2575f02655d45d7fa69cf62b243536",
-      "PROTECTED_BEFORE.json": "68e1b9822216d0937cdc9b861fa112a4442a62c0fcd690c4b7e3bb2b72b1f3e1",
-      "first-attempt/STATUS.json": "d5fa819b4b96c3847889eac10df333d488eceff30d2a8def2da359504b517691"
     }
   }
 }

@@ -6,8 +6,6 @@ Azureの診断設定とVM・VMSSのログ送信先を移行します。正本は
 |---|---|
 |[使い方](procedural-migration/README.md)|環境・CSV・実行順・各ファイルの処理・再実行・切り戻し|
 |[コード学習ガイド](procedural-migration/CODE_LEARNING.md)|step1からコードを上から読むための解説と、構文の補足|
-|[関数分割の比較版](readable-migration/README.md)|役割ごとの関数へ分け、各ステップで作業順序を読めるようにした版|
-|[読みやすさを優先した再設計版](clear-migration/README.md)|調査・確認・記録・反映を分け、データの受け渡しを明示した版|
 |[テスト環境の作成](test-environment/README.md)|既存VNet・会社ポリシーを使うテスト資源の作成手順|
 |[検証結果](test-results/REPORT.md)|実施内容・結果・実測時間・未実施項目|
 
