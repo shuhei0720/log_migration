@@ -1,9 +1,10 @@
 ﻿#Requires -Version 7.0
 param([switch]$SkipCsv)
 
+
 # ---
-# 移行元LAW・実行環境・追加する診断設定名を指定する。
-# locationは新規RG・Log Analytics・DCRの配置先。Storageの地域は移行対象から決める。
+# 設定するべき変数（変数の切り替えで開発・検証・本番共通で使用できる。）
+# locationはストレージ用RG・Log Analytics・DCRのリージョン
 # ---
 $targetWorkspaceId = '/subscriptions/43fc6c39-e53d-449d-9871-6d66f95ed2f3/resourcegroups/rg-hub-sand-resource-01/providers/microsoft.operationalinsights/workspaces/log-hub-sand-collection-01'
 $environment = 'dev'
@@ -11,8 +12,8 @@ $newDiagnosticSettingName = 'setByAzurePlatformTeam'
 $location = 'japaneast'
 
 # ---
-# 環境ごとの旧DCR2本とポリシー割り当て3件を指定し、後で完全なIDへ組み立てる。
-# policyReferenceIdsは、3件目のイニシアティブで除外する参照IDを指定する。
+# 環境ごとの旧DCRとポリシー割り当てを指定し、後で完全なIDへ組み立てる。
+# policyReferenceIdsは、initiative-<環境名>イニシアティブで除外する参照IDを指定する。
 # ---
 $environmentSettings = @{
     prod = @{
@@ -53,8 +54,7 @@ $policyReferenceIds = @(
 )
 
 # ---
-# 各工程で使う並列数・API版・リソースIDの接尾辞を用意する。
-# 選んだ環境のDCR・ポリシーIDと、再開時の照合情報・JSON保存先もここで作る。
+# 共通変数。基本変更しない。
 # ---
 $parallelLimit = 5
 $commonScript = $PSCommandPath
@@ -99,12 +99,13 @@ $ErrorActionPreference = 'Stop'
 $OutputEncoding = [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 $env:PYTHONIOENCODING = 'utf-8'
 
+function Invoke-ArmRequest {
 <#
 .SYNOPSIS
 リソースの取得・作成・更新・削除に使うAzure REST APIを呼び出す。
 .DESCRIPTION
 ResourceIdまたはResource.IdのAPIへMethod・Bodyを送り、JSON応答を各工程の作成・照合処理へ返す。
-呼び出し側の$subscriptionIdでAzure CLIの認証情報を取得する。一時的な通信失敗・HTTPエラーは初回を含め最大4回試す。
+呼び出し側の$subscriptionIdでAzure CLIの認証情報を取得する。一時的な通信失敗・HTTPエラーは初回を含め最大4回リトライする。
 .PARAMETER ResourceId
 操作先のリソースID、またはAPI版を含む完全なURL。
 .PARAMETER Method
@@ -124,7 +125,6 @@ System.Object
 JSON応答を変換した辞書など。各工程はid・propertiesや一覧のvalue・nextLinkを取り出して使う。
 本文がない場合やOptional指定時の404は$null。
 #>
-function Invoke-ArmRequest {
     param($ResourceId, $Method = 'Get', $Body, $ApiVersion = '2024-03-11', [switch]$Optional, $Resource, [switch]$Wait)
     # ---
     # Resourceに記録の1項目を渡した場合は、Id・API版・Bodyを取り出す。
