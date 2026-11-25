@@ -164,13 +164,13 @@ function Invoke-ArmRequest {
             Method = $Method
             Headers = @{ Authorization = "Bearer $($script:accessToken.accessToken)" }
             ContentType = 'application/json; charset=utf-8'
-            TimeoutSec = 90
+            TimeoutSec = 300
         }
         if ($null -ne $Body) {
             $request.Body = [Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $Body -Depth 40))
         }
         if ((Get-Command Invoke-WebRequest).Parameters.ContainsKey('OperationTimeoutSeconds')) {
-            $request.OperationTimeoutSeconds = 90
+            $request.OperationTimeoutSeconds = 300
         }
         try {
             $response = Invoke-WebRequest @request -SkipHttpErrorCheck

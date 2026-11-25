@@ -140,7 +140,7 @@ PowerShell 7以上を要求し、旧ワークスペースID・環境・新診断
 
 今回の環境・旧ワークスペース・旧DCR・新診断名を`$migrationContext`へまとめます。step1がJSONの`Context`へ保存し、再実行時に別作業の記録でないか照合します。JSONの保存先と日本語の文字コードもここで決めます。
 
-### 102～238行：Invoke-ArmRequestの中を読む
+### 102～239行：Invoke-ArmRequestの中を読む
 
 Azure APIへ要求し、応答を返します。GETは取得、PUTは作成・更新、DELETEは削除です。`$current = Invoke-ArmRequest -Resource $resource -Optional`なら、指定IDの応答が`$current`に入ります。期待値との比較は次の関数で行います。
 
@@ -148,119 +148,119 @@ Azure APIへ要求し、応答を返します。GETは取得、PUTは作成・�
 
 `-Resource`は`Id`・`Kind`・`Body`を持つ記録1項目です。ここから操作先とAPI版、PUTなどの本文を取り出します。`-Body`を別に渡せばそちらを使います。`-ResourceId`でIDだけも渡せます。短いIDには接続先とAPI版を補い、完全なURLはそのまま使います。
 
-**148～160行｜`for ($attempt = 0; $attempt -lt 4; $attempt++)`**
+**148～161行｜`for ($attempt = 0; $attempt -lt 4; $attempt++)`**
 
 トークンが未取得・期限間近、またはSubが変わったとき、ログイン済みCLIから取得して`$script:accessToken`へ保存します。後のHTTP要求はこれで認証します。取得失敗なら送信へ進みません。
 
-**161～176行｜`$request = @{`、`Invoke-WebRequest @request`**
+**162～177行｜`$request = @{`、`Invoke-WebRequest @request`**
 
-URL・操作・トークンを`$request`へまとめ、本文があればJSON・UTF-8バイト列にして送ります。接続・応答ヘッダは90秒待ちます。対応するPowerShellでは、本文受信中の無応答も90秒です。
+URL・操作・トークンを`$request`へまとめ、本文があればJSON・UTF-8バイト列にして送ります。接続・応答ヘッダは300秒（5分）待ちます。対応するPowerShellでは、本文受信中の無応答も300秒（5分）です。
 
-**177～200行｜型を指定した`catch`、`$retryTransport`**
+**178～201行｜型を指定した`catch`、`$retryTransport`**
 
 接続断や通信タイムアウトは、初回を含め最大4回試します。証明書・TLSの問題、中断、JSON不正は再試行しません。DELETEの応答を失った場合は、再試行で404なら削除済みと扱います。
 
-**205～237行｜`$status`、`$Wait`、`Retry-After`**
+**206～238行｜`$status`、`$Wait`、`Retry-After`**
 
 成功応答をJSONから辞書へ変換します。`-Wait`付きで作成中なら3秒ごとにGETし、`Succeeded`で返し、`Failed`／`Canceled`なら停止します。作成全体に一律上限はありません。401は認証更新、一時HTTPエラーは待機後に再試行します。`-Optional`付きの404はnullを返します。
 
-### 240～325行：Test-Configurationの中を読む
+### 241～326行：Test-Configurationの中を読む
 
 現在値と期待値を比較してtrue／falseを返します。例の`Test-Configuration $current $resource.Body -Kind 'Diagnostic'`は、GET結果と記録したログ・メトリック・送信先を比べます。copyは一致なら省略、verifyはOKとします。Azureへの通信は行いません。
 
-**266～284行｜`if ($Kind -in @('Diagnostic', 'Dcr', 'Association'))`**
+**267～285行｜`if ($Kind -in @('Diagnostic', 'Dcr', 'Association'))`**
 
 作成未完了ならfalseです。診断設定・DCR・関連付けは`Get-WritableBody`で比較用の形へそろえ、両方向に比べます。Lifecycleは`log-append-1095`だけを照合し、旧`log-append-365`が残っていればfalseにします。
 
-**290～308行｜`if ($Expected -is [array])`**
+**291～309行｜`if ($Expected -is [array])`**
 
 配列は件数を比べ、期待する各要素に合う現在値を1つずつ探します。使った候補は除くため二重に数えず、並び順の差は許し、不足や重複の差を検出できます。
 
-**313～324行｜`foreach ($key in $Expected.Keys)`**
+**314～325行｜`foreach ($key in $Expected.Keys)`**
 
 辞書は項目名で値を取り出し、中身も同じ関数で比べます。通常は期待値側の項目だけを調べます。`-Exact`は逆方向にも比べ、他作業で加わった値も検出するための指定です。文字列・数値は`-eq`、片側だけnullならfalseです。
 
-### 327～409行：Get-WritableBodyの中を読む
+### 328～410行：Get-WritableBodyの中を読む
 
-**343～370行｜`$body = @{ properties = @{} }`**
+**344～371行｜`$body = @{ properties = @{} }`**
 
 ここでの`Resource`はAzureのGET応答で、前の関数の「記録1項目」とは異なります。`-Kind`で種類に応じた書込み項目を取り出します。診断設定ならログ・メトリック・送信先、Waiverなどなら`properties`を基に本文を作ります。読取専用項目を除き、保存・復元・比較に使います。
 
-**374～408行｜`$body.properties.logAnalyticsDestinationType = 'AzureDiagnostics'`**
+**375～409行｜`$body.properties.logAnalyticsDestinationType = 'AzureDiagnostics'`**
 
 診断設定に`workspaceId`があれば、未指定の格納方式を`AzureDiagnostics`で補います。なければ返された格納方式を除き、Storage宛ての誤判定を防ぎます。DCRは地域・タグ・identityを残し、内部IDなどを除いて復元できる本文にします。
 
-### 411～444行：Read-MigrationRecordの中を読む
+### 412～445行：Read-MigrationRecordの中を読む
 
-**426～436行｜`$path = Join-Path $recordDirectory`**
+**427～437行｜`$path = Join-Path $recordDirectory`**
 
 `$Target.SubscriptionId`でローカルの`records/<環境>/<Sub ID>.json`を読み、不在ならnullを返します。JSONの`Context`・`Target`を今回の環境・CSVと照合し、別作業の記録なら停止します。
 
-**438～443行｜`foreach ($name in @('Destinations', 'NewSettings', 'OldSettings'))`**
+**439～444行｜`foreach ($name in @('Destinations', 'NewSettings', 'OldSettings'))`**
 
 `Destinations`（保存先）・`NewSettings`（新設定）・`OldSettings`（旧設定）が配列か確認して返します。copyは再開、verifyは照合、rollbackは復元に使います。
 
-### 450～497行：CSVを1行ずつ対象データへ変換する
+### 451～498行：CSVを1行ずつ対象データへ変換する
 
-**450～465行｜`if (-not $SkipCsv)`、`foreach ($row in Import-Csv`**
+**451～466行｜`if (-not $SkipCsv)`、`foreach ($row in Import-Csv`**
 
 CLIからSub名とIDを取得し、CSV各行の前後の空白を除いて`$target`へ入れます。VM列がなければLogを補い、列があって空欄なら新送信を作らない指定として残します。`SkipCsv`付きならこの節全体を飛ばします。
 
-**466～479行｜`$target.LogDestination -notin`**
+**467～480行｜`$target.LogDestination -notin`**
 
 送信先フラグと必須値を検査します。診断側はStorage・Log・None・空欄、VM側はLog・None・空欄です。Storage名は小文字英数字3～24文字で、後で置換する`jpe`が1か所必要です。
 
-**480～489行｜`$matches = @($accounts | Where-Object`**
+**481～490行｜`$matches = @($accounts | Where-Object`**
 
 `SubscriptionName`をCLIのSub名・IDと照合し、一意なIDを`$target.SubscriptionId`へ入れます。例では`rg-log`の`log-app`のIDも`WorkspaceId`へ組み立てます。旧ワークスペースと同じでないことを確認し、`$targets`へ追加します。
 
-**491～496行｜`Group-Object`、`$regionNames = Invoke-RestMethod`**
+**492～497行｜`Group-Object`、`$regionNames = Invoke-RestMethod`**
 
 対象0件・Sub ID重複を検出します。Storage名があればAzure Naming Toolから地域略称を`$regionNames`へ取得し、後でStorage名の`jpe`の置換に使います。
 
-### 499～781行：Get-MigrationPlanの中を読む
+### 500～782行：Get-MigrationPlanの中を読む
 
-**519～529行｜`$plan = @{`**
+**520～530行｜`$plan = @{`**
 
 Subを調べ、旧設定を`OldSettings`、作成先ID・地域を`Discovery`へ返します。新しい本文は後のstep1が`Destinations`・`NewSettings`へ組み立てます。まず環境・CSVと空の3一覧を`$plan`へ入れます。
 
-**535～559行｜`while ($resourcePage)`**
+**536～560行｜`while ($resourcePage)`**
 
 Sub内リソース一覧から`$resourceLocations[ID] = 地域`の対応表を作ります。通常一覧に出ないStorageのBlob・File・Queue・Tableも、親の種類に応じてIDと地域を追加します。後でこの全IDへ診断設定を問い合わせます。
 
-**563～575行｜`$resource.type -eq 'Microsoft.Cache/redisEnterprise'`**
+**564～576行｜`$resource.type -eq 'Microsoft.Cache/redisEnterprise'`**
 
 Redis Enterpriseは`databases` APIから子DBのIDを取得し、親の地域とともに追加します。子DB・Sub一覧のどちらも`nextLink`をたどり、全ページを読みます。
 
-**580～599行｜`$resourceLocations.Keys | ForEach-Object -Parallel`**
+**581～600行｜`$resourceLocations.Keys | ForEach-Object -Parallel`**
 
 各IDの診断設定を最大5リソース同時に読みます。全設定を`Settings`、旧ワークスペース宛てだけを`Sources`にして`$listedSettings`へ集めます。並列処理はcommonを`SkipCsv`で読み、外側のSub ID・トークンを受け取ります。
 
-**600～620行｜`$diagnosticSources = @($listedSettings`**
+**601～621行｜`$diagnosticSources = @($listedSettings`**
 
 全件の結果とエラーを確認します。診断非対応の`ResourceTypeNotSupported`だけを除き、その他の失敗は停止します。旧診断のID・本文を`OldSettings`へ入れます。地域が空・globalなら東日本とし、Storage選択に使います。
 
-**625～651行｜`foreach ($oldDcrId in $oldDcrIds)`**
+**626～652行｜`foreach ($oldDcrId in $oldDcrIds)`**
 
 旧DCR2つの関連から、このSubの関連を選びます。本体を再取得して参照先を確認し、ID・本文を`OldSettings`へ加えます。`vm-app`もここで対象になります。`OnlyOldSettings`付きならここで返し、作成後には不要な空き名・ポリシー確認を省きます。
 
-**657～689行｜`atScope()`**
+**658～690行｜`atScope()`**
 
 このSubに指定3割り当てが適用され、3件目のイニシアティブに12参照IDがあるか確認します。定義は次のSubでも再利用します。続いて`$discovery`に保存先・新設定の作成先を用意します。
 
-**695～713行｜`$storageLocations = @($diagnosticSources.Location`**
+**696～714行｜`$storageLocations = @($diagnosticSources.Location`**
 
 CSVにStorage名があれば、旧診断の地域を重複なしで取り出します。0件なら東日本です。地域略称で`jpe`を置換し、西日本なら`stjpwarchive001`にします。名前の形式とStandard_ZRS対応を確認してIDを組み立てます。
 
-**714～729行｜`if ($storageId -notin @($Record.Destinations.Id))`**
+**715～730行｜`if ($storageId -notin @($Record.Destinations.Id))`**
 
 名前の利用可否APIで使用済みなら停止します。再実行で同じIDがJSONの`Destinations`にある場合だけ省き、構成はcopyで確認します。ID・名前・地域を`Discovery.Storages`へ渡します。
 
-**735～754行｜`$Target.VmLogDestination -eq 'Log'`**
+**736～755行｜`$Target.VmLogDestination -eq 'Log'`**
 
 旧関連がありVM側がLogなら、`log-app`から`dcr-app`のIDを作り、旧関連の親VM・VMSSに新関連のIDを作ります。同じ親の旧関連が複数でも新関連は1つです。新旧同一IDは拒否し、`Discovery.Dcr`・`Associations`へ入れます。
 
-**755～781行｜`if ($Target.LogDestination -in @('Storage', 'Log'))`**
+**756～782行｜`if ($Target.LogDestination -in @('Storage', 'Log'))`**
 
 診断側がStorage／Logなら各親に新診断のIDを作ります。対象の旧診断が複数、新旧同名、記録外の同名設定、枠不足なら停止します。新旧ID・地域を`Discovery.Diagnostics`へ入れます。None・空欄は旧診断だけを削除用に残します。
 

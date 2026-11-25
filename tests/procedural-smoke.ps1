@@ -1277,7 +1277,7 @@ try {
         $subscriptionId = $global:ProceduralFixture.Subscriptions[0]
         $id = $global:ProceduralFixture.Inventory[0].id + '/providers/Microsoft.Insights/diagnosticSettings/old'
         $null = Invoke-ArmRequest $id -ApiVersion '2021-05-01-preview'
-        Assert-Replay (@($global:ProceduralFixture.OperationTimeoutValues | Where-Object { $_ -eq 90 }).Count -eq 1) '対応IWRには本文timeout90秒を渡す'
+        Assert-Replay (@($global:ProceduralFixture.OperationTimeoutValues | Where-Object { $_ -eq 300 }).Count -eq 1) '対応IWRには本文timeout300秒を渡す'
         function Get-Command { param($Name) [pscustomobject]@{ Parameters = @{} } }
         $null = Invoke-ArmRequest $id -ApiVersion '2021-05-01-preview'
         Assert-Replay (@($global:ProceduralFixture.OperationTimeoutValues | Where-Object { $_ -eq 0 }).Count -eq 1) '未対応IWRへ新しいparameterを渡さない'

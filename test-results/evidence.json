@@ -1,15 +1,15 @@
 {
   "status": "TESTS_PASS_ALL_RESOURCES_AUTH_RESTORED_26_REGISTRATIONS_RESTORED_TWO_AZURE_PENDING",
-  "updatedUtc": "2026-11-25T06:54:34.907322+00:00",
+  "updatedUtc": "2026-11-25T07:22:29.512806+00:00",
   "canonicalSha256": {
-    "common.ps1": "ee188624b51a793d13c11ea9a091a51539b21b9748f6cde09a798e971edb8ba5",
+    "common.ps1": "470b4f7915fffa7d337f84ccd5a9a030bde144c08dd34a08e90ecab6a38cf9dd",
     "precheck.ps1": "74d49d8b87ba2ba41d58a276c6fbb1f165a4d98afd7d3951852fbc975e08f599",
     "step1_copy.ps1": "f6a7c1ae2c854dd4dc9412c72d0fe2415a6520c833e5037e2004dfaab12862a1",
     "step2_verify.ps1": "0cafd60f9825042f238e9a746a45ec31b6e38926c4f72c28b039a10f52326cb9",
     "step3_delete.ps1": "4b848b0b1a1ca1f3c5f765b83425db32a2154ffe596c8fe2045494ee737c5689",
     "rollback.ps1": "c1c6eba36d30f56e4f3676afc7de7eaf54a91bf0794f63a753900cb07f5d6825"
   },
-  "testSha256": "128cb62b1f3778fa74ccd7ad70b6763b2580427baa25e8e3d939ff91a3343096",
+  "testSha256": "922fc60eb5b73ad0a09da6f2776a5c25a3f2d12d88be71834e3b62ca6ab374f9",
   "linuxReplay": {
     "result": "PASS",
     "runtime": "7.5.4",
@@ -1933,5 +1933,90 @@
     "executableCodeChanged": false,
     "azureRequests": 0,
     "entireHelpBlockIncludingIndentationRestoredFrom": "2ac259e"
+  },
+  "fiveMinuteRequestTimeoutRevision": {
+    "status": "PASS_EIGHT_TRANSPORT_WAIT_REPLAY_CASES",
+    "baselineCommit": "aadd8fcbbb7e50b1333e67ea591c64651e89fb53",
+    "timeoutSeconds": 300,
+    "operationTimeoutSecondsWhenSupported": 300,
+    "retryAttemptsIncludingInitial": 4,
+    "onlyTwoProductionNumericLiteralsChanged": true,
+    "userAuthoredCommentsPreserved": true,
+    "cases": [
+      {
+        "Case": "接続断・本文切断・通信timeoutから同じ要求で復旧する",
+        "Result": "PASS",
+        "Assertions": 24
+      },
+      {
+        "Case": "通信断が続けば最大4回で止まり旧設定を残す",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "TLS・明示中断・非通信IO・JSON不正を再試行しない",
+        "Result": "PASS",
+        "Assertions": 17
+      },
+      {
+        "Case": "429・503はRetryAfterを守って従来どおり再試行する",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "DELETE応答喪失後の404だけを削除済みとして継続する",
+        "Result": "PASS",
+        "Assertions": 10
+      },
+      {
+        "Case": "Wait付きPUTは1回だけ送信し以後はBody無しGETで待つ",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "作成待ちのFailed・Canceledは即停止する",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "対応IWRだけ本文timeoutを設定し未対応環境へ余計なparameterを送らない",
+        "Result": "PASS",
+        "Assertions": 2
+      }
+    ],
+    "assertions": 86,
+    "powerShellVersion": "7.5.4",
+    "azureRequests": 0,
+    "azureExecutionRerun": false,
+    "historicalAzureEvidencePreserved": true,
+    "proofDirectory": "/tmp/log-migration-fresh-normal-20261125/five-minute-timeout",
+    "proofSha256": {
+      "TRANSPORT_REPLAY.json": "6b51ade00d6bf65a225eeb49ec2ba03072a128abc1a33e75256104c3b5688bcd",
+      "DOC_QA.json": "27a4b5c66b25bb5b24f85e7894e754ce4a26604bde5c9ea9658a6209e55672fc",
+      "ACTUAL_TIMEOUT_HISTORY.json": "dcf71252f77563c89d0d5459a88cbb80490310f5bed43f1983485be8ce2bf67e"
+    },
+    "remainingWaitRetryAudit": {
+      "path": "/tmp/log-migration-fresh-normal-20261125/five-minute-timeout-review/WAIT_RETRY_AUDIT.json",
+      "sha256": "0684962fcb715eee3f06dc81268fe87953cb586efcb69d9200475f651b48d807",
+      "otherFixedOverallProvisioningTimeoutsFound": false,
+      "remainingFindings": 4,
+      "scope": "Six production scripts; separate test environment limits also reviewed.",
+      "testEnvironmentRequestTimeoutSeconds": 120,
+      "testEnvironmentProvisioningAndProviderWaitMinutes": 90,
+      "testEnvironmentChangeRequestBudgetGuardHours": 6
+    },
+    "actualApproximately90SecondObservation": {
+      "deduplicatedRecordedRequests": 1,
+      "elapsedSeconds": 89.997611,
+      "responseStatus": null,
+      "retrySucceeded": true,
+      "followingPutAndGetSucceeded": true,
+      "exceptionTypeNotRecorded": true,
+      "fullHistoryAbsenceNotProven": true
+    },
+    "documentSha256": {
+      "procedural-migration/README.md": "71ab5db4cdfdc821602ab30473dc7067a38a859f354d1b3fd7a0a09bddcefc67",
+      "procedural-migration/CODE_LEARNING.md": "778041a7af41a667be44215580be3eff40e1f96dc4138fa4e9d6e0f163c02ddd"
+    }
   }
 }
