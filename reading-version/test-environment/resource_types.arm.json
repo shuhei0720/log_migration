@@ -1,0 +1,2721 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "0.1.0.0",
+  "metadata": {
+    "fixtureTypes": [
+      {
+        "resourceType": "microsoft.codesigning/codesigningaccounts",
+        "keys": [],
+        "skipReason": "全月料金と有料オファーの適格性が未確認のため省略。"
+      },
+      {
+        "resourceType": "microsoft.web/sites/slots",
+        "keys": [
+          "functionSlot",
+          "slot"
+        ]
+      },
+      {
+        "resourceType": "microsoft.network/natgateways",
+        "keys": [
+          "networkNat"
+        ],
+        "conditional": true
+      },
+      {
+        "resourceType": "microsoft.databricks/workspaces",
+        "keys": [
+          "databricks"
+        ],
+        "conditional": true
+      },
+      {
+        "resourceType": "microsoft.app/containerapps",
+        "keys": [
+          "containerApp"
+        ]
+      },
+      {
+        "resourceType": "microsoft.app/jobs",
+        "keys": [
+          "containerJob"
+        ]
+      },
+      {
+        "resourceType": "microsoft.app/managedenvironments",
+        "keys": [
+          "containerEnvironment"
+        ]
+      },
+      {
+        "resourceType": "microsoft.servicebus/namespaces",
+        "keys": [
+          "serviceBus"
+        ]
+      },
+      {
+        "resourceType": "microsoft.web/hostingenvironments",
+        "keys": [
+          "ase"
+        ],
+        "conditional": true,
+        "optionalSwitch": "IncludeAse"
+      },
+      {
+        "resourceType": "microsoft.communication/communicationservices",
+        "keys": [
+          "communication"
+        ]
+      },
+      {
+        "resourceType": "microsoft.network/dnsresolverpolicies",
+        "keys": [
+          "networkDnsPolicy"
+        ]
+      },
+      {
+        "resourceType": "microsoft.network/expressroutecircuits",
+        "keys": [],
+        "skipReason": "回線契約、プロバイダー料金と撤去条件が未確認のため省略。"
+      },
+      {
+        "resourceType": "microsoft.automation/automationaccounts",
+        "keys": [
+          "automation"
+        ]
+      },
+      {
+        "resourceType": "microsoft.relay/namespaces",
+        "keys": [
+          "relay"
+        ]
+      },
+      {
+        "resourceType": "microsoft.botservice/botservices",
+        "keys": [
+          "bot"
+        ]
+      },
+      {
+        "resourceType": "microsoft.cache/redis",
+        "keys": [
+          "redis"
+        ],
+        "conditional": true
+      },
+      {
+        "resourceType": "microsoft.sql/servers",
+        "keys": [
+          "sqlServer"
+        ]
+      },
+      {
+        "resourceType": "microsoft.sql/servers/databases",
+        "keys": [
+          "sqlDatabase"
+        ]
+      },
+      {
+        "resourceType": "microsoft.search/searchservices",
+        "keys": [
+          "search"
+        ],
+        "conditional": true
+      },
+      {
+        "resourceType": "microsoft.web/serverfarms",
+        "keys": [
+          "appPlan"
+        ]
+      },
+      {
+        "resourceType": "microsoft.web/sites",
+        "keys": [
+          "functionSite",
+          "site"
+        ]
+      },
+      {
+        "resourceType": "microsoft.logic/workflows",
+        "keys": [
+          "logic"
+        ]
+      },
+      {
+        "resourceType": "microsoft.recoveryservices/vaults",
+        "keys": [
+          "recoveryVault"
+        ]
+      },
+      {
+        "resourceType": "microsoft.web/connections",
+        "keys": [
+          "connection"
+        ],
+        "conditional": true
+      },
+      {
+        "resourceType": "microsoft.compute/virtualmachinescalesets",
+        "keys": [
+          "computeVmss"
+        ]
+      },
+      {
+        "resourceType": "microsoft.network/loadbalancers",
+        "keys": [
+          "networkLoadBalancer"
+        ]
+      },
+      {
+        "resourceType": "microsoft.compute/disks",
+        "keys": [
+          "disk"
+        ],
+        "conditional": true
+      },
+      {
+        "resourceType": "microsoft.app/sessionpools",
+        "keys": [
+          "sessionPool"
+        ],
+        "conditional": true
+      },
+      {
+        "resourceType": "microsoft.containerregistry/registries",
+        "keys": [
+          "acr"
+        ]
+      },
+      {
+        "resourceType": "microsoft.containerservice/managedclusters",
+        "keys": [
+          "aks"
+        ],
+        "conditional": true
+      },
+      {
+        "resourceType": "microsoft.insights/datacollectionrules",
+        "keys": [
+          "dataCollectionRule"
+        ]
+      },
+      {
+        "resourceType": "microsoft.monitor/accounts",
+        "keys": [
+          "monitorAccount"
+        ]
+      },
+      {
+        "resourceType": "microsoft.apimanagement/service",
+        "keys": [
+          "apim"
+        ],
+        "conditional": true
+      },
+      {
+        "resourceType": "microsoft.bing/accounts",
+        "keys": [],
+        "skipReason": "サービス退役により新規検証できないため省略。"
+      },
+      {
+        "resourceType": "microsoft.cache/redisenterprise",
+        "keys": [
+          "managedRedis"
+        ],
+        "conditional": true
+      },
+      {
+        "resourceType": "microsoft.dbforpostgresql/flexibleservers",
+        "keys": [
+          "postgres"
+        ],
+        "conditional": true
+      },
+      {
+        "resourceType": "microsoft.documentdb/databaseaccounts",
+        "keys": [
+          "cosmos"
+        ]
+      },
+      {
+        "resourceType": "microsoft.network/applicationgateways",
+        "keys": [
+          "networkAppGateway"
+        ],
+        "conditional": true
+      },
+      {
+        "resourceType": "microsoft.insights/components",
+        "keys": [
+          "appInsights"
+        ]
+      },
+      {
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "keys": [
+          "logAnalytics"
+        ]
+      },
+      {
+        "resourceType": "microsoft.network/azurefirewalls",
+        "keys": [
+          "networkFirewall"
+        ],
+        "conditional": true
+      },
+      {
+        "resourceType": "microsoft.network/dnszones",
+        "keys": [
+          "networkPublicDns"
+        ]
+      },
+      {
+        "resourceType": "microsoft.network/networksecuritygroups",
+        "keys": [
+          "networkNsg"
+        ]
+      },
+      {
+        "resourceType": "microsoft.network/privatednszones",
+        "keys": [
+          "networkPrivateDns"
+        ]
+      },
+      {
+        "resourceType": "microsoft.network/virtualnetworks",
+        "keys": [
+          "networkVnet"
+        ]
+      },
+      {
+        "resourceType": "microsoft.kusto/clusters",
+        "keys": [
+          "kusto"
+        ],
+        "conditional": true
+      },
+      {
+        "resourceType": "microsoft.network/privateendpoints",
+        "keys": [
+          "networkPrivateEndpoint"
+        ]
+      },
+      {
+        "resourceType": "microsoft.compute/virtualmachines",
+        "keys": [
+          "computeVm"
+        ],
+        "conditional": true
+      },
+      {
+        "resourceType": "microsoft.network/networkinterfaces",
+        "keys": [
+          "networkNic"
+        ]
+      },
+      {
+        "resourceType": "microsoft.network/publicipaddresses",
+        "keys": [
+          "networkPublicIp"
+        ]
+      },
+      {
+        "resourceType": "microsoft.eventgrid/systemtopics",
+        "keys": [
+          "eventGrid"
+        ]
+      },
+      {
+        "resourceType": "microsoft.keyvault/vaults",
+        "keys": [
+          "keyVault"
+        ]
+      },
+      {
+        "resourceType": "microsoft.storage/storageaccounts",
+        "keys": [
+          "storage"
+        ]
+      },
+      {
+        "resourceType": "microsoft.machinelearningservices/workspaces",
+        "keys": [
+          "machineLearning"
+        ]
+      },
+      {
+        "resourceType": "microsoft.cognitiveservices/accounts/projects",
+        "keys": [
+          "aiProject"
+        ]
+      },
+      {
+        "resourceType": "microsoft.cognitiveservices/accounts",
+        "keys": [
+          "cognitive"
+        ]
+      }
+    ]
+  },
+  "parameters": {
+    "bundle": {
+      "type": "string",
+      "allowedValues": [
+        "A-R1",
+        "A-R3",
+        "B-R2",
+        "B-R4"
+      ]
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 13
+    },
+    "location": {
+      "type": "string"
+    },
+    "tenantId": {
+      "type": "string"
+    },
+    "enabledKeys": {
+      "type": "array"
+    },
+    "sharedStorageId": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "adminPassword": {
+      "type": "secureString"
+    },
+    "adminSshPublicKey": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "publisherEmail": {
+      "type": "string",
+      "defaultValue": "fixture@example.invalid"
+    },
+    "dataAdminLogin": {
+      "type": "string",
+      "defaultValue": "fixtureadmin",
+      "metadata": {
+        "description": "SQL/PostgreSQL administrator。接続テストは行わない。"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v4"
+    },
+    "vmssSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v4"
+    },
+    "networkRefs": {
+      "type": "object",
+      "metadata": {
+        "description": "準備済みの既存VNet A/Bと5サブネットのid/name。VNet・サブネットは作成しません。"
+      }
+    }
+  },
+  "variables": {
+    "namePrefix": "[concat('fx', parameters('runId'))]",
+    "networkNatName": "[concat(variables('namePrefix'), '-nat')]",
+    "networkDnsPolicyName": "[concat(variables('namePrefix'), '-dns-policy')]",
+    "networkLoadBalancerName": "[concat(variables('namePrefix'), '-lb')]",
+    "networkAppGatewayName": "[concat(variables('namePrefix'), '-agw')]",
+    "networkFirewallName": "[concat(variables('namePrefix'), '-fw')]",
+    "networkFirewallPolicyName": "[concat(variables('namePrefix'), '-fwpolicy')]",
+    "networkPublicIpName": "[concat(variables('namePrefix'), '-pip')]",
+    "networkFirewallPublicIpName": "[concat(variables('namePrefix'), '-fw-pip')]",
+    "networkNicName": "[concat(variables('namePrefix'), '-nic')]",
+    "networkPrivateEndpointName": "[concat(variables('namePrefix'), '-pe')]",
+    "networkNsgName": "[concat(variables('namePrefix'), '-nsg')]",
+    "networkPublicDnsName": "[concat(variables('namePrefix'), '.example.test')]",
+    "networkPrivateDnsName": "[concat(variables('namePrefix'), '.internal.test')]",
+    "dataStorageName": "[concat('fxst', parameters('runId'))]",
+    "dataSqlName": "[concat('fxsql', parameters('runId'))]",
+    "dataSearchName": "[concat('fxsearch', parameters('runId'))]",
+    "dataRedisName": "[concat('fxredis', parameters('runId'))]",
+    "dataManagedRedisName": "[concat('fxmr', parameters('runId'))]",
+    "dataPostgresName": "[concat('fxpg', parameters('runId'))]",
+    "dataCosmosName": "[concat('fxcosmos', parameters('runId'))]",
+    "dataKustoName": "[concat('fxkusto', parameters('runId'))]",
+    "dataAcrName": "[concat('fxacr', parameters('runId'))]",
+    "dataKeyVaultName": "[concat('fxkv', parameters('runId'))]",
+    "dataCognitiveName": "[concat('fxai', parameters('runId'))]",
+    "dataCollectionWorkspaceName": "[concat(variables('namePrefix'), '-dcr-la')]",
+    "dataBaseLAName": "[concat(variables('namePrefix'), '-base-la')]",
+    "dataInsightsName": "[concat(variables('namePrefix'), '-insights')]",
+    "dataMlName": "[concat(variables('namePrefix'), '-ml')]",
+    "dataMonitorName": "[concat(variables('namePrefix'), '-monitor')]",
+    "dataCollectionRuleName": "[concat(variables('namePrefix'), '-test-dcr')]",
+    "dataVm1Name": "[concat(variables('namePrefix'), '-vm-diag')]",
+    "dataVm2Name": "[concat(variables('namePrefix'), '-vm-oldonly')]",
+    "dataVmss1Name": "[concat(variables('namePrefix'), '-vmss-diag')]",
+    "dataVmss2Name": "[concat(variables('namePrefix'), '-vmss-oldonly')]",
+    "dataVmNic1Name": "[concat(variables('namePrefix'), '-vm-nic1')]",
+    "dataVmNic2Name": "[concat(variables('namePrefix'), '-vm-nic2')]"
+  },
+  "resources": [
+    {
+      "condition": "[and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkNat'))]",
+      "type": "Microsoft.Network/natGateways",
+      "apiVersion": "2025-09-01",
+      "name": "[variables('networkNatName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "networkNat",
+          "bundle": "B-R2",
+          "nameTemplate": "fx{runId}-nat"
+        }
+      },
+      "properties": {
+        "idleTimeoutInMinutes": 4
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      },
+      "sku": {
+        "name": "StandardV2"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkDnsPolicy'))]",
+      "type": "Microsoft.Network/dnsResolverPolicies",
+      "apiVersion": "2025-05-01",
+      "name": "[variables('networkDnsPolicyName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "networkDnsPolicy",
+          "bundle": "B-R2",
+          "nameTemplate": "fx{runId}-dns-policy"
+        }
+      },
+      "properties": {},
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkNsg'))]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2025-01-01",
+      "name": "[variables('networkNsgName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "networkNsg",
+          "bundle": "B-R2",
+          "nameTemplate": "fx{runId}-nsg"
+        }
+      },
+      "properties": {
+        "securityRules": []
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkPublicDns'))]",
+      "type": "Microsoft.Network/dnsZones",
+      "apiVersion": "2018-05-01",
+      "name": "[variables('networkPublicDnsName')]",
+      "location": "global",
+      "metadata": {
+        "fixture": {
+          "key": "networkPublicDns",
+          "bundle": "B-R2",
+          "nameTemplate": "fx{runId}.example.test"
+        }
+      },
+      "properties": {
+        "zoneType": "Public"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkPrivateDns'))]",
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2024-06-01",
+      "name": "[variables('networkPrivateDnsName')]",
+      "location": "global",
+      "metadata": {
+        "fixture": {
+          "key": "networkPrivateDns",
+          "bundle": "B-R2",
+          "nameTemplate": "fx{runId}.internal.test"
+        }
+      },
+      "properties": {}
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkPublicIp'))]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2025-01-01",
+      "name": "[variables('networkPublicIpName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "networkPublicIp",
+          "bundle": "B-R2",
+          "nameTemplate": "fx{runId}-pip"
+        }
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4"
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      },
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkNic'))]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2025-01-01",
+      "name": "[variables('networkNicName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "networkNic",
+          "bundle": "B-R2",
+          "nameTemplate": "fx{runId}-nic",
+          "dependsOnKeys": [
+            "networkVnet"
+          ]
+        }
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "primary",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('networkRefs').B.subnets.Protect.id]"
+              },
+              "primary": true
+            }
+          }
+        ]
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkLoadBalancer'))]",
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2025-01-01",
+      "name": "[variables('networkLoadBalancerName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "networkLoadBalancer",
+          "bundle": "B-R2",
+          "nameTemplate": "fx{runId}-lb",
+          "dependsOnKeys": [
+            "networkVnet"
+          ]
+        }
+      },
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "internal",
+            "properties": {
+              "subnet": {
+                "id": "[parameters('networkRefs').B.subnets.Protect.id]"
+              },
+              "privateIPAllocationMethod": "Dynamic"
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "empty"
+          }
+        ],
+        "loadBalancingRules": []
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      },
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkPrivateEndpoint'))]",
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2025-01-01",
+      "name": "[variables('networkPrivateEndpointName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "networkPrivateEndpoint",
+          "bundle": "B-R2",
+          "nameTemplate": "fx{runId}-pe",
+          "dependsOnKeys": [
+            "networkVnet",
+            "storage"
+          ]
+        }
+      },
+      "properties": {
+        "subnet": {
+          "id": "[parameters('networkRefs').B.subnets.Protect.id]"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "blob",
+            "properties": {
+              "privateLinkServiceId": "[parameters('sharedStorageId')]",
+              "groupIds": [
+                "blob"
+              ]
+            }
+          }
+        ]
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkAppGateway'))]",
+      "type": "Microsoft.Network/applicationGateways",
+      "apiVersion": "2025-01-01",
+      "name": "[variables('networkAppGatewayName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "networkAppGateway",
+          "bundle": "B-R2",
+          "nameTemplate": "fx{runId}-agw",
+          "dependsOnKeys": [
+            "networkVnet",
+            "networkPublicIp"
+          ]
+        }
+      },
+      "properties": {
+        "sku": {
+          "name": "Standard_v2",
+          "tier": "Standard_v2"
+        },
+        "autoscaleConfiguration": {
+          "minCapacity": 0,
+          "maxCapacity": 2
+        },
+        "gatewayIPConfigurations": [
+          {
+            "name": "gateway",
+            "properties": {
+              "subnet": {
+                "id": "[parameters('networkRefs').B.subnets.ApplicationGateway.id]"
+              }
+            }
+          }
+        ],
+        "frontendIPConfigurations": [
+          {
+            "name": "public",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('networkPublicIpName'))]"
+              }
+            }
+          }
+        ],
+        "frontendPorts": [
+          {
+            "name": "http",
+            "properties": {
+              "port": 80
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "empty",
+            "properties": {
+              "backendAddresses": []
+            }
+          }
+        ],
+        "backendHttpSettingsCollection": [
+          {
+            "name": "http",
+            "properties": {
+              "port": 80,
+              "protocol": "Http",
+              "cookieBasedAffinity": "Disabled",
+              "requestTimeout": 20
+            }
+          }
+        ],
+        "httpListeners": [
+          {
+            "name": "http",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', variables('networkAppGatewayName'), 'public')]"
+              },
+              "frontendPort": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', variables('networkAppGatewayName'), 'http')]"
+              },
+              "protocol": "Http",
+              "requireServerNameIndication": false
+            }
+          }
+        ],
+        "requestRoutingRules": [
+          {
+            "name": "basic",
+            "properties": {
+              "ruleType": "Basic",
+              "priority": 100,
+              "httpListener": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('networkAppGatewayName'), 'http')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('networkAppGatewayName'), 'empty')]"
+              },
+              "backendHttpSettings": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('networkAppGatewayName'), 'http')]"
+              }
+            }
+          }
+        ]
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('networkPublicIpName'))]"
+      ]
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkFirewall'))]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2025-01-01",
+      "name": "[variables('networkFirewallPublicIpName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "networkFirewall",
+          "bundle": "B-R2",
+          "nameTemplate": "fx{runId}-fw-pip"
+        }
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4"
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      },
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkFirewall'))]",
+      "type": "Microsoft.Network/firewallPolicies",
+      "apiVersion": "2025-01-01",
+      "name": "[variables('networkFirewallPolicyName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "networkFirewall",
+          "bundle": "B-R2",
+          "nameTemplate": "fx{runId}-fwpolicy"
+        }
+      },
+      "properties": {
+        "sku": {
+          "tier": "Standard"
+        },
+        "threatIntelMode": "Alert"
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'networkFirewall'))]",
+      "type": "Microsoft.Network/azureFirewalls",
+      "apiVersion": "2025-01-01",
+      "name": "[variables('networkFirewallName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "networkFirewall",
+          "bundle": "B-R2",
+          "nameTemplate": "fx{runId}-fw",
+          "dependsOnKeys": [
+            "networkVnet"
+          ]
+        }
+      },
+      "properties": {
+        "sku": {
+          "name": "AZFW_VNet",
+          "tier": "Standard"
+        },
+        "firewallPolicy": {
+          "id": "[resourceId('Microsoft.Network/firewallPolicies', variables('networkFirewallPolicyName'))]"
+        },
+        "ipConfigurations": [
+          {
+            "name": "data",
+            "properties": {
+              "subnet": {
+                "id": "[parameters('networkRefs').B.subnets.AzureFirewall.id]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('networkFirewallPublicIpName'))]"
+              }
+            }
+          }
+        ]
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('networkFirewallPublicIpName'))]",
+        "[resourceId('Microsoft.Network/firewallPolicies', variables('networkFirewallPolicyName'))]"
+      ]
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'logAnalytics'))]",
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('dataCollectionWorkspaceName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "logAnalytics",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}-dcr-la",
+          "phase": "foundation"
+        }
+      },
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        },
+        "retentionInDays": 30,
+        "publicNetworkAccessForIngestion": "Enabled",
+        "publicNetworkAccessForQuery": "Enabled"
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'logAnalytics'))]",
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('dataBaseLAName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "logAnalytics",
+          "bundle": "A-R3",
+          "nameTemplate": "fx{runId}-base-la",
+          "phase": "foundation"
+        }
+      },
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        },
+        "retentionInDays": 30,
+        "publicNetworkAccessForIngestion": "Enabled",
+        "publicNetworkAccessForQuery": "Enabled"
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'storage'))]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2025-01-01",
+      "name": "[variables('dataStorageName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "storage",
+          "bundle": "A-R3",
+          "nameTemplate": "fxst{runId}",
+          "phase": "foundation",
+          "scopeSuffixes": [
+            "/blobServices/default",
+            "/fileServices/default",
+            "/queueServices/default",
+            "/tableServices/default"
+          ],
+          "childApiVersion": "2023-05-01"
+        }
+      },
+      "properties": {
+        "supportsHttpsTrafficOnly": true,
+        "minimumTlsVersion": "TLS1_2",
+        "allowBlobPublicAccess": false,
+        "allowSharedKeyAccess": true,
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "defaultAction": "Allow"
+        }
+      },
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'sqlServer'))]",
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2023-08-01",
+      "name": "[variables('dataSqlName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "sqlServer",
+          "bundle": "A-R3",
+          "nameTemplate": "fxsql{runId}",
+          "scopeSuffixes": [
+            "/databases/master"
+          ]
+        }
+      },
+      "properties": {
+        "version": "12.0",
+        "administratorLogin": "[parameters('dataAdminLogin')]",
+        "administratorLoginPassword": "[parameters('adminPassword')]",
+        "minimalTlsVersion": "1.2",
+        "publicNetworkAccess": "Disabled"
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'sqlDatabase'))]",
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2023-08-01",
+      "name": "[concat(variables('dataSqlName'), '/fixturedb')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "sqlDatabase",
+          "bundle": "A-R3",
+          "nameTemplate": "fxsql{runId}/fixturedb",
+          "dependsOnKeys": [
+            "sqlServer"
+          ]
+        }
+      },
+      "properties": {
+        "maxSizeBytes": 2147483648,
+        "readScale": "Disabled",
+        "zoneRedundant": false
+      },
+      "sku": {
+        "name": "Basic",
+        "tier": "Basic",
+        "capacity": 5
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', variables('dataSqlName'))]"
+      ],
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'search'))]",
+      "type": "Microsoft.Search/searchServices",
+      "apiVersion": "2025-05-01",
+      "name": "[variables('dataSearchName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "search",
+          "bundle": "A-R1",
+          "nameTemplate": "fxsearch{runId}"
+        }
+      },
+      "properties": {
+        "replicaCount": 1,
+        "partitionCount": 1,
+        "hostingMode": "default",
+        "publicNetworkAccess": "enabled"
+      },
+      "sku": {
+        "name": "free"
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'redis'))]",
+      "type": "Microsoft.Cache/redis",
+      "apiVersion": "2024-11-01",
+      "name": "[variables('dataRedisName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "redis",
+          "bundle": "A-R1",
+          "nameTemplate": "fxredis{runId}"
+        }
+      },
+      "properties": {
+        "sku": {
+          "name": "Basic",
+          "family": "C",
+          "capacity": 0
+        },
+        "minimumTlsVersion": "1.2",
+        "enableNonSslPort": false,
+        "publicNetworkAccess": "Disabled"
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'managedRedis'))]",
+      "type": "Microsoft.Cache/redisEnterprise",
+      "apiVersion": "2025-04-01",
+      "name": "[variables('dataManagedRedisName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "managedRedis",
+          "bundle": "A-R1",
+          "nameTemplate": "fxmr{runId}",
+          "scopeSuffixes": [
+            "/databases/default"
+          ]
+        }
+      },
+      "properties": {
+        "highAvailability": "Disabled",
+        "minimumTlsVersion": "1.2"
+      },
+      "sku": {
+        "name": "Balanced_B0"
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'managedRedis'))]",
+      "type": "Microsoft.Cache/redisEnterprise/databases",
+      "apiVersion": "2025-04-01",
+      "name": "[concat(variables('dataManagedRedisName'), '/default')]",
+      "metadata": {
+        "fixture": {
+          "key": "managedRedis",
+          "bundle": "A-R1",
+          "nameTemplate": "fxmr{runId}/default"
+        }
+      },
+      "properties": {
+        "clientProtocol": "Encrypted",
+        "clusteringPolicy": "OSSCluster",
+        "evictionPolicy": "VolatileLRU",
+        "modules": []
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cache/redisEnterprise', variables('dataManagedRedisName'))]"
+      ]
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'postgres'))]",
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+      "apiVersion": "2024-08-01",
+      "name": "[variables('dataPostgresName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "postgres",
+          "bundle": "A-R1",
+          "nameTemplate": "fxpg{runId}"
+        }
+      },
+      "properties": {
+        "version": "16",
+        "administratorLogin": "[parameters('dataAdminLogin')]",
+        "administratorLoginPassword": "[parameters('adminPassword')]",
+        "createMode": "Default",
+        "storage": {
+          "storageSizeGB": 32
+        },
+        "backup": {
+          "backupRetentionDays": 7,
+          "geoRedundantBackup": "Disabled"
+        },
+        "highAvailability": {
+          "mode": "Disabled"
+        },
+        "network": {
+          "publicNetworkAccess": "Disabled"
+        }
+      },
+      "sku": {
+        "name": "Standard_B1ms",
+        "tier": "Burstable"
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'cosmos'))]",
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2024-11-15",
+      "name": "[variables('dataCosmosName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "cosmos",
+          "bundle": "A-R1",
+          "nameTemplate": "fxcosmos{runId}"
+        }
+      },
+      "properties": {
+        "databaseAccountOfferType": "Standard",
+        "locations": [
+          {
+            "locationName": "[parameters('location')]",
+            "failoverPriority": 0,
+            "isZoneRedundant": false
+          }
+        ],
+        "capabilities": [
+          {
+            "name": "EnableServerless"
+          }
+        ],
+        "enableAutomaticFailover": false,
+        "enableMultipleWriteLocations": false,
+        "enableFreeTier": false,
+        "publicNetworkAccess": "Disabled"
+      },
+      "kind": "GlobalDocumentDB",
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'kusto'))]",
+      "type": "Microsoft.Kusto/clusters",
+      "apiVersion": "2024-04-13",
+      "name": "[variables('dataKustoName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "kusto",
+          "bundle": "A-R1",
+          "nameTemplate": "fxkusto{runId}"
+        }
+      },
+      "properties": {
+        "engineType": "V2",
+        "enableAutoStop": true,
+        "enableStreamingIngest": false
+      },
+      "sku": {
+        "name": "Dev(No SLA)_Standard_E2a_v4",
+        "tier": "Basic",
+        "capacity": 1
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'acr'))]",
+      "type": "Microsoft.ContainerRegistry/registries",
+      "apiVersion": "2025-04-01",
+      "name": "[variables('dataAcrName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "acr",
+          "bundle": "A-R1",
+          "nameTemplate": "fxacr{runId}"
+        }
+      },
+      "properties": {
+        "adminUserEnabled": false
+      },
+      "sku": {
+        "name": "Basic"
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'dataCollectionRule'))]",
+      "type": "Microsoft.Insights/dataCollectionRules",
+      "apiVersion": "2023-03-11",
+      "name": "[variables('dataCollectionRuleName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "dataCollectionRule",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}-test-dcr",
+          "dependsOnKeys": [
+            "logAnalytics"
+          ]
+        }
+      },
+      "properties": {
+        "dataSources": {
+          "syslog": [
+            {
+              "name": "syslogSource",
+              "streams": [
+                "Microsoft-Syslog"
+              ],
+              "facilityNames": [
+                "auth"
+              ],
+              "logLevels": [
+                "Error",
+                "Critical",
+                "Alert",
+                "Emergency"
+              ]
+            }
+          ]
+        },
+        "destinations": {
+          "logAnalytics": [
+            {
+              "name": "la",
+              "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('dataCollectionWorkspaceName'))]"
+            }
+          ]
+        },
+        "dataFlows": [
+          {
+            "streams": [
+              "Microsoft-Syslog"
+            ],
+            "destinations": [
+              "la"
+            ]
+          }
+        ]
+      },
+      "kind": "Linux",
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('dataCollectionWorkspaceName'))]"
+      ],
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'monitorAccount'))]",
+      "type": "Microsoft.Monitor/accounts",
+      "apiVersion": "2023-04-03",
+      "name": "[variables('dataMonitorName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "monitorAccount",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}-monitor"
+        }
+      },
+      "properties": {},
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'appInsights'))]",
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[variables('dataInsightsName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "appInsights",
+          "bundle": "A-R3",
+          "nameTemplate": "fx{runId}-insights",
+          "phase": "foundation",
+          "dependsOnKeys": [
+            "logAnalytics"
+          ]
+        }
+      },
+      "properties": {
+        "Application_Type": "web",
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('dataBaseLAName'))]",
+        "Flow_Type": "Bluefield",
+        "Request_Source": "rest"
+      },
+      "kind": "web",
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('dataBaseLAName'))]"
+      ],
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'keyVault'))]",
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2024-11-01",
+      "name": "[variables('dataKeyVaultName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "keyVault",
+          "bundle": "A-R3",
+          "nameTemplate": "fxkv{runId}",
+          "phase": "foundation"
+        }
+      },
+      "properties": {
+        "tenantId": "[parameters('tenantId')]",
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "accessPolicies": [],
+        "enableRbacAuthorization": true,
+        "enableSoftDelete": true,
+        "softDeleteRetentionInDays": 7,
+        "publicNetworkAccess": "Enabled"
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'machineLearning'))]",
+      "type": "Microsoft.MachineLearningServices/workspaces",
+      "apiVersion": "2025-04-01",
+      "name": "[variables('dataMlName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "machineLearning",
+          "bundle": "A-R3",
+          "nameTemplate": "fx{runId}-ml",
+          "dependsOnKeys": [
+            "storage",
+            "keyVault",
+            "appInsights",
+            "logAnalytics"
+          ]
+        }
+      },
+      "properties": {
+        "friendlyName": "[variables('dataMlName')]",
+        "storageAccount": "[resourceId('Microsoft.Storage/storageAccounts', variables('dataStorageName'))]",
+        "keyVault": "[resourceId('Microsoft.KeyVault/vaults', variables('dataKeyVaultName'))]",
+        "applicationInsights": "[resourceId('Microsoft.Insights/components', variables('dataInsightsName'))]",
+        "managedNetwork": {
+          "isolationMode": "Disabled"
+        },
+        "publicNetworkAccess": "Enabled"
+      },
+      "kind": "Default",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('dataStorageName'))]",
+        "[resourceId('Microsoft.KeyVault/vaults', variables('dataKeyVaultName'))]",
+        "[resourceId('Microsoft.Insights/components', variables('dataInsightsName'))]"
+      ],
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'cognitive'))]",
+      "type": "Microsoft.CognitiveServices/accounts",
+      "apiVersion": "2025-06-01",
+      "name": "[variables('dataCognitiveName')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "cognitive",
+          "bundle": "A-R3",
+          "nameTemplate": "fxai{runId}"
+        }
+      },
+      "properties": {
+        "allowProjectManagement": true,
+        "customSubDomainName": "[variables('dataCognitiveName')]",
+        "disableLocalAuth": false,
+        "publicNetworkAccess": "Enabled"
+      },
+      "sku": {
+        "name": "S0"
+      },
+      "kind": "AIServices",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'aiProject'))]",
+      "type": "Microsoft.CognitiveServices/accounts/projects",
+      "apiVersion": "2025-06-01",
+      "name": "[concat(variables('dataCognitiveName'), '/fixtureproject')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "aiProject",
+          "bundle": "A-R3",
+          "nameTemplate": "fxai{runId}/fixtureproject",
+          "dependsOnKeys": [
+            "cognitive"
+          ]
+        }
+      },
+      "properties": {},
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('dataCognitiveName'))]"
+      ],
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'computeVm'))]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2025-01-01",
+      "name": "[variables('dataVmNic1Name')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "computeVm",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}-vm-nic1"
+        }
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('networkRefs').A.subnets.Private.id]"
+              }
+            }
+          }
+        ]
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'computeVm'))]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2024-07-01",
+      "name": "[variables('dataVm1Name')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "computeVm",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}-vm-diag"
+        }
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "ubuntu-24_04-lts",
+            "sku": "server",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('dataVm1Name'), '-osdisk')]",
+            "createOption": "FromImage",
+            "deleteOption": "Delete",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            },
+            "diskSizeGB": 32
+          }
+        },
+        "osProfile": {
+          "computerName": "[variables('dataVm1Name')]",
+          "adminUsername": "[parameters('dataAdminLogin')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', parameters('dataAdminLogin'), '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('adminSshPublicKey')]"
+                }
+              ]
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('dataVmNic1Name'))]",
+              "properties": {
+                "deleteOption": "Delete"
+              }
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": false
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('dataVmNic1Name'))]"
+      ],
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'computeVm'))]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2025-01-01",
+      "name": "[variables('dataVmNic2Name')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "computeVm",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}-vm-nic2"
+        }
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('networkRefs').A.subnets.Private.id]"
+              }
+            }
+          }
+        ]
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'computeVm'))]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2024-07-01",
+      "name": "[variables('dataVm2Name')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "computeVm",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}-vm-oldonly"
+        }
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "ubuntu-24_04-lts",
+            "sku": "server",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('dataVm2Name'), '-osdisk')]",
+            "createOption": "FromImage",
+            "deleteOption": "Delete",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            },
+            "diskSizeGB": 32
+          }
+        },
+        "osProfile": {
+          "computerName": "[variables('dataVm2Name')]",
+          "adminUsername": "[parameters('dataAdminLogin')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', parameters('dataAdminLogin'), '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('adminSshPublicKey')]"
+                }
+              ]
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('dataVmNic2Name'))]",
+              "properties": {
+                "deleteOption": "Delete"
+              }
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": false
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('dataVmNic2Name'))]"
+      ],
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'computeVmss'))]",
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "apiVersion": "2024-07-01",
+      "name": "[variables('dataVmss1Name')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "computeVmss",
+          "bundle": "B-R2",
+          "nameTemplate": "fx{runId}-vmss-diag",
+          "dependsOnKeys": [
+            "networkVnet"
+          ]
+        }
+      },
+      "properties": {
+        "orchestrationMode": "Uniform",
+        "singlePlacementGroup": true,
+        "overprovision": false,
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "imageReference": {
+              "publisher": "Canonical",
+              "offer": "ubuntu-24_04-lts",
+              "sku": "server",
+              "version": "latest"
+            },
+            "osDisk": {
+              "createOption": "FromImage",
+              "managedDisk": {
+                "storageAccountType": "Standard_LRS"
+              }
+            }
+          },
+          "osProfile": {
+            "computerNamePrefix": "fxvmss",
+            "adminUsername": "[parameters('dataAdminLogin')]",
+            "linuxConfiguration": {
+              "disablePasswordAuthentication": true,
+              "ssh": {
+                "publicKeys": [
+                  {
+                    "path": "[concat('/home/', parameters('dataAdminLogin'), '/.ssh/authorized_keys')]",
+                    "keyData": "[parameters('adminSshPublicKey')]"
+                  }
+                ]
+              }
+            }
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "nic",
+                "properties": {
+                  "primary": true,
+                  "ipConfigurations": [
+                    {
+                      "name": "ipconfig1",
+                      "properties": {
+                        "subnet": {
+                          "id": "[parameters('networkRefs').B.subnets.Protect.id]"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      "sku": {
+        "name": "[parameters('vmssSize')]",
+        "tier": "Standard",
+        "capacity": 0
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'computeVmss'))]",
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "apiVersion": "2024-07-01",
+      "name": "[variables('dataVmss2Name')]",
+      "location": "[parameters('location')]",
+      "metadata": {
+        "fixture": {
+          "key": "computeVmss",
+          "bundle": "B-R2",
+          "nameTemplate": "fx{runId}-vmss-oldonly",
+          "dependsOnKeys": [
+            "networkVnet"
+          ]
+        }
+      },
+      "properties": {
+        "orchestrationMode": "Uniform",
+        "singlePlacementGroup": true,
+        "overprovision": false,
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "imageReference": {
+              "publisher": "Canonical",
+              "offer": "ubuntu-24_04-lts",
+              "sku": "server",
+              "version": "latest"
+            },
+            "osDisk": {
+              "createOption": "FromImage",
+              "managedDisk": {
+                "storageAccountType": "Standard_LRS"
+              }
+            }
+          },
+          "osProfile": {
+            "computerNamePrefix": "fxvmss",
+            "adminUsername": "[parameters('dataAdminLogin')]",
+            "linuxConfiguration": {
+              "disablePasswordAuthentication": true,
+              "ssh": {
+                "publicKeys": [
+                  {
+                    "path": "[concat('/home/', parameters('dataAdminLogin'), '/.ssh/authorized_keys')]",
+                    "keyData": "[parameters('adminSshPublicKey')]"
+                  }
+                ]
+              }
+            }
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "nic",
+                "properties": {
+                  "primary": true,
+                  "ipConfigurations": [
+                    {
+                      "name": "ipconfig1",
+                      "properties": {
+                        "subnet": {
+                          "id": "[parameters('networkRefs').B.subnets.Protect.id]"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      "sku": {
+        "name": "[parameters('vmssSize')]",
+        "tier": "Standard",
+        "capacity": 0
+      },
+      "tags": {
+        "fixtureRunId": "[parameters('runId')]",
+        "fixtureBundle": "[parameters('bundle')]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2025-03-01",
+      "name": "[concat(variables('namePrefix'), 'plan')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'B-R4'), contains(parameters('enabledKeys'), 'appPlan'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {
+        "reserved": true
+      },
+      "metadata": {
+        "fixture": {
+          "key": "appPlan",
+          "bundle": "B-R4",
+          "nameTemplate": "fx{runId}plan"
+        }
+      },
+      "sku": {
+        "name": "P0v3",
+        "tier": "PremiumV3",
+        "capacity": 1
+      },
+      "kind": "linux"
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2025-03-01",
+      "name": "[concat(variables('namePrefix'), 'site')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'B-R4'), contains(parameters('enabledKeys'), 'site'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(variables('namePrefix'), 'plan'))]",
+        "httpsOnly": true,
+        "siteConfig": {
+          "linuxFxVersion": "DOTNETCORE|8.0",
+          "alwaysOn": true
+        }
+      },
+      "metadata": {
+        "fixture": {
+          "key": "site",
+          "bundle": "B-R4",
+          "nameTemplate": "fx{runId}site",
+          "dependsOnKeys": [
+            "appPlan"
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', concat(variables('namePrefix'), 'plan'))]"
+      ],
+      "kind": "app,linux"
+    },
+    {
+      "type": "Microsoft.Web/sites/slots",
+      "apiVersion": "2025-03-01",
+      "name": "[concat(variables('namePrefix'), 'site/stage')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'B-R4'), contains(parameters('enabledKeys'), 'slot'))]",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(variables('namePrefix'), 'plan'))]",
+        "httpsOnly": true,
+        "siteConfig": {
+          "linuxFxVersion": "DOTNETCORE|8.0",
+          "alwaysOn": true
+        }
+      },
+      "metadata": {
+        "fixture": {
+          "key": "slot",
+          "bundle": "B-R4",
+          "nameTemplate": "fx{runId}site/stage",
+          "dependsOnKeys": [
+            "site",
+            "appPlan"
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', concat(variables('namePrefix'), 'site'))]",
+        "[resourceId('Microsoft.Web/serverfarms', concat(variables('namePrefix'), 'plan'))]"
+      ],
+      "kind": "app,linux"
+    },
+    {
+      "type": "Microsoft.Databricks/workspaces",
+      "apiVersion": "2024-05-01",
+      "name": "[concat(variables('namePrefix'), 'dbx')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'B-R2'), contains(parameters('enabledKeys'), 'databricks'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {
+        "managedResourceGroupId": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', concat('fx-',parameters('runId'),'-dbx-managed'))]",
+        "parameters": {
+          "enableNoPublicIp": {
+            "value": true
+          },
+          "customVirtualNetworkId": {
+            "value": "[parameters('networkRefs').B.vnetId]"
+          },
+          "customPublicSubnetName": {
+            "value": "[parameters('networkRefs').B.subnets.Private.name]"
+          },
+          "customPrivateSubnetName": {
+            "value": "[parameters('networkRefs').B.subnets.VNetIntegration.name]"
+          }
+        }
+      },
+      "metadata": {
+        "fixture": {
+          "key": "databricks",
+          "bundle": "B-R2",
+          "nameTemplate": "fx{runId}dbx",
+          "managedResourceGroupNameTemplate": "fx-{runId}-dbx-managed"
+        }
+      },
+      "sku": {
+        "name": "premium"
+      }
+    },
+    {
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2025-01-01",
+      "name": "[concat(variables('namePrefix'), 'caenv')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'containerEnvironment'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {
+        "appLogsConfiguration": {
+          "destination": "azure-monitor"
+        },
+        "workloadProfiles": [
+          {
+            "name": "Consumption",
+            "workloadProfileType": "Consumption"
+          }
+        ],
+        "vnetConfiguration": {
+          "infrastructureSubnetId": "[parameters('networkRefs').A.subnets.VNetIntegration.id]"
+        }
+      },
+      "metadata": {
+        "fixture": {
+          "key": "containerEnvironment",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}caenv"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.App/containerApps",
+      "apiVersion": "2025-01-01",
+      "name": "[concat(variables('namePrefix'), 'caapp')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'containerApp'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {
+        "environmentId": "[resourceId('Microsoft.App/managedEnvironments', concat(variables('namePrefix'), 'caenv'))]",
+        "workloadProfileName": "Consumption",
+        "configuration": {},
+        "template": {
+          "containers": [
+            {
+              "name": "app",
+              "image": "mcr.microsoft.com/k8se/quickstart:latest",
+              "resources": {
+                "cpu": 0.25,
+                "memory": "0.5Gi"
+              }
+            }
+          ],
+          "scale": {
+            "minReplicas": 0,
+            "maxReplicas": 1
+          }
+        }
+      },
+      "metadata": {
+        "fixture": {
+          "key": "containerApp",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}caapp",
+          "dependsOnKeys": [
+            "containerEnvironment"
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.App/managedEnvironments', concat(variables('namePrefix'), 'caenv'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.App/jobs",
+      "apiVersion": "2025-01-01",
+      "name": "[concat(variables('namePrefix'), 'cajob')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'containerJob'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {
+        "environmentId": "[resourceId('Microsoft.App/managedEnvironments', concat(variables('namePrefix'), 'caenv'))]",
+        "workloadProfileName": "Consumption",
+        "configuration": {
+          "triggerType": "Manual",
+          "replicaTimeout": 60,
+          "replicaRetryLimit": 0,
+          "manualTriggerConfig": {
+            "parallelism": 1,
+            "replicaCompletionCount": 1
+          }
+        },
+        "template": {
+          "containers": [
+            {
+              "name": "job",
+              "image": "mcr.microsoft.com/k8se/quickstart:latest",
+              "resources": {
+                "cpu": 0.25,
+                "memory": "0.5Gi"
+              }
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "fixture": {
+          "key": "containerJob",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}cajob",
+          "dependsOnKeys": [
+            "containerEnvironment"
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.App/managedEnvironments', concat(variables('namePrefix'), 'caenv'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ServiceBus/namespaces",
+      "apiVersion": "2024-01-01",
+      "name": "[concat(variables('namePrefix'), 'sb')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'serviceBus'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {},
+      "metadata": {
+        "fixture": {
+          "key": "serviceBus",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}sb"
+        }
+      },
+      "sku": {
+        "name": "Basic",
+        "tier": "Basic",
+        "capacity": 0
+      }
+    },
+    {
+      "type": "Microsoft.Communication/communicationServices",
+      "apiVersion": "2023-03-31",
+      "name": "[concat(variables('namePrefix'), 'comm')]",
+      "location": "global",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'communication'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {
+        "dataLocation": "United States"
+      },
+      "metadata": {
+        "fixture": {
+          "key": "communication",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}comm"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Automation/automationAccounts",
+      "apiVersion": "2024-10-23",
+      "name": "[concat(variables('namePrefix'), 'auto')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'automation'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {
+        "sku": {
+          "name": "Basic"
+        },
+        "publicNetworkAccess": true
+      },
+      "metadata": {
+        "fixture": {
+          "key": "automation",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}auto"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Relay/namespaces",
+      "apiVersion": "2024-01-01",
+      "name": "[concat(variables('namePrefix'), 'relay')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'relay'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {},
+      "metadata": {
+        "fixture": {
+          "key": "relay",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}relay"
+        }
+      },
+      "sku": {
+        "name": "Standard",
+        "tier": "Standard"
+      }
+    },
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2023-01-31",
+      "name": "[concat(variables('namePrefix'), 'botid')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'botIdentity'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "metadata": {
+        "fixture": {
+          "key": "botIdentity",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}botid"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.BotService/botServices",
+      "apiVersion": "2022-09-15",
+      "name": "[concat(variables('namePrefix'), 'bot')]",
+      "location": "global",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'bot'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {
+        "displayName": "fixture",
+        "endpoint": "https://example.invalid/api/messages",
+        "msaAppType": "UserAssignedMSI",
+        "msaAppId": "[if(contains(parameters('enabledKeys'),'bot'),reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', concat(variables('namePrefix'), 'botid')),'2023-01-31').clientId,'')]",
+        "msaAppTenantId": "[parameters('tenantId')]",
+        "msaAppMSIResourceId": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', concat(variables('namePrefix'), 'botid'))]"
+      },
+      "metadata": {
+        "fixture": {
+          "key": "bot",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}bot",
+          "dependsOnKeys": [
+            "botIdentity"
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', concat(variables('namePrefix'), 'botid'))]"
+      ],
+      "sku": {
+        "name": "F0"
+      },
+      "kind": "azurebot"
+    },
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2019-05-01",
+      "name": "[concat(variables('namePrefix'), 'logic')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'logic'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "triggers": {},
+          "actions": {},
+          "outputs": {}
+        },
+        "parameters": {},
+        "state": "Disabled"
+      },
+      "metadata": {
+        "fixture": {
+          "key": "logic",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}logic"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.RecoveryServices/vaults",
+      "apiVersion": "2024-04-01",
+      "name": "[concat(variables('namePrefix'), 'rsv')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'recoveryVault'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {
+        "publicNetworkAccess": "Enabled"
+      },
+      "metadata": {
+        "fixture": {
+          "key": "recoveryVault",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}rsv"
+        }
+      },
+      "sku": {
+        "name": "Standard"
+      }
+    },
+    {
+      "type": "Microsoft.Web/connections",
+      "apiVersion": "2016-06-01",
+      "name": "[concat(variables('namePrefix'), 'conn')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'connection'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {
+        "displayName": "fixture-unconfigured",
+        "api": {
+          "id": "[concat(subscription().id,'/providers/Microsoft.Web/locations/',parameters('location'),'/managedApis/office365')]"
+        },
+        "parameterValues": {}
+      },
+      "metadata": {
+        "fixture": {
+          "key": "connection",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}conn"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2024-03-02",
+      "name": "[concat(variables('namePrefix'), 'disk')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'disk'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {
+        "creationData": {
+          "createOption": "Empty"
+        },
+        "diskSizeGB": 1
+      },
+      "metadata": {
+        "fixture": {
+          "key": "disk",
+          "bundle": "A-R3",
+          "nameTemplate": "fx{runId}disk"
+        }
+      },
+      "sku": {
+        "name": "Standard_LRS"
+      }
+    },
+    {
+      "type": "Microsoft.App/sessionPools",
+      "apiVersion": "2025-01-01",
+      "name": "[concat(variables('namePrefix'), 'sessions')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'sessionPool'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {
+        "containerType": "PythonLTS",
+        "poolManagementType": "Dynamic",
+        "scaleConfiguration": {
+          "maxConcurrentSessions": 5,
+          "readySessionInstances": 0
+        },
+        "sessionNetworkConfiguration": {
+          "status": "EgressDisabled"
+        },
+        "dynamicPoolConfiguration": {
+          "lifecycleConfiguration": {
+            "lifecycleType": "Timed",
+            "cooldownPeriodInSeconds": 300
+          }
+        }
+      },
+      "metadata": {
+        "fixture": {
+          "key": "sessionPool",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}sessions"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.ContainerService/managedClusters",
+      "apiVersion": "2024-10-01",
+      "name": "[concat(variables('namePrefix'), 'aks')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'aks'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {
+        "dnsPrefix": "[concat(variables('namePrefix'), 'aks')]",
+        "nodeResourceGroup": "[concat('fx-',parameters('runId'),'-aks-managed')]",
+        "agentPoolProfiles": [
+          {
+            "name": "sys",
+            "mode": "System",
+            "osType": "Linux",
+            "count": 2,
+            "vmSize": "Standard_D2s_v4",
+            "type": "VirtualMachineScaleSets",
+            "maxPods": 30,
+            "osDiskType": "Managed",
+            "osDiskSizeGB": 32,
+            "vnetSubnetID": "[parameters('networkRefs').A.subnets.Private.id]"
+          }
+        ],
+        "networkProfile": {
+          "networkPlugin": "azure",
+          "loadBalancerSku": "standard",
+          "outboundType": "loadBalancer",
+          "loadBalancerProfile": {
+            "managedOutboundIPs": {
+              "count": 1
+            }
+          },
+          "networkPluginMode": "overlay"
+        }
+      },
+      "metadata": {
+        "fixture": {
+          "key": "aks",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}aks",
+          "dependsOnKeys": [
+            "aksIdentity"
+          ],
+          "managedResourceGroupNameTemplate": "fx-{runId}-aks-managed"
+        }
+      },
+      "sku": {
+        "name": "Base",
+        "tier": "Free"
+      },
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', concat(variables('namePrefix'), 'aksid'))]": {}
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', concat(variables('namePrefix'), 'aksid'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service",
+      "apiVersion": "2024-05-01",
+      "name": "[concat(variables('namePrefix'), 'apim')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'apim'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {
+        "publisherName": "Fixture",
+        "publisherEmail": "[parameters('publisherEmail')]",
+        "virtualNetworkType": "None"
+      },
+      "metadata": {
+        "fixture": {
+          "key": "apim",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}apim"
+        }
+      },
+      "sku": {
+        "name": "Developer",
+        "capacity": 1
+      }
+    },
+    {
+      "type": "Microsoft.EventGrid/systemTopics",
+      "apiVersion": "2022-06-15",
+      "name": "[concat(variables('namePrefix'), 'events')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R3'), contains(parameters('enabledKeys'), 'eventGrid'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {
+        "source": "[parameters('sharedStorageId')]",
+        "topicType": "Microsoft.Storage.StorageAccounts"
+      },
+      "metadata": {
+        "fixture": {
+          "key": "eventGrid",
+          "bundle": "A-R3",
+          "nameTemplate": "fx{runId}events",
+          "dependsOnKeys": [
+            "storage"
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Web/hostingEnvironments",
+      "apiVersion": "2025-03-01",
+      "name": "[concat(variables('namePrefix'), 'ase')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'ase'))]",
+      "kind": "ASEV3",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "properties": {
+        "dedicatedHostCount": 0,
+        "zoneRedundant": false,
+        "virtualNetwork": {
+          "id": "[parameters('networkRefs').A.subnets.Protect.id]"
+        }
+      },
+      "metadata": {
+        "fixture": {
+          "key": "ase",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}ase"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2025-03-01",
+      "name": "[concat(variables('namePrefix'), 'func')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'B-R4'), contains(parameters('enabledKeys'), 'functionSite'))]",
+      "kind": "functionapp,linux",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(variables('namePrefix'), 'plan'))]",
+        "httpsOnly": true,
+        "enabled": false,
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "dotnet-isolated"
+            },
+            {
+              "name": "AzureWebJobsStorage__accountName",
+              "value": "[if(empty(parameters('sharedStorageId')), '', last(split(parameters('sharedStorageId'), '/')))]"
+            },
+            {
+              "name": "AzureWebJobsStorage__credential",
+              "value": "managedidentity"
+            }
+          ],
+          "linuxFxVersion": "DOTNET-ISOLATED|8.0",
+          "alwaysOn": true
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', concat(variables('namePrefix'), 'plan'))]"
+      ],
+      "metadata": {
+        "fixture": {
+          "key": "functionSite",
+          "bundle": "B-R4",
+          "nameTemplate": "fx{runId}func",
+          "dependsOnKeys": [
+            "appPlan",
+            "storage"
+          ]
+        }
+      },
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites/slots",
+      "apiVersion": "2025-03-01",
+      "name": "[concat(variables('namePrefix'), 'func/stage')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'B-R4'), contains(parameters('enabledKeys'), 'functionSlot'))]",
+      "kind": "functionapp,linux",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(variables('namePrefix'), 'plan'))]",
+        "httpsOnly": true,
+        "enabled": false,
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "dotnet-isolated"
+            },
+            {
+              "name": "AzureWebJobsStorage__accountName",
+              "value": "[if(empty(parameters('sharedStorageId')), '', last(split(parameters('sharedStorageId'), '/')))]"
+            },
+            {
+              "name": "AzureWebJobsStorage__credential",
+              "value": "managedidentity"
+            }
+          ],
+          "linuxFxVersion": "DOTNET-ISOLATED|8.0",
+          "alwaysOn": true
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', concat(variables('namePrefix'), 'plan'))]",
+        "[resourceId('Microsoft.Web/sites', concat(variables('namePrefix'), 'func'))]"
+      ],
+      "metadata": {
+        "fixture": {
+          "key": "functionSlot",
+          "bundle": "B-R4",
+          "nameTemplate": "fx{runId}func/stage",
+          "dependsOnKeys": [
+            "functionSite",
+            "appPlan",
+            "storage"
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2023-01-31",
+      "name": "[concat(variables('namePrefix'), 'aksid')]",
+      "location": "[parameters('location')]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'aksIdentity'))]",
+      "tags": {
+        "fixtureRun": "[parameters('runId')]"
+      },
+      "metadata": {
+        "fixture": {
+          "key": "aksIdentity",
+          "bundle": "A-R1",
+          "nameTemplate": "fx{runId}aksid",
+          "phase": "foundation"
+        }
+      }
+    }
+  ]
+}
