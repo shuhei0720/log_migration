@@ -2,17 +2,16 @@
 param([switch]$SkipCsv)
 
 # ---
-# 利用者が指定する値
-# locationは新しいRG・Log Analytics・DCRの配置先。
+# 設定するべき変数（変数の切り替えで開発・検証・本番共通で使用できる。）
+# locationはストレージ用RG・Log Analytics・DCRのリージョン。
 # ---
 $targetWorkspaceId = '/subscriptions/43fc6c39-e53d-449d-9871-6d66f95ed2f3/resourcegroups/rg-hub-sand-resource-01/providers/microsoft.operationalinsights/workspaces/log-hub-sand-collection-01'
 $environment = 'dev'
-$newDiagnosticSettingName = 'storage-archive'
+$newDiagnosticSettingName = 'setByAzurePlatformTeam'
 $location = 'japaneast'
 
 # ---
-# 環境ごとの旧DCRとポリシー割り当て
-# 同じ環境の情報を一か所に並べ、リソースIDを組み立てる。
+# 環境ごとの旧DCRとポリシー割り当ての情報。
 # ---
 $environmentSettings = @{
     prod = @{
@@ -53,7 +52,7 @@ $policyReferenceIds = @(
 )
 
 # ---
-# 共通処理で使う値
+# 共通処理で使う変数。基本変更しない。
 # ---
 $parallelLimit = 5
 $commonScript = $PSCommandPath
@@ -99,9 +98,9 @@ $OutputEncoding = [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 $env:PYTHONIOENCODING = 'utf-8'
 
 # ---
-# ARM APIを呼び出す
+# Azure REST APIを呼び出す共通関数。
 # ResourceId、またはId・Kind・Bodyを持つResourceを渡し、JSON応答を辞書で返す。
-# Optional時の404は値なし。通信切断・通信timeoutと一時HTTPエラーは最大4回試す。
+# 通信切断・通信timeoutと一時HTTPエラーは最大4回リトライする。
 # Waitは終端状態までGETで待ち、失敗状態なら止める。既存記録のAPI版も利用する。
 # ---
 function Invoke-ArmRequest {
