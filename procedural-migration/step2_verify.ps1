@@ -34,6 +34,7 @@ foreach ($target in $targets) {
                 if ($resource.Kind -eq 'Group') {
                     $expected = @{}
                 }
+                # 日数の一致に加え、テーブルの保持期間が既定値の継承ではなく個別指定かも確認する。
                 if (-not (Test-Configuration $current $expected -Kind $resource.Kind) -or
                     ($resource.Kind -eq 'Table' -and $current.properties.totalRetentionInDaysAsDefault)) {
                     throw '必要な設定がないか、予定の値と異なります。'

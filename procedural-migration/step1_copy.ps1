@@ -339,6 +339,7 @@ foreach ($target in $targets) {
                 $expected = @{}
             }
             $matched = Test-Configuration $current $expected -Kind $resource.Kind
+            # 日数が同じでも、ワークスペース既定値の継承ではテーブル個別の設定済みとみなさない。
             if ($resource.Kind -eq 'Table' -and $current.properties.totalRetentionInDaysAsDefault) {
                 $matched = $false
             }
@@ -405,6 +406,8 @@ foreach ($target in $targets) {
                 }
                 catch {
                     $message = $_.Exception.Message + $_.ErrorDetails.Message
+                    # Azureのエラー文から不足した出力先を拾い、Event・Syslogだけの反映遅れか調べる。
+                    # 別テーブルや出力先が不明なエラーを、反映待ちとして再送し続けないために区別する。
                     $outputTables = @([regex]::Matches($message, '(?i)\b(?:output table|table|output stream)\s+\\?[''"](?<table>[^''"\\]+)\\?[''"]') | ForEach-Object { $_.Groups['table'].Value })
                     if ($resource.Kind -ne 'Dcr' -or $message -notmatch 'InvalidOutputTable' -or -not $outputTables -or
                         @($outputTables | Where-Object { $_ -notin @('Event', 'Syslog', 'Microsoft-Event', 'Microsoft-Syslog') }).Count) {

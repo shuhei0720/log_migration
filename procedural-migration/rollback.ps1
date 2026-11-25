@@ -79,6 +79,7 @@ try {
                     if (Test-Configuration $current $expectedBody -Exact) {
                         continue
                     }
+                    # 復元値と違う旧設定は上書きしない。新設定も今回の作成値と一致する場合だけ戻す。
                     if ($current -and ($phase -eq 'Old' -or
                         -not (Test-Configuration $current $setting.Body -Exact))) {
                         throw "切り戻し直前に設定が変わっています: $($setting.Id)"

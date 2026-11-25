@@ -183,11 +183,14 @@ function Invoke-ArmRequest {
             $transportError = $_.Exception
             $cause = $transportError.GetBaseException()
             $networkError = [string]$transportError.HttpRequestError
+            # タイムアウト・切断・名前解決エラーなど、通信の再送で回復し得るものを選ぶ。
+            # 接続時・本文受信時やPowerShellの版で例外の形が違うため、外側の分類と内部原因の両方を調べる。
             $retryTransport = $transportError -is [System.TimeoutException] -or
                 $transportError.InnerException -is [System.TimeoutException] -or
                 $networkError -in @('ConnectionError', 'ResponseEnded', 'NameResolutionError') -or
                 ($cause -is [System.Net.Sockets.SocketException] -and [string]$cause.SocketErrorCode -in @('ConnectionAborted', 'ConnectionReset', 'NetworkReset', 'TimedOut', 'HostNotFound', 'TryAgain', 'NoData')) -or
                 ($transportError -is [System.Net.Http.HttpRequestException] -and $networkError -in @('', 'Unknown') -and $cause -is [System.IO.IOException])
+            # HTTP応答付きのエラー・利用者の中断・再送対象外・4回目の失敗は、そのまま呼出し元へ返す。
             if ($transportError.StatusCode -or $transportError.Response -or
                 ($transportError -is [System.Threading.Tasks.TaskCanceledException] -and $transportError.InnerException -isnot [System.TimeoutException]) -or
                 -not $retryTransport -or $attempt -eq 3) {
@@ -763,6 +766,7 @@ function Get-MigrationPlan {
                 throw "新旧診断設定の名前が同じです: $newId"
             }
             $existing = @($diagnostic.Settings | Where-Object name -eq $newDiagnosticSettingName)
+            # 記録済みのIDは再開対象として許可し、記録外の同名設定は上書きしない。
             if ($existing.Count -gt 0 -and $newId -notin @($Record.NewSettings.Id)) {
                 throw "新しい診断設定名が使用済みです: $newId"
             }

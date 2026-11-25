@@ -108,7 +108,7 @@ function Invoke-Arm {
                 'Cache-Control' = 'no-cache'
             }
             SkipHttpErrorCheck = $true
-            TimeoutSec = 120
+            TimeoutSec = 300
         }
         if ($null -ne $Body){
             $request.ContentType = 'application/json; charset=utf-8'

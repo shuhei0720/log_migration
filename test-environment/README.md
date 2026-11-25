@@ -28,6 +28,8 @@ VNet・サブネットは更新せず、NSG・ルートテーブルも付けま�
 |Deploy|RGの不存在と既存サブネットを確認し、RP登録・RG・資源作成後に結果を取得する|`run-ledger.json`の`deployments`・`inventory`・`managedGroups`|
 |Capture|資源・子スコープ・診断カテゴリ・現在の診断設定を読み取る|同台帳の`scopes`|
 
+API通信の待機は300秒（5分）です。
+
 ルートから次を実行します。Plan確認後、同じ設定でDeployします。
 
 ```powershell
