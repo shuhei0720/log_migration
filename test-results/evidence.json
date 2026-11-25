@@ -233,7 +233,7 @@
       "hostProofSha256": "28a289c0486436a446479c2743ed702a5cfdff4d6d6d75c85b1ab5aba2db959c"
     },
     "additionalFreshNormalRun": {
-      "status": "ENVIRONMENT_BUILD_APP_SERVICE_REGION_FEASIBILITY_CHECK_NORMAL_NOT_STARTED",
+      "status": "ALL_RESOURCE_TYPES_CREATED_P0V3_PROFILE_RECOVERY_BIND_BEFORE_SEED",
       "sequence": "Prior tests and their assets cleanup are complete. User approved carrying only B Network/Compute into the fresh run with their proven original NotRegistered targets retained. Exact2 and all40 required registrations are confirmed; current work prepares the new infrastructure. PRECHECK/copy/verify/delete and fresh final cleanup have not run.",
       "azureDeploymentAuthorized": true,
       "estimateDocument": "test-results/ADDITIONAL_NORMAL_ESTIMATE.md",
@@ -352,7 +352,31 @@
           "sha256": "f09c9bc50bc6bc9b7e0ab11e2dbe39f9d35a5814b19123021a426b7488628257"
         }
       ],
-      "appServiceRegionSelection": "Latest user: 安定してデプロイできるリージョンにしてよ; validate available quota and real creation before selecting"
+      "appServiceRegionSelection": "Latest user: 安定してデプロイできるリージョンにしてよ; validate available quota and real creation before selecting",
+      "testTemplateFix": {
+        "oldTemplateSha256": "fd5bb83cada189d43ea28a49529251e6f354b7dc86d8de5a39c6df39bd636f81",
+        "newTemplateSha256": "40d0f8e50eed22b5faba0f7adbeb72cb542a2902c4e2bbc394bba9042f848903",
+        "changedValues": [
+          "appPlan.sku.name:S1->P0v3",
+          "appPlan.sku.tier:Standard->PremiumV3"
+        ],
+        "allOtherTemplateValuesIdentical": true,
+        "productionCanonicalSixChanged": false,
+        "fixtureControllerChanged": false,
+        "oldPairPreserved": "source-pair-before-p0v3/MANIFEST.json",
+        "proofPath": "TEST_TEMPLATE_P0V3_FIX_PROOF.json"
+      },
+      "appServiceActualCreation": {
+        "status": "PASS_FULL_FIVE_CREATED_AND_READBACK_CONFIRMED",
+        "region": "westus2",
+        "sku": "P0v3",
+        "kind": "Linux",
+        "retailJPYPerHourPreTax": "12.2628",
+        "originalS1RetailJPYPerHourPreTax": "12.6584",
+        "proofPath": "fixture/deployment-monitor/wus2-p0v3-canary/P0V3_FULL_FIVE_SUCCESS_PROOF.json",
+        "sha256": "08621f709e40a2a4093df3ebf76b6cc8f30faf0255c6e9ecf013562641378d9b",
+        "normalPhasesStarted": false
+      }
     },
     "currentRcFull300": {
       "result": "PASS",
