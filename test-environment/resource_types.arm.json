@@ -196,7 +196,7 @@
       {
         "resourceType": "microsoft.insights/datacollectionrules",
         "keys": [
-          "oldDcr"
+          "dataCollectionRule"
         ]
       },
       {
@@ -355,25 +355,6 @@
           "cognitive"
         ]
       }
-    ],
-    "policyReferenceIds": [
-      "Linux 仮想マシンを構成してデータ収集ルールまたはデータ収集エンドポイントと関連付ける_1",
-      "Windows 仮想マシンを構成してデータ収集ルールまたはデータ収集エンドポイントと関連付ける_1",
-      "App Serviceに対して診断設定を有効化する必要がある_1",
-      "Kubernetes サービスに対して診断設定を有効化する必要がある_1",
-      "ストレージ アカウントに対して診断設定を有効化する必要がある_1",
-      "ストレージ アカウントのサブリソースに対して診断設定を有効化する必要がある_1",
-      "App Serviceの関数アプリに対して診断設定を有効化する必要がある_1",
-      "VMSSの均一モードでのデプロイを監査する_1",
-      "Table service の診断設定を監査する_1",
-      "File service の診断設定を監査する_1",
-      "Blob service の診断設定を監査する_1",
-      "Queue service の診断設定を監査する_1"
-    ],
-    "policyAssignmentNames": [
-      "f6f0b49f9bd34e8fbb2c0304",
-      "17fb86c1d07349769ff9b1a4",
-      "0073f42c7cba4eef8454e06e"
     ]
   },
   "parameters": {
@@ -399,10 +380,6 @@
     },
     "enabledKeys": {
       "type": "array"
-    },
-    "sourceWorkspaceId": {
-      "type": "string",
-      "defaultValue": ""
     },
     "sharedStorageId": {
       "type": "string",
@@ -467,15 +444,12 @@
     "dataAcrName": "[concat('fxacr', parameters('runId'))]",
     "dataKeyVaultName": "[concat('fxkv', parameters('runId'))]",
     "dataCognitiveName": "[concat('fxai', parameters('runId'))]",
-    "dataSourceLAName": "[concat(variables('namePrefix'), '-source-la')]",
-    "dataAuxLAName": "[concat(variables('namePrefix'), '-aux-la')]",
+    "dataCollectionWorkspaceName": "[concat(variables('namePrefix'), '-dcr-la')]",
     "dataBaseLAName": "[concat(variables('namePrefix'), '-base-la')]",
     "dataInsightsName": "[concat(variables('namePrefix'), '-insights')]",
     "dataMlName": "[concat(variables('namePrefix'), '-ml')]",
     "dataMonitorName": "[concat(variables('namePrefix'), '-monitor')]",
-    "dataDcr1Name": "[concat(variables('namePrefix'), '-old-dcr1')]",
-    "dataDcr2Name": "[concat(variables('namePrefix'), '-old-dcr2')]",
-    "dataDcr3Name": "[concat(variables('namePrefix'), '-sentinel-dcr')]",
+    "dataCollectionRuleName": "[concat(variables('namePrefix'), '-test-dcr')]",
     "dataVm1Name": "[concat(variables('namePrefix'), '-vm-diag')]",
     "dataVm2Name": "[concat(variables('namePrefix'), '-vm-oldonly')]",
     "dataVmss1Name": "[concat(variables('namePrefix'), '-vmss-diag')]",
@@ -494,8 +468,7 @@
         "fixture": {
           "key": "networkNat",
           "bundle": "B-R2",
-          "nameTemplate": "fx{runId}-nat",
-          "cleanupEarly": true
+          "nameTemplate": "fx{runId}-nat"
         }
       },
       "properties": {
@@ -591,8 +564,7 @@
         "fixture": {
           "key": "networkPublicIp",
           "bundle": "B-R2",
-          "nameTemplate": "fx{runId}-pip",
-          "cleanupEarly": true
+          "nameTemplate": "fx{runId}-pip"
         }
       },
       "properties": {
@@ -656,8 +628,7 @@
           "nameTemplate": "fx{runId}-lb",
           "dependsOnKeys": [
             "networkVnet"
-          ],
-          "cleanupEarly": true
+          ]
         }
       },
       "properties": {
@@ -740,8 +711,7 @@
           "dependsOnKeys": [
             "networkVnet",
             "networkPublicIp"
-          ],
-          "cleanupEarly": true
+          ]
         }
       },
       "properties": {
@@ -852,10 +822,7 @@
         "fixture": {
           "key": "networkFirewall",
           "bundle": "B-R2",
-          "nameTemplate": "fx{runId}-fw-pip",
-          "cleanupEarly": true,
-          "deploymentNetworkRole": "B",
-          "cleanupOrder": 20
+          "nameTemplate": "fx{runId}-fw-pip"
         }
       },
       "properties": {
@@ -881,9 +848,7 @@
         "fixture": {
           "key": "networkFirewall",
           "bundle": "B-R2",
-          "nameTemplate": "fx{runId}-fwpolicy",
-          "deploymentNetworkRole": "B",
-          "cleanupOrder": 10
+          "nameTemplate": "fx{runId}-fwpolicy"
         }
       },
       "properties": {
@@ -910,10 +875,7 @@
           "nameTemplate": "fx{runId}-fw",
           "dependsOnKeys": [
             "networkVnet"
-          ],
-          "cleanupEarly": true,
-          "deploymentNetworkRole": "B",
-          "cleanupOrder": 0
+          ]
         }
       },
       "properties": {
@@ -951,43 +913,14 @@
       "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'logAnalytics'))]",
       "type": "Microsoft.OperationalInsights/workspaces",
       "apiVersion": "2023-09-01",
-      "name": "[variables('dataSourceLAName')]",
+      "name": "[variables('dataCollectionWorkspaceName')]",
       "location": "[parameters('location')]",
       "metadata": {
         "fixture": {
           "key": "logAnalytics",
           "bundle": "A-R1",
-          "nameTemplate": "fx{runId}-source-la",
-          "phase": "foundation",
-          "role": "source-workspace"
-        }
-      },
-      "properties": {
-        "sku": {
-          "name": "PerGB2018"
-        },
-        "retentionInDays": 30,
-        "publicNetworkAccessForIngestion": "Enabled",
-        "publicNetworkAccessForQuery": "Enabled"
-      },
-      "tags": {
-        "fixtureRunId": "[parameters('runId')]",
-        "fixtureBundle": "[parameters('bundle')]"
-      }
-    },
-    {
-      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'logAnalytics'))]",
-      "type": "Microsoft.OperationalInsights/workspaces",
-      "apiVersion": "2023-09-01",
-      "name": "[variables('dataAuxLAName')]",
-      "location": "[parameters('location')]",
-      "metadata": {
-        "fixture": {
-          "key": "logAnalytics",
-          "bundle": "A-R1",
-          "nameTemplate": "fx{runId}-aux-la",
-          "phase": "foundation",
-          "role": "untargeted-aux-workspace"
+          "nameTemplate": "fx{runId}-dcr-la",
+          "phase": "foundation"
         }
       },
       "properties": {
@@ -1014,8 +947,7 @@
           "key": "logAnalytics",
           "bundle": "A-R3",
           "nameTemplate": "fx{runId}-base-la",
-          "phase": "foundation",
-          "role": "appinsights-base-workspace"
+          "phase": "foundation"
         }
       },
       "properties": {
@@ -1084,8 +1016,7 @@
           "nameTemplate": "fxsql{runId}",
           "scopeSuffixes": [
             "/databases/master"
-          ],
-          "cleanupEarly": true
+          ]
         }
       },
       "properties": {
@@ -1171,8 +1102,7 @@
         "fixture": {
           "key": "redis",
           "bundle": "A-R1",
-          "nameTemplate": "fxredis{runId}",
-          "cleanupEarly": true
+          "nameTemplate": "fxredis{runId}"
         }
       },
       "properties": {
@@ -1203,8 +1133,7 @@
           "nameTemplate": "fxmr{runId}",
           "scopeSuffixes": [
             "/databases/default"
-          ],
-          "cleanupEarly": true
+          ]
         }
       },
       "properties": {
@@ -1251,8 +1180,7 @@
         "fixture": {
           "key": "postgres",
           "bundle": "A-R1",
-          "nameTemplate": "fxpg{runId}",
-          "cleanupEarly": true
+          "nameTemplate": "fxpg{runId}"
         }
       },
       "properties": {
@@ -1331,8 +1259,7 @@
         "fixture": {
           "key": "kusto",
           "bundle": "A-R1",
-          "nameTemplate": "fxkusto{runId}",
-          "cleanupEarly": true
+          "nameTemplate": "fxkusto{runId}"
         }
       },
       "properties": {
@@ -1360,8 +1287,7 @@
         "fixture": {
           "key": "acr",
           "bundle": "A-R1",
-          "nameTemplate": "fxacr{runId}",
-          "cleanupEarly": true
+          "nameTemplate": "fxacr{runId}"
         }
       },
       "properties": {
@@ -1376,20 +1302,19 @@
       }
     },
     {
-      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'oldDcr'))]",
+      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'dataCollectionRule'))]",
       "type": "Microsoft.Insights/dataCollectionRules",
       "apiVersion": "2023-03-11",
-      "name": "[variables('dataDcr1Name')]",
+      "name": "[variables('dataCollectionRuleName')]",
       "location": "[parameters('location')]",
       "metadata": {
         "fixture": {
-          "key": "oldDcr",
+          "key": "dataCollectionRule",
           "bundle": "A-R1",
-          "nameTemplate": "fx{runId}-old-dcr1",
+          "nameTemplate": "fx{runId}-test-dcr",
           "dependsOnKeys": [
             "logAnalytics"
-          ],
-          "role": "old-dcr-1"
+          ]
         }
       },
       "properties": {
@@ -1416,7 +1341,7 @@
           "logAnalytics": [
             {
               "name": "la",
-              "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('dataSourceLAName'))]"
+              "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('dataCollectionWorkspaceName'))]"
             }
           ]
         },
@@ -1433,137 +1358,7 @@
       },
       "kind": "Linux",
       "dependsOn": [
-        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('dataSourceLAName'))]"
-      ],
-      "tags": {
-        "fixtureRunId": "[parameters('runId')]",
-        "fixtureBundle": "[parameters('bundle')]"
-      }
-    },
-    {
-      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'oldDcr'))]",
-      "type": "Microsoft.Insights/dataCollectionRules",
-      "apiVersion": "2023-03-11",
-      "name": "[variables('dataDcr2Name')]",
-      "location": "[parameters('location')]",
-      "metadata": {
-        "fixture": {
-          "key": "oldDcr",
-          "bundle": "A-R1",
-          "nameTemplate": "fx{runId}-old-dcr2",
-          "dependsOnKeys": [
-            "logAnalytics"
-          ],
-          "role": "old-dcr-2"
-        }
-      },
-      "properties": {
-        "dataSources": {
-          "syslog": [
-            {
-              "name": "syslogSource",
-              "streams": [
-                "Microsoft-Syslog"
-              ],
-              "facilityNames": [
-                "auth"
-              ],
-              "logLevels": [
-                "Error",
-                "Critical",
-                "Alert",
-                "Emergency"
-              ]
-            }
-          ]
-        },
-        "destinations": {
-          "logAnalytics": [
-            {
-              "name": "la",
-              "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('dataSourceLAName'))]"
-            }
-          ]
-        },
-        "dataFlows": [
-          {
-            "streams": [
-              "Microsoft-Syslog"
-            ],
-            "destinations": [
-              "la"
-            ]
-          }
-        ]
-      },
-      "kind": "Linux",
-      "dependsOn": [
-        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('dataSourceLAName'))]"
-      ],
-      "tags": {
-        "fixtureRunId": "[parameters('runId')]",
-        "fixtureBundle": "[parameters('bundle')]"
-      }
-    },
-    {
-      "condition": "[and(equals(parameters('bundle'), 'A-R1'), contains(parameters('enabledKeys'), 'oldDcr'))]",
-      "type": "Microsoft.Insights/dataCollectionRules",
-      "apiVersion": "2023-03-11",
-      "name": "[variables('dataDcr3Name')]",
-      "location": "[parameters('location')]",
-      "metadata": {
-        "fixture": {
-          "key": "oldDcr",
-          "bundle": "A-R1",
-          "nameTemplate": "fx{runId}-sentinel-dcr",
-          "dependsOnKeys": [
-            "logAnalytics"
-          ],
-          "role": "untargeted-sentinel-dcr"
-        }
-      },
-      "properties": {
-        "dataSources": {
-          "syslog": [
-            {
-              "name": "syslogSource",
-              "streams": [
-                "Microsoft-Syslog"
-              ],
-              "facilityNames": [
-                "auth"
-              ],
-              "logLevels": [
-                "Error",
-                "Critical",
-                "Alert",
-                "Emergency"
-              ]
-            }
-          ]
-        },
-        "destinations": {
-          "logAnalytics": [
-            {
-              "name": "la",
-              "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('dataAuxLAName'))]"
-            }
-          ]
-        },
-        "dataFlows": [
-          {
-            "streams": [
-              "Microsoft-Syslog"
-            ],
-            "destinations": [
-              "la"
-            ]
-          }
-        ]
-      },
-      "kind": "Linux",
-      "dependsOn": [
-        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('dataAuxLAName'))]"
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('dataCollectionWorkspaceName'))]"
       ],
       "tags": {
         "fixtureRunId": "[parameters('runId')]",
@@ -1795,8 +1590,7 @@
         "fixture": {
           "key": "computeVm",
           "bundle": "A-R1",
-          "nameTemplate": "fx{runId}-vm-diag",
-          "cleanupEarly": true
+          "nameTemplate": "fx{runId}-vm-diag"
         }
       },
       "properties": {
@@ -1900,10 +1694,7 @@
         "fixture": {
           "key": "computeVm",
           "bundle": "A-R1",
-          "nameTemplate": "fx{runId}-vm-oldonly",
-          "seedSourceDiagnostic": false,
-          "role": "old-only-collector",
-          "cleanupEarly": true
+          "nameTemplate": "fx{runId}-vm-oldonly"
         }
       },
       "properties": {
@@ -2064,9 +1855,7 @@
           "nameTemplate": "fx{runId}-vmss-oldonly",
           "dependsOnKeys": [
             "networkVnet"
-          ],
-          "seedSourceDiagnostic": false,
-          "role": "old-only-collector"
+          ]
         }
       },
       "properties": {
@@ -2154,8 +1943,7 @@
         "fixture": {
           "key": "appPlan",
           "bundle": "B-R4",
-          "nameTemplate": "fx{runId}plan",
-          "cleanupEarly": true
+          "nameTemplate": "fx{runId}plan"
         }
       },
       "sku": {
@@ -2189,8 +1977,7 @@
           "nameTemplate": "fx{runId}site",
           "dependsOnKeys": [
             "appPlan"
-          ],
-          "cleanupEarly": true
+          ]
         }
       },
       "dependsOn": [
@@ -2220,8 +2007,7 @@
           "dependsOnKeys": [
             "site",
             "appPlan"
-          ],
-          "cleanupEarly": true
+          ]
         }
       },
       "dependsOn": [
@@ -2261,8 +2047,7 @@
           "key": "databricks",
           "bundle": "B-R2",
           "nameTemplate": "fx{runId}dbx",
-          "managedResourceGroupNameTemplate": "fx-{runId}-dbx-managed",
-          "cleanupEarly": true
+          "managedResourceGroupNameTemplate": "fx-{runId}-dbx-managed"
         }
       },
       "sku": {
@@ -2626,8 +2411,7 @@
         "fixture": {
           "key": "disk",
           "bundle": "A-R3",
-          "nameTemplate": "fx{runId}disk",
-          "cleanupEarly": true
+          "nameTemplate": "fx{runId}disk"
         }
       },
       "sku": {
@@ -2714,8 +2498,7 @@
           "dependsOnKeys": [
             "aksIdentity"
           ],
-          "managedResourceGroupNameTemplate": "fx-{runId}-aks-managed",
-          "cleanupEarly": true
+          "managedResourceGroupNameTemplate": "fx-{runId}-aks-managed"
         }
       },
       "sku": {
@@ -2750,8 +2533,7 @@
         "fixture": {
           "key": "apim",
           "bundle": "A-R1",
-          "nameTemplate": "fx{runId}apim",
-          "cleanupEarly": true
+          "nameTemplate": "fx{runId}apim"
         }
       },
       "sku": {
@@ -2804,8 +2586,7 @@
         "fixture": {
           "key": "ase",
           "bundle": "A-R1",
-          "nameTemplate": "fx{runId}ase",
-          "cleanupEarly": true
+          "nameTemplate": "fx{runId}ase"
         }
       }
     },
@@ -2857,8 +2638,7 @@
           "dependsOnKeys": [
             "appPlan",
             "storage"
-          ],
-          "cleanupEarly": true
+          ]
         }
       },
       "tags": {
@@ -2915,8 +2695,7 @@
             "functionSite",
             "appPlan",
             "storage"
-          ],
-          "cleanupEarly": true
+          ]
         }
       }
     },
@@ -2934,9 +2713,7 @@
           "key": "aksIdentity",
           "bundle": "A-R1",
           "nameTemplate": "fx{runId}aksid",
-          "phase": "foundation",
-          "seedSourceDiagnostic": false,
-          "role": "aks-subnet-identity"
+          "phase": "foundation"
         }
       }
     }

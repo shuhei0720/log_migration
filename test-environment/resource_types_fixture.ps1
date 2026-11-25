@@ -1,7 +1,7 @@
 #Requires -Version 7.0
 [CmdletBinding()]
 param(
-    [ValidateSet('Plan', 'Deploy', 'Capture', 'Seed', 'Cleanup')][string]$Action = 'Plan',
+    [ValidateSet('Plan', 'Deploy', 'Capture')][string]$Action = 'Plan',
     [Parameter(Mandatory)][ValidatePattern('^[a-z0-9]{8,13}$')][string]$RunId,
     [string]$RunRoot = (Join-Path $PSScriptRoot 'runs'),
     [decimal]$BudgetJPY = 0,
@@ -14,8 +14,9 @@ param(
 )
 
 # ---
-# 利用者設定。2つのsubscriptionと既存VNet ID、配置regionを指定する。
-# VNet・subnet・NSG・route tableの作成/更新はしない。DBRと旧Redisは既定で省略する。
+# 利用者設定。2つのサブスクリプションと既存VNet ID、配置リージョンを指定する。
+# VNet・サブネットの作成/更新と、NSG・ルートテーブルの関連付けはしない。
+# Databricksと旧Redisは既定で省略する。
 # ---
 $SubscriptionIds = @('5f1b809c-f59f-4489-8211-4bef16a0463a', 'bfda36ec-1aed-4b0c-a907-4d4809c63888')
 $ExistingVnetIds = @(
@@ -32,7 +33,6 @@ $SubnetNames = [ordered]@{
 }
 $SubnetPrefixLengths = @{Protect=27;Private=26;ApplicationGateway=24;VNetIntegration=26;AzureFirewall=26}
 $MaximumHours = 6
-$NewDiagnosticSettingName = 'storage-archive'
 $ErrorActionPreference = 'Stop'
 $Utf8 = [Text.UTF8Encoding]::new($false)
 $ArmBase = 'https://management.azure.com'
@@ -46,11 +46,11 @@ $tokenExpiry = [DateTimeOffset]::MinValue
 
 # ---
 # ARM要求を送る。Optionalは明示404だけnull、AllowErrorはAPIのerrorオブジェクトを返す。
-# QueryはlistKeys/getEntities等の読取POST。GET一覧のnextLinkはここで全件取得する。
-# 変更のintentを先に保存し、本文・token・storage keyは台帳へ記録しない。
+# GET一覧のnextLinkはここで全件取得する。
+# 変更前に操作先を台帳へ記録する。要求本文や認証情報は保存しない。
 # ---
 function Invoke-Arm {
-    param($Method, $Id, $ApiVersion, $Body = $null, [switch]$Optional, [switch]$AllowError, [switch]$Query)
+    param($Method, $Id, $ApiVersion, $Body = $null, [switch]$Optional, [switch]$AllowError)
     $uri = if ($Id.StartsWith('https://')){
         $Id
     }else{
@@ -70,10 +70,10 @@ function Invoke-Arm {
         }) + 'api-version=' + $ApiVersion
     }
     $operation = $null
-    if ($state -and $Action -ne 'Cleanup' -and $Method -notin @('GET', 'HEAD') -and -not $Query -and [DateTimeOffset]::UtcNow -ge ([DateTimeOffset]$state.startedUtc).AddHours($MaximumHours)) {
-        throw 'Run lifetime exceeded; use Cleanup.'
+    if ($state -and $Method -notin @('GET', 'HEAD') -and [DateTimeOffset]::UtcNow -ge ([DateTimeOffset]$state.startedUtc).AddHours($MaximumHours)) {
+        throw 'Run lifetime exceeded; delete the test resource groups.'
     }
-    if ($state -and $Method -notin @('GET', 'HEAD') -and -not $Query){
+    if ($state -and $Method -notin @('GET', 'HEAD')){
         $operation = @{
             method = $Method
             id = $Id
@@ -174,7 +174,7 @@ function Invoke-Arm {
 }
 
 # ---
-# 1つの台帳をatomicに保存する。途中停止時も最初のBeforeを上書きしない。
+# 作成したIDと操作結果を一時ファイルへ保存し、完成してから台帳を置き換える。
 # ---
 function Save-State {
     [IO.File]::WriteAllText(($StatePath + '.pending'), ($state | ConvertTo-Json -Depth 100), $Utf8)
@@ -182,17 +182,14 @@ function Save-State {
 }
 
 # ---
-# 作成完了または不存在を待つ。失敗状態はその時点で止める。
+# 作成完了を待つ。Failed/Canceledはその時点で止める。
 # ---
 function Wait-Resource {
-    param($Id, $ApiVersion, [switch]$Gone)
+    param($Id, $ApiVersion)
     $limit = [DateTimeOffset]::UtcNow.AddMinutes(90)
     do {
         $current = Invoke-Arm GET $Id $ApiVersion -Optional
-        if ($Gone -and -not $current){
-            return
-        }
-        if (-not $Gone -and $current) {
+        if ($current) {
             if ($current.properties.provisioningState -in @('Failed', 'Canceled')) {
                 throw ('Provisioning failed: ' + $Id)
             }
@@ -208,176 +205,8 @@ function Wait-Resource {
 }
 
 # ---
-# GET結果から比較用コピーを作る。readonlyな参照以外の設定は残す。
-# 比較のために実リソース・保存Before/Afterを変更しない。
-# ---
-function Get-ComparableConfig {
-    param($Value, $Before = $null, [switch]$Nested)
-    if ($Nested) {
-        if ($Value -is [Collections.IDictionary]) {
-            $ordered = [ordered]@{}
-            foreach ($key in @($Value.Keys | Sort-Object -CaseSensitive)) {
-                $ordered[$key] = Get-ComparableConfig $Value[$key] -Nested
-            }
-            return $ordered
-        }
-        if ($Value -is [array]) {
-            return , @(foreach ($item in $Value) {
-                    Get-ComparableConfig $item -Nested
-            })
-        }
-        return $Value
-    }
-    $copy = $Value | ConvertTo-Json -Depth 100 | ConvertFrom-Json -AsHashtable
-    foreach ($entry in @($copy) + @($copy.properties.subnets) + @($copy.properties.subnets.properties.delegations)){
-        if ($entry){
-            $entry.Remove('etag')
-            $entry.Remove('systemData')
-            if ($entry.properties){
-                $entry.properties.Remove('provisioningState')
-            }
-        }
-    }
-    if ($copy.type -ieq 'Microsoft.Network/virtualNetworks'){
-        foreach ($subnet in @($copy.properties.subnets)){
-            if ($Before) {
-                $original = @($Before.properties.subnets | Where-Object id -EQ $subnet.id)[0]
-                $originalLinks = @($original.properties.applicationGatewayIPConfigurations)
-                $keptLinks = @()
-                foreach ($link in @($subnet.properties.applicationGatewayIPConfigurations)) {
-                    if (-not $link) {
-                        continue
-                    }
-                    if ($link.id -in $originalLinks.id) {
-                        $keptLinks += $link
-                        continue
-                    }
-                    if (@($link.Keys | Where-Object { $_ -ne 'id' }).Count) {
-                        throw 'Unknown field in new AppGW subnet reference.'
-                    }
-                    $owner = @($state.resources | Where-Object {
-                            $_.resourceType -eq 'microsoft.network/applicationgateways' -and $link.id.StartsWith($_.id + '/gatewayIPConfigurations/', [StringComparison]::OrdinalIgnoreCase)
-                    })
-                    if ($owner.Count -ne 1 -or $owner[0].id -in $state.initialState.resourceIds) {
-                        throw 'Unowned AppGW subnet reference.'
-                    }
-                    $actual = Invoke-Arm GET $owner[0].id $owner[0].apiVersion
-                    $reverse = @($actual.properties.gatewayIPConfigurations | Where-Object id -EQ $link.id)
-                    if ($actual.tags.fixtureRunId -cne $RunId -or $actual.properties.provisioningState -ne 'Succeeded' -or $reverse.Count -ne 1 -or $reverse[0].properties.subnet.id -ine $subnet.id) {
-                        throw 'AppGW reverse subnet reference differs.'
-                    }
-                }
-                if ($original.properties.ContainsKey('applicationGatewayIPConfigurations')) {
-                    $subnet.properties.applicationGatewayIPConfigurations = $keptLinks
-                }
-                else {
-                    $subnet.properties.Remove('applicationGatewayIPConfigurations')
-                }
-            }
-            foreach ($name in @('ipConfigurations', 'ipConfigurationProfiles', 'privateEndpoints', 'serviceAssociationLinks', 'resourceNavigationLinks', 'purpose')){
-                $subnet.properties.Remove($name)
-            }
-        }
-    }
-    $ownedFirewalls = @($state.resources | Where-Object {
-            $_.external -and $_.resourceType -eq 'microsoft.network/azurefirewalls'
-        } | ForEach-Object id)
-    if ($copy.type -ieq 'Microsoft.Network/publicIPAddresses'){
-        $link = $copy.properties.ipConfiguration.id
-        if ($link -and @($ownedFirewalls | Where-Object {
-                    $link.StartsWith($_ + '/', [StringComparison]::OrdinalIgnoreCase)
-            }).Count -ne 1) {
-            throw 'PIP has an unowned attachment.'
-        }
-        $copy.properties.Remove('ipConfiguration')
-    }
-    if ($copy.type -ieq 'Microsoft.Network/firewallPolicies'){
-        if (@($copy.properties.firewalls | Where-Object {
-                    $_.id -notin $ownedFirewalls
-            }).Count) {
-            throw 'Policy is shared with an unowned firewall.'
-        }
-        $copy.properties.Remove('firewalls')
-    }
-    return ((Get-ComparableConfig $copy -Nested) | ConvertTo-Json -Depth 100 -Compress)
-}
-
-# ---
-# Blob RESTをShared Keyで呼ぶ。account名と鍵は対象accountの処理中だけ設定する。
-# GET/HEAD/DELETE専用。AllowNotFoundは明示的404だけを値なしにする。
-# ---
-function Invoke-Blob {
-    param(
-        [ValidateSet('GET','HEAD','DELETE')][string]$Method,
-        [string]$Container,
-        [string]$Blob='',
-        [hashtable]$Query=@{},
-        [hashtable]$Headers=@{},
-        [switch]$AllowNotFound
-    )
-    $Method=$Method.ToUpperInvariant()
-    if($script:BlobAccountName -cnotmatch '^[a-z0-9]{3,24}$'){
-        throw 'Storage account name is invalid.'
-    }
-    $parts=@($Container)+@($Blob -split '/')
-    if($parts -contains '.' -or $parts -contains '..'){
-        throw 'Dot path segments cannot be sent without URI normalization.'
-    }
-    $path='/'+[Uri]::EscapeDataString($Container)
-    if($Blob){
-        $path+='/'+(@($Blob -split '/' | ForEach-Object {[Uri]::EscapeDataString($_)}) -join '/')
-    }
-    $names=[string[]]@($Query.Keys | ForEach-Object {$_.ToLowerInvariant()})
-    [array]::Sort($names,[StringComparer]::Ordinal)
-    $queryParts=@()
-    $resource='/'+$script:BlobAccountName+$path
-    foreach($name in $names){
-        $values=[string[]]@($Query[$name])
-        [array]::Sort($values,[StringComparer]::Ordinal)
-        foreach($value in $values){
-            $queryParts+=([Uri]::EscapeDataString($name)+'='+[Uri]::EscapeDataString($value))
-        }
-        $resource+="`n${name}:"+($values -join ',')
-    }
-    $headers=$Headers.Clone()
-    $headers['x-ms-date']=[DateTime]::UtcNow.ToString('R',[Globalization.CultureInfo]::InvariantCulture)
-    $headers['x-ms-version']='2023-11-03'
-    $headerNames=[string[]]@($headers.Keys | Where-Object {$_ -like 'x-ms-*'} | ForEach-Object {$_.ToLowerInvariant()})
-    [array]::Sort($headerNames,[StringComparer]::Ordinal)
-    $canonicalHeaders=(@($headerNames | ForEach-Object {
-        $_+':'+([string]$headers[$_] -replace '\s+',' ').Trim()+"`n"
-    }) -join '')
-    # 0-byteのContent-LengthとDateは空欄。Dateの代わりにx-ms-dateを署名する。
-    $standard=@($Method,'','','','','','',$headers['If-Modified-Since'],$headers['If-Match'],
-        $headers['If-None-Match'],$headers['If-Unmodified-Since'],$headers['Range'])
-    $hmac=[Security.Cryptography.HMACSHA256]::new([Convert]::FromBase64String($script:BlobAccountKey))
-    try{
-        $signature=[Convert]::ToBase64String($hmac.ComputeHash(
-            [Text.Encoding]::UTF8.GetBytes(($standard -join "`n")+"`n"+$canonicalHeaders+$resource)
-        ))
-    }finally{
-        $hmac.Dispose()
-    }
-    $headers.Authorization='SharedKey '+$script:BlobAccountName+':'+$signature
-    $uri='https://'+$script:BlobAccountName+'.blob.core.windows.net'+$path
-    if($queryParts.Count){
-        $uri+='?'+($queryParts -join '&')
-    }
-    $response=Invoke-WebRequest -Uri $uri -Method $Method -Headers $headers -SkipHttpErrorCheck -MaximumRedirection 0 -TimeoutSec 30
-    if($AllowNotFound -and [int]$response.StatusCode -eq 404 -and
-        ([string]$response.Headers['x-ms-error-code']) -in @('BlobNotFound','ResourceNotFound')){
-        return $null
-    }
-    if([int]$response.StatusCode -lt 200 -or [int]$response.StatusCode -ge 300){
-        throw ('Blob REST failed: '+[int]$response.StatusCode+'/'+[string]$response.Headers['x-ms-error-code'])
-    }
-    return $response
-}
-
-
-# ---
-# Plan: 56型から対象と依存を選び、exact IDと配置先を一度だけ組み立てる。
-# Firewall3rootはVNet BのRGへ、他は新規専用RGへ配置する。
+# Plan: 56型から対象と依存を選び、配置先とリソースIDを組み立てる。
+# 各Subで1つの専用RGを使い、4つのbundleで資源のリージョンを分ける。
 # ---
 if ($Action -in @('Plan', 'Deploy')){
     $keys = @()
@@ -434,7 +263,7 @@ if ($Action -in @('Plan', 'Deploy')){
                         1
             })]
             location = $Locations[$bundleKey]
-            resourceGroup = ('fx-' + $RunId + '-' + $bundleKey.ToLowerInvariant())
+            resourceGroup = ('fx-' + $RunId + '-' + $bundleKey.Substring(0, 1).ToLowerInvariant())
         }
     }
     foreach ($resource in $Template.resources){
@@ -444,9 +273,6 @@ if ($Action -in @('Plan', 'Deploy')){
         }
         $bundle = @($bundles | Where-Object key -EQ $meta.bundle)[0]
         $group = '/subscriptions/' + $bundle.subscriptionId + '/resourceGroups/' + $bundle.resourceGroup
-        if ($meta.deploymentNetworkRole){
-            $group = @($networks | Where-Object role -EQ $meta.deploymentNetworkRole)[0].rgId
-        }
         $name = $meta.nameTemplate.Replace('{runId}', $RunId)
         $types = $resource.type.Split('/')
         $names = $name.Split('/')
@@ -462,7 +288,6 @@ if ($Action -in @('Plan', 'Deploy')){
             name = $name
             key = $meta.key
             bundle = $meta.bundle
-            role = $meta.role
             resourceType = $resource.type.ToLowerInvariant()
             apiVersion = $resource.apiVersion
             location = $(if ($resource.location -eq 'global'){
@@ -475,20 +300,7 @@ if ($Action -in @('Plan', 'Deploy')){
                     $_
             })
             childApiVersion = ($meta.childApiVersion ?? $resource.apiVersion)
-            seedSourceDiagnostic = ($meta.seedSourceDiagnostic -ne $false)
-            external = [bool]$meta.deploymentNetworkRole
-            cleanupOrder = ($meta.cleanupOrder ?? 0)
             managedName = $meta.managedResourceGroupNameTemplate
-            cleanupEarly = [bool]$meta.cleanupEarly
-        }
-    }
-    foreach ($family in $resources | Group-Object {
-            $_.bundle + '|' + $_.key
-    }){
-        if (@($family.Group | ForEach-Object {
-                    ($_.id -split '/providers/')[0]
-                } | Sort-Object -Unique).Count -ne 1){
-            throw 'One key cannot mix deployment resource groups.'
         }
     }
     for ($number = 0; $number -lt $LoadCount; $number++) {
@@ -508,8 +320,6 @@ if ($Action -in @('Plan', 'Deploy')){
             location = $bundle.location
             phase = 'resources'
             scopeSuffixes = @()
-            seedSourceDiagnostic = $true
-            external = $false
             load = $true
         }
     }
@@ -539,7 +349,7 @@ if ($Action -in @('Plan', 'Deploy')){
         throw 'Set the reviewed budget before Deploy. It is not a billing hard cap.'
     }
     if (Test-Path $StatePath){
-        throw 'Run ledger already exists. Use Capture/Cleanup or another RunId.'
+        throw 'Run ledger already exists. Use Capture or another RunId.'
     }
     $reviewed = Get-Content (Join-Path $RunPath 'plan.json') -Raw | ConvertFrom-Json -AsHashtable
     foreach ($field in @('scriptSha256', 'templateSha256')){
@@ -558,22 +368,16 @@ if ($Action -in @('Plan', 'Deploy')){
     $state = @{
         runId = $RunId
         startedUtc = [DateTimeOffset]::UtcNow.ToString('o')
-        status = 'CAPTURING'
+        status = 'CREATING'
         plan = $plan
         resources = $resources
-        initialState = @()
-        subscriptionParents = @()
         existingNetworks = @()
         operations = @()
         deployments = @()
         inventory = @()
         managedGroups = @()
-        ownedExternalResources = @()
         ownedExternalRoles = @()
-        sourceSettings = @()
         scopes = @()
-        collectorAssociations = @()
-        cleanup = @()
     }
     Save-State
 }else{
@@ -587,34 +391,11 @@ if ($Action -in @('Plan', 'Deploy')){
 }
 
 # ---
-# Deploy: 初期状態と同名不存在を先に記録し、MG→専用RG→共有基盤→各資源の順で作る。
+# Deploy: 同名RGの不存在と既存サブネットを確認し、各Subの専用RGへ資源を作る。
 # ---
+$groups = @($state.plan.bundles | Group-Object subscriptionId | ForEach-Object { $_.Group[0] })
 if ($Action -eq 'Deploy'){
-    $entities = Invoke-Arm POST '/providers/Microsoft.Management/getEntities' '2020-05-01' -Query
-    foreach ($subscription in $SubscriptionIds){
-        $parent = @($entities.value | Where-Object {
-                $_.name -eq $subscription -or $_.id -eq ('/subscriptions/' + $subscription)
-        })[0].properties.parent.id
-        if (-not $parent){
-            throw 'Original management-group parent was not returned.'
-        }
-        $state.subscriptionParents+=@{subscriptionId = $subscription;parentId = $parent}
-        $currentResources = Invoke-Arm GET ('/subscriptions/' + $subscription + '/resources') '2021-04-01'
-        $currentGroups = Invoke-Arm GET ('/subscriptions/' + $subscription + '/resourceGroups') '2022-09-01'
-        $providers = Invoke-Arm GET ('/subscriptions/' + $subscription + '/providers') '2021-04-01'
-        $state.initialState+=@{
-            subscriptionId = $subscription
-            resourceIds = @($currentResources.value.id)
-            groupIds = @($currentGroups.value.id)
-            roleIds = @((Invoke-Arm GET ('/subscriptions/' + $subscription + '/providers/Microsoft.Authorization/roleAssignments') '2022-04-01').value.id)
-            assignmentIds = @((Invoke-Arm GET ('/subscriptions/' + $subscription + '/providers/Microsoft.Authorization/policyAssignments') '2022-06-01').value.id)
-            exemptionIds = @((Invoke-Arm GET ('/subscriptions/' + $subscription + '/providers/Microsoft.Authorization/policyExemptions') '2022-07-01-preview').value.id)
-            providers = @($providers.value | ForEach-Object {
-                    @{namespace = $_.namespace;registrationState = $_.registrationState}
-            })
-        }
-    }
-    foreach ($bundle in $state.plan.bundles){
+    foreach ($bundle in $groups){
         if (Invoke-Arm GET ('/subscriptions/' + $bundle.subscriptionId + '/resourceGroups/' + $bundle.resourceGroup) '2022-09-01' -Optional){
             throw 'A planned resource group already exists.'
         }
@@ -648,61 +429,29 @@ if ($Action -eq 'Deploy'){
             }
             $subnets[$role] = @{id = $subnet[0].id;name = $subnet[0].name}
         }
-        $diagnostics = Invoke-Arm GET ($network.vnetId + '/providers/Microsoft.Insights/diagnosticSettings') '2021-05-01-preview'
-        if (-not $diagnostics -or -not $diagnostics.ContainsKey('value') -or $diagnostics.value -isnot [array]) {
-            throw 'Existing VNet diagnostic settings did not return a value array.'
-        }
         $state.existingNetworks+=@{
             role = $network.role
             vnetId = $network.vnetId
             rgId = $network.rgId
-            networkBefore = $body
-            configuration = (Get-ComparableConfig $body)
+            location = $body.location
             subnets = $subnets
-            diagnosticsBefore = @{ supported = $true; body = $diagnostics }
-        }
-    }
-    foreach ($root in @($state.resources | Where-Object external)){
-        if (Invoke-Arm GET $root.id $root.apiVersion -Optional){
-            throw ('Existing external root: ' + $root.id)
-        }
-        $state.ownedExternalResources+=@{
-            id = $root.id
-            apiVersion = $root.apiVersion
-            cleanupOrder = $root.cleanupOrder
-            beforeAbsent = $true
-            intent = $false
-            after = $null
         }
     }
     foreach ($resource in @($state.resources | Where-Object managedName)) {
         $groupId = '/subscriptions/' + $resource.id.Split('/')[2] + '/resourceGroups/' + $resource.managedName.Replace('{runId}', $RunId)
-        if ($groupId -in $state.initialState.groupIds) {
+        if (Invoke-Arm GET $groupId '2022-09-01' -Optional) {
             throw 'A planned managed resource group already exists.'
         }
         $state.managedGroups += @{ id = $groupId;ownerId = $resource.id;beforeAbsent = $true }
     }
-    $external = @($state.resources | Where-Object external)
-    if ($external.Count) {
-        $state.externalDeploymentId = ($external[0].id -split '/providers/')[0] + '/providers/Microsoft.Resources/deployments/fx-' + $RunId + '-resources-network-b'
-        if (Invoke-Arm GET $state.externalDeploymentId '2022-09-01' -Optional) {
-            throw 'The external deployment name already exists.'
-        }
-    }
-    $state.managementGroupId = '/providers/Microsoft.Management/managementGroups/fx-' + $RunId
-    if (Invoke-Arm GET $state.managementGroupId '2020-05-01' -Optional){
-        throw 'The run management group already exists.'
-    }
-    $state.initialCaptureComplete = $true
-    Save-State
-    foreach ($initial in $state.initialState){
+    foreach ($subscription in $SubscriptionIds){
         $needed = @('Microsoft.Insights', 'Microsoft.OperationalInsights', 'Microsoft.Resources') + @($state.resources | Where-Object {
-                $_.id.StartsWith('/subscriptions/' + $initial.subscriptionId + '/')
+                $_.id.StartsWith('/subscriptions/' + $subscription + '/')
             } | ForEach-Object {
                 $_.resourceType.Split('/')[0]
         })
         foreach ($provider in @($needed | Sort-Object -Unique)){
-            $id = '/subscriptions/' + $initial.subscriptionId + '/providers/' + $provider
+            $id = '/subscriptions/' + $subscription + '/providers/' + $provider
             $registered = Invoke-Arm GET $id '2021-04-01'
             if ($registered.registrationState -ne 'Registered'){
                 $null = Invoke-Arm POST ($id + '/register') '2021-04-01'
@@ -717,83 +466,13 @@ if ($Action -eq 'Deploy'){
             }
         }
     }
-    if (Invoke-Arm GET $state.managementGroupId '2020-05-01' -Optional) {
-        throw 'Management-group name collided before creation.'
-    }
-    $null = Invoke-Arm PUT $state.managementGroupId '2020-05-01' @{properties = @{displayName = ('Fixture ' + $RunId);details = @{parent = @{id = $state.subscriptionParents[0].parentId}}}}
-    $null = Wait-Resource $state.managementGroupId '2020-05-01'
-    foreach ($subscription in $SubscriptionIds) {
-        $limit = [DateTimeOffset]::UtcNow.AddMinutes(5)
-        do {
-            $moved = Invoke-Arm PUT ($state.managementGroupId + '/subscriptions/' + $subscription) '2020-05-01' -AllowError
-            if (-not $moved.error) {
-                break
-            }
-            if ($moved.error.code -notin @('ManagementGroupNotFound', 'ResourceNotFound', 'NotFound') -or [DateTimeOffset]::UtcNow -ge $limit) {
-                throw ('Subscription move failed: ' + $moved.error.code)
-            }
-            Start-Sleep -Seconds 5
-        } while ($true)
-    }
-    $definition = $state.managementGroupId + '/providers/Microsoft.Authorization/policyDefinitions/fx-audit'
-    $initiative = $state.managementGroupId + '/providers/Microsoft.Authorization/policySetDefinitions/fx-initiative'
-    $null = Invoke-Arm PUT $definition '2023-04-01' @{properties = @{policyType = 'Custom';mode = 'All';policyRule = @{if = @{field = 'type';equals = 'Microsoft.Storage/storageAccounts'};then = @{effect = 'audit'}}}}
-    $references = @($Template.metadata.policyReferenceIds | ForEach-Object {
-            @{policyDefinitionId = $definition;policyDefinitionReferenceId = $_}
-    })
-    $null = Invoke-Arm PUT $initiative '2023-04-01' @{properties = @{policyType = 'Custom';policyDefinitions = $references}}
-    $state.policyAssignmentIds = @()
-    foreach ($name in $Template.metadata.policyAssignmentNames){
-        $id = $state.managementGroupId + '/providers/Microsoft.Authorization/policyAssignments/' + $name
-        $null = Invoke-Arm PUT $id '2022-06-01' @{properties = @{policyDefinitionId = $(if ($state.policyAssignmentIds.Count -eq 2){
-                        $initiative
-                    }else{
-                        $definition
-                });enforcementMode = 'DoNotEnforce'}}
-        $state.policyAssignmentIds+=, $id
-        Save-State
-    }
-    # 新しいVNetを作るサービスを拒否する。元からあるVNetの設定は変更しない。
-    $guard = $state.managementGroupId + '/providers/Microsoft.Authorization/policyDefinitions/fx-no-new-vnet'
-    $vnetIds = @($state.initialState.resourceIds | Where-Object {
-            $_ -match '/providers/Microsoft.Network/virtualNetworks/[^/]+$'
-    })
-    $null = Invoke-Arm PUT $guard '2023-04-01' @{
-        properties = @{
-            policyType = 'Custom'
-            mode = 'All'
-            policyRule = @{if = @{allOf = @(@{field = 'type';equals = 'Microsoft.Network/virtualNetworks'}, @{field = 'id';notIn = $vnetIds})};then = @{effect = 'deny'}}
-        }
-    }
-    $null = Invoke-Arm PUT ($state.managementGroupId + '/providers/Microsoft.Authorization/policyAssignments/fx-no-new-vnet') '2022-06-01' @{properties = @{policyDefinitionId = $guard;enforcementMode = 'Default'}}
-    foreach ($subscription in $SubscriptionIds) {
-        $limit = [DateTimeOffset]::UtcNow.AddMinutes(5)
-        do {
-            $assignments = Invoke-Arm GET ('/subscriptions/' + $subscription + '/providers/Microsoft.Authorization/policyAssignments?$filter=atScope()') '2022-06-01'
-            $missing = @($state.policyAssignmentIds + @($state.managementGroupId + '/providers/Microsoft.Authorization/policyAssignments/fx-no-new-vnet') | Where-Object {
-                    $_ -notin $assignments.value.id
-            })
-            if (-not $missing.Count) {
-                break
-            }
-            if ([DateTimeOffset]::UtcNow -ge $limit) {
-                throw 'Subscription policy-assignment propagation wait exceeded.'
-            }
-            Start-Sleep -Seconds 5
-        } while ($true)
-    }
-    foreach ($bundle in $state.plan.bundles){
+    foreach ($bundle in $groups){
         if (Invoke-Arm GET ('/subscriptions/' + $bundle.subscriptionId + '/resourceGroups/' + $bundle.resourceGroup) '2022-09-01' -Optional) {
             throw 'Resource-group name collided before creation.'
         }
         $null = Invoke-Arm PUT ('/subscriptions/' + $bundle.subscriptionId + '/resourceGroups/' + $bundle.resourceGroup) '2022-09-01' @{location = $bundle.location;tags = @{fixtureRun = $RunId}}
     }
-    $state.sourceWorkspaceId = @($state.resources | Where-Object role -EQ 'source-workspace')[0].id
-    $state.auxWorkspaceId = @($state.resources | Where-Object role -EQ 'untargeted-aux-workspace')[0].id
-    $state.sharedStorageId = @($state.resources | Where-Object key -EQ 'storage')[0].id
-    $state.oldDcrIds = @($state.resources | Where-Object {
-            $_.role -in @('old-dcr-1', 'old-dcr-2')
-        } | ForEach-Object id)
+    $state.sharedStorageId = (@($state.resources | Where-Object key -EQ 'storage')[0].id ?? '')
     $networkRefs = @{}
     foreach ($network in $state.existingNetworks){
         $networkRefs[$network.role] = @{vnetId = $network.vnetId;subnets = $network.subnets}
@@ -817,50 +496,31 @@ if ($Action -eq 'Deploy'){
             $selected = @($state.resources | Where-Object {
                     $_.bundle -eq $bundle.key -and -not $_.load -and ($phase -eq 'resources' -or $_.phase -eq 'foundation')
             })
-            foreach ($external in @($false, $true)){
-                $rows = @($selected | Where-Object external -EQ $external)
-                if (-not $rows.Count){
-                    continue
-                }
-                $group = if ($external){
-                    ($rows[0].id -split '/providers/')[0]
-                }else{
-                    '/subscriptions/' + $bundle.subscriptionId + '/resourceGroups/' + $bundle.resourceGroup
-                }
-                $deploymentId = $group + '/providers/Microsoft.Resources/deployments/fx-' + $RunId + '-' + $phase + $(if ($external){
-                        '-network-b'
-                })
-                if ($external){
-                    if (Invoke-Arm GET $deploymentId '2022-09-01' -Optional){
-                        throw 'Existing external deployment name.'
-                    }
-                    foreach ($root in $state.ownedExternalResources){
-                        $root.intent = $true
-                    }
-                    Save-State
-                }
-                $parameters = @{
-                    runId = $RunId
-                    bundle = $bundle.key
-                    location = $bundle.location
-                    enabledKeys = @($rows.key | Sort-Object -Unique)
-                    networkRefs = $networkRefs
-                    tenantId = $tenantId
-                    sourceWorkspaceId = $state.sourceWorkspaceId
-                    sharedStorageId = $state.sharedStorageId
-                    adminPassword = $password
-                    adminSshPublicKey = $AdminSshPublicKey
-                    publisherEmail = $PublisherEmail
-                }
-                $parameterValues = @{}
-                foreach ($name in $parameters.Keys){
-                    $parameterValues[$name] = @{value = $parameters[$name]}
-                }
-                $state.deployments+=@{id = $deploymentId;external = $external;resourceIds = @($rows.id);state = 'INTENT'}
-                Save-State
-                $null = Invoke-Arm PUT $deploymentId '2022-09-01' @{properties = @{mode = 'Incremental';template = $Template;parameters = $parameterValues}}
-                $tickets+=, $deploymentId
+            if (-not $selected.Count) {
+                continue
             }
+            $group = '/subscriptions/' + $bundle.subscriptionId + '/resourceGroups/' + $bundle.resourceGroup
+            $deploymentId = $group + '/providers/Microsoft.Resources/deployments/fx-' + $RunId + '-' + $bundle.key.ToLowerInvariant() + '-' + $phase
+            $parameters = @{
+                runId = $RunId
+                bundle = $bundle.key
+                location = $bundle.location
+                enabledKeys = @($selected.key | Sort-Object -Unique)
+                networkRefs = $networkRefs
+                tenantId = $tenantId
+                sharedStorageId = $state.sharedStorageId
+                adminPassword = $password
+                adminSshPublicKey = $AdminSshPublicKey
+                publisherEmail = $PublisherEmail
+            }
+            $parameterValues = @{}
+            foreach ($name in $parameters.Keys) {
+                $parameterValues[$name] = @{value = $parameters[$name]}
+            }
+            $state.deployments += @{id = $deploymentId;resourceIds = @($selected.id);state = 'INTENT'}
+            Save-State
+            $null = Invoke-Arm PUT $deploymentId '2022-09-01' @{properties = @{mode = 'Incremental';template = $Template;parameters = $parameterValues}}
+            $tickets += $deploymentId
         }
         if ($phase -eq 'resources') {
             foreach ($resource in @($state.resources | Where-Object load)) {
@@ -873,7 +533,7 @@ if ($Action -eq 'Deploy'){
             Save-State
         }
         if ($phase -eq 'foundation'){
-            $identity = @($state.resources | Where-Object role -EQ 'aks-subnet-identity')
+            $identity = @($state.resources | Where-Object key -EQ 'aksIdentity')
             if ($identity.Count){
                 $principal = (Invoke-Arm GET $identity[0].id $identity[0].apiVersion).properties.principalId
                 $subnet = @($state.existingNetworks | Where-Object role -EQ 'A')[0].subnets.Private.id
@@ -899,11 +559,10 @@ if ($Action -eq 'Deploy'){
 }
 
 # ---
-# Capture: 新規専用RGの実在庫と、既存RG内の所有3rootだけを回収する。
-# providerが作ったmanaged RGも、元不存在かつ所有rootの管理先だけを対象にする。
+# Capture: 各Subの専用RGの実在庫と、サービスが作った管理用RGのIDを記録する。
 # ---
-if ($Action -in @('Deploy', 'Capture', 'Seed', 'Cleanup') -and -not $state.resourceCleanupComplete) {
-    foreach ($bundle in $state.plan.bundles) {
+if ($Action -in @('Deploy', 'Capture')) {
+    foreach ($bundle in $groups) {
         $groupId = '/subscriptions/' + $bundle.subscriptionId + '/resourceGroups/' + $bundle.resourceGroup
         $group = Invoke-Arm GET $groupId '2022-09-01' -Optional
         if (-not $group) {
@@ -919,29 +578,6 @@ if ($Action -in @('Deploy', 'Capture', 'Seed', 'Cleanup') -and -not $state.resou
             }
         }
     }
-    foreach ($record in $state.ownedExternalResources) {
-        $actual = Invoke-Arm GET $record.id $record.apiVersion -Optional
-        if (-not $actual) {
-            continue
-        }
-        if (-not $record.beforeAbsent -or -not $record.intent -or $actual.tags.fixtureRunId -cne $RunId -or $actual.id -ine $record.id) {
-            throw 'External root ownership is unproven.'
-        }
-        $configuration = Get-ComparableConfig $actual
-        if ($record.after -and $record.after -cne $configuration) {
-            throw ('External root changed after its first After: ' + $record.id)
-        }
-        if (-not $record.after) {
-            $operations = Invoke-Arm GET ($state.externalDeploymentId + '/operations') '2022-09-01'
-            if ($record.id -notin $operations.value.properties.targetResource.id) {
-                throw 'External resource is absent from its deployment operations.'
-            }
-            $record.after = $configuration
-        }
-        if ($actual.id -notin $state.inventory.id) {
-            $state.inventory += $actual
-        }
-    }
     foreach ($resource in @($state.resources | Where-Object {
                 $_.managedName -or $_.resourceType -eq 'microsoft.monitor/accounts'
     })) {
@@ -954,8 +590,8 @@ if ($Action -in @('Deploy', 'Capture', 'Seed', 'Cleanup') -and -not $state.resou
         } else {
             ($actual.properties.defaultIngestionSettings.dataCollectionRuleResourceId -split '/providers/')[0]
         }
-        if (-not $groupId -or $groupId -in $state.initialState.groupIds) {
-            throw 'Managed resource-group ownership is unproven.'
+        if (-not $groupId) {
+            throw 'Managed resource-group ID was not returned.'
         }
         if ($groupId -notin $state.managedGroups.id) {
             $state.managedGroups += @{ id = $groupId; ownerId = $resource.id; beforeAbsent = $true }
@@ -965,32 +601,25 @@ if ($Action -in @('Deploy', 'Capture', 'Seed', 'Cleanup') -and -not $state.resou
 }
 
 # ---
-# Capture/Seed: 親・既知の子・既存VNetを別scopeで調査する。
-# Category取得成功を送信設定成功と扱わず、Seed後の最初のGET結果は保持する。
+# Capture: 親・既知の子・既存VNetのカテゴリと現在の診断設定を読み取る。
+# 旧設定の作成は既存ポリシーに任せる。カテゴリ取得成功を設定作成成功と扱わない。
 # ---
-if ($Action -in @('Deploy', 'Capture', 'Seed')) {
+if ($Action -in @('Deploy', 'Capture')) {
     $candidates = @($state.resources)
     foreach ($network in @($state.existingNetworks | Where-Object { 'networkVnet' -in $state.plan.selectedKeys })) {
         $candidates += @{
             id = $network.vnetId
             resourceType = 'microsoft.network/virtualnetworks'
             apiVersion = '2024-05-01'
-            location = $network.networkBefore.location
+            location = $network.location
             scopeSuffixes = @()
-            seedSourceDiagnostic = $true
             existing = $true
         }
     }
+    $state.scopes = @()
     foreach ($resource in $candidates) {
         foreach ($suffix in @('') + @($resource.scopeSuffixes)) {
             $id = $resource.id + $suffix
-            $previous = @($state.scopes | Where-Object resourceId -EQ $id)[0]
-            if ($previous.sourceSeeded) {
-                continue
-            }
-            if ($previous) {
-                $state.scopes = @($state.scopes | Where-Object resourceId -NE $id)
-            }
             $api = if ($suffix) {
                 $resource.childApiVersion
             } else {
@@ -1000,21 +629,21 @@ if ($Action -in @('Deploy', 'Capture', 'Seed')) {
             $categories = if ($body) {
                 Invoke-Arm GET ($id + '/providers/Microsoft.Insights/diagnosticSettingsCategories') '2021-05-01-preview' -AllowError
             }
+            $settings = if ($body) {
+                Invoke-Arm GET ($id + '/providers/Microsoft.Insights/diagnosticSettings') '2021-05-01-preview' -AllowError
+            }
             $status = if (-not $body) {
                 'UNRESOLVED'
-            } elseif ($categories.error.code -in @('ResourceTypeNotSupported', 'UnsupportedResourceType', 'DiagnosticSettingsNotSupported')) {
+            } elseif (@($categories.error.code, $settings.error.code) | Where-Object { $_ -in @('ResourceTypeNotSupported', 'UnsupportedResourceType', 'DiagnosticSettingsNotSupported') }) {
                 'EXPECTED_UNSUPPORTED'
-            } elseif ($categories.error) {
+            } elseif ($categories.error -or $settings.error) {
                 'FAILED'
-            } elseif ($categories -isnot [Collections.IDictionary] -or -not $categories.ContainsKey('value') -or $categories.value -isnot [array]) {
+            } elseif ($categories.value -isnot [array] -or $settings.value -isnot [array]) {
                 'UNRESOLVED'
             } elseif (-not $categories.value.Count) {
                 'NO_EXPORTABLE_CATEGORIES'
             } else {
-                'CATEGORIES_ONLY'
-            }
-            if (-not $resource.seedSourceDiagnostic) {
-                $status = 'UNTARGETED_OLD_ONLY_COLLECTOR'
+                'READ_ONLY_CAPTURED'
             }
             $state.scopes += @{
                 resourceId = $id
@@ -1023,710 +652,12 @@ if ($Action -in @('Deploy', 'Capture', 'Seed')) {
                 exists = [bool]$body
                 actualLocation = ($body.location ?? $resource.location)
                 categoryResponse = $categories
+                diagnosticSettings = $settings
                 actualStatus = $status
-                actualErrorCode = $categories.error.code
-                seedSourceDiagnostic = $resource.seedSourceDiagnostic
-                sourceSeeded = $false
-                sourceBefore = $null
+                actualErrorCode = ($categories.error.code ?? $settings.error.code)
                 existing = [bool]$resource.existing
             }
         }
     }
     Save-State
-}
-
-# ---
-# Seed: 実categoryから元の診断設定を作り、PUT直後のGETで照合する。
-# 同名の未所有設定は上書きしない。VM/VMSSは診断設定の有無に関係なく旧2DCRへ関連付ける。
-# ---
-if ($Action -eq 'Seed') {
-    $index = 0
-    foreach ($scope in $state.scopes) {
-        $index++
-        if (-not $scope.seedSourceDiagnostic -or $scope.actualStatus -eq 'EXPECTED_UNSUPPORTED' -or -not $scope.exists) {
-            continue
-        }
-        $id = $scope.resourceId + '/providers/Microsoft.Insights/diagnosticSettings/fx-source-' + $RunId
-        $record = @($state.sourceSettings | Where-Object id -EQ $id)[0]
-        # 保存済みの送信設定を再利用し、一覧の順番が変わっても同じ値で照合する。
-        $body = $record.requestedBody
-        if (-not $body -and $record.after) {
-            $body = @{ properties = $record.after.properties }
-        }
-        if (-not $body) {
-            $logs = @()
-            $metrics = @()
-            foreach ($category in $scope.categoryResponse.value) {
-                $setting = @{ category = $category.name; enabled = $true }
-                if ($category.properties.categoryType -eq 'Logs') {
-                    $logs += $setting
-                }
-                if ($category.properties.categoryType -eq 'Metrics') {
-                    $metrics += $setting
-                }
-            }
-            if (-not ($logs.Count + $metrics.Count)) {
-                continue
-            }
-            if ($logs.Count -gt 1 -and $index % 3 -eq 1) {
-                $logs[-1].enabled = $false
-            }
-            if ($logs.Count -and $index % 5 -eq 1) {
-                $metrics = @()
-            } elseif ($metrics.Count -and $index % 5 -eq 2) {
-                $logs = @()
-            }
-            # 代表NSGだけログ群を使い、他scopeでは個別categoryの変種も残す。
-            if ($scope.parentType -eq 'microsoft.network/networksecuritygroups' -and $scope.resourceId -like '*-nsg' -and
-                'allLogs' -in $scope.categoryResponse.value.properties.categoryGroups) {
-                $logs = @(@{ categoryGroup = 'allLogs'; enabled = $true })
-            }
-            $body = @{ properties = @{ workspaceId = $state.sourceWorkspaceId; logs = $logs; metrics = $metrics } }
-        }
-        $logs = $body.properties.logs
-        $metrics = $body.properties.metrics
-        $current = Invoke-Arm GET $id '2021-05-01-preview' -Optional -AllowError
-        if ($current.error) {
-            $scope.actualStatus = if ($current.error.code -in @('ResourceTypeNotSupported','UnsupportedResourceType','DiagnosticSettingsNotSupported')) {
-                'EXPECTED_UNSUPPORTED'
-            } else {
-                'FAILED'
-            }
-            $scope.actualErrorCode = $current.error.code
-            Save-State
-            continue
-        }
-        if (-not $record) {
-            if ($current) {
-                throw ('Unowned diagnostic name collision: ' + $id)
-            }
-            $record = @{
-                id = $id
-                apiVersion = '2021-05-01-preview'
-                kind = 'Diagnostic'
-                beforeAbsent = $true
-                requestedBody = ($body | ConvertTo-Json -Depth 30 | ConvertFrom-Json -AsHashtable)
-                after = $null
-            }
-            $state.sourceSettings += $record
-            Save-State
-        }
-        if ($record.after -and $current -and (Get-ComparableConfig $current) -cne (Get-ComparableConfig $record.after)) {
-            throw 'Seeded source configuration changed; the first After is preserved.'
-        }
-        if (-not $current) {
-            $result = Invoke-Arm PUT $id '2021-05-01-preview' $body -AllowError
-            if ($result.error) {
-                $scope.actualStatus = if ($result.error.code -in @('ResourceTypeNotSupported', 'UnsupportedResourceType', 'DiagnosticSettingsNotSupported')) {
-                    'EXPECTED_UNSUPPORTED'
-                } else {
-                    'FAILED'
-                }
-                $scope.actualErrorCode = $result.error.code
-                Save-State
-                continue
-            }
-            $current = Invoke-Arm GET $id '2021-05-01-preview'
-        }
-        # Azureが補完したdisabled項目は許容し、実際に有効な全項目とworkspaceを照合する。
-        $wanted = @(
-            $logs | Where-Object enabled -EQ $true | ForEach-Object {
-                'L:' + $(if ($_.categoryGroup) {
-                    'Group:' + $_.categoryGroup
-                } else {
-                    'Category:' + $_.category
-                })
-            }
-            $metrics | Where-Object enabled -EQ $true | ForEach-Object { 'M:' + $_.category }
-        )
-        $observed = @(
-            $current.properties.logs | Where-Object enabled -EQ $true | ForEach-Object {
-                'L:' + $(if ($_.categoryGroup) {
-                    'Group:' + $_.categoryGroup
-                } else {
-                    'Category:' + $_.category
-                })
-            }
-            $current.properties.metrics | Where-Object enabled -EQ $true | ForEach-Object { 'M:' + $_.category }
-        )
-        if ($current.properties.workspaceId -ine $state.sourceWorkspaceId -or (($wanted | Sort-Object) -join '|') -cne (($observed | Sort-Object) -join '|')) {
-            throw 'Source diagnostic PUT/GET differs.'
-        }
-        $record.after ??= $current
-        $scope.sourceBefore ??= $current
-        $scope.sourceSeeded = $true
-        $scope.actualStatus = 'POSITIVE_SEEDED'
-        Save-State
-    }
-    $dcrs = @($state.resources | Where-Object {
-            $_.role -in @('old-dcr-1', 'old-dcr-2', 'untargeted-sentinel-dcr')
-    })
-    foreach ($collector in @($state.resources | Where-Object {
-                $_.resourceType -in @('microsoft.compute/virtualmachines', 'microsoft.compute/virtualmachinescalesets')
-    })) {
-        foreach ($dcr in $dcrs) {
-            $id = $collector.id + '/providers/Microsoft.Insights/dataCollectionRuleAssociations/fx-' + $dcr.role
-            $body = @{ properties = @{ dataCollectionRuleId = $dcr.id } }
-            $record = @($state.sourceSettings | Where-Object id -EQ $id)[0]
-            $current = Invoke-Arm GET $id '2024-03-11' -Optional
-            if (-not $record) {
-                if ($current) {
-                    throw 'Unowned DCR association name collision.'
-                }
-                $record = @{
-                    id = $id
-                    apiVersion = '2024-03-11'
-                    kind = 'Association'
-                    beforeAbsent = $true
-                    after = $null
-                }
-                $state.sourceSettings += $record
-                Save-State
-            }
-            if (-not $current) {
-                $null = Invoke-Arm PUT $id '2024-03-11' $body
-                $current = Invoke-Arm GET $id '2024-03-11'
-            }
-            if ($current.properties.dataCollectionRuleId -ine $dcr.id) {
-                throw 'DCR association PUT/GET differs.'
-            }
-            $record.after ??= $current
-            if ($id -notin $state.collectorAssociations.id) {
-                $state.collectorAssociations += @{
-                    id = $id
-                    collectorId = $collector.id
-                    dcrId = $dcr.id
-                    role = $dcr.role
-                    status = 'PUT_GET_SUCCEEDED'
-                }
-            }
-            Save-State
-        }
-    }
-    # 対象外設定の不変確認用に、所有scopeへ別workspace宛の診断設定を1つ置く。
-    $representative = @($state.scopes | Where-Object { $_.sourceSeeded -and -not $_.existing })[0]
-    if ($representative) {
-        $id = $representative.resourceId + '/providers/Microsoft.Insights/diagnosticSettings/fx-untargeted-' + $RunId
-        $record = @($state.sourceSettings | Where-Object id -EQ $id)[0]
-        $current = Invoke-Arm GET $id '2021-05-01-preview' -Optional
-        if (-not $record) {
-            if ($current) {
-                throw 'Unowned auxiliary diagnostic name collision.'
-            }
-            $record = @{ id=$id;apiVersion='2021-05-01-preview';kind='Diagnostic';beforeAbsent=$true;after=$null }
-            $state.sourceSettings += $record
-            Save-State
-        }
-        if (-not $current) {
-            $body = @{ properties=@{workspaceId=$state.auxWorkspaceId;logs=$representative.sourceBefore.properties.logs;metrics=$representative.sourceBefore.properties.metrics} }
-            $null = Invoke-Arm PUT $id '2021-05-01-preview' $body
-            $current = Invoke-Arm GET $id '2021-05-01-preview'
-        }
-        if ($current.properties.workspaceId -ine $state.auxWorkspaceId -or ($record.after -and (Get-ComparableConfig $record.after) -cne (Get-ComparableConfig $current))) {
-            throw 'Auxiliary diagnostic readback differs.'
-        }
-        $record.after ??= $current
-        $current | ConvertTo-Json -Depth 100 | Set-Content (Join-Path $RunPath 'untargeted-diagnostic-baseline.json') -Encoding utf8
-        Save-State
-    }
-    $positive = @($state.scopes | Where-Object sourceSeeded)
-    @($positive.resourceId) | ConvertTo-Json -AsArray | Set-Content (Join-Path $RunPath 'positive-expected-scopes.json') -Encoding utf8
-    @($positive.resourceId) | ConvertTo-Json -AsArray | Set-Content (Join-Path $RunPath 'source-diag-put-success-scopes.json') -Encoding utf8
-    $state.scopes | ConvertTo-Json -Depth 100 -AsArray | Set-Content (Join-Path $RunPath 'scope-capabilities.json') -Encoding utf8
-    $unresolved = @($state.scopes | Where-Object { $_.actualStatus -in @('FAILED', 'UNRESOLVED') })
-    if ($unresolved.Count) {
-        throw ('Source settings remain unresolved: ' + ($unresolved.resourceId -join ', '))
-    }
-    $state.status = 'SEEDED'
-    Save-State
-}
-
-# ---
-# Cleanup: 非同期deploymentを先に止め、送信設定を外してから所有資源を撤去する。
-# 新規4RGは丸ごと所有、既存VNet RGは記録した3rootだけを削除する。
-# ---
-if ($Action -eq 'Cleanup' -and -not $state.resourceCleanupComplete) {
-    if (-not $state.initialCaptureComplete) {
-        throw 'Initial snapshot is incomplete; no automatic cleanup writes are safe.'
-    }
-    foreach ($deployment in $state.deployments) {
-        $current = Invoke-Arm GET $deployment.id '2022-09-01' -Optional
-        if ($current -and $current.properties.provisioningState -notin @('Succeeded', 'Failed', 'Canceled')) {
-            $null = Invoke-Arm POST ($deployment.id + '/cancel') '2022-09-01'
-            $limit = [DateTimeOffset]::UtcNow.AddMinutes(20)
-            do {
-                Start-Sleep -Seconds 5
-                $current = Invoke-Arm GET $deployment.id '2022-09-01'
-                if ([DateTimeOffset]::UtcNow -ge $limit) {
-                    throw 'Deployment cancellation is still pending; roots have not been deleted.'
-                }
-            } while ($current.properties.provisioningState -notin @('Succeeded', 'Failed', 'Canceled'))
-        }
-    }
-    # 既存VNetは元の設定を保持。既知のSourceと、所有保存先へ送る指定名だけを外す。
-    foreach ($network in $state.existingNetworks) {
-        $current = Invoke-Arm GET ($network.vnetId + '/providers/Microsoft.Insights/diagnosticSettings') '2021-05-01-preview'
-        if (-not $current -or -not $current.ContainsKey('value') -or $current.value -isnot [array]) {
-            throw 'Existing VNet diagnostic settings did not return a value array.'
-        }
-        foreach ($setting in $current.value) {
-            if ($setting.id -in $network.diagnosticsBefore.body.value.id) {
-                continue
-            }
-            $source = @($state.sourceSettings | Where-Object id -EQ $setting.id)[0]
-            $destination = $setting.properties.storageAccountId ?? $setting.properties.workspaceId
-            $ownedDestination = @($state.plan.bundles | Where-Object {
-                    $destination -like ('/subscriptions/' + $_.subscriptionId + '/resourceGroups/' + $_.resourceGroup + '/*')
-            })
-            if (-not $source -and ($setting.name -cne $NewDiagnosticSettingName -or $ownedDestination.Count -ne 1)) {
-                throw 'Unknown new diagnostic on an existing VNet; restore it with the migration rollback first.'
-            }
-            $null = Invoke-Arm DELETE $setting.id '2021-05-01-preview' -Optional
-        }
-    }
-    $scopeIds = @($state.inventory.id) + @($state.scopes | Where-Object {
-            -not $_.existing
-        } | ForEach-Object resourceId)
-    foreach ($scopeId in @($scopeIds | Sort-Object -Unique)) {
-        $settings = Invoke-Arm GET ($scopeId + '/providers/Microsoft.Insights/diagnosticSettings') '2021-05-01-preview' -AllowError
-        if ($settings.error -and $settings.error.code -notin @('ResourceNotFound', 'ResourceGroupNotFound', 'NotFound', 'ResourceTypeNotSupported', 'UnsupportedResourceType', 'DiagnosticSettingsNotSupported')) {
-            throw ('Diagnostic shutdown is unresolved: ' + $settings.error.code)
-        }
-        foreach ($setting in $settings.value) {
-            $null = Invoke-Arm DELETE $setting.id '2021-05-01-preview' -Optional
-        }
-    }
-    foreach ($association in @($state.sourceSettings | Where-Object kind -EQ 'Association')) {
-        $null = Invoke-Arm DELETE $association.id $association.apiVersion -Optional
-    }
-    $earlyRoots = @($state.resources | Where-Object {
-        $_.resourceType -in @(
-            'microsoft.containerservice/managedclusters',
-            'microsoft.monitor/accounts',
-            'microsoft.databricks/workspaces'
-        ) -and -not $_.external
-    })
-    foreach ($root in $earlyRoots) {
-        $null = Invoke-Arm DELETE $root.id $root.apiVersion -Optional
-    }
-    foreach ($record in @($state.ownedExternalResources | Sort-Object cleanupOrder)) {
-        $current = Invoke-Arm GET $record.id $record.apiVersion -Optional
-        if (-not $current) {
-            continue
-        }
-        if (-not $record.after -or (Get-ComparableConfig $current) -cne $record.after) {
-            throw 'External root changed immediately before deletion.'
-        }
-        $null = Invoke-Arm DELETE $record.id $record.apiVersion
-        Wait-Resource $record.id $record.apiVersion -Gone
-    }
-    if ($state.externalDeploymentId) {
-        $null = Invoke-Arm DELETE $state.externalDeploymentId '2022-09-01' -Optional
-    }
-
-    # 新規immutable accountだけを空にする。通常accountは中身を変更せずRG削除へ任せる。
-    $state.storageAccess ??= @{}
-    foreach ($item in @($state.inventory | Where-Object type -EQ 'Microsoft.Storage/storageAccounts')) {
-        $account = Invoke-Arm GET $item.id '2023-05-01' -Optional
-        if (-not $account -or -not $account.properties.immutableStorageWithVersioning.enabled) {
-            continue
-        }
-        $groupId = ($item.id -split '/providers/')[0]
-        if ($groupId -in $state.initialState.groupIds -or $item.id -in $state.initialState.resourceIds -or (Invoke-Arm GET $groupId '2022-09-01').tags.fixtureRun -cne $RunId) {
-            throw 'Storage drain requires a newly created, owned fixture account.'
-        }
-        $script:BlobAccountName = $account.name
-        if ($account.properties.primaryEndpoints.blob -cne ('https://' + $script:BlobAccountName + '.blob.core.windows.net/')) {
-            throw 'Unexpected Blob endpoint.'
-        }
-        # ---
-        # 最初のアクセス設定と一時開放値を別々に保存する。再実行でもBeforeは置き換えない。
-        # この断片の前に、対象accountが今回新規作成した所有資源であることを確認する。
-        # ---
-        $accessFields = @('allowSharedKeyAccess', 'publicNetworkAccess', 'networkAcls')
-        $current = Invoke-Arm GET $item.id '2023-05-01'
-        $currentAccess = @{}
-        foreach ($field in $accessFields) {
-            $currentAccess[$field] = $current.properties[$field]
-        }
-        if (-not $state.storageAccess.ContainsKey($item.id)) {
-            $before = $currentAccess | ConvertTo-Json -Depth 30 | ConvertFrom-Json -AsHashtable
-            $temporary = $before | ConvertTo-Json -Depth 30 | ConvertFrom-Json -AsHashtable
-            $temporary.allowSharedKeyAccess = $true
-            $temporary.publicNetworkAccess = 'Enabled'
-            $temporary.networkAcls.defaultAction = 'Allow'
-            $state.storageAccess[$item.id] = @{
-                Before = $before
-                Temporary = $temporary
-                OpenIntent = $false
-                TemporaryOpened = $null
-            }
-            Save-State
-        }
-        $access = $state.storageAccess[$item.id]
-        $beforeConfiguration = Get-ComparableConfig $access.Before
-        $temporaryConfiguration = Get-ComparableConfig $access.Temporary
-        try {
-            # ---
-            # 元の値か、開放前に意図を保存した一時値だけを変更する。未知のACLは上書きしない。
-            # PATCH直後に中断しても、保存済みTemporaryとOpenIntentで再開できる。
-            # ---
-            $current = Invoke-Arm GET $item.id '2023-05-01'
-            $currentAccess = @{}
-            foreach ($field in $accessFields) {
-                $currentAccess[$field] = $current.properties[$field]
-            }
-            $configuration = Get-ComparableConfig $currentAccess
-            if ($configuration -cne $beforeConfiguration -and
-                -not ($access.OpenIntent -and $configuration -ceq $temporaryConfiguration)) {
-                throw 'Storage access changed outside this run; no opening PATCH was sent.'
-            }
-            $access.OpenIntent = $true
-            Save-State
-            if ($configuration -cne $temporaryConfiguration) {
-                $opened = $access.Temporary | ConvertTo-Json -Depth 30 | ConvertFrom-Json -AsHashtable
-                $null = Invoke-Arm PATCH $item.id '2023-05-01' @{ properties = $opened }
-            }
-            $effective = Invoke-Arm GET $item.id '2023-05-01'
-            $openedAccess = @{}
-            foreach ($field in $accessFields) {
-                $openedAccess[$field] = $effective.properties[$field]
-            }
-            if ((Get-ComparableConfig $openedAccess) -cne $temporaryConfiguration) {
-                throw 'Storage access opening did not match its saved temporary configuration.'
-            }
-            $access.TemporaryOpened ??= ($openedAccess | ConvertTo-Json -Depth 30 | ConvertFrom-Json -AsHashtable)
-            Save-State
-
-            Start-Sleep -Seconds 30
-            $keys = Invoke-Arm POST ($item.id + '/listKeys') '2023-05-01' -Query
-            $script:BlobAccountKey = $keys.keys[0].value
-            $containers = Invoke-Arm GET ($item.id + '/blobServices/default/containers') '2023-05-01'
-            foreach ($container in $containers.value) {
-                $containerName = $container.name
-                # ---
-                # 呼出元がaccount所有・送信設定停止・access開放・listKeys取得を確認してから実行する。
-                # containerNameの内容だけを空にし、成功後のcontainer削除は呼出元がARMで行う。
-                # immutable/lease/hold解除とpermanent deleteは送らず、server保護エラーで停止する。
-                # ---
-                $containerEmpty=$false
-                for($pass=0;$pass -le 3;$pass++){
-                    $rows=@()
-                    $marker=''
-                    $seenMarkers=[Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
-                    do{
-                        $query=@{restype='container';comp='list';include='versions,snapshots,deletedwithversions'}
-                        if($marker){
-                            $query.marker=$marker
-                        }
-                        [xml]$listing=([string](Invoke-Blob GET $containerName -Query $query).Content).TrimStart([char]0xFEFF)
-                        if($listing.DocumentElement.Name -cne 'EnumerationResults' -or
-                            $null -eq $listing.SelectSingleNode('/EnumerationResults/Blobs') -or
-                            $null -eq $listing.SelectSingleNode('/EnumerationResults/NextMarker')){
-                            throw 'Unexpected List Blobs response; empty content is unproven.'
-                        }
-                        $rows+=@($listing.EnumerationResults.Blobs.Blob | Where-Object {$_})
-                        $marker=[string]$listing.EnumerationResults.NextMarker
-                        if($marker -and -not $seenMarkers.Add($marker)){
-                            throw 'List Blobs continuation marker repeated.'
-                        }
-                    }while($marker)
-                    $live=@($rows | Where-Object {
-                        -not ([string]$_.HasVersionsOnly -eq 'true' -and -not $_.VersionId -and -not $_.Snapshot)
-                    })
-                    if(-not $live.Count){
-                        $containerEmpty=$true
-                        break
-                    }
-                    if($pass -eq 3){
-                        throw 'Blob content remains after three drain passes.'
-                    }
-                    # Snapshot→previous→current/versionlessの順。base DELETEへsnapshot一括削除は指定しない。
-                    foreach($row in @($live | Sort-Object @{Expression={
-                        if($_.Snapshot){
-                            0
-                        }elseif($_.VersionId -and [string]$_.IsCurrentVersion -ne 'true'){
-                            1
-                        }else{
-                            2
-                        }
-                    }},Name)){
-                        $nameElement=$row.SelectSingleNode('Name')
-                        $blobName=$nameElement.InnerText
-                        if($nameElement.GetAttribute('Encoded') -eq 'true'){
-                            $blobName=[Uri]::UnescapeDataString($blobName)
-                        }
-                        $snapshot=[string]$row.Snapshot
-                        $version=[string]$row.VersionId
-                        if([string]$row.Deleted -eq 'true'){
-                            throw 'Soft-deleted content remains; permanent deletion is not enabled by this script.'
-                        }
-                        if($snapshot){
-                            $null=Invoke-Blob DELETE $containerName $blobName -Query @{snapshot=$snapshot} -AllowNotFound
-                            continue
-                        }
-                        if($version -and [string]$row.IsCurrentVersion -ne 'true'){
-                            $null=Invoke-Blob DELETE $containerName $blobName -Query @{versionid=$version} -AllowNotFound
-                            continue
-                        }
-                        $head=Invoke-Blob HEAD $containerName $blobName -AllowNotFound
-                        if(-not $head){
-                            if($version){
-                                $null=Invoke-Blob DELETE $containerName $blobName -Query @{versionid=$version} -AllowNotFound
-                            }
-                            continue
-                        }
-                        $etag=[string]$head.Headers.ETag
-                        $currentVersion=[string]$head.Headers['x-ms-version-id']
-                        $listedEtag=([string]$row.Properties.Etag).Trim('"')
-                        if(-not $etag -or ($listedEtag -and $listedEtag -cne $etag.Trim('"')) -or
-                            $currentVersion -cne $version){
-                            throw 'Blob identity changed between LIST and HEAD; no base DELETE sent.'
-                        }
-                        $null=Invoke-Blob DELETE $containerName $blobName -Headers @{'If-Match'=$etag}
-                        if($version){
-                            # BASE削除でpreviousになった同じversionを明示削除し、そのIDの不存在を確認する。
-                            $null=Invoke-Blob DELETE $containerName $blobName -Query @{versionid=$version} -AllowNotFound
-                            if(Invoke-Blob HEAD $containerName $blobName -Query @{versionid=$version} -AllowNotFound){
-                                throw 'The exact current version remains after deletion.'
-                            }
-                        }elseif(Invoke-Blob HEAD $containerName $blobName -AllowNotFound){
-                            throw 'The exact versionless base remains after deletion.'
-                        }
-                    }
-                }
-                if(-not $containerEmpty){
-                    throw 'Blob drain did not prove an empty container.'
-                }
-                $null = Invoke-Arm DELETE $container.id '2023-05-01'
-                Wait-Resource $container.id '2023-05-01' -Gone
-            }
-        } finally {
-            $script:BlobAccountKey = $null
-            $keys = $null
-            try {
-                # ---
-                # drainの成否にかかわらず復元する。未知の変更は保持して停止する。
-                # PATCHするのは保存した3項目だけ。他のaccount設定には触れない。
-                # ---
-                $remaining = Invoke-Arm GET $item.id '2023-05-01' -Optional
-                if ($remaining) {
-                    $remainingAccess = @{}
-                    foreach ($field in $accessFields) {
-                        $remainingAccess[$field] = $remaining.properties[$field]
-                    }
-                    $configuration = Get-ComparableConfig $remainingAccess
-                    if ($configuration -cne $beforeConfiguration -and
-                        -not ($access.OpenIntent -and $configuration -ceq $temporaryConfiguration)) {
-                        throw 'Storage access changed outside this run; unknown settings were preserved.'
-                    }
-                    if ($configuration -cne $beforeConfiguration) {
-                        $restore = $access.Before | ConvertTo-Json -Depth 30 | ConvertFrom-Json -AsHashtable
-                        $null = Invoke-Arm PATCH $item.id '2023-05-01' @{ properties = $restore }
-                    }
-                    $restored = Invoke-Arm GET $item.id '2023-05-01'
-                    $restoredAccess = @{}
-                    foreach ($field in $accessFields) {
-                        $restoredAccess[$field] = $restored.properties[$field]
-                    }
-                    if ((Get-ComparableConfig $restoredAccess) -cne $beforeConfiguration) {
-                        throw 'Storage access settings were not restored.'
-                    }
-                }
-            } finally {
-                $script:BlobAccountName = $null
-            }
-        }
-    }
-    foreach ($workspace in @($state.inventory | Where-Object type -EQ 'Microsoft.OperationalInsights/workspaces')) {
-        $null = Invoke-Arm DELETE ($workspace.id + '?force=true') '2023-09-01' -Optional
-    }
-    foreach ($root in $earlyRoots) {
-        Wait-Resource $root.id $root.apiVersion -Gone
-    }
-    foreach ($role in $state.ownedExternalRoles) {
-        $current = Invoke-Arm GET $role.id '2022-04-01' -Optional
-        if ($current -and ($current.properties.principalId -ine $role.body.properties.principalId -or $current.properties.roleDefinitionId -ine $role.body.properties.roleDefinitionId)) {
-            throw 'Existing-subnet role assignment changed.'
-        }
-        $null = Invoke-Arm DELETE $role.id '2022-04-01' -Optional
-    }
-    # 所有RGを先に全てDELETE開始し、その後に待つ。既存VNet RGは含めない。
-    $groupIds = @(
-        $state.plan.bundles | ForEach-Object {
-            '/subscriptions/' + $_.subscriptionId + '/resourceGroups/' + $_.resourceGroup
-        }
-        $state.managedGroups | ForEach-Object id
-    ) | Sort-Object -Unique
-    foreach ($groupId in $groupIds) {
-        $null = Invoke-Arm DELETE $groupId '2022-09-01' -Optional
-    }
-    foreach ($groupId in $groupIds) {
-        Wait-Resource $groupId '2022-09-01' -Gone
-    }
-    foreach ($item in @($state.inventory | Where-Object {
-                $_.type -in @('Microsoft.KeyVault/vaults', 'Microsoft.CognitiveServices/accounts', 'Microsoft.ApiManagement/service')
-    })) {
-        $parts = $item.id.Split('/')
-        if ($item.type -eq 'Microsoft.KeyVault/vaults') {
-            $deletedId = '/subscriptions/' + $parts[2] + '/providers/Microsoft.KeyVault/locations/' + $item.location + '/deletedVaults/' + $parts[-1]
-            if (Invoke-Arm GET $deletedId '2023-07-01' -Optional) {
-                $null = Invoke-Arm POST ($deletedId + '/purge') '2023-07-01'
-            }
-            Wait-Resource $deletedId '2023-07-01' -Gone
-        } elseif ($item.type -eq 'Microsoft.CognitiveServices/accounts') {
-            $deletedId = '/subscriptions/' + $parts[2] + '/providers/Microsoft.CognitiveServices/locations/' + $item.location + '/resourceGroups/' + $parts[4] + '/deletedAccounts/' + $parts[-1]
-            if (Invoke-Arm GET $deletedId '2025-06-01' -Optional) {
-                $null = Invoke-Arm DELETE $deletedId '2025-06-01'
-            }
-            Wait-Resource $deletedId '2025-06-01' -Gone
-        } else {
-            # ---
-            # 今回のAPIMと元IDが一致する削除保留だけを完全削除する。
-            # ---
-            $deletedId = '/subscriptions/' + $parts[2] + '/providers/Microsoft.ApiManagement/locations/' + $item.location + '/deletedservices/' + $parts[-1]
-            $deletedService = Invoke-Arm GET $deletedId '2024-05-01' -Optional
-            if ($deletedService) {
-                if ($deletedService.properties.serviceId -ine $item.id) {
-                    throw 'Deleted APIM service ID differs from the owned resource.'
-                }
-                $null = Invoke-Arm DELETE $deletedId '2024-05-01'
-            }
-            Wait-Resource $deletedId '2024-05-01' -Gone
-        }
-    }
-    foreach ($initial in $state.initialState) {
-        $deleted = Invoke-Arm GET ('/subscriptions/' + $initial.subscriptionId + '/providers/Microsoft.OperationalInsights/deletedWorkspaces') '2023-09-01'
-        $ownedWorkspaces = @($state.inventory | Where-Object { $_.type -eq 'Microsoft.OperationalInsights/workspaces' -and $_.id.StartsWith('/subscriptions/' + $initial.subscriptionId + '/', [StringComparison]::OrdinalIgnoreCase) } | ForEach-Object id)
-        if (@($deleted.value | Where-Object { $_.id -in $ownedWorkspaces -or $_.properties.originalResourceId -in $ownedWorkspaces }).Count) {
-            throw 'Recoverable owned Log Analytics workspace remains; resource cleanup is incomplete.'
-        }
-    }
-    foreach ($initial in $state.initialState) {
-        $exemptions = Invoke-Arm GET ('/subscriptions/' + $initial.subscriptionId + '/providers/Microsoft.Authorization/policyExemptions') '2022-07-01-preview'
-        foreach ($exemption in @($exemptions.value | Where-Object { $_.id -notin $initial.exemptionIds })) {
-            if ($exemption.properties.policyAssignmentId -notin $state.policyAssignmentIds -or
-                $exemption.properties.exemptionCategory -ne 'Waiver' -or
-                $exemption.id -notmatch ('^/subscriptions/' + [regex]::Escape($initial.subscriptionId) + '/providers/Microsoft.Authorization/policyExemptions/[^/]+$')) {
-                throw 'Unknown policy exemption remains; it was preserved.'
-            }
-            $null = Invoke-Arm DELETE $exemption.id '2022-07-01-preview'
-            Wait-Resource $exemption.id '2022-07-01-preview' -Gone
-        }
-    }
-    $entities = Invoke-Arm POST '/providers/Microsoft.Management/getEntities' '2020-05-01' -Query
-    foreach ($parent in $state.subscriptionParents) {
-        $currentParent = @($entities.value | Where-Object { $_.name -eq $parent.subscriptionId -or $_.id -eq ('/subscriptions/' + $parent.subscriptionId) })[0].properties.parent.id
-        if ($currentParent -ieq $state.managementGroupId) {
-            $null = Invoke-Arm PUT ($parent.parentId + '/subscriptions/' + $parent.subscriptionId) '2020-05-01'
-        } elseif ($currentParent -ine $parent.parentId) {
-            throw 'Subscription parent changed outside this run.'
-        }
-    }
-    $limit = [DateTimeOffset]::UtcNow.AddMinutes(5)
-    do {
-        $entities = Invoke-Arm POST '/providers/Microsoft.Management/getEntities' '2020-05-01' -Query
-        $pendingParents = @($state.subscriptionParents | Where-Object {
-            $parent = $_
-            $actualParent = @($entities.value | Where-Object { $_.name -eq $parent.subscriptionId -or $_.id -eq ('/subscriptions/' + $parent.subscriptionId) })[0].properties.parent.id
-            $actualParent -ine $parent.parentId
-        })
-        if (-not $pendingParents.Count) {
-            break
-        }
-        if ([DateTimeOffset]::UtcNow -ge $limit) {
-            throw 'Subscription parent restoration has not been confirmed.'
-        }
-        Start-Sleep -Seconds 5
-    } while ($true)
-    if (Invoke-Arm GET $state.managementGroupId '2020-05-01' -Optional) {
-        foreach ($collection in @('policyAssignments','policySetDefinitions','policyDefinitions','roleAssignments')) {
-            $api = if ($collection -eq 'roleAssignments') {
-                '2022-04-01'
-            } elseif ($collection -eq 'policyAssignments') {
-                '2022-06-01'
-            } else {
-                '2023-04-01'
-            }
-            $prefix = $state.managementGroupId + '/providers/Microsoft.Authorization/' + $collection + '/'
-            $listId = $state.managementGroupId + '/providers/Microsoft.Authorization/' + $collection
-            if ($collection -eq 'policyAssignments') {
-                $listId += '?$filter=atExactScope()'
-            }
-            $entries = Invoke-Arm GET $listId $api
-            foreach ($entry in @($entries.value | Where-Object { $_.id.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase) })) {
-                $null = Invoke-Arm DELETE $entry.id $api -Optional
-            }
-        }
-        $null = Invoke-Arm DELETE $state.managementGroupId '2020-05-01' -Optional
-        Wait-Resource $state.managementGroupId '2020-05-01' -Gone
-    }
-    foreach ($network in $state.existingNetworks) {
-        $actual = Invoke-Arm GET $network.vnetId '2024-05-01'
-        if ((Get-ComparableConfig $actual $network.networkBefore) -cne $network.configuration) {
-            throw 'Existing VNet/subnet configuration differs from Before.'
-        }
-        $diagnostics = Invoke-Arm GET ($network.vnetId + '/providers/Microsoft.Insights/diagnosticSettings') '2021-05-01-preview'
-        if (-not $diagnostics -or -not $diagnostics.ContainsKey('value') -or $diagnostics.value -isnot [array]) {
-            throw 'Existing VNet diagnostic settings did not return a value array.'
-        }
-        if ((Get-ComparableConfig $diagnostics.value) -cne (Get-ComparableConfig $network.diagnosticsBefore.body.value)) {
-            throw 'Existing VNet diagnostic settings differ from Before.'
-        }
-    }
-    Save-State
-}
-
-# ---
-# 最後にMicrosoft.Resourcesの一覧で残存を照合し、元未登録を確認できたRPだけ戻す。
-# cleanup再実行時にサービスAPIを呼び直して、復元済みRPを再登録しない。
-# ---
-if ($Action -eq 'Cleanup') {
-    foreach ($initial in $state.initialState) {
-        $resourceIds = @((Invoke-Arm GET ('/subscriptions/' + $initial.subscriptionId + '/resources') '2021-04-01').value.id | Sort-Object)
-        $groupIds = @((Invoke-Arm GET ('/subscriptions/' + $initial.subscriptionId + '/resourceGroups') '2022-09-01').value.id | Sort-Object)
-        if (($resourceIds -join '|') -cne (($initial.resourceIds | Sort-Object) -join '|') -or ($groupIds -join '|') -cne (($initial.groupIds | Sort-Object) -join '|')) {
-            throw 'Resource differences remain; provider restoration has not started.'
-        }
-    }
-    foreach ($initial in $state.initialState) {
-        foreach ($collection in @(
-            @{ name = 'roleAssignments'; api = '2022-04-01'; before = $initial.roleIds },
-            @{ name = 'policyAssignments'; api = '2022-06-01'; before = $initial.assignmentIds },
-            @{ name = 'policyExemptions'; api = '2022-07-01-preview'; before = $initial.exemptionIds }
-        )) {
-            $actual = Invoke-Arm GET ('/subscriptions/' + $initial.subscriptionId + '/providers/Microsoft.Authorization/' + $collection.name) $collection.api
-            if ((@($actual.value.id | Sort-Object) -join '|') -cne (@($collection.before | Sort-Object) -join '|')) {
-                throw ('Authorization differences remain: ' + $initial.subscriptionId + '/' + $collection.name)
-            }
-        }
-    }
-    if (-not $state.resourceCleanupComplete) {
-        $state.resourceCleanupComplete = $true
-        Save-State
-    }
-    foreach ($initial in $state.initialState) {
-        $currentProviders = (Invoke-Arm GET ('/subscriptions/' + $initial.subscriptionId + '/providers') '2021-04-01').value
-        foreach ($provider in @($initial.providers | Where-Object { $_.registrationState -in @('NotRegistered','Unregistered') })) {
-            $current = @($currentProviders | Where-Object namespace -EQ $provider.namespace)[0]
-            if ($current.registrationState -in @('NotRegistered','Unregistered')) {
-                continue
-            }
-            $id = '/subscriptions/' + $initial.subscriptionId + '/providers/' + $provider.namespace
-            if ($current.registrationState -eq 'Registered') {
-                $null = Invoke-Arm POST ($id + '/unregister') '2021-04-01'
-            }
-            $limit = [DateTimeOffset]::UtcNow.AddMinutes(90)
-            while ($current.registrationState -notin @('NotRegistered','Unregistered')) {
-                if ([DateTimeOffset]::UtcNow -ge $limit) {
-                    throw ('Provider unregister wait exceeded: ' + $provider.namespace)
-                }
-                Start-Sleep -Seconds 10
-                $current = Invoke-Arm GET $id '2021-04-01'
-            }
-        }
-    }
-    $state.status = 'CLEANED'
-    Save-State
-    Write-Host 'Owned test resources removed; existing networks preserved.'
 }

@@ -1,6 +1,6 @@
 {
-  "status": "PRIOR_COMPREHENSIVE_AND_FRESH_NORMAL_MIGRATION_PASS_FRESH_CLEANUP_IN_PROGRESS",
-  "updatedUtc": "2026-11-25T03:57:15.928766+00:00",
+  "status": "COMPREHENSIVE_FRESH_NORMAL_AND_SIMPLIFIED_FIXTURE_FOCUSED_PASS_ALL_RESOURCES_REMOVED_PROVIDERS_RESTORING",
+  "updatedUtc": "2026-11-25T04:50:34.364716+00:00",
   "canonicalSha256": {
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
     "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
@@ -139,7 +139,7 @@
     "proofSha256": "50698b737fcad3403ddd1be66da4af7c8df1050ad9f333c693a8e0d3ab423178"
   },
   "testEnvironmentCode": {
-    "status": "HISTORICAL_FULL_DEPLOY_SEED_F2_AND_TEARDOWN_PASS_CURRENT_REVISION_DEPLOYING",
+    "status": "HISTORICAL_FULL_SUITE_PRESERVED_CURRENT_SIMPLIFIED_FIXTURE_FOCUSED_AZURE_PASS",
     "controllerSha256": "42d3c36f8101114cfd5b7250acd28b5f4de38b94ff7b3f297d9fcfbe72db7b79",
     "templateSha256": "fd5bb83cada189d43ea28a49529251e6f354b7dc86d8de5a39c6df39bd636f81",
     "functions": 5,
@@ -165,17 +165,45 @@
     "controllerSha256Attribution": "Historical full fixture Deploy/Capture/Seed/F1/F2; cleanup recovery used preserved in-memory variants. Local counts below are historical checks, not re-execution of the new controller.",
     "historicalFullFixtureControllerFrozen": true,
     "currentDistributedController": {
-      "sha256": "32e97ed2dd76717d578d28c891cee008ec1ba1ca4aee2c34ea6faeeafa99a907",
-      "commit": "6814101",
-      "templateSha256": "fd5bb83cada189d43ea28a49529251e6f354b7dc86d8de5a39c6df39bd636f81",
+      "sha256": "0ce591a03a9b928a76727b80e1b05585e78f37c95995c150899563a21bf5b498",
+      "templateSha256": "e453927c096732eb3b034b3a7d261f0926b1867f740fb613cee936ac6457bda0",
+      "readmeSha256": "850d3814ada2f92078005d5007fc4f6205614f10f3863f73df9125ac18cea263",
+      "functions": 3,
+      "actions": [
+        "Plan",
+        "Deploy",
+        "Capture"
+      ],
       "changes": [
-        "Add Cache-Control: no-cache to ARM requests",
-        "Only AKS, Monitor, and Databricks internal roots are deleted early; other internal resources use resource-group dependency deletion"
+        "Seed and artificial old diagnostic/DCR-association/sentinel preparation",
+        "Cleanup action and its blob/purge/restore logic",
+        "Management-group or policy creation and subscription parent changes",
+        "Second old DCR, sentinel DCR and auxiliary workspace definitions",
+        "One dedicated resource group per subscription with multi-region resource placement",
+        "Keep only the user-approved AKS PrivateSubnet Network Contributor role creation"
       ],
       "migrationSixChanged": false,
-      "azureValidation": "REPRESENTATIVE_FIXTURE_DEPLOY_CAPTURE_SEED_IN_PROGRESS",
-      "historicalResultsReattributedToCurrentVersion": false
-    }
+      "azureValidation": "FOCUSED_THREE_NSG_DEPLOY_CAPTURE_AND_TWO_RG_DELETION_PASS",
+      "full62ResourceAzureDeploymentPerformed": false,
+      "historicalResultsReattributedToCurrentVersion": false,
+      "detail": "currentRun.deliveryPolicyFixtureRevision",
+      "azureValidationExecutedControllerSha256": "00c6047f3f2342c66ace64f5cd0b2ecd38981e2173dbd7d8a5f258c257c0f44f",
+      "distributionDiffFromExecutedController": "One trailing LF removed; all other bytes identical, recorded private equivalence proof."
+    },
+    "previousDistributedControllers": [
+      {
+        "sha256": "32e97ed2dd76717d578d28c891cee008ec1ba1ca4aee2c34ea6faeeafa99a907",
+        "commit": "6814101",
+        "templateSha256": "fd5bb83cada189d43ea28a49529251e6f354b7dc86d8de5a39c6df39bd636f81",
+        "changes": [
+          "Add Cache-Control: no-cache to ARM requests",
+          "Only AKS, Monitor, and Databricks internal roots are deleted early; other internal resources use resource-group dependency deletion"
+        ],
+        "migrationSixChanged": false,
+        "azureValidation": "REPRESENTATIVE_FIXTURE_DEPLOY_CAPTURE_SEED_IN_PROGRESS",
+        "historicalResultsReattributedToCurrentVersion": false
+      }
+    ]
   },
   "currentRun": {
     "runId": "fin7t261124a",
@@ -233,8 +261,8 @@
       "hostProofSha256": "28a289c0486436a446479c2743ed702a5cfdff4d6d6d75c85b1ab5aba2db959c"
     },
     "additionalFreshNormalRun": {
-      "status": "NORMAL_FOUR_PHASES_AND_FINAL_SETTINGS_PASS_CLEANUP_IN_PROGRESS",
-      "sequence": "New environment creation and source seed completed after recorded setup constraints were resolved; unchanged canonical scripts then completed PRECHECK/copy/verify/delete once each without interruption or rerun. Raw evidence recovered and independently audited. Fresh resource cleanup and final provider restoration are still in progress.",
+      "status": "NORMAL_FOUR_PHASES_PASS_ALL_TEST_RESOURCES_REMOVED_PROVIDERS_RESTORING",
+      "sequence": "Normal four migration phases passed on frozen production code. Main fixture, native Windows, artifact and prepared networks are removed. Pre-unregister service and global metadata snapshot passed27 checks with resource/RG counts0. Only final provider restoration remains.",
       "azureDeploymentAuthorized": true,
       "estimateDocument": "test-results/ADDITIONAL_NORMAL_ESTIMATE.md",
       "approvedCurrentBudgetJPY": 6000,
@@ -256,7 +284,7 @@
       "normalResult": "PASS",
       "freshFinalCleanupComplete": false,
       "paidPreparationIntentUtc": "2026-11-25T01:42:27Z",
-      "newInfrastructurePresent": true,
+      "newInfrastructurePresent": false,
       "preparation": {
         "exactTwoRegistration": {
           "status": "PASS_TWO_PROVIDERS_REREGISTERED",
@@ -379,7 +407,7 @@
         "normalPhasesStartedScope": "Historical observation at App Service creation proof, before the subsequent normal execution."
       },
       "normalFourPhasesCompleted": true,
-      "freshCleanupStatus": "IN_PROGRESS",
+      "freshCleanupStatus": "ALL_ASSETS_REMOVED_PRE_PROVIDER_ROOT0_27_CHECKS_PASS_PROVIDER_RESTORATION_PENDING",
       "preparationObservationScope": "Preparation fields preserve observations before the normal execution; current migration results are recorded in normalExecution.",
       "normalExecution": {
         "result": "PASS",
@@ -525,7 +553,48 @@
           "sourceEdits": 0,
           "rawFilesChanged": 0
         }
-      }
+      },
+      "freshCleanupEvidence": {
+        "fixture/cleanup-run/final-ledger-frozen.json": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/fixture/cleanup-run/final-ledger-frozen.json",
+          "sha256": "560b715578dfe85a11c57095e2cf5cf69b19a37e2c3dbb8a5b5ba0b98e3a3a2f"
+        },
+        "fixture/cleanup-run/INDEPENDENT_FINAL_LOCAL_REVIEW.json": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/fixture/cleanup-run/INDEPENDENT_FINAL_LOCAL_REVIEW.json",
+          "sha256": "2d5df0ba30aed5c0498e482ff5d958664744f7de949bd6dc430f391671493ea6"
+        },
+        "windows/cleanup-result.json": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/windows/cleanup-result.json",
+          "sha256": "d4f5a544037740be9bc39153eb3bf8587fb1e4c06a4d9afe044b20721ba5b62e"
+        },
+        "artifacts/cleanup-journal.json": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/artifacts/cleanup-journal.json",
+          "sha256": "5aa5d15bbae097df3f45ddd41fbfa97525f76b882024a41d331b60d1f0f144e8"
+        },
+        "network/run/cleanup-result.json": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/network/run/cleanup-result.json",
+          "sha256": "ef294522be7bf07c90d31d76252a793e4bd1a6f9ab3d1afe3295d9fc4f7e94f6"
+        },
+        "baseline/fresh-pre-verification.json": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/baseline/fresh-pre-verification.json",
+          "sha256": "08ecb3e0f65f49b483cd0de513bfb6e41b62fcbe112bc807278614ac48c9f3ec"
+        },
+        "baseline/fresh-pre-index.json": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/baseline/fresh-pre-index.json",
+          "sha256": "5cc15b9fbe28f43911bff4b5ec70d4b43295e6055c0a23ddcbbc58322be44284"
+        }
+      },
+      "mainFixtureCleanupComplete": true,
+      "mainFixtureBefore11Preserved": true,
+      "mainFixtureOsExitCodeRecovered": false,
+      "mainFixtureTerminalStateAndSuccessOutputVerified": true,
+      "nativeWindowsRemoved": true,
+      "artifactStorageRemoved": true,
+      "preparedNetworkRemoved": true,
+      "providersFinallyRestored": false,
+      "allPhysicalTestResourcesAndGroupsRemoved": true,
+      "preProviderRoot0Verification": "PASS_27_CHECKS",
+      "providerRestoreInitiated": true
     },
     "currentRcFull300": {
       "result": "PASS",
@@ -1201,6 +1270,159 @@
             "sha256": "d5251c74e4bd1e6912bf897875d715aea160cf018ac9838a613702aaeb1925c0"
           }
         }
+      }
+    },
+    "deliveryPolicyFixtureRevision": {
+      "status": "LOCAL_FULL_PLAN_AND_FOCUSED_AZURE_CREATION_CAPTURE_RG_DELETION_PASS",
+      "requestedScope": "Delivery test environment fixture only; production canonical six unchanged.",
+      "sourceSha256": {
+        "resource_types_fixture.ps1": "0ce591a03a9b928a76727b80e1b05585e78f37c95995c150899563a21bf5b498",
+        "resource_types.arm.json": "e453927c096732eb3b034b3a7d261f0926b1867f740fb613cee936ac6457bda0",
+        "README.md": "850d3814ada2f92078005d5007fc4f6205614f10f3863f73df9125ac18cea263"
+      },
+      "actions": [
+        "Plan",
+        "Deploy",
+        "Capture"
+      ],
+      "sharedFunctions": [
+        "Invoke-Arm",
+        "Save-State",
+        "Wait-Resource"
+      ],
+      "removed": [
+        "Seed and artificial old diagnostic/DCR-association/sentinel preparation",
+        "Cleanup action and its blob/purge/restore logic",
+        "Management-group or policy creation and subscription parent changes",
+        "Second old DCR, sentinel DCR and auxiliary workspace definitions"
+      ],
+      "existingCompanyPoliciesCreateDiagnosticAndDcraSettings": true,
+      "oneDedicatedRgPerSubscription": true,
+      "azureManagedResourceGroupsSeparate": true,
+      "aksRbac": {
+        "behavior": "Create Network Contributor role assignment for the new AKS user-assigned identity at configured A PrivateSubnet scope.",
+        "roleDefinitionGuid": "4d97b98b-1d4f-4787-a291-c67834d212e7",
+        "identityName": "fx<RunId>aksid",
+        "retainedAfterDedicatedRgDeletion": true,
+        "userExplicitlyAcceptedRetention": true,
+        "userQuote": "別にええよRBACなんか。リソースちゃんねんから",
+        "existingIdentityParameterAdded": false,
+        "focusedNsgRunExecutedThisBranch": false
+      },
+      "codeMetrics": {
+        "beforeControllerSha256": "32e97ed2dd76717d578d28c891cee008ec1ba1ca4aee2c34ea6faeeafa99a907",
+        "beforeNonCommentCharacters": 81630,
+        "afterNonCommentCharacters": 27320,
+        "afterLines": 663,
+        "sharedFunctions": 3,
+        "executedNonCommentCharacters": 27321,
+        "executedLines": 664
+      },
+      "fullPlanLocalOnly": {
+        "roots": 62,
+        "newResourceTypes": 53,
+        "subscriptions": 2,
+        "dedicatedResourceGroups": 2,
+        "nonGlobalRegions": [
+          "japaneast",
+          "japanwest",
+          "canadacentral",
+          "westus2"
+        ],
+        "azureRequests": 0,
+        "actualFull62AzureDeploymentPerformed": false
+      },
+      "focusedAzureRun": {
+        "runId": "policy261125a",
+        "os": "Linux",
+        "powerShellVersion": "7.5.4",
+        "plan": "PASS_LOCAL_AZURE_REQUESTS_0",
+        "deploy": "PASS",
+        "capture": "PASS_AZURE_READ_ONLY",
+        "manualTwoRgDeletion": "PASS_TWO_OWNED_GROUPS_ABSENT",
+        "resourceRoots": 3,
+        "resourceType": "Microsoft.Network/networkSecurityGroups",
+        "subscriptions": 2,
+        "dedicatedResourceGroups": 2,
+        "regions": [
+          "japaneast",
+          "japanwest"
+        ],
+        "allResourceStatesSucceeded": true,
+        "standaloneNsgsWithNoSubnetOrNicAssociations": true,
+        "capturedScopes": 3,
+        "sourceOperations": 5,
+        "diagnosticDcraPolicyMgVnetBodyWrites": 0,
+        "rbacWrites": 0,
+        "manualGroupDeletes": 2,
+        "groupGet404Confirmed": 2,
+        "phaseSecondsMeasured": false
+      },
+      "proofs": {
+        "delivery-policy-fixture-local-checks/HANDOFF_FINAL.json": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/delivery-policy-fixture-local-checks/HANDOFF_FINAL.json",
+          "sha256": "2ac292bf8aa961fe150135adcb95a3e1dbe206bf5b7113d244e90c8c3a544405"
+        },
+        "delivery-policy-fixture-local-checks/FINAL_LOCAL_EDITOR_CHECK_v2.json": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/delivery-policy-fixture-local-checks/FINAL_LOCAL_EDITOR_CHECK_v2.json",
+          "sha256": "fabeab3bebf48111dbb8d8f66a43b77a5bd6bc25d8f65ccc627661089204ac04"
+        },
+        "delivery-policy-fixture-review/INDEPENDENT_DELIVERY_FIXTURE_FINAL_REVIEW.json": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/delivery-policy-fixture-review/INDEPENDENT_DELIVERY_FIXTURE_FINAL_REVIEW.json",
+          "sha256": "171ae072302608b78b92e77f3c6ff6c2c8c248c63292940cd6f6c1071677d37a"
+        },
+        "delivery-policy-fixture-review/INDEPENDENT_ARM_REFERENCE_REVIEW.json": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/delivery-policy-fixture-review/INDEPENDENT_ARM_REFERENCE_REVIEW.json",
+          "sha256": "75966feb12d46b03c20bc4908eefcbd54ed9cbc6685a65fb6e67279450541d35"
+        },
+        "delivery-policy-fixture-live-check/REAL_AZURE_CREATION_PROOF.json": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/delivery-policy-fixture-live-check/REAL_AZURE_CREATION_PROOF.json",
+          "sha256": "b0e3c4e69d1155ac350a6387edb6c701ca9a87341b6f93d083f9c114a08f68bf"
+        },
+        "delivery-policy-fixture-live-check/manual-rg-deletion-journal.json": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/delivery-policy-fixture-live-check/manual-rg-deletion-journal.json",
+          "sha256": "d59df5f38a441dcd630472fb7922d188c72bcbf81eace0ad0a797c38b8f47aa8"
+        },
+        "delivery-policy-fixture-live-check/policy261125a/plan.json": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/delivery-policy-fixture-live-check/policy261125a/plan.json",
+          "sha256": "ada2e23fa01ad00d19d293d20198bbe1a872eb3708f4a880f4380f0703caf130"
+        },
+        "delivery-policy-fixture-live-check/policy261125a/run-ledger.json": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/delivery-policy-fixture-live-check/policy261125a/run-ledger.json",
+          "sha256": "3a5613cd44189265377e67af225ba2025ee25ac9036053e9c2f7ab57e5468124"
+        },
+        "delivery-policy-fixture-local-checks/DISTRIBUTION_TRAILING_NEWLINE_EQUIVALENCE.json": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/delivery-policy-fixture-local-checks/DISTRIBUTION_TRAILING_NEWLINE_EQUIVALENCE.json",
+          "sha256": "870df6bc413497d5d83385cbf8df5f1e01bf822086507dce5f5493689e848d9e"
+        }
+      },
+      "priorFullNormalExecution": {
+        "fixtureControllerSha256": "32e97ed2dd76717d578d28c891cee008ec1ba1ca4aee2c34ea6faeeafa99a907",
+        "templateSha256": "40d0f8e50eed22b5faba0f7adbeb72cb542a2902c4e2bbc394bba9042f848903",
+        "roots": 65,
+        "diagnosticScopes": 65,
+        "productionCanonicalSixChanged": false,
+        "oldExecutionReattributedToSimplifiedFixture": false
+      },
+      "limits": [
+        "Latest fixture was verified in Azure using three NSGs; no fresh all62-resource deployment was performed with the one-RG-per-subscription layout.",
+        "Focused NSG test does not execute AKS identity or RBAC creation.",
+        "The existing company policies are a prerequisite; the fixture does not simulate them."
+      ],
+      "executedFocusedSourceSha256": {
+        "resource_types_fixture.ps1": "00c6047f3f2342c66ace64f5cd0b2ecd38981e2173dbd7d8a5f258c257c0f44f",
+        "resource_types.arm.json": "e453927c096732eb3b034b3a7d261f0926b1867f740fb613cee936ac6457bda0",
+        "README.md": "850d3814ada2f92078005d5007fc4f6205614f10f3863f73df9125ac18cea263"
+      },
+      "internalSeedPreparationRetainedOutsideDistribution": true,
+      "sourceCodeEquivalence": {
+        "executedControllerSha256": "00c6047f3f2342c66ace64f5cd0b2ecd38981e2173dbd7d8a5f258c257c0f44f",
+        "distributedControllerSha256": "0ce591a03a9b928a76727b80e1b05585e78f37c95995c150899563a21bf5b498",
+        "removedTrailingLfBytes": 1,
+        "allOtherBytesIdentical": true,
+        "azureReexecutionRequired": false,
+        "proofPath": "/tmp/log-migration-fresh-normal-20261125/delivery-policy-fixture-local-checks/DISTRIBUTION_TRAILING_NEWLINE_EQUIVALENCE.json",
+        "proofSha256": "870df6bc413497d5d83385cbf8df5f1e01bf822086507dce5f5493689e848d9e"
       }
     }
   },
