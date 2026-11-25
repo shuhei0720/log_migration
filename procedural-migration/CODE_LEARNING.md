@@ -1,14 +1,14 @@
 # 正本のコードを上から読むための学習資料
 
-各ファイルを開き、**指定行のコード→その直下の説明**の順で読んでください。行番号と検索式で場所を見つけ、「どこから何を読み、どの変数へ入れ、次に何へ使うか」を追います。実行手順は[README](README.md)にあります。
+各ファイルの**指定行→説明**の順に読み、情報の取得元・格納先・使い道を追います。場所は行番号か検索式で探してください。実行手順は[README](README.md)にあります。
 
 Sub＝サブスクリプション、RG＝リソースグループ、DCR＝データ収集ルールです。
 
-説明中は、CSVの1行が `ResourceGroup=rg-log`、`StorageAccount=stjpearchive001`、`WorkspaceName=log-app`、`LogDestination=Storage`、`VmLogDestination=Log`の場合を追います。このSubに東日本の`nsg-app`の旧診断`old-setting`と、`vm-app`の旧DCR関連がある例を使います。
+例として、CSVの1行を`ResourceGroup=rg-log`、`StorageAccount=stjpearchive001`、`WorkspaceName=log-app`、`LogDestination=Storage`、`VmLogDestination=Log`とします。このSubには、東日本の`nsg-app`に旧診断`old-setting`、`vm-app`に旧DCR関連があるものとします。
 
 ## コードを読む前に
 
-まず、後の説明で使う書き方を確認します。例は正本から抜粋したもので、ここでは読むための例として使います。値の受渡しと繰り返しが分かると、各工程の流れを追いやすくなります。
+正本に出てくる構文を先に確認します。
 
 ### 値を入れる・取り出す
 
@@ -17,13 +17,13 @@ $environment = 'dev'
 $subscriptionId = $target.SubscriptionId
 ```
 
-`$`で始まる名前が変数です。1行目は、環境を表す変数へ文字列`dev`を入れます。2行目の`$target`はCSVの1行から作ったデータで、そこに格納されたSub IDを取り出しています。
+`$`で始まる名前が変数です。1行目は環境へ文字列`dev`を入れ、2行目はCSVの1行から作った`$target`からSub IDを取り出します。
 
 ```powershell
 $recordPath = Join-Path $recordDirectory "$subscriptionId.json"
 ```
 
-二重引用符の中では変数が値に置き換わり、上の例では対象SubのIDに`.json`を付けたファイル名になります。`"$($Target.WorkspaceId)/tables/$tableName"`のように、項目の参照や式を入れる場合は`$(...)`で囲みます。単一引用符の中では変数を展開しません。
+二重引用符内の変数は値へ置き換わるため、ここでは`<Sub ID>.json`という名前になります。`"$($Target.WorkspaceId)/tables/$tableName"`のような項目の参照は`$(...)`で囲みます。単一引用符内では変数を展開しません。
 
 ### 配列とハッシュテーブル
 
@@ -32,9 +32,9 @@ $targets = @()
 $body = @{ properties = @{} }
 ```
 
-`@()`は複数の値を並べる配列（一覧）、`@{}`は項目名を使って値を取り出すハッシュテーブル（辞書）です。`$targets.Count`は対象の件数、`$Expected.Keys`は辞書の項目名一覧です。2行目は、Azureへ送る本文を入れる`$body`を用意し、その中に`properties`という空の辞書を作っています。後で、この中へ送信先IDや保持日数などを入れます。
+`@()`は配列（一覧）、`@{}`はハッシュテーブル（辞書）です。`$targets.Count`は件数、`$Expected.Keys`は項目名の一覧を返します。2行目は、Azureへ送る`$body`の中に空の`properties`を用意しています。後で送信先や保持日数を入れます。
 
-`$plan.NewSettings += ...`の`+=`は一覧への追加です。`@(処理)`は処理結果を配列として受け取り、0件・1件・複数件を同じ書き方で扱うためにも使います。
+`+=`は一覧への追加です。`@(処理)`は結果を配列として受け取り、0件でも1件でも同じ書き方で扱えます。
 
 ### 条件で分ける・繰り返す
 
@@ -44,7 +44,7 @@ foreach ($target in $targets) {
 }
 ```
 
-`foreach`は一覧から1件ずつ取り出します。`if (条件) { ... }`は条件を満たすとき、`else`は満たさないときの処理です。`while ($resourcePage)`は次ページのURLがある間の繰り返しで、`continue`は今回の残りを飛ばし、`break`は繰り返しを抜けます。
+`foreach`は一覧から1件ずつ取り出します。`if`は条件を満たす処理、`else`は満たさない処理です。`while ($resourcePage)`は次ページのURLがある間繰り返します。`continue`は次の件へ進み、`break`は繰り返しを抜けます。
 
 |記号|正本での読み方|
 |---|---|
@@ -54,7 +54,7 @@ foreach ($target in $targets) {
 |`-and` / `-or` / `-not`|両方満たす / どちらか満たす / 条件を反転|
 |`-like` / `-match`|ワイルドカード / 正規表現で照合|
 
-文字列の比較は通常、大文字小文字を区別しません。`-ceq`や`-cnotmatch`の`c`は、区別して比較する指定です。`$true`・`$false`は真・偽を表します。
+文字列の比較は通常、大文字小文字を区別しません。`-ceq`や`-cnotmatch`の`c`を付けると区別します。`$true`・`$false`は真・偽です。
 
 ### パイプラインで一覧を絞る
 
@@ -62,7 +62,7 @@ foreach ($target in $targets) {
 $listedSettings | Where-Object { $_.Sources.Count }
 ```
 
-`|`は左の結果を右の処理へ渡します。`$_`は今処理している1件です。この例は、Sourcesの件数があるものだけを残します。件数0は条件を満たさないものとして扱います。`Where-Object`は絞込み、`ForEach-Object`は各件の処理、`Sort-Object`は並べ替えに使います。
+`|`は左の結果を右へ渡し、`$_`は処理中の1件を表します。この例の`Where-Object`は、Sourcesが1件以上あるものを残します。`ForEach-Object`は各件の処理、`Sort-Object`は並べ替えです。
 
 ### 引数を渡して関数を呼ぶ
 
@@ -70,13 +70,17 @@ $listedSettings | Where-Object { $_.Sources.Count }
 Invoke-ArmRequest -Resource $resource -Optional -Wait
 ```
 
-先頭が関数名です。`-Resource`は引数名、その次の`$resource`が渡す値です。定義側の`param(...)`が受け取る引数を示します。`[switch]`の引数は、`-Optional`や`-Wait`のように付けるだけで有効になります。`$current = Invoke-ArmRequest ...`と書けば、関数から返った値を`$current`へ入れられます。関数は`function`で定義しただけでは動かず、呼び出したときに動きます。
+先頭が関数名、`-Resource`が引数名、`$resource`が渡す値です。定義の`param(...)`が引数を受け取ります。`[switch]`は付ければ有効、省略すれば無効になる引数です。
+
+`Optional`はこの関数独自の引数名です。未作成の保存先などが404でも、エラーにせずnullを返します。省略時の404はエラーです。`-Wait`は、作成途中の保存先を使わないよう`Succeeded`まで待ちます。省略すると最初の応答を返します。
+
+`$current = Invoke-ArmRequest ...`と書くと戻り値が`$current`に入ります。`function`は定義しただけでは動かず、呼び出したときに動きます。
 
 ### 関数の説明を読む
 
-関数の直前にある`<#`から`#>`までは、PowerShellのヘルプとしても表示できる説明です。`.SYNOPSIS`で何をする関数か、`.DESCRIPTION`で処理の要点、`.PARAMETER 引数名`で渡す値、`.OUTPUTS`で返される値を確認します。その後、`function`内のコードを読むと、入力から結果までの流れを追えます。
+関数内の`<# ... #>`は、`Get-Help`でも読める説明です。`.SYNOPSIS`は目的、`.DESCRIPTION`は処理の要点、`.PARAMETER`は各引数、`.OUTPUTS`は戻り値を説明します。
 
-リポジトリのルートで次を実行すると、関数を読み込んでヘルプを表示できます。`-SkipCsv`を付けるため、CSVの読み込みやAzureへの問い合わせは行いません。
+ルートで次を実行するとヘルプを読めます。`-SkipCsv`は設定と関数だけを読み込み、CSV・Sub一覧・地域略称の取得を省きます。
 
 ```powershell
 . .\procedural-migration\common.ps1 -SkipCsv
@@ -89,7 +93,7 @@ Get-Help Invoke-ArmRequest -Full
 . (Join-Path $PSScriptRoot 'common.ps1')
 ```
 
-先頭のドットと空白は、commonを読み込み、その変数や関数を呼出し元でも使えるようにする指定です。`& (...)`は別スクリプトを実行する呼出しで、この正本では返された記録を受け取る箇所に出てきます。
+先頭のドットと空白は、commonの変数・関数を呼出し元でも使う指定です。`& (...)`は別スクリプトを実行し、戻り値を受け取る箇所で使います。
 
 |書き方|役割|
 |---|---|
@@ -104,334 +108,334 @@ $ApiVersion = $Resource.ApiVersion ?? $apiVersions[$Resource.Kind]
 $status = [int]$response.StatusCode
 ```
 
-`$null`は値がない状態で、空文字`''`や数値0、CSVの文字列`None`とは区別します。`??`は左がnullの場合だけ右を採用する記号です。1行目では、個別のAPI版が指定されていなければ、種類に対応する版を辞書の`[キー]`で選びます。
+`$null`は値がない状態です。空文字`''`・数値0・CSVの文字列`None`とは区別します。`??`は左がnullなら右を採用します。ここでは個別のAPI版がなければ、辞書の`[キー]`で種類ごとの版を選びます。
 
-`[int]`は整数への変換です。`[Text.Encoding]::UTF8`のような`[型]::名前`は、その型に用意された値や処理を使う書き方です。Azureの応答コードを数値にしたり、文字コードを指定したりする箇所で使います。
+`[int]`は整数への変換です。`[Text.Encoding]::UTF8`のような`[型]::名前`は、その型に用意された値や処理を使います。
 
 ### 失敗を受け取る
 
-`try { ... }`に処理を置き、失敗したときの処理を`catch { ... }`に書きます。`throw`は失敗を呼出し元へ伝えます。そこでcatchが受け取ればCSVへの記録などを行い、受け取るcatchがなければ実行を停止します。
+`try`に処理、`catch`に失敗時の処理を書きます。`throw`は失敗を呼出し元へ伝え、catchで受け取られなければ実行を止めます。
 
-正本の`$ErrorActionPreference = 'Stop'`は、PowerShellの処理エラーをcatchで受け取れるようにする設定です。「1件の失敗で何を止めるか」は、各工程のtry/catchの位置を見て確認します。
+`$ErrorActionPreference = 'Stop'`は、PowerShellの処理エラーをcatchで受け取る設定です。失敗時にどこまで止まるかは、各工程のtry/catchの範囲で決まります。
 
 ## 1. common.ps1を読む
 
-[common.ps1](common.ps1)には、各工程が使う変数と5つの関数が入っています。上から、利用者が指定する値、Azureへの通信など4関数、CSVの読み込み、移行対象を調べる5つ目の関数の順に読みます。各工程の冒頭でこのファイルを読み込むと、変数が用意され、必要な関数を呼べるようになります。
+[common.ps1](common.ps1)は設定値と5関数を用意します。上から、設定値→通信・比較など4関数→CSV読み込み→対象調査の関数の順です。各工程の冒頭で読み込みます。
 
 ### 1～100行：利用者の設定と、共通処理の準備
 
-**1～11行｜`param([switch]$SkipCsv)`、`$targetWorkspaceId`から`$location`まで**
+**1～12行｜`param([switch]$SkipCsv)`、`$targetWorkspaceId`から`$location`まで**
 
-最初にPowerShell 7以上が必要だと宣言します。続く4変数で、移行対象を探すための旧ワークスペースID、実行する環境、新診断設定名、新しいRG・Log Analytics・DCRの配置地域を指定します。Storageの地域は後で対象リソースから決めます。`SkipCsv`は、並列処理やrollbackからcommonを読む際、後半のCSV読み込みを省く引数です。
+PowerShell 7以上を要求し、旧ワークスペースID・環境・新診断名・新規RG／Log Analytics／DCRの地域を指定します。Storageの地域は対象リソースから決めます。`SkipCsv`は並列処理・delete・rollbackから読み込む際に、CSVなどの取得を省くための引数です。
 
-**17～53行｜`$environmentSettings = @{`、`$policyReferenceIds = @(`**
+**18～54行｜`$environmentSettings = @{`、`$policyReferenceIds = @(`**
 
-環境ごとに、関連付けを探す旧DCR2つ、既存の管理グループ、除外するポリシー割り当て3つを指定します。`$policyReferenceIds`には、3件目の割り当てで除外する12個の参照IDを入れます。ここまでが利用者向けの6変数で、本番・検証・開発の提示値が入っています。
+環境別の旧DCR2つ・既存MG・ポリシー割り当て3つを指定します。`$policyReferenceIds`は3件目で除外する12参照IDです。ここまでの6変数には、提示された本番・検証・開発の値が入っています。
 
 **59～90行｜`$parallelLimit`、`$apiVersions`、`$settings = $environmentSettings[$environment]`**
 
-診断設定を同時に処理する数、リソースIDに付ける診断設定・DCR関連のパス、Azure APIの版番号を用意します。`$environmentSettings[$environment]`は、例えばdevならdevの欄を取り出す書き方です。その値から旧DCRとポリシー割り当ての完全なIDを作り、後のAzure調査に使います。除外する参照IDは最初の2割り当てでは空、3件目だけ12個を持たせます。
+並列数・診断設定とDCR関連のパス・API版を用意します。`$environmentSettings[$environment]`で該当環境の欄を取り出し、旧DCRと割り当ての完全なIDを組み立てます。除外参照IDは最初の2割り当てでは空、3件目だけ12個です。
 
 **91～100行｜`$migrationContext = @{`**
 
-今回の環境・旧ワークスペースID・旧DCRのID・新診断設定名を、`$migrationContext`という辞書へまとめます。step1はこれをJSONの`Context`へ保存し、再実行時には今回の値と比べて別作業のJSONの使用を防ぎます。JSONの保存先は`records/dev`などに決め、日本語の入出力に使う文字コードもそろえます。
+今回の環境・旧ワークスペース・旧DCR・新診断名を`$migrationContext`へまとめます。step1がJSONの`Context`へ保存し、再実行時に別作業の記録でないか照合します。JSONの保存先と日本語の文字コードもここで決めます。
 
-### 102～235行：Invoke-ArmRequestの中を読む
+### 102～238行：Invoke-ArmRequestの中を読む
 
-Azure APIへ要求を送り、その応答を受け取る関数です。GETは現在値の取得、PUTは本文を送って作成・更新、DELETEは削除を指します。例えば`$current = Invoke-ArmRequest -Resource $resource -Optional`は、そのIDの現在値を読み、応答の`properties`などを`$current`から取り出せる形で返します。値が期待どおりかの比較は、次の`Test-Configuration`が担当します。
+Azure APIへ要求し、応答を返します。GETは取得、PUTは作成・更新、DELETEは削除です。`$current = Invoke-ArmRequest -Resource $resource -Optional`なら、指定IDの応答が`$current`に入ります。期待値との比較は次の関数で行います。
 
-**128～143行｜`if ($Resource)`、`$uri = $ResourceId`**
+**133～147行｜`if ($Resource)`、`$uri = $ResourceId`**
 
-`-Resource`には、`Id`（操作先）、`Kind`（Storage・診断設定などの種類）、`Body`（作成する値）を持つ1項目を渡します。ここではその中からURL・API版を決め、PUTなどで本文を省略したときは`Body`も取り出します。`-ResourceId`でIDだけを渡す方法もあり、`/subscriptions/...`で始まるIDにはAzureの接続先とAPI版を付け、完全なURLならそのまま使います。
+`-Resource`は`Id`・`Kind`・`Body`を持つ記録1項目です。ここから操作先とAPI版、PUTなどの本文を取り出します。`-Body`を別に渡せばそちらを使います。`-ResourceId`でIDだけも渡せます。短いIDには接続先とAPI版を補い、完全なURLはそのまま使います。
 
-**144～157行｜`for ($attempt = 0; $attempt -lt 4; $attempt++)`**
+**148～160行｜`for ($attempt = 0; $attempt -lt 4; $attempt++)`**
 
-呼出し元の`$subscriptionId`を使い、今回のSubで使える認証用トークンを確認します。未取得、Subの変更、有効期限間近の場合は、ログイン済みのAzure CLIから取り直して`$script:accessToken`へ入れます。後続のHTTP要求はこのトークンで認証します。取得できなければ例外を返し、要求の送信へ進みません。
+トークンが未取得・期限間近、またはSubが変わったとき、ログイン済みCLIから取得して`$script:accessToken`へ保存します。後のHTTP要求はこれで認証します。取得失敗なら送信へ進みません。
 
-**158～173行｜`$request = @{`、`Invoke-WebRequest @request`**
+**161～176行｜`$request = @{`、`Invoke-WebRequest @request`**
 
-URL、GETやPUTなどの操作、認証用トークンを`$request`へまとめます。送る本文があれば、辞書の`Body`をJSON文字列・UTF-8のバイト列へ変換して加え、`Invoke-WebRequest`で送信します。接続・応答ヘッダの待機は90秒です。`OperationTimeoutSeconds`を使えるPowerShellでは、本文受信中の無応答にも90秒を指定します。
+URL・操作・トークンを`$request`へまとめ、本文があればJSON・UTF-8バイト列にして送ります。接続・応答ヘッダは90秒待ちます。対応するPowerShellでは、本文受信中の無応答も90秒です。
 
-**174～197行｜型を指定した`catch`、`$retryTransport`**
+**177～200行｜型を指定した`catch`、`$retryTransport`**
 
-接続断・本文切断・通信タイムアウトなど、一時的な通信失敗を最大4回試します。証明書・TLSの問題や明示的な中断、JSON不正などはそのまま失敗にします。DELETEの応答だけを受け取れなかった場合は印を残し、同じ要求の再試行で404になれば削除済みとして扱います。
+接続断や通信タイムアウトは、初回を含め最大4回試します。証明書・TLSの問題、中断、JSON不正は再試行しません。DELETEの応答を失った場合は、再試行で404なら削除済みと扱います。
 
-**202～234行｜`$status`、`$Wait`、`Retry-After`**
+**205～237行｜`$status`、`$Wait`、`Retry-After`**
 
-HTTPの成功応答をJSONから辞書へ変換して返します。`-Wait`付きで作成状態が途中なら、3秒ごとのGETで`Succeeded`まで待ち、`Failed`／`Canceled`なら例外にします。前の90秒は1回の通信の待機時間で、作成全体の所要時間には上限を置きません。401なら認証を更新し、一時HTTPエラーなら待機後に初回を含め最大4回試します。`-Optional`付きの404は、不在を表すnullを返します。
+成功応答をJSONから辞書へ変換します。`-Wait`付きで作成中なら3秒ごとにGETし、`Succeeded`で返し、`Failed`／`Canceled`なら停止します。作成全体に一律上限はありません。401は認証更新、一時HTTPエラーは待機後に再試行します。`-Optional`付きの404はnullを返します。
 
-### 237～321行：Test-Configurationの中を読む
+### 240～325行：Test-Configurationの中を読む
 
-渡された2つの値を比べ、一致ならtrue、不一致ならfalseを返す関数です。例えば`Test-Configuration $current $resource.Body -Kind 'Diagnostic'`は、先にGETした現在値と、JSONに保存した診断設定のログ・メトリック・送信先を比較します。copyはtrueなら作成をスキップし、verifyはOK/NGを決めます。
+現在値と期待値を比較してtrue／falseを返します。例の`Test-Configuration $current $resource.Body -Kind 'Diagnostic'`は、GET結果と記録したログ・メトリック・送信先を比べます。copyは一致なら省略、verifyはOKとします。Azureへの通信は行いません。
 
-**261～279行｜`if ($Kind -in @('Diagnostic', 'Dcr', 'Association'))`**
+**266～284行｜`if ($Kind -in @('Diagnostic', 'Dcr', 'Association'))`**
 
-現在値の作成状態が未完了ならfalseを返します。診断設定・DCR・DCR関連では、後述の`Get-WritableBody`へ両方の値を渡し、書き込める項目にそろえてから比較します。`Exact`では左右を入れ替えてもう一度比較し、余分な項目も含めて差を調べます。ライフサイクルでは、管理対象の`log-append-1095`を比較し、旧`log-append-365`が残っていればfalseにします。
+作成未完了ならfalseです。診断設定・DCR・関連付けは`Get-WritableBody`で比較用の形へそろえ、両方向に比べます。Lifecycleは`log-append-1095`だけを照合し、旧`log-append-365`が残っていればfalseにします。
 
-**285～303行｜`if ($Expected -is [array])`**
+**290～308行｜`if ($Expected -is [array])`**
 
-診断設定の`logs`など、値が配列なら件数を比べ、期待する各要素に対応する現在値を1つずつ探します。一致相手を見つけるたびに候補の一覧から外すため、同じ要素を二重に数えません。これにより並び順だけの差は許し、要素の不足や重複の差はfalseにできます。
+配列は件数を比べ、期待する各要素に合う現在値を1つずつ探します。使った候補は除くため二重に数えず、並び順の差は許し、不足や重複の差を検出できます。
 
-**309～320行｜`foreach ($key in $Expected.Keys)`**
+**313～324行｜`foreach ($key in $Expected.Keys)`**
 
-期待値が辞書なら、`properties`や`workspaceId`などの項目名で現在値を取り出し、同じ関数を呼んで中の値を比べます。通常は期待値の項目がそろえばtrueで、現在値の余分な項目は許します。`Exact`では逆向きにも比較するため、余分な項目も検出します。文字列・数値は`-eq`で比べ、片方だけnullならfalseにします。
+辞書は項目名で値を取り出し、中身も同じ関数で比べます。通常は期待値側の項目だけを調べます。`-Exact`は逆方向にも比べ、他作業で加わった値も検出するための指定です。文字列・数値は`-eq`、片側だけnullならfalseです。
 
-### 323～407行：Get-WritableBodyの中を読む
+### 327～409行：Get-WritableBodyの中を読む
 
-**339～366行｜`$body = @{ properties = @{} }`**
+**343～370行｜`$body = @{ properties = @{} }`**
 
-引数で受け取ったGET応答から、PUTや比較に使う本文を作って返します。例えば`Get-WritableBody $source -Kind 'Diagnostic'`では、`$source.properties`のログ・メトリック・送信先を`$body.properties`へ取り出します。Azureが管理する作成状態などは除き、旧設定の保存・復元に使える本文にします。DCRは入れ子の項目も加工するため、先に応答のコピーを作ります。
+ここでの`Resource`はAzureのGET応答で、前の関数の「記録1項目」とは異なります。`-Kind`で種類に応じた書込み項目を取り出します。診断設定ならログ・メトリック・送信先、Waiverなどなら`properties`を基に本文を作ります。読取専用項目を除き、保存・復元・比較に使います。
 
-**371～406行｜`$body.properties.logAnalyticsDestinationType = 'AzureDiagnostics'`**
+**374～408行｜`$body.properties.logAnalyticsDestinationType = 'AzureDiagnostics'`**
 
-診断設定の`workspaceId`がある場合、省略された格納方式を既定の`AzureDiagnostics`で補います。Storage宛てなど`workspaceId`がない場合は、Azureが格納方式を返しても本文から除きます。これで格納方式の項目だけを理由に一致判定が変わるのを防ぎます。DCRでは地域・タグ・identity（認証に使うID設定）を残し、内部IDなどを除いて、再作成できる本文を返します。
+診断設定に`workspaceId`があれば、未指定の格納方式を`AzureDiagnostics`で補います。なければ返された格納方式を除き、Storage宛ての誤判定を防ぎます。DCRは地域・タグ・identityを残し、内部IDなどを除いて復元できる本文にします。
 
-### 409～443行：Read-MigrationRecordの中を読む
+### 411～444行：Read-MigrationRecordの中を読む
 
-**424～435行｜`$path = Join-Path $recordDirectory`**
+**426～436行｜`$path = Join-Path $recordDirectory`**
 
-`$Target.SubscriptionId`から`records/<環境>/<Sub ID>.json`のパスを作り、ローカルファイルを読みます。なければ初回作業としてnullを返します。このJSONには旧設定だけでなく、新しく作る値`Body`と変更前の値`Before`も入っています。`Context`と`Target`を今回の環境・CSVの値と比べ、別作業のJSONなら停止します。
+`$Target.SubscriptionId`でローカルの`records/<環境>/<Sub ID>.json`を読み、不在ならnullを返します。JSONの`Context`・`Target`を今回の環境・CSVと照合し、別作業の記録なら停止します。
 
-**437～442行｜`foreach ($name in @('Destinations', 'NewSettings', 'OldSettings'))`**
+**438～443行｜`foreach ($name in @('Destinations', 'NewSettings', 'OldSettings'))`**
 
-JSONの`Destinations`（RG・Storageなどの保存先）、`NewSettings`（新診断設定・DCRなど）、`OldSettings`（旧診断設定・旧DCR関連）が配列になっているか確認します。読んだ内容を辞書として返し、copyは再開、verifyは現在値との比較、rollbackは旧設定の復元に使います。
+`Destinations`（保存先）・`NewSettings`（新設定）・`OldSettings`（旧設定）が配列か確認して返します。copyは再開、verifyは照合、rollbackは復元に使います。
 
-### 449～496行：CSVを1行ずつ対象データへ変換する
+### 450～497行：CSVを1行ずつ対象データへ変換する
 
-**449～464行｜`if (-not $SkipCsv)`、`foreach ($row in Import-Csv`**
+**450～465行｜`if (-not $SkipCsv)`、`foreach ($row in Import-Csv`**
 
-Azure CLIからSubの名前とIDの一覧を取得し、CSVを1行ずつ読みます。保存先RG名・Storage名・Workspace名・送信先フラグの空白を除いて、1Sub分の辞書`$target`へ入れます。VM列がない旧CSVではLogを補いますが、列があって空欄なら「新送信を作らない」指定として空欄を残します。`-SkipCsv`で読み込んだ場合は、このCSV処理全体を飛ばします。
+CLIからSub名とIDを取得し、CSV各行の前後の空白を除いて`$target`へ入れます。VM列がなければLogを補い、列があって空欄なら新送信を作らない指定として残します。`SkipCsv`付きならこの節全体を飛ばします。
 
-**465～478行｜`$target.LogDestination -notin`**
+**466～479行｜`$target.LogDestination -notin`**
 
-今読んだ`$target`の送信先フラグと、Sub名・RG名・Workspace名の必須値を検査します。診断側はStorage・Log・None・空欄、VM側はLog・None・空欄を受け付けます。Storage名を指定した場合は、小文字英数字3～24文字で`jpe`を1か所含むことも確認します。後でこの`jpe`を地域略称に置き換えるためです。
+送信先フラグと必須値を検査します。診断側はStorage・Log・None・空欄、VM側はLog・None・空欄です。Storage名は小文字英数字3～24文字で、後で置換する`jpe`が1か所必要です。
 
-**479～488行｜`$matches = @($accounts | Where-Object`**
+**480～489行｜`$matches = @($accounts | Where-Object`**
 
-CSVの`SubscriptionName`をCLIのSub名・IDの一覧と照合し、候補が1件ならそのIDを`$target.SubscriptionId`へ入れます。例の行では、さらに`rg-log`配下の`log-app`の完全なIDを`WorkspaceId`へ組み立てます。旧ワークスペースと同じIDでないことを確認し、完成した`$target`を一覧`$targets`へ追加します。
+`SubscriptionName`をCLIのSub名・IDと照合し、一意なIDを`$target.SubscriptionId`へ入れます。例では`rg-log`の`log-app`のIDも`WorkspaceId`へ組み立てます。旧ワークスペースと同じでないことを確認し、`$targets`へ追加します。
 
-**490～495行｜`Group-Object`、`$regionNames = Invoke-RestMethod`**
+**491～496行｜`Group-Object`、`$regionNames = Invoke-RestMethod`**
 
-完成した`$targets`が0件でないことと、同じSub IDの重複がないことを確認します。Storage名が1行でもあれば、MicrosoftのAzure Naming Toolから地域名と略称を取得して`$regionNames`へ入れます。次の関数がこの一覧を使い、Storage名の`jpe`を対象地域の略称へ置き換えます。
+対象0件・Sub ID重複を検出します。Storage名があればAzure Naming Toolから地域略称を`$regionNames`へ取得し、後でStorage名の`jpe`の置換に使います。
 
-### 498～780行：Get-MigrationPlanの中を読む
+### 499～781行：Get-MigrationPlanの中を読む
 
-**516～526行｜`$plan = @{`**
+**519～529行｜`$plan = @{`**
 
-`$Target`のSubをAzureで調べ、旧設定と作成先の情報をまとめて返す関数です。まず`$plan`に環境・CSVの内容と空の3一覧を用意します。以降で旧設定のID・種類・本文を`OldSettings`へ、作成先ID・地域を`Discovery`へ入れます。Azureへ送る新しい本文は、呼出し元のstep1が`Destinations`と`NewSettings`へ組み立てます。
+Subを調べ、旧設定を`OldSettings`、作成先ID・地域を`Discovery`へ返します。新しい本文は後のstep1が`Destinations`・`NewSettings`へ組み立てます。まず環境・CSVと空の3一覧を`$plan`へ入れます。
 
-**532～556行｜`while ($resourcePage)`**
+**535～559行｜`while ($resourcePage)`**
 
-AzureのSub内リソース一覧APIを読み、`$resourceLocations[リソースID] = 地域`という対応表を作ります。これが後で診断設定を問い合わせるIDの一覧になります。通常一覧に出ないStorageの子サービスは、親の種類に応じたBlob・File・Queue・TableのIDを組み立てて追加し、親と同じ地域を入れます。
+Sub内リソース一覧から`$resourceLocations[ID] = 地域`の対応表を作ります。通常一覧に出ないStorageのBlob・File・Queue・Tableも、親の種類に応じてIDと地域を追加します。後でこの全IDへ診断設定を問い合わせます。
 
-**560～572行｜`$resource.type -eq 'Microsoft.Cache/redisEnterprise'`**
+**563～575行｜`$resource.type -eq 'Microsoft.Cache/redisEnterprise'`**
 
-Redis Enterpriseの場合は、親の`databases` APIから子DB一覧を取得し、各DBのIDと親の地域を同じ`$resourceLocations`へ加えます。子DB一覧に続きがあれば`$databases.nextLink`、Subのリソース一覧に続きがあれば`$page.nextLink`を読みます。両方を読み終えるまで繰り返し、診断設定を調べるIDをそろえます。
+Redis Enterpriseは`databases` APIから子DBのIDを取得し、親の地域とともに追加します。子DB・Sub一覧のどちらも`nextLink`をたどり、全ページを読みます。
 
-**577～596行｜`$resourceLocations.Keys | ForEach-Object -Parallel`**
+**580～599行｜`$resourceLocations.Keys | ForEach-Object -Parallel`**
 
-集めた各IDの診断設定一覧APIを、最大5リソース分同時に読みます。リソースごとに、全診断設定を`Settings`へ、その中で旧ワークスペース宛てのものだけを`Sources`へ入れ、結果を`$listedSettings`へ集めます。並列処理ではcommonをCSVなしで読み込み、外側のSub IDと認証用トークンを受け取ってAzureへ接続します。
+各IDの診断設定を最大5リソース同時に読みます。全設定を`Settings`、旧ワークスペース宛てだけを`Sources`にして`$listedSettings`へ集めます。並列処理はcommonを`SkipCsv`で読み、外側のSub ID・トークンを受け取ります。
 
-**597～617行｜`$diagnosticSources = @($listedSettings`**
+**600～620行｜`$diagnosticSources = @($listedSettings`**
 
-全リソース分の結果が戻ったかと、取得エラーがないかを確認します。診断非対応の`ResourceTypeNotSupported`だけを対象外とし、その他の失敗は停止します。`Sources`があるものを選び、旧診断のIDと本文を`$plan.OldSettings`へ追加します。例の`nsg-app`の`old-setting`もここに入ります。対象の地域が空・globalなら東日本とし、後で同地域のStorageを選ぶために使います。
+全件の結果とエラーを確認します。診断非対応の`ResourceTypeNotSupported`だけを除き、その他の失敗は停止します。旧診断のID・本文を`OldSettings`へ入れます。地域が空・globalなら東日本とし、Storage選択に使います。
 
-**623～649行｜`foreach ($oldDcrId in $oldDcrIds)`**
+**625～651行｜`foreach ($oldDcrId in $oldDcrIds)`**
 
-指定した旧DCR2つの関連一覧を取得し、IDが今回のSubに属する関連を選びます。各関連の本体を読み直し、参照先が同じ旧DCRであることを確認してID・本文を`OldSettings`へ追加します。例の`vm-app`は、この旧関連があるためVM側の移行対象になります。`-OnlyOldSettings`付きならここで`$plan`を返し、後半の名前やポリシーの確認を省きます。
+旧DCR2つの関連から、このSubの関連を選びます。本体を再取得して参照先を確認し、ID・本文を`OldSettings`へ加えます。`vm-app`もここで対象になります。`OnlyOldSettings`付きならここで返し、作成後には不要な空き名・ポリシー確認を省きます。
 
-**656～688行｜`atScope()`**
+**657～689行｜`atScope()`**
 
-このSubに適用されるポリシー割り当て一覧を取得し、指定の3割り当てが含まれるか確認します。3件目のイニシアティブ（ポリシー群）の定義を読み、除外する12参照IDが実在するかも確かめます。同じ定義は変数へ保存して次のSubでも使います。続いて、Storage・DCR・関連付け・診断設定の作成先を入れる`$discovery`を用意します。
+このSubに指定3割り当てが適用され、3件目のイニシアティブに12参照IDがあるか確認します。定義は次のSubでも再利用します。続いて`$discovery`に保存先・新設定の作成先を用意します。
 
-**694～712行｜`$storageLocations = @($diagnosticSources.Location`**
+**695～713行｜`$storageLocations = @($diagnosticSources.Location`**
 
-CSVにStorage名があれば、移行対象の旧診断がある地域を重複なしで取り出します。対象がなければ東日本1つにします。`$regionNames`から各地域の略称を選び、例の`stjpearchive001`なら西日本用を`stjpwarchive001`へ変換します。変換後の名前の書式と、AzureのSKU一覧でその地域がStandard_ZRSに対応することを確認し、Storage IDを組み立てます。
+CSVにStorage名があれば、旧診断の地域を重複なしで取り出します。0件なら東日本です。地域略称で`jpe`を置換し、西日本なら`stjpwarchive001`にします。名前の形式とStandard_ZRS対応を確認してIDを組み立てます。
 
-**713～728行｜`if ($storageId -notin @($Record.Destinations.Id))`**
+**714～729行｜`if ($storageId -notin @($Record.Destinations.Id))`**
 
-Storage名の利用可否APIを呼び、使用済みなら停止します。再実行で同じStorage IDがJSONの`Destinations`にある場合だけ、この空き確認を省きます。既に自分が作成した可能性があるためで、実際の構成は後のcopyが比較します。確認した`Id`・`Name`・`Location`を`Discovery.Storages`へ入れ、copyへ渡します。
+名前の利用可否APIで使用済みなら停止します。再実行で同じIDがJSONの`Destinations`にある場合だけ省き、構成はcopyで確認します。ID・名前・地域を`Discovery.Storages`へ渡します。
 
-**734～753行｜`$Target.VmLogDestination -eq 'Log'`**
+**735～754行｜`$Target.VmLogDestination -eq 'Log'`**
 
-旧DCR関連があり、`VmLogDestination=Log`なら、新DCRと関連付けのIDを組み立てます。例の`log-app`から`dcr-app`という名前を作り、旧関連の親IDを使って`vm-app`などの新関連IDを決めます。同じ親の旧関連が複数あれば新関連は1つにまとめます。新旧IDの一致を拒否し、結果を`Discovery.Dcr`と`Discovery.Associations`へ入れます。DCRの本文は後のcopyで作ります。
+旧関連がありVM側がLogなら、`log-app`から`dcr-app`のIDを作り、旧関連の親VM・VMSSに新関連のIDを作ります。同じ親の旧関連が複数でも新関連は1つです。新旧同一IDは拒否し、`Discovery.Dcr`・`Associations`へ入れます。
 
-**754～780行｜`if ($Target.LogDestination -in @('Storage', 'Log'))`**
+**755～781行｜`if ($Target.LogDestination -in @('Storage', 'Log'))`**
 
-`LogDestination=Storage/Log`なら、各対象リソースに新診断名を付けてIDを作ります。対象の旧診断が複数、新旧同名、JSONにない同名設定、追加枠不足なら停止します。新旧IDと地域を`Discovery.Diagnostics`へ入れ、`OldSettings`とともに返します。None・空欄では新診断の項目を作らず、旧診断は最後の削除に備えて`OldSettings`へ残します。
+診断側がStorage／Logなら各親に新診断のIDを作ります。対象の旧診断が複数、新旧同名、記録外の同名設定、枠不足なら停止します。新旧ID・地域を`Discovery.Diagnostics`へ入れます。None・空欄は旧診断だけを削除用に残します。
 
 ## 2. precheck.ps1を読む
 
-[precheck.ps1](precheck.ps1)は、CSVの対象に対して作業を始められるか、現在のAzureを調べる入口です。Azureを変更せず、step1で使う変更前記録も作りません。
+[precheck.ps1](precheck.ps1)は、現在のAzureで名前・地域・対象を確認します。Azureの変更や記録保存は行いません。
 
-**1～17行｜`. (Join-Path $PSScriptRoot 'common.ps1')`、`$results = foreach ($target in $targets)`**
+**1～16行｜`. (Join-Path $PSScriptRoot 'common.ps1')`、`$results = foreach ($target in $targets)`**
 
-commonで作った`$targets`から1Subずつ取り出し、`Get-MigrationPlan`へ渡します。例では`nsg-app`の旧診断と`vm-app`の旧DCR関連を探し、Storage名の空き・診断設定の追加枠・ポリシーを確認します。返された旧設定や作成先は`$null =`で受け流し、結果表にはSub ID・OK・理由だけを残します。
+`$targets`から1Subずつ`Get-MigrationPlan`へ渡し、旧設定・保存先名・追加枠・ポリシーを確認します。返された計画は`$null =`で捨て、結果表にはSub ID・OK・理由を残します。
 
-**19～34行｜`catch`、`$results | Export-Csv`**
+**18～32行｜`catch`、`$results | Export-Csv`**
 
-調査が失敗したSubでは、例外のメッセージを理由としてNG行を作り、次のSubへ進みます。全Subの結果を`precheck_results.csv`へ出力し、NGが1件でもあればエラーで終了します。このCSVは人が事前確認するための結果表で、step1の入力ではありません。step1は実行当日のAzureを改めて調べます。
+失敗したSubはNGと理由を残し、次へ進みます。全結果を`precheck_results.csv`へ出し、NGがあればエラーで終了します。step1はこのCSVを読まず、当日のAzureを再調査します。
 
 ## 3. step1_copy.ps1を読む
 
-[step1_copy.ps1](step1_copy.ps1)では、**11行目のforeachの中が1つのSub分**です。まずAzureの旧設定と作成先を調べ、これから書き込む本文も`$plan`へ加えます。これを再実行・切り戻し用の`$record`としてJSONへ保存してから、Azureへの書き込みを始めます。JSONには旧設定の本文、新しい作成値`Body`、変更前の値`Before`が入ります。
+[step1_copy.ps1](step1_copy.ps1)の**10行目のforeachが1Sub分**です。Azureを調べ、作成する本文を`$plan`へ加えます。旧本文・新しい`Body`・変更前の`Before`をJSONへ保存してから書き込みます。
 
-**1～17行｜`$record = Read-MigrationRecord -Target $target`、`$plan = Get-MigrationPlan -Target $target -Record $record`**
+**1～16行｜`$record = Read-MigrationRecord -Target $target`、`$plan = Get-MigrationPlan -Target $target -Record $record`**
 
-commonを読み込み、失敗を集める一覧とJSON用フォルダを用意します。CSVの1Sub分を`$target`へ取り出し、前回のJSONを`$record`へ読みます。初回はnullです。続く`Get-MigrationPlan`で現在のAzureを調べ、旧診断・旧DCR関連を`$plan.OldSettings`へ、作成先IDを`$plan.Discovery`へ受け取ります。precheckを実行したかどうかには依存しません。
+commonと失敗一覧・記録フォルダを用意します。CSVの1Subを`$target`、前回の記録を`$record`へ入れます（初回はnull）。Azureを再調査し、旧設定を`$plan.OldSettings`、作成先を`$plan.Discovery`へ受け取ります。
 
-**23～40行｜`$plan.NewSettings += @{`**
+**21～38行｜`$plan.NewSettings += @{`**
 
-指定の3ポリシー割り当てについて、Sub配下の適用除外IDと本文を`$plan.NewSettings`へ追加します。期限なしのWaiverで、1・2件目は全体、3件目は指定の12参照IDを除外する本文です。後でこの適用除外を最初に作り、作業中にポリシーが旧設定を作り直すのを防ぎます。この時点では変数へ入れるだけです。
+3割り当てに対するWaiverのID・本文を`NewSettings`へ加えます。期限なしで、最初の2件は全体、3件目は12参照IDを除外します。後で最初に作り、作業中にポリシーが旧設定を再作成するのを防ぎます。
 
-**41～58行｜`$plan.Destinations += @{`**
+**39～56行｜`$plan.Destinations += @{`**
 
-CSVの`rg-log`と`log-app`を、保存先の一覧`$plan.Destinations`へ追加します。各項目は`Id`・`Kind`・`Body`を持ち、後半のループがこれを読んでAzureへ送ります。RGの本文は配置地域、ワークスペースの本文は保持日数・アクセス設定などです。ここの365日はワークスペース全体の保持期間で、Event・Syslogの総保持1,095日は後のブロックで加えます。
+`rg-log`と`log-app`の`Id`・`Kind`・`Body`を`Destinations`へ加えます。RGは地域、Log Analyticsは保持・アクセス設定を本文にします。365日はワークスペースの保持日数で、Event・Syslogの総保持1,095日は後で加えます。
 
-**65～91行｜`$storageIds[$storageLocation] = $storageId`**
+**62～88行｜`$storageIds[$storageLocation] = $storageId`**
 
-`Discovery.Storages`から地域別の作成先IDを読み、「東日本→stjpearchive001のID」のような対応を`$storageIds`へ入れます。後で診断設定の地域から送信先IDを選ぶためです。同時に、Storage本体の`Body`を組み立てて`Destinations`へ追加します。ZRS、二重暗号化、不変性、HTTPS・TLS、共有キー無効、通信の既定拒否などが、実際に送る値です。
+地域別IDを`$storageIds`へ入れ、後の診断設定が同地域のStorageを選べるようにします。Storage本体のZRS・暗号化・不変性・HTTPS／TLS・共有キー無効・既定拒否も`Body`にして`Destinations`へ加えます。
 
-**92～126行｜`Kind = 'Blob'`、`'Lifecycle'`、`'Defender'`**
+**89～123行｜`Kind = 'Blob'`、`'Lifecycle'`、`'Defender'`**
 
-同じStorage配下のIDで、Blobのバージョン管理、appendBlobを最終更新から1,095日経過後に削除するルール、Defender無効化の3項目を`Destinations`へ追加します。DefenderはSubの既定値よりStorage個別の指定を優先させます。Storage本体と合わせ地域ごとに4項目です。CSVにStorage名があれば送信先フラグに関係なく準備し、名前がなければこの繰り返しは0件になります。
+Blobバージョン管理・appendBlobの1,095日後削除・Storage個別のDefender無効化を追加します。Storage本体を含め地域ごとに4項目です。CSVにStorage名があれば送信先フラグに関係なく準備します。
 
-**132～146行｜`if ($oldAssociations.Count -gt 0)`**
+**129～143行｜`if ($oldAssociations.Count -gt 0)`**
 
-`OldSettings`から`Kind=Association`の旧DCR関連を取り出します。1件でもあれば、`log-app`のEvent・SyslogテーブルのIDと、総保持1,095日の本文を`Destinations`へ加えます。条件は旧関連の有無なので、VMの新送信をNone・空欄にした場合も、旧関連があればテーブルの保持期間を設定します。
+旧DCR関連があれば、`log-app`のEvent・Syslogと総保持1,095日の本文を`Destinations`へ加えます。条件は旧関連の有無なので、VM側がNone・空欄でも対象です。
 
-**151～198行｜`if ($plan.Discovery.Dcr)`、`$dcrBody.properties.dataSources = @{`**
+**148～195行｜`if ($plan.Discovery.Dcr)`、`$dcrBody.properties.dataSources = @{`**
 
-`Discovery.Dcr`がある場合、新DCRの本文を作ります。`dataSources`へコード内の固定値でWindowsイベントの取得条件・Syslogの種類と重大度、`destinations`へ`log-app`のIDを入れます。`dataFlows`は収集したログを`new-workspace`という送信先名へ結び付けます。本文を`NewSettings`へ追加します。旧DCR関連は対象VM・VMSSを選ぶために使い、収集条件はここに書いた値を使います。
+`Discovery.Dcr`があれば本文を作ります。`dataSources`に固定のWindowsイベント・Syslog条件、`destinations`に`log-app`のID、`dataFlows`に両者の結び付きを入れ、`NewSettings`へ加えます。旧DCRは対象VMを選ぶために使い、収集条件は複製しません。
 
-**199～208行｜`foreach ($association in $plan.Discovery.Associations)`**
+**196～205行｜`foreach ($association in $plan.Discovery.Associations)`**
 
-`Discovery.Associations`のIDごとに、`dataCollectionRuleId=新DCRのID`という本文を作り、`NewSettings`へ加えます。これをAzureへ送ると、`vm-app`など旧関連があったVM・VMSSが新DCRへ結び付きます。VM本体を作る処理はありません。VM送信先がNone・空欄なら`Discovery.Dcr`がなく、DCRと関連付けの両方を省略します。
+新関連のIDごとに`dataCollectionRuleId=新DCRのID`の本文を作り、`NewSettings`へ加えます。これで旧関連のあるVM・VMSSを新DCRへ結び付けます。VM側がNone・空欄ならDCRと関連付けを作りません。
 
-**215～237行｜`$original = @($plan.OldSettings`**
+**211～233行｜`$original = @($plan.OldSettings`**
 
-`Discovery.Diagnostics`の`OldId`で旧診断を探し、`Body.properties.logs`と`metrics`を新しい本文へコピーします。Storage宛てなら、対象の地域を`$storageIds`で引いて送信先IDを入れます。Log宛てなら`log-app`のIDと旧設定の格納方式を入れます。新診断を`Before=null`として`NewSettings`へ加えます。診断送信先がNone・空欄なら、この繰り返しは0件です。
+`OldId`で旧診断を探し、ログ・メトリック指定をコピーします。Storageなら`$storageIds`から同地域のID、Logなら`log-app`のIDと旧格納方式を設定します。新診断は`Before=null`で記録します。診断側がNone・空欄なら0件です。
 
-**243～253行｜`$setting.Before = $saved[0].Before`**
+**238～248行｜`$setting.Before = $saved[0].Before`**
 
-Waiver・DCR・関連付けの各IDをAzureで取得し、書き込み可能な本文を`Before`へ入れます。不在ならnullで、rollbackはこれを見て復元か削除かを決めます。再実行ではJSON内の最初の`Before`を引き継ぎ、現在値で置き換えません。新設するDCR本体には`KeepOnRollback=true`を付け、切り戻しでも残す対象にします。
+Waiver・DCR・関連の現在値を`Before`へ保存します。不在はnullで、rollbackが復元か削除かを決めます。再実行は最初の`Before`を維持します。新設DCRには`KeepOnRollback=true`を付けて残します。
 
-**254～265行｜`$body.properties[$property] = $setting.Body.properties[$property]`**
+**249～260行｜`$body.properties[$property] = $setting.Body.properties[$property]`**
 
-DCR・関連付けの`Before`があれば、その本文を土台に今回の`Body.properties`の項目を差し替えます。例えば`dataSources`は中身ごと更新し、今回指定していない項目は元の本文から引き継ぎます。これを最終的な`Body`にします。必要なIDと本文が3一覧へそろったため、組み立て用だった`Discovery`を`$plan`から取り除きます。
+既存DCR・関連の`Before`を土台に、今回指定する`Body.properties`を差し替えます。未指定項目は引き継ぎます。3一覧にID・本文がそろったら、組立て用の`Discovery`を除きます。
 
-**272～295行｜`if ($record)`、`foreach ($collection in`**
+**266～289行｜`if ($record)`、`foreach ($collection in`**
 
-再実行では、JSONの`OldSettings`と今回調べた旧設定をID・本文で比較し、消失・変更があれば停止します。次に保存先・新設定・旧設定の3一覧をIDで照合し、新しく見つかった項目だけを`$record`へ追記します。同じIDの`Body`が前回と違う場合も停止します。初回は組み立てた`$plan`をそのまま`$record`にし、JSONへ保存する準備が整います。
+記録済みの旧設定に消失・変更があれば停止します。3一覧をIDで照合し、新規の項目だけ`$record`へ追記します。同じIDの`Body`が前回と違っても停止します。初回は`$plan`をそのまま記録にします。
 
-**300～310行｜`WriteAllText`、`Replace`、`Move`**
+**293～303行｜`WriteAllText`、`Replace`、`Move`**
 
-初回または追記があれば、`$record`をJSONに変換して`.tmp`ファイルへ書きます。書き出し後、既存JSONならReplaceで差し替え、初回ならMoveで正式名`<Sub ID>.json`にします。これで旧設定の本文、今回の作成値、Waiver・DCR・関連付けの`Before`がローカルに残り、以降の再実行・確認・切り戻しで読み直せます。保存後にAzureへの書き込みへ進みます。
+`$record`をJSONにして`.tmp`へ書き、既存記録ならReplace、初回ならMoveで`<Sub ID>.json`にします。保存完了後にAzureへの書込みへ進みます。
 
-**317～321行｜`$resources = @($record.NewSettings`**
+**309～313行｜`$resources = @($record.NewSettings`**
 
-`$record.NewSettings`と`Destinations`から、Waiver→RG・保存先・保持設定→DCR・関連付けの順に`$resources`を作ります。これを1件ずつ`$resource`へ取り出し、同じループで現在値の取得・比較・書き込みを行います。新診断設定は保存先などの準備完了後に別処理するため、この一覧から除きます。
+Waiver→RG・保存先・保持設定→DCR・関連の順に`$resources`を作り、各項目を同じループで取得・比較・書込みします。新診断は準備完了後の別処理です。
 
-**326～344行｜`if (-not $providersReady`**
+**317～335行｜`if (-not $providersReady`**
 
-Waiverの処理後、最初の保存先に進む前に、必要なリソースプロバイダーの登録状態をAzureで読みます。Microsoft.Insightsなどが未登録なら登録APIを呼び、3秒ごとのGETでRegisteredまで待ちます。すべて確認できたら`$providersReady=true`にして、同じSubの後続項目では登録確認を省きます。
+Waiverの後、最初の保存先の前に必要なRPを確認します。未登録なら登録し、3秒ごとにRegisteredまで待ちます。`$providersReady=true`で同じSub内の再確認を省きます。
 
-**345～366行｜`$matched = Test-Configuration`**
+**336～357行｜`$matched = Test-Configuration`**
 
-`$resource.Id`をGETし、`Test-Configuration`で`$resource.Body`と比べます。一致なら次へ進み、不在・不一致なら書き込みを準備します。RGは存在すればよく、Event・Syslogの総保持が既定値任せなら更新が必要です。既存Waiverが不一致なら停止します。DCR・関連付けは、現在値が保存済みの`Before`と一致するときだけ更新を許します。
+`Invoke-ArmRequest -Optional -Wait`で現在値を読み、未作成ならnull、作成中なら完了を待ちます。`Body`と一致なら省略します。RGは存在だけ、テーブルは総保持の明示設定も確認します。既存Waiverの不一致は停止し、DCR・関連は`Before`と一致する場合だけ更新します。
 
-**373～397行｜`if ($current -and $resource.Kind -eq 'Storage')`**
+**363～387行｜`if ($current -and $resource.Kind -eq 'Storage')`**
 
-Storageが既にあれば、地域・SKU・暗号化・不変性が`Body`と合うか確認します。通信規則はGETした現在のIP規則などを本文へ引き継ぎ、既定拒否とAzureサービスの例外だけを更新します。既存Log Analyticsでは地域を確認し、現在の`features`を残してリソース権限によるログアクセスを加えます。Log Analyticsの更新は、指定項目だけを送るPATCHに切り替えます。
+既存Storageの地域・SKU・暗号化・不変性を確認します。IP規則を残し、既定拒否とAzureサービス例外を更新します。既存Log Analyticsは地域を確認し、他のfeaturesを残してログ参照権限を加え、PATCHで更新します。
 
-**398～406行｜`$_.name -notin`**
+**388～396行｜`$_.name -notin`**
 
-ライフサイクルは現在のルール一覧から、このスクリプトの`log-append-365`と`log-append-1095`だけを除き、新しい1,095日ルールを加えた本文にします。他名のルールは残ります。Event・Syslogが既にあれば、本文を`totalRetentionInDays=1095`だけに絞ってPATCHにし、分析用保持期間などの既存項目を引き継ぎます。
+管理対象の旧365日・1,095日ルールを除き、新しい1,095日ルールを加えます。他名のルールは残します。既存テーブルは`totalRetentionInDays=1095`だけをPATCHし、分析用保持などを保ちます。
 
-**411～435行｜`while ($true)`、`-Method $method -Body $body`**
+**401～424行｜`while ($true)`、`-Method $method -Body $body`**
 
-用意した`$body`を、PUTまたはPATCHで`$resource.Id`へ送ります。DCRの`InvalidOutputTable`が指定の組み込み出力だけの反映待ちなら、10秒待って再試行します。それ以外は例外を返します。成功後は同じIDをGETし直し、JSONの`Body`と比べて一致したら次の項目へ進みます。APIが成功しただけで完了とせず、保存先・保持設定などの実際の値を確認します。
+本文をPUT／PATCHし、GETで`Body`と照合します。DCRの`InvalidOutputTable`が指定の組込み出力の反映待ちなら、10秒後に再試行します。その他のエラーや作成値の不一致は停止します。
 
-**442～456行｜`$diagnostics | ForEach-Object -Parallel`**
+**430～444行｜`$diagnostics | ForEach-Object -Parallel`**
 
-保存先とDCRなどの準備が終わったら、`NewSettings`から新診断設定を取り出して最大5件同時に処理します。各処理はSub ID・診断設定ID・失敗理由・期待する本文を返す`$result`を用意します。commonをCSVなしで読み、外側のSub IDと認証用トークンを受け取ってAzureへ接続します。この並列化は1Sub内の新診断設定が対象です。
+準備後、新診断を最大5件同時に作成します。各処理はSub ID・対象ID・理由・期待本文を`$result`へ入れます。commonを`SkipCsv`で読み、外側のSub ID・トークンを受け取ります。
 
-**457～479行｜`return $result`**
+**445～467行｜`return $result`**
 
-新診断設定のIDをGETし、`Body`と一致するなら書き込まず成功結果を返します。同名でも内容が違えば失敗にし、不在ならPUTで作ってGETでログ・メトリック・送信先を照合します。例外は`$result.Reason`と`Expected`へ入れて返します。全件分を`$copied`へ集め、件数を確認してから失敗した結果だけを`$failures`へ追加します。
+新診断をGETし、`Body`と一致なら省略、不一致なら失敗、不在ならPUTします。作成後もGETで照合します。結果を`$copied`へ集め、全件戻ったことを確認し、失敗分を`$failures`へ追加します。
 
-**481～502行｜外側の`catch`、`$failurePath = Join-Path $PSScriptRoot`**
+**469～490行｜外側の`catch`、`$failurePath = Join-Path $PSScriptRoot`**
 
-保存先などの処理中に例外が出たSubは、対象ID・理由・本文を`$failures`へ追加し、そのSubの残りを飛ばして次へ進みます。全Subの後、失敗があれば`copy_failures.csv`へ出してエラーで終了し、なければ前回の失敗CSVを削除します。ここまで旧診断・旧DCR関連は残るので、step2で新しい送信先まで確認してからstep3で旧側を外します。
+準備中に失敗したSubは残りを飛ばし、他Subへ進みます。最後に`copy_failures.csv`を出してエラーにし、成功なら過去の失敗CSVを削除します。旧設定は残し、step2の確認後にstep3で外します。
 
 ## 4. step2_verify.ps1を読む
 
-[step2_verify.ps1](step2_verify.ps1)は、step1のJSONにあるIDと本文を使ってAzureを読み、保存先・新送信設定がそろっているか確認します。人が実行結果を確認した後、step3へ進みます。step3も冒頭で同じ確認を行い、NGなら削除を始めません。
+[step2_verify.ps1](step2_verify.ps1)は記録したIDの現在値を読み、保存先・新設定を確認します。結果を人が確認してからstep3へ進みます。step3も冒頭で同じ検査を行います。
 
 **1～19行｜`param([switch]$PassThru)`、`Read-MigrationRecord`**
 
-CSVのSubごとにJSONを読み、なければNGにします。続いて`Get-MigrationPlan -OnlyOldSettings`で、今も旧ワークスペース宛ての診断設定と、旧2DCRの関連を再取得します。結果の`OldSettings`を次の比較に使います。名前の空き確認・新設定のID作成・ポリシー確認は、この引数で省きます。
+SubごとのJSONを読み、不在ならNGです。`-OnlyOldSettings`で旧診断・旧DCR関連を再取得します。新しい保存先は既に作成済みなので、初回の空き名・ポリシー確認を省きます。
 
 **20～25行｜`foreach ($current in $currentPlan.OldSettings)`**
 
-現在の旧設定のIDでJSONの`OldSettings`を探し、本文を1件ずつ比べます。`old-setting`のログ種別が変わった、JSONにない旧設定が増えた場合はNGです。一方、Azureに既にない旧設定はこのループへ来ないため許可します。step3が途中まで削除した後でも、残りを再確認できる仕組みです。
+現在の旧設定をJSONと比較し、追加・改変があればNGです。既に不在の旧設定は許可するため、step3が途中まで削除した後も再確認できます。
 
-**31～59行｜`@($record.Destinations) + @($record.NewSettings)`**
+**30～58行｜`@($record.Destinations) + @($record.NewSettings)`**
 
-JSONの`Destinations`と`NewSettings`のIDをGETし、各`Body`と比較します。例ではStorageや新診断`setByAzurePlatformTeam`が対象です。RGは存在を、Event・Syslogは総保持1,095日がテーブル単位で明示されていることも確認します。不在・不一致ならID・理由・期待する本文をNG行へ入れ、次の対象も確認します。この本文は手動修正時に使えます。
+保存先と新設定をGETし、各`Body`と比べます。RGは存在、Event・Syslogは総保持1,095日の明示設定も確認します。NGにはID・理由・手動修正用の期待本文を残し、次へ進みます。
 
-**60～85行｜`$records += $record`、`if ($PassThru)`**
+**59～83行｜`$records += $record`、`if ($PassThru)`**
 
-JSONの読み込みや旧設定の探索に失敗したSubは、NG行を残して次のSubへ進みます。全結果を`verify_results.csv`へ出し、NGがあれば例外で終了します。全件OKのとき、通常実行は完了を表示し、`-PassThru`付きではJSONから読んだ`$records`を返します。step3はこの中の`OldSettings`を削除対象に使います。
+Subの読込み・調査失敗もNGにし、全結果を`verify_results.csv`へ出します。NGなら例外で終了します。`-PassThru`は全件OKのときだけ、結果行ではなく読み込んだJSON記録を返す指定です。step3が削除対象を受け取るために使います。
 
 ## 5. step3_delete.ps1を読む
 
-[step3_delete.ps1](step3_delete.ps1)は、step2をもう一度実行してから、JSONの`OldSettings`にある旧設定を削除します。例の`old-setting`を外す工程です。削除の開始前に全Subを確認し、各設定の削除直前にも旧設定・対応する新設定の本文を確かめます。
+[step3_delete.ps1](step3_delete.ps1)は、全Subのstep2成功後に記録した旧設定を削除します。削除直前にも旧設定と対応する新設定を照合します。
 
-**8～15行｜`$records = @(& (Join-Path`**
+**7～14行｜`$records = @(& (Join-Path`**
 
-`&`でstep2を`-PassThru`付きで呼び、全件OKなら返されたJSONの内容を`$records`へ受け取ります。NGなら例外となり、削除のループへ入りません。commonをCSVなしで読み、`Kind`をAssociation→Diagnosticの順に切り替えて、全Subの旧DCR関連を先に、旧診断設定を後に処理します。
+`&`でstep2を`-PassThru`付きで実行し、記録を`$records`へ受け取ります。NGなら削除に進みません。commonを`SkipCsv`で読み、全Subの旧DCR関連→全Subの旧診断の順に処理します。
 
-**20～27行｜`if (-not $current)`**
+**18～25行｜`if (-not $current)`**
 
-`OldSettings`のIDをGETし、不在なら削除済みとして次へ進みます。存在すれば`Get-WritableBody`で本文を取り出し、JSONの`Body`と完全一致するか比較します。ログ種別や参照先DCRなどが変わっていれば、step2成功後の変更として削除全体を止めます。
+旧設定をGETし、不在なら省略します。存在すれば書込み用本文を取り出して記録と両方向に照合し、step2後の変更も検出して削除を止めます。
 
-**32～52行｜`$newId = ''`、`if ($newId)`**
+**30～50行｜`$newId = ''`、`if ($newId)`**
 
-旧設定の親IDから新診断・新DCR関連のIDを求め、JSONの`NewSettings`で本文を探してAzureの現在値と比較します。例では`nsg-app`の`setByAzurePlatformTeam`です。新設定が不在・不一致なら削除全体を止めます。None・空欄は旧送信も終了する指定なので、その側の新設定の確認を省いて旧設定の削除へ進みます。
+旧設定の親IDから新設定IDを求め、`NewSettings`の本文と現在値を比べます。不在・不一致なら停止します。None・空欄は送信終了の指定なので、新側の照合を省いて旧設定を削除します。
 
-**53～71行｜`-Method Delete`、`catch`**
+**51～68行｜`-Method Delete`、`catch`**
 
-確認できた旧設定のIDへDELETEを送り、次へ進みます。途中で失敗すればSub ID・対象ID・理由・旧本文を`delete_failures.csv`へ出し、ほかのSubも含め残りの削除を停止します。削除済みの分は自動復元せず、再実行またはrollbackで対応します。保存先・新送信設定は残り、None・空欄の側はここで旧送信が終了します。
+旧設定をDELETEします。失敗は`delete_failures.csv`へ残し、他Subも含め以降の削除を止めます。削除済みの分は自動復元しません。保存先・新設定は残し、再実行かrollbackで対応します。
 
 ## 6. rollback.ps1を読む
 
-[rollback.ps1](rollback.ps1)は、step1のJSONから旧設定の`Body`と新設定の`Before`を読み、元の送信設定へ戻します。step1の途中・終了後、step3の途中・終了後のいずれも同じスクリプトです。旧送信を全件復元してから、新しい送信設定を変更前へ戻します。
+[rollback.ps1](rollback.ps1)は、旧設定の`Body`と新設定の`Before`で送信設定を戻します。copy・deleteの途中でも完了後でも使えます。旧送信を全件戻してから、新側を変更前へ戻します。
 
 **1～19行｜`$PSBoundParameters.ContainsKey('SubscriptionIds')`**
 
-commonを`-SkipCsv`で読み、`records/<環境>/`のJSONファイル一覧を取得します。`-SubscriptionIds`がなければ全ファイル、あればファイル名のSub IDが一致するものだけを選びます。存在しないID・重複・空の指定は停止します。対象SubはJSONから選ぶため、CSVは読みません。
+CSVを使わず、`records/<環境>/`から対象を選びます。`-SubscriptionIds`省略時は全Sub、指定時は該当IDの記録だけです。空・重複・記録にないIDなら停止します。
 
 **20～30行｜`$records = @(foreach ($file in $recordFiles)`**
 
-各JSONを読み、ファイル名と`Target.SubscriptionId`が同じか確かめます。さらに`Read-MigrationRecord`へ保存済みの`Target`を渡し、`Context`が今回の環境・旧ワークスペース・新診断名などと一致するか確認します。確認した内容を`$records`へ集めます。不正なJSONや対象0件なら、Azureへの書き込み前に停止します。
+ファイル名と`Target.SubscriptionId`を照合し、保存済みTargetで`Read-MigrationRecord`を呼びます。今回の環境・旧ワークスペースなどと一致しなければ、書込み前に停止します。
 
-**37～50行｜`$matchesBody`、`$matchesBefore`**
+**36～49行｜`$matchesBody`、`$matchesBefore`**
 
-選んだ全Subの旧・新設定をGETし、本文がJSONの`Body`か`Before`と一致する、または不在であることを確認します。第三者が別の値へ変えていれば、書き込む前に全体を停止します。保存先はこの対象一覧に入れず、新設DCR本体・元からあるWaiverも残す指定として除外します。
+全対象の現在値が`Body`・`Before`・不在のいずれかを確認し、他の変更があれば停止します。保存先、新設DCR本体、元からあるWaiverは戻す対象から除きます。
 
-**57～72行｜`foreach ($phase in @('Old', 'New'))`**
+**55～70行｜`foreach ($phase in @('Old', 'New'))`**
 
-`$phase`をOld→Newの順に切り替えます。Oldでは全対象Subの旧DCR関連、次に旧診断設定を`Body`から復元します。それが全部終わってから、NewでDCR→関連付け→診断設定→Waiverを`Before`へ戻します。これにより、選んだSubすべての旧送信を戻してから新送信を外せます。
+`$phase`をOld→Newに切り替えます。全Subの旧DCR関連→旧診断を`Body`から復元後、新DCR→新関連→新診断→Waiverを`Before`へ戻します。
 
-**77～88行｜`$expectedBody = $setting.Body`**
+**74～85行｜`$expectedBody = $setting.Body`**
 
-Oldでは旧設定の`Body`、Newでは新設定の`Before`を`$expectedBody`へ入れ、戻す値を決めます。同じIDをGETし直して既に一致していればスキップします。初めの確認後に別の値へ変更されていた場合も、ここで検出して上書きを止めます。
+Oldは`Body`、Newは`Before`を`$expectedBody`へ入れます。再取得して一致済みなら省略し、最初の確認後に別の変更があれば停止します。
 
-**93～114行｜`if ($null -eq $expectedBody)`**
+**89～109行｜`if ($null -eq $expectedBody)`**
 
-不在の旧診断を戻す前に、親リソースの診断設定一覧を読み、上限5件に空きがあるか確認します。`$expectedBody`に値があればPUTし、nullなら今回追加した設定をDELETEします。GETし直して復元値と比較し、不一致なら停止します。例ではOldで`old-setting`を復元した後、Newで`setByAzurePlatformTeam`を削除します。
+旧診断を再作成する前に5枠の空きを確認します。復元値があればPUT、nullなら今回追加した設定をDELETEし、GETで照合します。例では旧`old-setting`を戻した後、新`setByAzurePlatformTeam`を消します。
 
-**120～135行｜`catch`、`Remove-Item $failurePath`**
+**115～129行｜`catch`、`Remove-Item $failurePath`**
 
-失敗したらSub ID・対象ID・理由を`rollback_failures.csv`へ出して停止し、全件成功なら前回の失敗CSVを削除します。再実行では復元済みの項目を比較してスキップできます。保存先・保存済みログ、新設DCR本体、元からあるWaiverは残ります。新設Waiverは`Before=null`なので、新診断・新関連と同じく削除されます。
+失敗は`rollback_failures.csv`へ出して停止し、成功なら過去の失敗CSVを消します。再実行は復元済みを省略できます。保存先・保存済みログ・新設DCR・既存Waiverは残し、今回新設したWaiverは削除します。

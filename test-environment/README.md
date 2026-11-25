@@ -1,14 +1,14 @@
 # リソース網羅テストの環境
 
-移行テストで使うVM・Storage・App Serviceなどを、2つのサブスクリプションへ作成します。PowerShell 7と、Ownerでログイン済みのAzure CLIで実行します。
+VM・Storage・App Serviceなどを2つのSub（サブスクリプション）へ作成します。PowerShell 7と、Ownerでログイン済みのAzure CLIを使います。
 
-作成したリソースへの旧診断設定とDCR関連付けは、会社の既存ポリシーで設定される前提です。このスクリプトはMG・ポリシー・サブスクリプションの所属を変更しません。実施済みの構成と確認範囲は[検証結果](../test-results/REPORT.md)に記録しています。
+旧診断・DCR関連は会社の既存ポリシーで設定する前提です。管理グループ・ポリシー・Sub所属は変更しません。確認済みの範囲は[検証結果](../test-results/REPORT.md)を参照してください。
 
 ## 指定する値
 
-PS1先頭の`$SubscriptionIds`に2つのSub ID、同じ順番の`$ExistingVnetIds`に既存VNet ID、`$Locations`に4つの配置リージョンを指定します。資源は各Subで1つの専用RG（`fx-<RunId>-a`／`fx-<RunId>-b`）へまとめ、資源ごとのリージョンは分けます。AKSなどが自動で作る管理RGは別に記録します。
+PS1先頭の`$SubscriptionIds`にSub IDを2つ、同順の`$ExistingVnetIds`に既存VNet ID、`$Locations`に4地域を指定します。各Subの専用RG（`fx-<RunId>-a`／`-b`）へ作り、資源の地域を分けます。AKSなどの管理RGは別途台帳へ記録します。
 
-既存VNetには次の5サブネットが必要です。IPアドレスは実際のVNetから取得します。
+既存VNetには次の5サブネットが必要です。IPは実際のVNetから取得します。
 
 |名前|サイズ|
 |---|---|
@@ -18,17 +18,17 @@ PS1先頭の`$SubscriptionIds`に2つのSub ID、同じ順番の`$ExistingVnetId
 |VNetIntegrationSubnet|/26|
 |AzureFirewallSubnet|/26|
 
-VNet・サブネットを作成・更新したり、NSG・ルートテーブルを関連付けたりしません。ASEにはA側ProtectSubnetの`Microsoft.Web/hostingEnvironments`委任、Container Apps環境にはA側VNetIntegrationSubnetの`Microsoft.App/environments`委任を事前に用意します。
+VNet・サブネットは更新せず、NSG・ルートテーブルも付けません。事前にA側のProtectSubnetを`Microsoft.Web/hostingEnvironments`へ、VNetIntegrationSubnetを`Microsoft.App/environments`へ委任します。
 
 ## 実行
 
-|Action|実行する内容|確認するファイル|
+|Action|処理|確認先|
 |---|---|---|
-|Plan|選択したリソースタイプと依存先から、作成する名前・ID・RG・リージョンを組み立てる。Azureへのアクセスはない|`runs/<RunId>/plan.json`の`resources`と`skipped`|
-|Deploy|同名RGの不存在と既存サブネットの条件を確認し、必要な利用登録・専用RG・リソースを作る。続けて作成結果も取得する|`runs/<RunId>/run-ledger.json`の`deployments`・`inventory`・`managedGroups`|
-|Capture|作成後のリソース、Storageの子サービスなど、診断カテゴリ、現在の診断設定をAzureから取得して台帳を更新する|同JSONの`scopes`|
+|Plan|依存先を含む名前・ID・RG・地域を組み立てる。Azureへのアクセスなし|`runs/<RunId>/plan.json`の`resources`・`skipped`|
+|Deploy|RGの不存在と既存サブネットを確認し、RP登録・RG・資源作成後に結果を取得する|`run-ledger.json`の`deployments`・`inventory`・`managedGroups`|
+|Capture|資源・子スコープ・診断カテゴリ・現在の診断設定を読み取る|同台帳の`scopes`|
 
-リポジトリのルートから、次の順に実行します。`Plan`の内容を確認し、`Deploy`にも同じ変数を渡します。
+ルートから次を実行します。Plan確認後、同じ設定でDeployします。
 
 ```powershell
 Set-Location .\test-environment
@@ -42,24 +42,30 @@ $options = @{
     LoadCount = 0
 }
 .\resource_types_fixture.ps1 -Action Plan @options
-# plan.jsonを確認してから、同じ設定で作成する。
+# plan.jsonを確認する。
 .\resource_types_fixture.ps1 -Action Deploy @options
-# 作成後、会社ポリシーによる診断設定を取得する。
+# 会社ポリシーによる診断設定を取得する。
 .\resource_types_fixture.ps1 -Action Capture -RunId $run
 ```
 
-`RunId`は英小文字・数字8～13文字です。台帳は`runs/<RunId>/run-ledger.json`へ保存します。旧設定を生成するSeedと撤去用のCleanupはありません。終了後は今回の専用RGと、残っていれば台帳に記録した管理RGを削除してください。AKS用に既存PrivateSubnetへ付与するNetwork ContributorのRBACはRG削除後も残ります。
+`RunId`は英小文字・数字8～13文字、台帳は`runs/<RunId>/run-ledger.json`です。旧設定の生成・撤去機能はありません。終了後は専用RGと残った管理RGを削除します。AKS用のPrivateSubnetのNetwork ContributorはRG削除後も残ります。
 
-DCR1本と、DCR・Application Insights用のLAWを作成しますが、このスクリプトから診断設定やDCR関連付けは作成しません。
+DCR1本と、DCR・Application Insights用のLog Analyticsを作ります。診断設定・DCR関連は作りません。
 
-`Capture`の結果は`run-ledger.json`の`scopes`で確認します。正常に取得した`diagnosticSettings.value`に実在する診断設定が入り、空配列なら取得時点では設定されていません。`actualStatus=READ_ONLY_CAPTURED`は取得成功を表します。`FAILED`や`UNRESOLVED`は`resourceId`と`actualErrorCode`を確認してください。
+Captureの`diagnosticSettings.value`が空なら、その時点で診断設定がありません。`READ_ONLY_CAPTURED`は取得成功で、設定済みを意味しません。`FAILED`／`UNRESOLVED`は`resourceId`・`actualErrorCode`を確認します。DCR関連はCaptureの対象外です。
 
-会社ポリシーが必要な診断設定・DCR関連付けを設定したことを確認してから、[移行スクリプト](../procedural-migration/README.md)でテストします。`Capture`はDCR関連付けを取得しないため、DCR側の対象は移行用の任意precheckなどで確認します。
+会社ポリシーで旧設定がそろったことを確認し、[移行スクリプト](../procedural-migration/README.md)でテストします。DCR側の対象は移行用precheckなどで確認できます。
 
 ## 対象と制約
 
-提示された56型をARMの対応表で管理します。Storageの4サービス、Foundry子プロジェクト、SQL master、Web・Functionのslot、Redis子DBも別スコープで読み取ります。Code Signing・Bing・ExpressRouteは提供条件等により省略し、Databricksと旧Redisは既定で省略します。
+提示56型の対応表を使い、Storageの4サービス・Foundry子プロジェクト・SQL master・Web／Function slot・Redis子DBも読み取ります。Code Signing・Bing・ExpressRouteは提供条件等で省略し、Databricks・旧Redisは既定で省略します。
 
-`SkipTypes`で型を省略できます。必要な依存型まで省略すると停止します。`IncludeConditional`は有料・配置条件のある資源、`IncludeAse`はASEも選びます。`LoadCount`は追加NSG数で、サブネットへ関連付けません。`BudgetJPY`は計画予算です。開始から6時間を過ぎると新しい設定変更を開始しません。必要なRPの登録状態は戻しません。
+|変数|用途|
+|---|---|
+|`SkipTypes`|省略する型。必要な依存型を省くと停止|
+|`IncludeConditional`|有料・配置条件のある資源も選ぶ|
+|`IncludeAse`|ASEも選ぶ|
+|`LoadCount`|追加NSG数。サブネットへ関連付けない|
+|`BudgetJPY`|計画予算|
 
-途中停止後は作成した資源と台帳を確認し、再作成には別のRunIdを使います。過去版で作った環境には、その台帳と作成時のソース2ファイルを使用してください。旧Seed/Cleanup版の実行記録を、この版の結果として扱いません。
+開始6時間後は新規の変更を始めません。RP登録は戻しません。途中停止後は資源・台帳を確認し、再作成には別のRunIdを使います。過去版の環境は、その台帳と作成時のソース2ファイルで扱ってください。

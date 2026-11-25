@@ -1,16 +1,14 @@
 # 診断設定・VMログの段階移行
 
-Azureの診断設定とVM・VMSSのログ送信先を移行するスクリプトです。実行する正本は`procedural-migration`フォルダにあります。
+Azureの診断設定とVM・VMSSのログ送信先を移行します。正本は`procedural-migration`です。
 
-作業する場合は[使い方](procedural-migration/README.md)、コードを理解したい場合は[学習ガイド](procedural-migration/CODE_LEARNING.md)から読んでください。
-
-**総合テストと追加の正常通し試験が成功し、全試験資源を撤去しました。** 元の認可設定・MG所属との一致も確認しました。利用登録は28件中26件を復元し、サブスクリプション2のCompute・Networkの2件はAzure側で解除処理中です。構成・実測時間・配布用テストコードの確認範囲は[検証結果](test-results/REPORT.md)に記録しています。
-
-|資料|記載する内容|
+|資料|内容|
 |---|---|
-|[移行スクリプトの使い方](procedural-migration/README.md)|必要な環境、変数・CSVの設定、実行順、各ファイルの処理、再実行・切り戻し|
-|[コード学習ガイド](procedural-migration/CODE_LEARNING.md)|前提となる構文と、コードを上から読むための解説|
-|[テスト環境の作成](test-environment/README.md)|既存ポリシーを使う構成、各Subの専用RGへの作成手順と制約|
-|[検証結果](test-results/REPORT.md)|実施したテスト、結果、未実施項目|
+|[使い方](procedural-migration/README.md)|環境・CSV・実行順・各ファイルの処理・再実行・切り戻し|
+|[コード学習ガイド](procedural-migration/CODE_LEARNING.md)|構文の基礎と、コードを上から読むための解説|
+|[テスト環境の作成](test-environment/README.md)|既存VNet・会社ポリシーを使うテスト資源の作成手順|
+|[検証結果](test-results/REPORT.md)|実施内容・結果・実測時間・未実施項目|
 
-ルートの`log_migration.ps1`と`log_migration_targets.csv`は原本として保持しています。
+総合テスト・追加の正常通し試験は成功し、試験資源は撤去済みです。認可設定・MG所属も元に戻っています。利用登録は28件中26件を復元し、Sub2のCompute・NetworkはAzure側で解除処理中です。詳細は検証結果を参照してください。
+
+ルートの`log_migration.ps1`と`log_migration_targets.csv`は原本です。

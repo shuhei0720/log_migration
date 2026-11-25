@@ -1,9 +1,8 @@
 ﻿#Requires -Version 7.0
 
 # ---
-# step2_verifyを呼び、全Subの保存先・新診断設定・DCR関連などをAzureで確認する。NGがあれば削除を開始しない。
-# 全件OKなら、SubごとのJSONから旧診断設定・旧DCR関連付けのIDと本体を$recordsで受け取る。
-# このIDを次のループで使い、全Subの旧DCR関連付けを削除してから、旧診断設定を削除する。
+# step2で全Subの保存先・新設定を確認し、全件OKのときだけ記録JSONを$recordsで受け取る。
+# 記録のIDを使い、全Subの旧DCR関連付け→旧診断設定の順に削除する。
 # ---
 $records = @(& (Join-Path $PSScriptRoot 'step2_verify.ps1') -PassThru)
 . (Join-Path $PSScriptRoot 'common.ps1') -SkipCsv
@@ -14,8 +13,7 @@ try {
             $subscriptionId = $record.Target.SubscriptionId
             foreach ($resource in @($record.OldSettings | Where-Object Kind -eq $kind)) {
                 # ---
-                # JSONのIDで旧設定を読み直し、送信先・ログ種別やDCRの関連先が保存値と同じか確認する。
-                # 削除済みなら次へ進み、別の内容に変わっていれば以降の削除を止める。
+                # 旧設定をAzureから読み直してJSONと照合する。削除済みはスキップし、変更されていれば全Subの残りを止める。
                 # ---
                 $current = Invoke-ArmRequest -Resource $resource -Optional
                 if (-not $current) {
@@ -26,8 +24,8 @@ try {
                     throw '削除直前に旧設定が変更されています。'
                 }
                 # ---
-                # 診断設定をStorage/Log、VM側をLogにした場合は、旧設定の親IDから新診断設定・新DCR関連付けのIDを求める。
-                # そのIDをAzureから取得しJSONの作成値と照合する。空欄・Noneの側は新設定を作らないため、照合せず旧設定を削除する。
+                # 送信を続ける側は、同じ親リソースの新診断設定・DCR関連付けもAzureから取得し、JSONと照合する。
+                # 空欄・Noneの側は送信を終了するため、新設定の確認なしで旧設定を削除する。
                 # ---
                 $newId = ''
                 if ($kind -eq 'Diagnostic' -and $record.Target.LogDestination -in @('Storage', 'Log')) {
@@ -57,8 +55,7 @@ try {
 }
 catch {
     # ---
-    # エラーになった旧設定のID・理由・変更前の値をdelete_failures.csvへ出す。
-    # 例外を返し、ほかのSubを含む残りの削除を停止する。
+    # 失敗した旧設定のID・理由・変更前の値をdelete_failures.csvへ出し、全Subの残りの削除を止める。
     # ---
     [pscustomobject]@{
         SubscriptionId = $subscriptionId

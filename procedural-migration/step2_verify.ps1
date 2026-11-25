@@ -1,13 +1,13 @@
 ﻿#Requires -Version 7.0
+# PassThruはstep3用。全件OKなら記録JSONの内容を返す。省略時は確認結果のCSVだけを出す。
 param([switch]$PassThru)
 . (Join-Path $PSScriptRoot 'common.ps1')
 $results = @()
 $records = @()
 
 # ---
-# targets.csvの各Subに対応するrecords/<環境>/<SubID>.jsonを読み、環境・移行元Workspace・CSVの対象情報が作成時と同じか確認する。
-# Azureから再探索した移行対象の旧診断設定・旧DCR関連付けをJSONと照合し、記録にないIDや内容の差を検出する。
-# 削除済みの旧設定は許可する。保存先・新設定も確認し、削除へ進める状態か判定する。Azureのリソースは変更しない。
+# CSVの各SubのJSONを読み、環境・移行元Workspace・CSVが作成時と同じか確認する。
+# 旧設定をAzureから探し直し、JSONにない追加・変更を検出する。削除済みは許可し、Azureは変更しない。
 # ---
 foreach ($target in $targets) {
     $subscriptionId = $target.SubscriptionId
@@ -24,9 +24,8 @@ foreach ($target in $targets) {
             }
         }
         # ---
-        # JSONにある保存先・新診断設定・DCR関連・WaiverなどのIDでAzureを取得し、Bodyに保存した作成値と照合する。
-        # Event/Syslogは、保持期間をテーブル単位で明示した状態かも確認する。
-        # 不一致はそのIDと期待値を結果に加え、ほかの保存先・新設定の確認を続ける。
+        # 保存先・新設定・WaiverをAzureから取得し、JSONの作成値と照合する。Event・Syslogは保持期間の個別指定も確認する。
+        # 不一致のIDと期待値を結果に残し、ほかの対象も確認する。
         # ---
         foreach ($resource in @($record.Destinations) + @($record.NewSettings)) {
             try {
@@ -70,8 +69,7 @@ foreach ($target in $targets) {
     }
 }
 # ---
-# 全Subの確認結果と、手動で直す際に必要な期待値をverify_results.csvに出す。NGが1件でもあれば終了する。
-# -PassThruの場合は全件OKのときだけ、旧設定のID・本体を含むJSONの内容をstep3_deleteへ返す。
+# 全Subの結果と修正用の期待値をverify_results.csvへ出す。NGがあればエラーにして、step3へ記録を返さない。
 # ---
 $results | Export-Csv (Join-Path $PSScriptRoot 'verify_results.csv') -Encoding utf8BOM
 if ($results.Result -contains 'NG') {
