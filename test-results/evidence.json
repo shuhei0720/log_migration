@@ -1,8 +1,8 @@
 {
   "status": "TESTS_PASS_ALL_RESOURCES_AUTH_RESTORED_26_REGISTRATIONS_RESTORED_TWO_AZURE_PENDING",
-  "updatedUtc": "2026-11-25T06:48:49.382741+00:00",
+  "updatedUtc": "2026-11-25T06:51:24.567959+00:00",
   "canonicalSha256": {
-    "common.ps1": "4e39b38178c463e1547a413622f9a06c07977cc8406b5e44c390b6ffe72e9a3d",
+    "common.ps1": "3825e67e879c116ec21d0af3418743c47efe775ee71c5be4383e6d71b2643590",
     "precheck.ps1": "74d49d8b87ba2ba41d58a276c6fbb1f165a4d98afd7d3951852fbc975e08f599",
     "step1_copy.ps1": "f6a7c1ae2c854dd4dc9412c72d0fe2415a6520c833e5037e2004dfaab12862a1",
     "step2_verify.ps1": "0cafd60f9825042f238e9a746a45ec31b6e38926c4f72c28b039a10f52326cb9",
@@ -1924,5 +1924,13 @@
       "USER_EDITS_RESTORATION_REVIEW.json": "4fe97030697255b3d820876a6dfb537ca8e62daf71a5452daa33dd200de6322c",
       "LEARNING_REFERENCES_QA.json": "57550013dcc41f466406b484af6497251960a2383a0c0a030ff1920424ae1d18"
     }
+  },
+  "invokeHelpDescriptionPreference": {
+    "basis": "User requested the concise Invoke-ArmRequest description from 2ac259e.",
+    "changedDescriptionLines": 2,
+    "otherUserAuthoredCommentsAndHelpLayoutPreserved": true,
+    "syntaxAndGetHelpConfirmed": true,
+    "executableCodeChanged": false,
+    "azureRequests": 0
   }
 }

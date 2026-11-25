@@ -104,8 +104,8 @@ function Invoke-ArmRequest {
 .SYNOPSIS
 Azureのリソースを取得・作成・更新・削除する。
 .DESCRIPTION
-ResourceIdまたはResource.IdのAPIへMethod・Bodyを送り、JSON応答を各工程の作成・照合処理へ返す。
-呼び出し側の$subscriptionIdでAzure CLIの認証情報を取得する。一時的な通信失敗・HTTPエラーは初回を含め最大4回リトライする。
+呼び出し元の$subscriptionIdで認証し、指定したAPIへ要求を送る。
+一時的な通信・HTTPエラーは最大4回試す（初回を含む）。
 .PARAMETER ResourceId
 一覧取得などで直接操作するリソースID、またはAPI版を含む完全なURL。
 Resourceを指定する場合は不要。
