@@ -79,7 +79,7 @@ CSVの1Subずつ、次の順に処理します。
 
 |対象|設定内容|
 |---|---|
-|RG・Log Analytics|新規作成地域は`$location`。ワークスペース保持365日、取込・クエリのパブリックアクセスとリソース権限でのログ参照を有効化|
+|RG・Log Analytics|新規作成地域は`$location`。ワークスペース保持90日、取込・クエリのパブリックアクセスとリソース権限でのログ参照を有効化|
 |地域別Storage|StorageV2・Standard_ZRS、インフラ暗号化・バージョン単位の不変性を有効化。共有キー・Blob匿名公開は無効。HTTPS／TLS 1.2、通信は既定拒否・AzureServicesを許可|
 |Storageの追加設定|Blobバージョン管理、appendBlobを最終更新の1,095日後に削除するライフサイクル、個別Defenderの無効化|
 |Event・Syslog|旧DCR関連がある場合に準備し、合計保持を1,095日へ設定。VM側がNone・空欄でも対象|

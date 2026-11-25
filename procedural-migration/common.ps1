@@ -80,6 +80,7 @@ if (-not $settings) {
 $oldDcrIds = @(foreach ($name in $settings.DcrNames) {
     "/subscriptions/$($settings.HubSubscriptionId)/resourceGroups/$($settings.ResourceGroup)/providers/Microsoft.Insights/dataCollectionRules/$name"
 })
+# 割り当てのIDを組み立て、3件目だけ参照IDを付ける。最初の2件は割り当て全体を除外する。
 $policyAssignments = @(for ($index = 0; $index -lt 3; $index++) {
     @{
         Id = "/providers/Microsoft.Management/managementGroups/$($settings.ManagementGroup)/providers/Microsoft.Authorization/policyAssignments/$($settings.Assignments[$index])"
@@ -88,6 +89,7 @@ $policyAssignments = @(for ($index = 0; $index -lt 3; $index++) {
         })
     }
 })
+# 別環境・別の移行条件の記録を再実行で使わないよう、照合に使う値をまとめる。
 $migrationContext = @{
     Environment = $environment
     SourceWorkspace = $targetWorkspaceId
@@ -96,6 +98,7 @@ $migrationContext = @{
 }
 $recordDirectory = Join-Path $PSScriptRoot "records/$environment"
 $ErrorActionPreference = 'Stop'
+# Azure CLIとの間で日本語の設定名が文字化けしないよう、入出力をUTF-8にそろえる。
 $OutputEncoding = [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 $env:PYTHONIOENCODING = 'utf-8'
 
@@ -169,6 +172,7 @@ function Invoke-ArmRequest {
         if ($null -ne $Body) {
             $request.Body = [Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $Body -Depth 40))
         }
+        # 本文受信の待機を設定できる環境でだけ指定し、非対応の引数で止まるのを避ける。
         if ((Get-Command Invoke-WebRequest).Parameters.ContainsKey('OperationTimeoutSeconds')) {
             $request.OperationTimeoutSeconds = 300
         }
@@ -216,6 +220,7 @@ function Invoke-ArmRequest {
                 $Method = 'Get'
                 $Body = $null
                 Start-Sleep -Seconds 3
+                # 作成中という正常応答は通信失敗の回数に数えず、完了まで確認を続けるため試行数を戻す。
                 $attempt = -1
                 continue
             }
@@ -280,6 +285,7 @@ function Test-Configuration {
         return (Test-Configuration $Actual $Expected -Kind $Kind) -and
             (Test-Configuration $Expected $Actual -Kind $Kind)
     }
+    # 旧365日ルールが残ると3年を待たずログが消えるため、新ルールの一致だけでなく旧ルールの不在も確認する。
     if ($Kind -eq 'Lifecycle') {
         if (@($Actual.properties.policy.rules | Where-Object name -eq 'log-append-365').Count) {
             return $false
@@ -404,6 +410,7 @@ function Get-WritableBody {
             $body.identity.Remove('tenantId')
             if ($body.identity.userAssignedIdentities) {
                 foreach ($identityId in @($body.identity.userAssignedIdentities.Keys)) {
+                    # ユーザー割当IDのリソースIDはキーとして残し、Azureが採番した内部値だけを除いて再PUTできる形にする。
                     $body.identity.userAssignedIdentities[$identityId] = @{}
                 }
             }
@@ -476,6 +483,7 @@ if (-not $SkipCsv) {
                 throw "CSVの必須値が空欄です: $name"
             }
         }
+        # Storage宛ては名前を必須にし、指定された名前には地域置換用のjpeが1か所だけあることを確認する。
         if (($target.LogDestination -eq 'Storage' -and -not $target.StorageAccount) -or
             ($target.StorageAccount -and ($target.StorageAccount -cnotmatch '^[a-z0-9]{3,24}$' -or
             [regex]::Matches($target.StorageAccount, 'jpe').Count -ne 1))) {
@@ -543,6 +551,7 @@ function Get-MigrationPlan {
         foreach ($resource in $page.value) {
             $resourceLocations[$resource.id] = $resource.location
             if ($resource.type -eq 'Microsoft.Storage/storageAccounts') {
+                # アカウント種別ごとに存在するサービスだけを追加し、対応しない子サービスを問い合わせない。
                 $services = switch ($resource.kind) {
                     'BlobStorage' {
                         'blobServices'
@@ -586,6 +595,7 @@ function Get-MigrationPlan {
     $listedSettings = @($resourceLocations.Keys | ForEach-Object -Parallel {
         $result = @{ ResourceId = $_; Sources = @(); Settings = @(); Error = '' }
         try {
+            # 並列処理へ関数・変数は自動で渡らないため、共通定義と対象Subの認証情報を用意する。
             . $using:commonScript -SkipCsv
             $subscriptionId = $using:subscriptionId
             $script:accessToken = $using:accessToken
@@ -595,6 +605,7 @@ function Get-MigrationPlan {
             $result.Sources = @($response.value | Where-Object { $_.properties.workspaceId -eq $using:sourceWorkspace })
         }
         catch {
+            # 診断設定に対応しないリソースだけを対象外にし、通信失敗などで調査漏れが起きた場合は止める。
             if (($_.Exception.Message + $_.ErrorDetails.Message) -notmatch 'ResourceTypeNotSupported') {
                 $result.Error = $_.Exception.Message
             }

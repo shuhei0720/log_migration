@@ -11,6 +11,7 @@ $subscriptionFilterProvided = $PSBoundParameters.ContainsKey('SubscriptionIds')
 $recordFiles = @(Get-ChildItem $recordDirectory -Filter '*.json')
 if ($subscriptionFilterProvided) {
     $unknownIds = @($SubscriptionIds | Where-Object { $_ -notin $recordFiles.BaseName })
+    # 空指定・記録にないID・重複は停止し、指定したSubだけを確実に戻す。
     if ($SubscriptionIds.Count -eq 0 -or $unknownIds.Count -gt 0 -or
         @($SubscriptionIds | Sort-Object -Unique).Count -ne $SubscriptionIds.Count) {
         throw '記録にあるSub IDを重複なく指定してください。'

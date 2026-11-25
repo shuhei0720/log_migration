@@ -1,13 +1,13 @@
 {
   "status": "TESTS_PASS_ALL_RESOURCES_AUTH_RESTORED_26_REGISTRATIONS_RESTORED_TWO_AZURE_PENDING",
-  "updatedUtc": "2026-11-25T07:35:19.695659+00:00",
+  "updatedUtc": "2026-11-25T07:53:21.454900+00:00",
   "canonicalSha256": {
-    "common.ps1": "68441b315ffe668de0ae72bba1627bd5ea2582d5289a8d24fc7620cdaaa81abb",
-    "precheck.ps1": "74d49d8b87ba2ba41d58a276c6fbb1f165a4d98afd7d3951852fbc975e08f599",
-    "rollback.ps1": "d4bfe2ea1f2887712107ba0c623857282bb5179795a717faa2395efce11f8071",
-    "step1_copy.ps1": "8611f0a689c2bcb83540f929092f59a9ee6623554c56a13757a4a91ec3995db2",
-    "step2_verify.ps1": "49961f9d6ac3360172faeba887e336668013bcce4d39e07ccf9ba863c843bd72",
-    "step3_delete.ps1": "4b848b0b1a1ca1f3c5f765b83425db32a2154ffe596c8fe2045494ee737c5689"
+    "step3_delete.ps1": "4b848b0b1a1ca1f3c5f765b83425db32a2154ffe596c8fe2045494ee737c5689",
+    "common.ps1": "3dceca34770c1590b133a4f394096aa36a53e65fc346b89f0fbe7aee7b23eecf",
+    "rollback.ps1": "cafe6ccc395f48a76cf609b14d9300a60c558a8d2db42913b1bd628714c0497a",
+    "step1_copy.ps1": "3d50370d5aaea6b24dc6faf7c663e6de003a59127581ed351b092d930d387a91",
+    "step2_verify.ps1": "feb65bd719d68a792339776ecc33ac789ff67de928e83ec3dcd8096f147cab4e",
+    "precheck.ps1": "74d49d8b87ba2ba41d58a276c6fbb1f165a4d98afd7d3951852fbc975e08f599"
   },
   "testSha256": "922fc60eb5b73ad0a09da6f2776a5c25a3f2d12d88be71834e3b62ca6ab374f9",
   "linuxReplay": {
@@ -165,7 +165,7 @@
     "controllerSha256Attribution": "Historical full fixture Deploy/Capture/Seed/F1/F2; cleanup recovery used preserved in-memory variants. Local counts below are historical checks, not re-execution of the new controller.",
     "historicalFullFixtureControllerFrozen": true,
     "currentDistributedController": {
-      "sha256": "03fa32e3b40041686288a3726c215ad5c4dac0b9e8f61c6b64c4b32672635e62",
+      "sha256": "cbe73b16f6e5f2fac46ae4ef2ce2ceb4b0e29673ac2baae44f253395512a0666",
       "templateSha256": "e453927c096732eb3b034b3a7d261f0926b1867f740fb613cee936ac6457bda0",
       "readmeSha256": "af12a7cd375fde4dee15e36fed44b42041fa50d26c620a869d848409f2271980",
       "functions": 3,
@@ -175,12 +175,12 @@
         "Capture"
       ],
       "changes": [
-        "HTTP request TimeoutSec changed from 120 to 300 seconds; all other controller bytes preserved."
+        "Add brief purpose comments to non-obvious processing; executable tokens and AST unchanged."
       ],
-      "azureValidation": "NOT_RERUN_SINGLE_TIMEOUT_VALUE_CHANGE_SYNTAX_AND_BYTE_DIFF_VALIDATED",
+      "azureValidation": "NOT_RERUN_COMMENTS_ONLY_TOKENS_AND_AST_VALIDATED",
       "previousAzureValidatedControllerSha256": "00c6047f3f2342c66ace64f5cd0b2ecd38981e2173dbd7d8a5f258c257c0f44f",
       "historicalResultsReattributedToCurrentVersion": false,
-      "detail": "fixtureTimeoutAndConditionCommentRevision"
+      "detail": "fullSourceReadabilityAndRetention90Revision"
     },
     "previousDistributedControllers": [
       {
@@ -221,6 +221,25 @@
         "azureValidationExecutedControllerSha256": "00c6047f3f2342c66ace64f5cd0b2ecd38981e2173dbd7d8a5f258c257c0f44f",
         "distributionDiffFromExecutedController": "One trailing LF removed; all other bytes identical, recorded private equivalence proof.",
         "archivedBy": "fixtureTimeoutAndConditionCommentRevision"
+      },
+      {
+        "sha256": "03fa32e3b40041686288a3726c215ad5c4dac0b9e8f61c6b64c4b32672635e62",
+        "templateSha256": "e453927c096732eb3b034b3a7d261f0926b1867f740fb613cee936ac6457bda0",
+        "readmeSha256": "af12a7cd375fde4dee15e36fed44b42041fa50d26c620a869d848409f2271980",
+        "functions": 3,
+        "actions": [
+          "Plan",
+          "Deploy",
+          "Capture"
+        ],
+        "changes": [
+          "HTTP request TimeoutSec changed from 120 to 300 seconds; all other controller bytes preserved."
+        ],
+        "azureValidation": "NOT_RERUN_SINGLE_TIMEOUT_VALUE_CHANGE_SYNTAX_AND_BYTE_DIFF_VALIDATED",
+        "previousAzureValidatedControllerSha256": "00c6047f3f2342c66ace64f5cd0b2ecd38981e2173dbd7d8a5f258c257c0f44f",
+        "historicalResultsReattributedToCurrentVersion": false,
+        "detail": "fixtureTimeoutAndConditionCommentRevision",
+        "archivedBy": "fullSourceReadabilityAndRetention90Revision"
       }
     ]
   },
@@ -2060,6 +2079,99 @@
     "documentSha256": {
       "procedural-migration/CODE_LEARNING.md": "7ea228e0c670234612fc22b3937f2ba62ad387ef2bd5841a8d513bc8b3436f69",
       "test-environment/README.md": "af12a7cd375fde4dee15e36fed44b42041fa50d26c620a869d848409f2271980"
+    }
+  },
+  "fullSourceReadabilityAndRetention90Revision": {
+    "status": "PASS_FULL_READING_AND_TARGETED_NORMAL_REPLAY",
+    "baselineCommit": "02769434b4df123a51c0515e4c67689b2a0ccb98",
+    "reviewedScripts": 7,
+    "reviewScope": "Full reading of six migration scripts and the test fixture; data construction, transformations, special values, processing flow and complex conditions.",
+    "commentsAddedAtLocations": 39,
+    "allExistingCommentsPreservedExceptUserRequestedRetentionDescription": true,
+    "onlyExecutableChange": {
+      "file": "step1_copy.ps1",
+      "property": "Workspace properties.retentionInDays",
+      "before": 365,
+      "after": 90
+    },
+    "workspaceRetentionDays": 90,
+    "eventSyslogTotalRetentionDays": 1095,
+    "storageAppendBlobLifecycleDays": 1095,
+    "powerShellVersion": "7.5.4",
+    "caseCount": 8,
+    "assertions": 633,
+    "cases": [
+      {
+        "Case": "StorageとVM: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 90
+      },
+      {
+        "Case": "LogとVM: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 90
+      },
+      {
+        "Case": "Storageのみ: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 86
+      },
+      {
+        "Case": "Logのみ: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 86
+      },
+      {
+        "Case": "VMのみ: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 88
+      },
+      {
+        "Case": "両方None: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 84
+      },
+      {
+        "Case": "両方空欄: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 84
+      },
+      {
+        "Case": "Storage ACL・LAW features・分析保持・他ルールを維持する",
+        "Result": "PASS",
+        "Assertions": 13
+      }
+    ],
+    "retentionObservations": {
+      "Cases": 8,
+      "WorkspaceObservations": 16,
+      "TableObservations": 32,
+      "LifecycleObservations": 16,
+      "Status": "PASS",
+      "WorkspaceRetentionDays": 90,
+      "EventSyslogTotalRetentionDays": 1095,
+      "StorageAppendBlobLifecycleDays": 1095,
+      "AzureRequests": 0
+    },
+    "nativeHelpFunctions": 5,
+    "learningGuideRangesValidated": 77,
+    "learningGuideAnchorsValidated": 99,
+    "azureRequests": 0,
+    "azureExecutionRerun": false,
+    "historicalExecutionResultsPreserved": true,
+    "proofDirectory": "/tmp/log-migration-fresh-normal-20261125/full-condition-comment-review",
+    "proofSha256": {
+      "COMMON_FULL_COMMENT_REVIEW.json": "19e127d53e9c76c4efa70b225ab4026932304b93622edea3eb8548592710c8a1",
+      "STEPS_COMMENT_REVIEW.json": "6e26205fe7299baa75cb09efc0e071e816f2d12b6cc996a2d3eb9a6ad3e50a7c",
+      "FIXTURE_COMMENT_REVIEW.json": "e295a3c084746f61ac652ca662a5a278c4a67910ba839c023b055b8b1ef80748",
+      "SOURCE_QA.json": "b032b30c2360cf22dffe9bc3d3eb473ee6bdc79c300a6917c935222dbd42befa",
+      "DOC_LINE_QA.json": "9ef5514f6a47b7dc39683f5cc270237b74fd4f991383bd61e461bdc08dafd9d8",
+      "NORMAL_REPLAY.json": "b187ec55a9308dcd8d0d52dfe0aaaefcb173137e7228ab5ef947fef1dfcb8541",
+      "RETENTION_QA.json": "602c97e9cefc4bdba3b4d313f571a7df3195a500624929e3e64dc8328ef5413a"
+    },
+    "documentSha256": {
+      "procedural-migration/README.md": "72ad976ac353e8b7c020502fe84975eeb4f57990c52cc17c9d27337843224512",
+      "procedural-migration/CODE_LEARNING.md": "7b76d74ba1933854c249cfdee9030afa92109ad3cb20c01ea2a85fa539277d93"
     }
   }
 }

@@ -16,7 +16,7 @@ foreach ($target in $targets) {
         $resourceGroupId = "/subscriptions/$subscriptionId/resourceGroups/$($target.ResourceGroup)"
         # ---
         # 環境別ポリシーのSub単位Waiverと、CSVのリソースグループ・Log Analyticsを作成対象に加える。
-        # Log Analytics全体は365日保持する。送信がNone・空欄でも保存先は作る。
+        # Log Analytics全体は90日保持する。送信がNone・空欄でも保存先は作る。
         # ---
         foreach ($assignment in $policyAssignments) {
             $assignmentName = ($assignment.Id -split '/')[-1]
@@ -47,7 +47,7 @@ foreach ($target in $targets) {
             Body = @{
                 location = $location
                 properties = @{
-                    retentionInDays = 365
+                    retentionInDays = 90
                     publicNetworkAccessForIngestion = 'Enabled'
                     publicNetworkAccessForQuery = 'Enabled'
                     features = @{ enableLogAccessUsingOnlyResourcePermissions = $true }
@@ -155,6 +155,7 @@ foreach ($target in $targets) {
                 windowsEventLogs = @(@{
                     name = 'eventLogsDataSource'
                     streams = @('Microsoft-Event')
+                    # Securityの数値は監査成功・失敗を選ぶ指定で、Application・Systemは全レベルを収集する。
                     xPathQueries = @(
                         'Application!*[System[(Level=1 or Level=2 or Level=3 or Level=4 or Level=0 or Level=5)]]'
                         'Security!*[System[(band(Keywords,13510798882111488))]]'
@@ -244,6 +245,7 @@ foreach ($target in $targets) {
                 $setting.Before = Get-WritableBody (Invoke-ArmRequest -Resource $setting -Optional) -Kind $setting.Kind
             }
             if ($setting.Kind -eq 'Dcr') {
+                # 今回新しく作るDCRは切り戻しでも残すため、作成前に存在しない場合だけ保持対象にする。
                 $setting.KeepOnRollback = $null -eq $setting.Before
             }
             if ($setting.Before -and $setting.Kind -in @('Dcr', 'Association')) {
@@ -257,6 +259,7 @@ foreach ($target in $targets) {
                 $setting.Body = $body
             }
         }
+        # 作成先を決めるための調査用情報は、再開・切り戻しに不要なので記録から外す。
         $plan.Remove('Discovery')
 
         # ---
@@ -335,6 +338,7 @@ foreach ($target in $targets) {
             $current = Invoke-ArmRequest -Resource $resource -Optional -Wait
             $currentBody = Get-WritableBody $current -Kind $resource.Kind
             $expected = $resource.Body
+            # RGは存在すれば再利用するため、地域は一致条件に含めない。
             if ($resource.Kind -eq 'Group') {
                 $expected = @{}
             }
@@ -349,11 +353,13 @@ foreach ($target in $targets) {
             if ($current -and $resource.Kind -eq 'Exemption') {
                 throw '既存の適用除外が指定内容と異なります。'
             }
+            # DCR・関連付けは保存した変更前のままなら更新し、別の変更があれば上書きしない。
             if ($current -and $resource.Kind -in @('Dcr', 'Association')) {
                 if (-not $resource.Before -or -not (Test-Configuration $currentBody $resource.Before -Exact)) {
                     throw "変更予定の設定が記録と異なります: $($resource.Id)"
                 }
             }
+            # 既存値を引き継ぐための変更は送信本文のコピーに加え、記録のBodyは変えない。
             $body = ConvertTo-Json $resource.Body -Depth 40 | ConvertFrom-Json -AsHashtable
             $method = 'Put'
 
@@ -391,6 +397,7 @@ foreach ($target in $targets) {
                     $null -ne $_ -and $_.name -notin @('log-append-365', 'log-append-1095')
                 }) + @($resource.Body.properties.policy.rules)
             }
+            # 既存テーブルの列定義などを保つため、保持期間だけをPATCHで更新する。
             if ($current -and $resource.Kind -eq 'Table') {
                 $method = 'Patch'
                 $body = @{ properties = @{ totalRetentionInDays = 1095 } }
@@ -441,6 +448,7 @@ foreach ($target in $targets) {
                 Expected = ''
             }
             try {
+                # 並列処理には外側の関数が引き継がれないため、共通定義と対象Subの認証情報を用意する。
                 . $using:commonScript -SkipCsv
                 $subscriptionId = $using:subscriptionId
                 $script:accessToken = $using:accessToken
