@@ -3,4 +3,9 @@ procedural-migration/records/
 procedural-migration/*_results.csv
 procedural-migration/*_failures.csv
 procedural-migration/*.tmp
+readable-migration/targets.csv
+readable-migration/records/
+readable-migration/*_results.csv
+readable-migration/*_failures.csv
+readable-migration/*.tmp
 test-environment/runs/

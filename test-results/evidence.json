@@ -1,6 +1,6 @@
 {
   "status": "TESTS_PASS_ALL_RESOURCES_AUTH_RESTORED_26_REGISTRATIONS_RESTORED_TWO_AZURE_PENDING",
-  "updatedUtc": "2026-11-25T09:49:40.312200+00:00",
+  "updatedUtc": "2026-11-25T13:07:42.013966+00:00",
   "canonicalSha256": {
     "rollback.ps1": "cafe6ccc395f48a76cf609b14d9300a60c558a8d2db42913b1bd628714c0497a",
     "step3_delete.ps1": "4b848b0b1a1ca1f3c5f765b83425db32a2154ffe596c8fe2045494ee737c5689",
@@ -2634,6 +2634,60 @@
     "proofSha256": {
       "SOURCE_QA.json": "4ff18298c768927fb7f6067544a0035082829a6d13c705d6e1ba641c83046024",
       "DOC_QA.json": "debda54b23cd5b8cc3044bbd499bbe5c48732df8660482594ae424eabb5bf522"
+    }
+  },
+  "readableRefactor": {
+    "status": "PASS_SEPARATE_FUNCTION_BASED_COMPARISON_VERSION",
+    "directory": "readable-migration",
+    "baseCommit": "fb9ff688abdf13615d8344e5287f6cd360cd8e1a",
+    "canonicalFilesAndOriginalsUnchanged": true,
+    "commonFunctionCount": 38,
+    "functionParameterHelpCount": 78,
+    "stepFunctionDefinitions": 0,
+    "stepLines": {
+      "precheck.ps1": 29,
+      "step1_copy.ps1": 73,
+      "step2_verify.ps1": 49,
+      "step3_delete.ps1": 30,
+      "rollback.ps1": 55
+    },
+    "scriptFiles": 6,
+    "runtime": "7.5.4",
+    "testHarnessSha256": "37bef30539f3791280d21c1e17d93d3a6f6c5f236266833aee1a8a3e9873ceb2",
+    "caseCount": 90,
+    "assertions": 1304,
+    "allCaseNamesResultsAndAssertionCountsMatchCanonical": true,
+    "realParallelRunspaces": 974,
+    "requestsFromParallelRunspaces": 1339,
+    "azureRequests": 0,
+    "commonLoadExternalCalls": 0,
+    "azureExecutionRerun": false,
+    "executedSourceSha256": {
+      "step1_copy.ps1": "010faa71e75362b2a0c80f71ebd5c5ac1971c618e8f957a6942003ff26de9b82",
+      "step2_verify.ps1": "058a75193dd9783937fa06ad7fcb2847406ce3955a7b7568ece045c6195308b6",
+      "precheck.ps1": "fa4aa034da1f821f73ca5aa687157da696da8f975445ba1c0b5d910547fb1fba",
+      "common.ps1": "8429c9e7625660d0713a9123d061bb75b2b91921ba5b8d4a7f754b6f2f04cfbd",
+      "step3_delete.ps1": "c808a8684c95d56d4b64dbe57e8d5b165fb4e39ae8f122e1a271fe067632dcad",
+      "rollback.ps1": "76c3639013f54317a73204a50f70ae90c260d4af7317dcbcd0949467593ef7a3"
+    },
+    "submittedSourceSha256": {
+      "common.ps1": "8429c9e7625660d0713a9123d061bb75b2b91921ba5b8d4a7f754b6f2f04cfbd",
+      "precheck.ps1": "fa4aa034da1f821f73ca5aa687157da696da8f975445ba1c0b5d910547fb1fba",
+      "step1_copy.ps1": "c7137079a9c4289af5ffd4631f82c474a3a54b9f987089e8dfacce382bc0cef8",
+      "step2_verify.ps1": "058a75193dd9783937fa06ad7fcb2847406ce3955a7b7568ece045c6195308b6",
+      "step3_delete.ps1": "c808a8684c95d56d4b64dbe57e8d5b165fb4e39ae8f122e1a271fe067632dcad",
+      "rollback.ps1": "ca8166dc01fc9b6c772f3ec9ef5e01f3e83450eebac58df088853a9c67578a96"
+    },
+    "submittedExecutableCodeMatchesReplay": true,
+    "afterReplayEdits": "Two explanatory comments only; non-comment tokens compared for all six scripts",
+    "protectedSourceFileCount": 12,
+    "documentLinksChecked": 28,
+    "privateProofDirectory": "/tmp/log-migration-readable-refactor",
+    "proofSha256": {
+      "READABLE_REPLAY.json": "569c6282b4cb29f72a5cc1cc1c6ff13f8fb075df8f0da5674e47ef1342eda997",
+      "STRUCTURE_QA.json": "bb366ee8d85efb6551fc07e7e478d02e40e433db054e33f6d2167b3f0932eb20",
+      "REPLAY_EQUIVALENCE.json": "a7428f7d8840fe1537fe7640e29a6edd46c3e1d8f8180423c10ad22f99ebcc49",
+      "PROTECTED_BEFORE.json": "1860462df365c25293b357579c36b3610da2ef7672b866cd91a7413c9f8ef310"
     }
   }
 }
