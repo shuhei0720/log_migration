@@ -1,6 +1,6 @@
 {
-  "status": "CURRENT_COMPREHENSIVE_TESTS_AND_ASSET_CLEANUP_COMPLETE_PROVIDER_RESTORE_PENDING",
-  "updatedUtc": "2026-11-25T01:08:40.939046+00:00",
+  "status": "PRIOR_COMPREHENSIVE_TESTS_COMPLETE_FRESH_NORMAL_INFRASTRUCTURE_PREPARATION_IN_PROGRESS",
+  "updatedUtc": "2026-11-25T01:48:44.935203+00:00",
   "canonicalSha256": {
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
     "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
@@ -179,7 +179,7 @@
   },
   "currentRun": {
     "runId": "fin7t261124a",
-    "status": "CURRENT_TESTS_PASS_ASSETS_ZERO_PROVIDER_RESTORE_PENDING",
+    "status": "PRIOR_TESTS_AND_OWN_ASSET_CLEANUP_COMPLETE_EXACT_TWO_PROVIDERS_CARRIED_TO_APPROVED_FRESH_RUN",
     "reviewGateSkippedByUser": true,
     "baselineResourceAndGroupCounts": [
       0,
@@ -233,9 +233,9 @@
       "hostProofSha256": "28a289c0486436a446479c2743ed702a5cfdff4d6d6d75c85b1ab5aba2db959c"
     },
     "additionalFreshNormalRun": {
-      "status": "BUDGET10000_APPROVED_DELAY_CAUSE_INVESTIGATION_FIRST_NOT_RUN",
-      "sequence": "Only after current tests, all cleanup, Root0 original-state verification, documentation completion and source freeze; full-scope fresh normal run and the combined JPY 10000 planning budget are approved; two provider unregister operations and final prior-restoration verification remain pending",
-      "azureDeploymentAuthorized": false,
+      "status": "ENVIRONMENT_BUILD_APP_SERVICE_REGION_FEASIBILITY_CHECK_NORMAL_NOT_STARTED",
+      "sequence": "Prior tests and their assets cleanup are complete. User approved carrying only B Network/Compute into the fresh run with their proven original NotRegistered targets retained. Exact2 and all40 required registrations are confirmed; current work prepares the new infrastructure. PRECHECK/copy/verify/delete and fresh final cleanup have not run.",
+      "azureDeploymentAuthorized": true,
       "estimateDocument": "test-results/ADDITIONAL_NORMAL_ESTIMATE.md",
       "approvedCurrentBudgetJPY": 6000,
       "proposedCombinedBudgetJPY": [
@@ -248,8 +248,111 @@
       "additionalBudgetJPY": 4000,
       "selectedConfiguration": "Full scope: 65 roots, 53 actual new types including auxiliary dependencies, two subscriptions, four regions, no duplicate 300-NSG load",
       "budgetApprovalQuote": "追加予算は大丈夫。現時点で2000円なんよな？利用登録解除待ちって時間かかりすぎやろ",
-      "providerCarryoverApproved": false,
-      "latestUserInstruction": "まずそんな時間かかる方がおかしいだろ、その原因特定からだろ"
+      "providerCarryoverApproved": true,
+      "latestUserInstruction": "オッケー進めていいよ",
+      "runId": "fresh261124c",
+      "providerCarryoverApprovalQuote": "オッケー、それはその方針でいいけど、最終テストで聞きたいことがある。",
+      "normalFourPhasesStarted": false,
+      "normalResult": "NOT_RUN",
+      "freshFinalCleanupComplete": false,
+      "paidPreparationIntentUtc": "2026-11-25T01:42:27Z",
+      "newInfrastructurePresent": true,
+      "preparation": {
+        "exactTwoRegistration": {
+          "status": "PASS_TWO_PROVIDERS_REREGISTERED",
+          "completedUtc": "2026-11-25T01:31:45.366656+00:00",
+          "postCount": 2,
+          "postRetries": 0,
+          "confirmedStates": {
+            "Microsoft.Network": "Registered",
+            "Microsoft.Compute": "Registered"
+          },
+          "allOtherProviderStatesUnchanged": true,
+          "finalProof": {
+            "path": "/tmp/log-migration-fresh-normal-20261125/carryover2/REGISTER_TWO_FINAL_PROOF.json",
+            "sha256": "d5251c74e4bd1e6912bf897875d715aea160cf018ac9838a613702aaeb1925c0"
+          },
+          "independentScopeReview": {
+            "path": "/tmp/log-migration-fresh-normal-20261125/carryover2/INDEPENDENT_REGISTER_SCOPE_REVIEW.json",
+            "sha256": "9c2a26582e9cf21ad2ef22700254c85598155380ddb17a792173f4eee4975307"
+          }
+        },
+        "requiredProviders": {
+          "status": "ALL_REGISTERED_CONFIRMED",
+          "registrationPairs": 40,
+          "additionalRegistrationPosts": 26,
+          "completedUtc": "2026-11-25T01:37:45.298759+00:00",
+          "journal": {
+            "path": "/tmp/log-migration-fresh-normal-20261125/baseline/full-provider-registration-journal.json",
+            "sha256": "ce78c09ab6af4ce26a2b11381b29e89ac945938f14550bcb9144aa34130a70c7"
+          }
+        },
+        "registeredBeforeVerification": {
+          "status": "PASS",
+          "checks": 27,
+          "finalProviderRestorationClaimed": false,
+          "proof": {
+            "path": "/tmp/log-migration-fresh-normal-20261125/baseline/registered-before-verification.json",
+            "sha256": "254f5bff79e69814270404d2c2ae9a343ffe5ea126a4892db8d99c8e70b4f5a6"
+          }
+        },
+        "network": {
+          "status": "READY",
+          "verifiedAtUtc": "2026-11-25T01:41:47.147158+00:00",
+          "vnetCount": 3,
+          "subnetsPerVnet": 5,
+          "nsgAttachments": 0,
+          "routeTableAttachments": 0,
+          "proof": {
+            "path": "/tmp/log-migration-fresh-normal-20261125/network/run/ready.json",
+            "sha256": "16c27894c4ac335ea568a180243a795e94381dfcfba1620675c47eb43612b679"
+          }
+        },
+        "windows": {
+          "provisioningState": "Succeeded",
+          "vmResourceId": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-cx-final-ps7-fresh-261125a/providers/Microsoft.Compute/virtualMachines/vm-final-ps7-fresh261125a",
+          "vmId": "1e165bbe-99d4-4098-96f5-e61fe1a9910b",
+          "proof": {
+            "path": "/tmp/log-migration-fresh-normal-20261125/windows/vm-created.json",
+            "sha256": "44d6f9d4b82b9c7d9b936d074c9233079007041d93d6afcc833057ab1184569f"
+          },
+          "nativeBootstrapAndNormalTestPassClaimed": false
+        },
+        "carriedFinalTargets": [
+          {
+            "subscriptionId": "bfda36ec-1aed-4b0c-a907-4d4809c63888",
+            "namespace": "microsoft.network",
+            "state": "NotRegistered"
+          },
+          {
+            "subscriptionId": "bfda36ec-1aed-4b0c-a907-4d4809c63888",
+            "namespace": "microsoft.compute",
+            "state": "NotRegistered"
+          }
+        ]
+      },
+      "fullSourceChangedDuringPreparation": false,
+      "infraReadyProof": {
+        "path": "FRESH_INFRA_READY_PROOF.json",
+        "sha256": "0ec65e2fb8bc657589c9a6b1ccfa9d98a10c91fd3745eed13ca95a9bfb5a632e"
+      },
+      "hostLaunchFailureBeforeScriptLoad": {
+        "path": "fixture/HOST_LAUNCH_FAILURE_01.json",
+        "azureMutations": 0,
+        "scriptLoaded": false,
+        "resolution": "Explicit writable XDG cache/config/data paths"
+      },
+      "setupConstraintEvidence": [
+        {
+          "path": "fixture/deployment-monitor/b4-original-failed/B4_RETRY_FAILED_PROOF.json",
+          "sha256": "eefc73ce6644edd878d0c73c868ee7a054790601f119638877c05f9062405f1a"
+        },
+        {
+          "path": "fixture/deployment-monitor/b4-new-rg-preparation/CANADACENTRAL_PREFLIGHT_FAILURE_PROOF.json",
+          "sha256": "f09c9bc50bc6bc9b7e0ab11e2dbe39f9d35a5814b19123021a426b7488628257"
+        }
+      ],
+      "appServiceRegionSelection": "Latest user: 安定してデプロイできるリージョンにしてよ; validate available quota and real creation before selecting"
     },
     "currentRcFull300": {
       "result": "PASS",
@@ -792,7 +895,7 @@
         "ownedApimAbsenceProofSha256": "c86e37feea3d62be89bdcc2d6a2d7ef378a296c523b5ef2137bce429f9d78cb0"
       },
       "providerRestoration": {
-        "status": "UNREGISTER_PENDING_GET_ONLY_CONTINUATION",
+        "status": "OLD_PENDING_HISTORY_PRESERVED_EXACT_TWO_CARRIED_AND_REREGISTERED_FOR_APPROVED_FRESH_RUN",
         "restored": false,
         "initialExactPlanPairs": 27,
         "initialAttemptResult": "STOP_PRE_GUARD_BEFORE_AZURE_REQUESTS",
@@ -905,7 +1008,25 @@
           "internalCauseKnown": false,
           "supportRequestDraftPrepared": true,
           "supportMessageSent": false,
-          "reregistrationApproved": false
+          "reregistrationApproved": false,
+          "reregistrationApprovedAfterInvestigation": true
+        },
+        "pendingPairsScope": "Archived old cleanup observation before the approved reregistration; current fresh states are recorded in additionalFreshNormalRun.preparation",
+        "carriedToFreshRun": {
+          "approved": true,
+          "count": 2,
+          "originalNotRegisteredTargetsRetained": true,
+          "oldJournalAndIncompleteChainPreserved": true,
+          "currentConfirmedStates": {
+            "Microsoft.Network": "Registered",
+            "Microsoft.Compute": "Registered"
+          },
+          "registeredAtUtc": "2026-11-25T01:31:45.366656+00:00",
+          "finalRestorationStillRequired": true,
+          "finalProof": {
+            "path": "/tmp/log-migration-fresh-normal-20261125/carryover2/REGISTER_TWO_FINAL_PROOF.json",
+            "sha256": "d5251c74e4bd1e6912bf897875d715aea160cf018ac9838a613702aaeb1925c0"
+          }
         }
       }
     }
