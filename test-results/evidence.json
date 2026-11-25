@@ -1,6 +1,6 @@
 {
   "status": "CURRENT_COMPREHENSIVE_TESTS_AND_ASSET_CLEANUP_COMPLETE_PROVIDER_RESTORE_PENDING",
-  "updatedUtc": "2026-11-24T23:10:44.773316+00:00",
+  "updatedUtc": "2026-11-25T00:56:50.005354+00:00",
   "canonicalSha256": {
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
     "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
@@ -233,15 +233,17 @@
       "hostProofSha256": "28a289c0486436a446479c2743ed702a5cfdff4d6d6d75c85b1ab5aba2db959c"
     },
     "additionalFreshNormalRun": {
-      "status": "PENDING_USER_SCOPE_AND_BUDGET_RESPONSE_NOT_RUN",
-      "sequence": "Only after current tests, all cleanup, Root0 original-state verification, documentation completion and source freeze; fresh scope and budget approval are still pending",
+      "status": "IMPLEMENTATION_DIRECTION_APPROVED_ADDITIONAL_BUDGET_PENDING_NOT_RUN",
+      "sequence": "Only after current tests, all cleanup, Root0 original-state verification, documentation completion and source freeze; user approved carrying out the final fresh normal run, but the additional budget remains unapproved",
       "azureDeploymentAuthorized": false,
       "estimateDocument": "test-results/ADDITIONAL_NORMAL_ESTIMATE.md",
       "approvedCurrentBudgetJPY": 6000,
       "proposedCombinedBudgetJPY": [
         10000,
         8000
-      ]
+      ],
+      "implementationDirectionApproved": true,
+      "additionalBudgetApproved": false
     },
     "currentRcFull300": {
       "result": "PASS",
@@ -919,5 +921,55 @@
     "resourcesAndGroupsRemoved": true,
     "originalRoleAndPolicyBodiesUnchanged": true,
     "originalManagementGroupParentsRestored": true
+  },
+  "actualCost": {
+    "classification": "REFLECTED_ACTUAL_COST_NOT_FINAL_BILL_OR_CONFIRMED_REMAINING_BUDGET",
+    "costType": "ActualCost",
+    "metric": "PreTaxCost",
+    "currency": "JPY",
+    "period": {
+      "from": "2026-11-01T00:00:00Z",
+      "to": "2026-11-25T00:23:00Z"
+    },
+    "rowCount": 37,
+    "currentRowCount": 11,
+    "currentReturnedPreTaxCostJPY": "2151.0482531901734",
+    "beforeCurrentReturnedPreTaxCostJPY": "3529.36652204793251",
+    "totalReturnedPreTaxCostJPY": "5680.41477523810591",
+    "currentScope": "Owned current test resources used on 2026-11-24; all 11 returned rows matched ownership evidence",
+    "subscriptions": [
+      {
+        "subscriptionId": "5f1b809c-f59f-4489-8211-4bef16a0463a",
+        "queriedUtc": "2026-11-25T00:23:06.149841+00:00",
+        "httpStatus": 200,
+        "rowCount": 28,
+        "nextLink": null,
+        "currentPreTaxCostJPY": "1099.7544279041834",
+        "totalPreTaxCostJPY": "3320.14779246235321",
+        "rawPath": "baseline/cost-check/actual-261125-0022/query-5f1b809c-f59f-4489-8211-4bef16a0463a.json",
+        "rawFileSha256": "ce85cc8738726334f0d4cd0150459a554918754cc69a1c78b9529efd417d934d"
+      },
+      {
+        "subscriptionId": "bfda36ec-1aed-4b0c-a907-4d4809c63888",
+        "queriedUtc": "2026-11-25T00:23:06.151771+00:00",
+        "httpStatus": 200,
+        "rowCount": 9,
+        "nextLink": null,
+        "currentPreTaxCostJPY": "1051.293825285990",
+        "totalPreTaxCostJPY": "2360.2669827757527",
+        "rawPath": "baseline/cost-check/actual-261125-0022/query-bfda36ec-1aed-4b0c-a907-4d4809c63888.json",
+        "rawFileSha256": "9096aa8c64d8ca14301f5387708ba70c718a5d487b584b19fd2d68a5bcc5a2db"
+      }
+    ],
+    "independentAudit": {
+      "result": "PASS_INDEPENDENT_DECIMAL_RAW_RECONCILIATION",
+      "checkedUtc": "2026-11-25T00:26:20.172129+00:00",
+      "path": "baseline/cost-check/actual-261125-0022/independent-cost-ownership-verification.json",
+      "sha256": "304b7a5aafdb7d4e9c6ae1b832230db2af99dce360dcf9a9b9f5a8b40a29fd9a"
+    },
+    "dataFreshness": "UNKNOWN; API supplied no complete-through timestamp; missing usage rows do not establish zero cost",
+    "finalCurrentCostKnown": false,
+    "remainingBudgetKnown": false,
+    "azureResourceMutations": 0
   }
 }
