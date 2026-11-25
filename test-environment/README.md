@@ -4,6 +4,8 @@ VM・Storage・App Serviceなどを2つのSub（サブスクリプション）�
 
 旧診断・DCR関連は会社の既存ポリシーで設定する前提です。管理グループ・ポリシー・Sub所属は変更しません。確認済みの範囲は[検証結果](../test-results/REPORT.md)を参照してください。
 
+自社2Subで正常系・複製後切り戻し・削除後切り戻しを確認する場合は、[総合テスト手順](INTEGRATION_TEST.md)を使います。
+
 ## 指定する値
 
 PS1先頭の`$SubscriptionIds`にSub IDを2つ、同順の`$ExistingVnetIds`に既存VNet ID、`$Locations`に4地域を指定します。各Subの専用RG（`fx-<RunId>-a`／`-b`）へ作り、資源の地域を分けます。AKSなどの管理RGは別途台帳へ記録します。
