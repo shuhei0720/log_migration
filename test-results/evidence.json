@@ -1,6 +1,6 @@
 {
-  "status": "PRIOR_COMPREHENSIVE_TESTS_COMPLETE_FRESH_NORMAL_INFRASTRUCTURE_PREPARATION_IN_PROGRESS",
-  "updatedUtc": "2026-11-25T01:48:44.935203+00:00",
+  "status": "PRIOR_COMPREHENSIVE_AND_FRESH_NORMAL_MIGRATION_PASS_FRESH_CLEANUP_IN_PROGRESS",
+  "updatedUtc": "2026-11-25T03:57:15.928766+00:00",
   "canonicalSha256": {
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
     "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
@@ -233,8 +233,8 @@
       "hostProofSha256": "28a289c0486436a446479c2743ed702a5cfdff4d6d6d75c85b1ab5aba2db959c"
     },
     "additionalFreshNormalRun": {
-      "status": "ALL_RESOURCE_TYPES_CREATED_P0V3_PROFILE_RECOVERY_BIND_BEFORE_SEED",
-      "sequence": "Prior tests and their assets cleanup are complete. User approved carrying only B Network/Compute into the fresh run with their proven original NotRegistered targets retained. Exact2 and all40 required registrations are confirmed; current work prepares the new infrastructure. PRECHECK/copy/verify/delete and fresh final cleanup have not run.",
+      "status": "NORMAL_FOUR_PHASES_AND_FINAL_SETTINGS_PASS_CLEANUP_IN_PROGRESS",
+      "sequence": "New environment creation and source seed completed after recorded setup constraints were resolved; unchanged canonical scripts then completed PRECHECK/copy/verify/delete once each without interruption or rerun. Raw evidence recovered and independently audited. Fresh resource cleanup and final provider restoration are still in progress.",
       "azureDeploymentAuthorized": true,
       "estimateDocument": "test-results/ADDITIONAL_NORMAL_ESTIMATE.md",
       "approvedCurrentBudgetJPY": 6000,
@@ -252,8 +252,8 @@
       "latestUserInstruction": "オッケー進めていいよ",
       "runId": "fresh261124c",
       "providerCarryoverApprovalQuote": "オッケー、それはその方針でいいけど、最終テストで聞きたいことがある。",
-      "normalFourPhasesStarted": false,
-      "normalResult": "NOT_RUN",
+      "normalFourPhasesStarted": true,
+      "normalResult": "PASS",
       "freshFinalCleanupComplete": false,
       "paidPreparationIntentUtc": "2026-11-25T01:42:27Z",
       "newInfrastructurePresent": true,
@@ -375,7 +375,156 @@
         "originalS1RetailJPYPerHourPreTax": "12.6584",
         "proofPath": "fixture/deployment-monitor/wus2-p0v3-canary/P0V3_FULL_FIVE_SUCCESS_PROOF.json",
         "sha256": "08621f709e40a2a4093df3ebf76b6cc8f30faf0255c6e9ecf013562641378d9b",
-        "normalPhasesStarted": false
+        "normalPhasesStarted": false,
+        "normalPhasesStartedScope": "Historical observation at App Service creation proof, before the subsequent normal execution."
+      },
+      "normalFourPhasesCompleted": true,
+      "freshCleanupStatus": "IN_PROGRESS",
+      "preparationObservationScope": "Preparation fields preserve observations before the normal execution; current migration results are recorded in normalExecution.",
+      "normalExecution": {
+        "result": "PASS",
+        "realAzure": true,
+        "nativeWindows": true,
+        "powerShellVersion": "7.6.10",
+        "platform": "Microsoft Windows NT 10.0.20348.0",
+        "canonicalScriptsUnchanged": true,
+        "onlyAllowedConfigurationOverrides": true,
+        "frozenNormalEntrySha256": "49b4b8e45fda625d4cb0298b20ecc0b44363388500137119b57e79964d264849",
+        "frozenOriginalBundleSha256": "01f266d24894297c6bec0b311f4f70ee06fc65c40ebf070d500ecc39b993b05e",
+        "executedPhases": [
+          "precheck",
+          "copy-complete",
+          "verify",
+          "delete-complete"
+        ],
+        "phaseExecutionsEach": 1,
+        "phaseInterruptions": 0,
+        "phaseReruns": 0,
+        "phaseLimitMinutes": 0,
+        "rawCaseEntries": 13,
+        "distinctCaseIds": 12,
+        "duplicateCaseIdOccurrences": {
+          "independent-copy-contract": 2
+        },
+        "rootResources": 65,
+        "newResourceTypes": 53,
+        "existingReferencedVnetTypes": 1,
+        "observedTypeCountIncludingExistingVnet": 54,
+        "regions": 4,
+        "subscriptions": 2,
+        "loadNsgCount": 0,
+        "diagnosticScopes": 65,
+        "oldDiagnostics": 65,
+        "oldDcrAssociations": 8,
+        "oldSettingsDeleted": 73,
+        "newDiagnostics": 65,
+        "newDcrAssociations": 4,
+        "newWaivers": 6,
+        "newDcrBodies": 2,
+        "destinationObjects": 24,
+        "finalSavedSettingsCompared": 101,
+        "externalVnetDiagnosticsOwned": 2,
+        "beforeUnchanged": true,
+        "unrelatedObjects": 8,
+        "phaseSeconds": {
+          "precheck": 37.3495304,
+          "copy-complete": 301.0176948,
+          "verify": 68.5854918,
+          "delete-complete": 312.7163162
+        },
+        "phaseTotalSeconds": 719.6690332,
+        "wrapperStartUtc": "2026-11-25T03:28:01.2192285+00:00",
+        "wrapperEndUtc": "2026-11-25T03:40:50.044217+00:00",
+        "wrapperWallSeconds": 768.8249885,
+        "wrapperTimingScope": "Native managed execution through result upload; excludes environment creation/seed/cleanup.",
+        "artifactZip": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/windows/downloaded/fresh261124c-normal-results.zip",
+          "sha256": "3e413afc39ff6c0d85a28824944de1d26beb1b63afea597e25991dedce992748",
+          "bytes": 277921,
+          "verifiedFiles": 49
+        },
+        "proofs": {
+          "independent-audit/FRESH_NORMAL_RAW_AUDIT.json": {
+            "path": "/tmp/log-migration-fresh-normal-20261125/independent-audit/FRESH_NORMAL_RAW_AUDIT.json",
+            "sha256": "82e35c97c172665cc48f845b0a7896ac227848d7f5b495cd923155aae4b3feb0"
+          },
+          "windows/fresh-normal-261125a-final.json": {
+            "path": "/tmp/log-migration-fresh-normal-20261125/windows/fresh-normal-261125a-final.json",
+            "sha256": "4d664f8bce1cdc7bca70f163e64bde7e49ef798dc35a6d62e5533f08d9fdd314"
+          },
+          "recovered-normal/F1/cases.json": {
+            "path": "/tmp/log-migration-fresh-normal-20261125/recovered-normal/F1/cases.json",
+            "sha256": "5ca2294130328b22aaa92c3a871a7d7ef9070c389748646a0a768864139770b5"
+          },
+          "recovered-normal/F1/normal-proof.json": {
+            "path": "/tmp/log-migration-fresh-normal-20261125/recovered-normal/F1/normal-proof.json",
+            "sha256": "33b8b5876412de80addc78cc8886d6d4c7c15de1d3d4d1136a4988cc1ed1fc51"
+          },
+          "recovered-normal/F1/result.json": {
+            "path": "/tmp/log-migration-fresh-normal-20261125/recovered-normal/F1/result.json",
+            "sha256": "b945fb92de5f43fef0afc7cc27e07e3e0ee3a44de675f9a35fe76682aebf8885"
+          },
+          "recovered-normal/F1/source-proof.json": {
+            "path": "/tmp/log-migration-fresh-normal-20261125/recovered-normal/F1/source-proof.json",
+            "sha256": "8693d7332df62ab0f1977aa9d415812e0007977d340c7e75975aa71def48ff6a"
+          },
+          "recovered-normal/F1/post-delete-settings.json": {
+            "path": "/tmp/log-migration-fresh-normal-20261125/recovered-normal/F1/post-delete-settings.json",
+            "sha256": "18ea59c079b302637b80d69994fd100061b4d98849ad4dc4801e9eaeb943f35c"
+          }
+        },
+        "phaseAudit": {
+          "precheck": {
+            "status": "PASS",
+            "seconds": 37.3495304,
+            "requests": 133,
+            "resourceWrites": 0,
+            "exitCode": 0,
+            "interrupted": false,
+            "traceSha256": "7247caf1242129ebcdd3a037d847b4e34d6f3643b6f9930a3185bb48cbceeba3"
+          },
+          "copy-complete": {
+            "status": "PASS",
+            "seconds": 301.0176948,
+            "requests": 475,
+            "resourceWrites": 95,
+            "exitCode": 0,
+            "interrupted": false,
+            "traceSha256": "aa0e7b2bec6bbcfd31552d49c39300f46ee5e76812d276062e7afd73d02bda3a"
+          },
+          "verify": {
+            "status": "PASS",
+            "seconds": 68.5854918,
+            "requests": 249,
+            "resourceWrites": 0,
+            "exitCode": 0,
+            "interrupted": false,
+            "traceSha256": "27a0540a857b1c09c5dfdf54307e00d1b5c865285747a8ff235fbb4b3dc53d99"
+          },
+          "delete-complete": {
+            "status": "PASS",
+            "seconds": 312.7163162,
+            "requests": 468,
+            "resourceWrites": 73,
+            "exitCode": 0,
+            "interrupted": false,
+            "traceSha256": "83a540b493f3eb9ceae6cacd283c9de2d87385e39afe4102dc0708d67aae54ec"
+          }
+        },
+        "independentAuditResult": "PASS",
+        "finalVerificationLimits": [
+          "Final old absence and unrelated live body equality are assertions of the frozen reviewed wrapper; those independent helper GET bodies are not serialized. Product DELETE successes and every saved post-delete destination/new-setting body are independently audited here."
+        ],
+        "cleanupIncludedInPassClaim": false,
+        "providerRestorationIncludedInPassClaim": false,
+        "independentReview": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/independent-audit/INDEPENDENT_FRESH_NORMAL_REVIEW.json",
+          "sha256": "6f959848a2b62c2cd51d6f6744f12667473b18d6d211d3df13a4c385ab7e7d9d",
+          "result": "PASS_INDEPENDENT_LOCAL_FRESH_NORMAL_RAW_REVIEW",
+          "azureCalls": 0,
+          "sourceEdits": 0,
+          "rawFilesChanged": 0
+        }
       }
     },
     "currentRcFull300": {
@@ -1186,6 +1335,93 @@
     "dataFreshness": "UNKNOWN; API supplied no complete-through timestamp; missing usage rows do not establish zero cost",
     "finalCurrentCostKnown": false,
     "remainingBudgetKnown": false,
-    "azureResourceMutations": 0
+    "azureResourceMutations": 0,
+    "originalObservationScope": "The original 2026-11-25 00:23 UTC observation is retained in these existing fields; latest contains the newer reflected result.",
+    "latest": {
+      "status": "REFLECTED_ACTUAL_COST_NOT_FINAL_BILL",
+      "queriedUtc": "2026-11-25T03:53:45Z",
+      "costType": "ActualCost",
+      "metric": "PreTaxCost",
+      "currency": "JPY",
+      "period": {
+        "from": "2026-11-01T00:00:00Z",
+        "to": "2026-11-25T03:53:44Z"
+      },
+      "rowCount": 38,
+      "allPagesRetrieved": true,
+      "preNov24ReturnedPreTaxJPY": "3529.36652204793251",
+      "nov24ReturnedPreTaxJPY": "3881.18572342102121",
+      "nov25ReturnedRowCount": 0,
+      "nov25FinalCostKnown": false,
+      "totalMonthReturnedPreTaxJPY": "7410.55224546895372",
+      "dataFreshness": "UNKNOWN; no complete-through timestamp. Returned rows are partial reflected usage; missing resource/date rows do not prove zero cost.",
+      "finalCurrentTestCostKnown": false,
+      "finalFreshNormalTestCostKnown": false,
+      "remainingBudgetKnown": false,
+      "monthTotalIsNotCurrentBudgetSpend": true,
+      "summaryProof": {
+        "path": "/tmp/log-migration-fresh-normal-20261125/cost-check/actual-latest/cost-summary.json",
+        "sha256": "2d079ef42c0202d074210a38f52d98844c90ec8faed6c0f21e4e72b3cef7cf28"
+      },
+      "subscriptions": [
+        {
+          "subscriptionId": "5f1b809c-f59f-4489-8211-4bef16a0463a",
+          "rows": 29,
+          "currency": "JPY",
+          "bucketRowCounts": {
+            "before_20261124": 20,
+            "20261124": 9
+          },
+          "bucketsPreTaxJPY": {
+            "before_20261124": "2220.39336455816981",
+            "20261124": "1993.46006428290521",
+            "20261125": "0"
+          },
+          "totalPreTaxJPY": "4213.85342884107502",
+          "queryEvidencePath": "/tmp/log-migration-fresh-normal-20261125/cost-check/actual-latest/query-5f1b809c-f59f-4489-8211-4bef16a0463a.json",
+          "queryEvidenceSha256": "3e3c3bca5fc771d802868a6b7b6cd91f7db79afba5a014787b65a8f070cf785f",
+          "pages": [
+            {
+              "rawPath": "/tmp/log-migration-fresh-normal-20261125/cost-check/actual-latest/raw-5f1b809c-f59f-4489-8211-4bef16a0463a-page-1.json",
+              "rawSha256": "8b30870d9b3bb805c07104efc46c41f92c2a9c042c12427afac755a3cad505fa",
+              "rowCount": 29,
+              "nextLink": null,
+              "queriedUtc": "2026-11-25T03:53:45.136446+00:00"
+            }
+          ]
+        },
+        {
+          "subscriptionId": "bfda36ec-1aed-4b0c-a907-4d4809c63888",
+          "rows": 9,
+          "currency": "JPY",
+          "bucketRowCounts": {
+            "before_20261124": 6,
+            "20261124": 3
+          },
+          "bucketsPreTaxJPY": {
+            "before_20261124": "1308.9731574897627",
+            "20261124": "1887.725659138116",
+            "20261125": "0"
+          },
+          "totalPreTaxJPY": "3196.6988166278787",
+          "queryEvidencePath": "/tmp/log-migration-fresh-normal-20261125/cost-check/actual-latest/query-bfda36ec-1aed-4b0c-a907-4d4809c63888.json",
+          "queryEvidenceSha256": "cbb4dfa4035594d0ae7064b89411f28f37cb9527c152c14a601f9c0869a76e27",
+          "pages": [
+            {
+              "rawPath": "/tmp/log-migration-fresh-normal-20261125/cost-check/actual-latest/raw-bfda36ec-1aed-4b0c-a907-4d4809c63888-page-1.json",
+              "rawSha256": "11915bc96e72a76ebce958292b4f3ac78a85c17361cecb7411233b76c7169679",
+              "rowCount": 9,
+              "nextLink": null,
+              "queriedUtc": "2026-11-25T03:53:45.137149+00:00"
+            }
+          ]
+        }
+      ],
+      "independentAudit": {
+        "path": "/tmp/log-migration-fresh-normal-20261125/cost-check/actual-latest/INDEPENDENT_COST_RECONCILIATION.json",
+        "sha256": "f4787020000f6066a135db60d8adce38975df6ce436efd2210838f9d93f821b3",
+        "result": "PASS_INDEPENDENT_DECIMAL_RAW_RECONCILIATION"
+      }
+    }
   }
 }

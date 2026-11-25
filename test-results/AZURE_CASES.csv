@@ -227,4 +227,17 @@
 確認範囲,FT21,1,未実施,事前確認後に300資源を追加する専用実機ケース,,未実施,,,,
 確認範囲,AZURE_INJECTED_TRANSIENT_FAILURES,1,未実施,Azure実機への429・切断・DNS等の意図的注入,,未実施,,,通信障害等は別の再生89ケースで確認,
 確認範囲,LIVE_LOG_ARRIVAL_ACTIVITYLOG_PERMISSIONS,1,対象外,実ログ着信・サブスクリプションActivity Log・権限試験,,対象外,,,,
-全作業後の追加正常,FRESH-NORMAL,1,正常,新規環境作成から事前確認・複製・照合・旧削除・全撤去までを通して確認,別RunIdの新規環境,未実施・実行未承認,,完成版を別途確定,現在の全試験・全撤去・資料確定後の案。構成・追加予算は回答待ち,ADDITIONAL_NORMAL_ESTIMATE.md
+全作業後の追加正常,FRESH-NORMAL,1,正常,環境作成・旧設定準備後、固定正本で事前確認・複製・照合・旧削除と最終照合を各1回実行,2Sub・4地域・65root・新規53型＋既存VNet1型・診断65＋旧関連8,移行PASS・撤去中,768.8249885,正本fedad825・Native Windows PS7.6.10,移行4工程は中断・再実行0。環境配置の初回制約とP0v3調整の履歴を保持。全撤去・RP復元は未完了,additionalFreshNormalRun.normalExecution
+追加正常通し,original-Present-0,1,正常,移行前の旧診断65件・旧DCR関連8件を独立GETで確認,診断65・旧DCR関連8・2Sub・4地域,PASS,,正本fedad825・Native Windows PS7.6.10,凍結済み試験コードの独立GET判定。応答本文は未保存のため事後の本文再照合とは区別,fresh261124c/F1/cases.json#0
+追加正常通し,unrelated-1,1,正常,移行前の対象外設定8件を記録,診断65・旧DCR関連8・2Sub・4地域,PASS,,正本fedad825・Native Windows PS7.6.10,凍結済み試験コードの独立GET判定。応答本文は未保存のため事後の本文再照合とは区別,fresh261124c/F1/cases.json#1
+追加正常通し,precheck,1,正常,事前確認を正常実行、設定書き込み0件,診断65・旧DCR関連8・2Sub・4地域,PASS,37.3495304,正本fedad825・Native Windows PS7.6.10,各工程1回、中断・再実行0。rawケースIDの重複は回数で区別,fresh261124c/F1/cases.json#2
+追加正常通し,copy-complete,1,正常,新診断65件・新DCR関連4件・Waiver6件等を作成,診断65・旧DCR関連8・2Sub・4地域,PASS,301.0176948,正本fedad825・Native Windows PS7.6.10,各工程1回、中断・再実行0。rawケースIDの重複は回数で区別,fresh261124c/F1/cases.json#3
+追加正常通し,original-Present-4,1,正常,複製後も旧設定73件が残っていることを独立GETで確認,診断65・旧DCR関連8・2Sub・4地域,PASS,,正本fedad825・Native Windows PS7.6.10,凍結済み試験コードの独立GET判定。応答本文は未保存のため事後の本文再照合とは区別,fresh261124c/F1/cases.json#4
+追加正常通し,independent-copy-contract,1,正常,新診断・DCR関連と独立した期待設定を照合,診断65・旧DCR関連8・2Sub・4地域,PASS,,正本fedad825・Native Windows PS7.6.10,各工程1回、中断・再実行0。rawケースIDの重複は回数で区別,fresh261124c/F1/cases.json#5
+追加正常通し,unrelated-6,1,正常,複製後も対象外設定8件が変わっていないことを確認,診断65・旧DCR関連8・2Sub・4地域,PASS,,正本fedad825・Native Windows PS7.6.10,凍結済み試験コードの独立GET判定。応答本文は未保存のため事後の本文再照合とは区別,fresh261124c/F1/cases.json#6
+追加正常通し,verify,1,正常,新旧設定の照合が成功、設定書き込み0件,診断65・旧DCR関連8・2Sub・4地域,PASS,68.5854918,正本fedad825・Native Windows PS7.6.10,各工程1回、中断・再実行0。rawケースIDの重複は回数で区別,fresh261124c/F1/cases.json#7
+追加正常通し,delete-complete,1,正常,旧診断65件・旧DCR関連8件を削除,診断65・旧DCR関連8・2Sub・4地域,PASS,312.7163162,正本fedad825・Native Windows PS7.6.10,各工程1回、中断・再実行0。rawケースIDの重複は回数で区別,fresh261124c/F1/cases.json#8
+追加正常通し,original-Absent-9,1,正常,削除後に旧設定73件の不在を独立GETで確認,診断65・旧DCR関連8・2Sub・4地域,PASS,,正本fedad825・Native Windows PS7.6.10,凍結済み試験コードの独立GET判定。応答本文は未保存のため事後の本文再照合とは区別,fresh261124c/F1/cases.json#9
+追加正常通し,independent-copy-contract,2,正常,新診断・DCR関連と独立した期待設定を照合,診断65・旧DCR関連8・2Sub・4地域,PASS,,正本fedad825・Native Windows PS7.6.10,各工程1回、中断・再実行0。rawケースIDの重複は回数で区別,fresh261124c/F1/cases.json#10
+追加正常通し,unrelated-11,1,正常,削除後も対象外設定8件の保持を確認,診断65・旧DCR関連8・2Sub・4地域,PASS,,正本fedad825・Native Windows PS7.6.10,凍結済み試験コードの独立GET判定。応答本文は未保存のため事後の本文再照合とは区別,fresh261124c/F1/cases.json#11
+追加正常通し,post-delete-all-settings,1,正常,保存先・新設定101件の最終GET本文と保持期間を照合,診断65・旧DCR関連8・2Sub・4地域,PASS,,正本fedad825・Native Windows PS7.6.10,各工程1回、中断・再実行0。rawケースIDの重複は回数で区別,fresh261124c/F1/cases.json#12
