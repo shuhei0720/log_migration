@@ -40,9 +40,9 @@
 依頼型,microsoft.insights/components,新規作成,1,0,1,1,0,0,canadacentral,旧F1・現行F2を確認,
 依頼型,microsoft.operationalinsights/workspaces,新規作成,3,0,3,3,0,0,canadacentral / japaneast,旧F1・現行F2を確認,
 依頼型,microsoft.network/azurefirewalls,新規作成,1,0,1,1,0,0,japanwest,旧F1・現行F2を確認,
-依頼型,microsoft.network/dnszones,新規作成,1,0,0,0,1,0,global,診断非対応を確認,実Categories APIがResourceTypeNotSupported。診断設定移行の成功件数へ加算しない。
+依頼型,microsoft.network/dnszones,新規作成,1,0,0,0,1,0,global,診断非対応を確認,Categories APIはAllMetricsを返すが診断設定PUTがResourceTypeNotSupported。移行成功件数へ加算しない。
 依頼型,microsoft.network/networksecuritygroups,新規作成,301,0,301,1,0,0,japaneast / japanwest,旧F1・現行F2を確認,基本1＋負荷300。現行F2前に負荷300だけ撤去。NSGをサブネットへ関連付けない。
-依頼型,microsoft.network/privatednszones,新規作成,1,0,0,0,1,0,global,診断非対応を確認,実Categories APIがResourceTypeNotSupported。診断設定移行の成功件数へ加算しない。
+依頼型,microsoft.network/privatednszones,新規作成,1,0,0,0,1,0,global,診断非対応を確認,Categories APIはAllMetricsを返すが診断設定PUTがResourceTypeNotSupported。移行成功件数へ加算しない。
 依頼型,microsoft.network/virtualnetworks,既存参照,0,2,2,2,0,0,japaneast / japanwest,旧F1・現行F2を確認,事前準備済みVNet2件を参照。fixtureはVNet/Subnet/NSG/UDR設定を変更しない。
 依頼型,microsoft.kusto/clusters,新規作成,1,0,1,1,0,0,japaneast,旧F1・現行F2を確認,
 依頼型,microsoft.network/privateendpoints,新規作成,1,0,1,1,0,0,japanwest,旧F1・現行F2を確認,

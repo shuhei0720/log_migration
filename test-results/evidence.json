@@ -1,6 +1,6 @@
 {
   "status": "CURRENT_COMPREHENSIVE_TESTS_AND_ASSET_CLEANUP_COMPLETE_PROVIDER_RESTORE_PENDING",
-  "updatedUtc": "2026-11-25T00:56:50.005354+00:00",
+  "updatedUtc": "2026-11-25T01:08:40.939046+00:00",
   "canonicalSha256": {
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
     "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
@@ -233,8 +233,8 @@
       "hostProofSha256": "28a289c0486436a446479c2743ed702a5cfdff4d6d6d75c85b1ab5aba2db959c"
     },
     "additionalFreshNormalRun": {
-      "status": "IMPLEMENTATION_DIRECTION_APPROVED_ADDITIONAL_BUDGET_PENDING_NOT_RUN",
-      "sequence": "Only after current tests, all cleanup, Root0 original-state verification, documentation completion and source freeze; user approved carrying out the final fresh normal run, but the additional budget remains unapproved",
+      "status": "BUDGET10000_APPROVED_DELAY_CAUSE_INVESTIGATION_FIRST_NOT_RUN",
+      "sequence": "Only after current tests, all cleanup, Root0 original-state verification, documentation completion and source freeze; full-scope fresh normal run and the combined JPY 10000 planning budget are approved; two provider unregister operations and final prior-restoration verification remain pending",
       "azureDeploymentAuthorized": false,
       "estimateDocument": "test-results/ADDITIONAL_NORMAL_ESTIMATE.md",
       "approvedCurrentBudgetJPY": 6000,
@@ -243,7 +243,13 @@
         8000
       ],
       "implementationDirectionApproved": true,
-      "additionalBudgetApproved": false
+      "additionalBudgetApproved": true,
+      "approvedCombinedBudgetJPY": 10000,
+      "additionalBudgetJPY": 4000,
+      "selectedConfiguration": "Full scope: 65 roots, 53 actual new types including auxiliary dependencies, two subscriptions, four regions, no duplicate 300-NSG load",
+      "budgetApprovalQuote": "追加予算は大丈夫。現時点で2000円なんよな？利用登録解除待ちって時間かかりすぎやろ",
+      "providerCarryoverApproved": false,
+      "latestUserInstruction": "まずそんな時間かかる方がおかしいだろ、その原因特定からだろ"
     },
     "currentRcFull300": {
       "result": "PASS",
@@ -834,8 +840,73 @@
         "getOnlyPollHelperSha256": "c3897b6ae16f47009e67246fe0e82040fdb7cbf9d87c1afc9a197097e49add90",
         "independentPollCodeReview": "independent-audit/PROVIDER_METADATA_POLL_CODE_REVIEW.json",
         "independentPollCodeReviewSha256": "fc0c1f78f9269ec8a6f920f5d6b8ce3adf1b8c5f0db1186e934a2a454a8f56fd",
-        "serviceApiCallsAfterFirstUnregister": 0,
-        "postRestorationVerificationRun": false
+        "serviceApiCallsAfterFirstUnregister": 18,
+        "postRestorationVerificationRun": false,
+        "serviceApiCallsAfterFirstUnregisterCountScope": "Read-only target Network/Compute resource collection GETs17 plus administrative activity GET1 during cause diagnosis; excludes ARM metadata and Cost Management read queries",
+        "serviceApiCallsBeforeCauseInvestigationDuringNormalCleanup": 0,
+        "causeDiagnosisServiceReadsChangedRegistrationState": false,
+        "delayCauseInvestigation": {
+          "status": "PUBLIC_API_DIAGNOSIS_COMPLETE_INTERNAL_CAUSE_NOT_IDENTIFIED",
+          "latestProviderObservedUtc": "2026-11-25T01:15:43.838049+00:00",
+          "azureMutations": 0,
+          "summaryPath": "baseline/final-restore/cause-investigation-20261125/CAUSE_INVESTIGATION_SUMMARY.json",
+          "summarySha256": "319ca54de697498cf0a3921c7a85b5615296c1215dd9946c424c02f0d4486193",
+          "facts": {
+            "originalUnregisterPostsAcceptedExactlyOnce": true,
+            "activityLogManagementOperationsSucceededWithinSeconds": true,
+            "allTargetActivityEventsStartedSucceededNoFailed": true,
+            "noRegisterActionInQueriedActivityWindow": true,
+            "armResourcesAndResourceGroups": 0,
+            "networkCollectionsChecked": 11,
+            "computeCollectionsChecked": 6,
+            "allCheckedServiceCollectionsEmpty": true,
+            "subscriptionState": "Enabled",
+            "networkComputeFeatureCount": 1264,
+            "allTargetFeatureStates": "NotRegistered",
+            "freshNoCacheIndividualAndCollectionAgree": true,
+            "networkHadEarlierSeparateUnregisterWait": true,
+            "networkConfirmedRegisteredBetweenOldAndCurrentEpisodes": true,
+            "computeBeforeCurrentTestNotRegistered": true
+          },
+          "evidence": {
+            "activity": {
+              "path": "/tmp/log-migration-final-20261124/baseline/final-restore/cause-investigation-20261125/activity-20261125T011050Z/DIAGNOSTIC_CONCLUSION.json",
+              "sha256": "14f5c6f078058d4530dd326144c1add8fdf226dec28e885d10188a3dffa4ca10"
+            },
+            "activitySummary": {
+              "path": "/tmp/log-migration-final-20261124/baseline/final-restore/cause-investigation-20261125/activity-20261125T011050Z/summary.json",
+              "sha256": "406f050351e705f436f238fcf0cedd2730d24bb3943994cedee4ef18dd7c0579"
+            },
+            "residual": {
+              "path": "/tmp/log-migration-final-20261124/baseline/final-restore/cause-investigation-20261125/residual/RESULT.json",
+              "sha256": "80006c7a574c6963ecb6bf01ced6b41b36b655cb746172c4b2e06253ddd7b7d0"
+            },
+            "subscriptionAndFeatures": {
+              "path": "/tmp/log-migration-final-20261124/baseline/final-restore/cause-investigation-20261125/feature-subscription-check/summary.json",
+              "sha256": "fefa84b4589ab21a372e3e11b36d41078c13c0b8461b1bd92c5b58a61772666f"
+            },
+            "originalPostReview": {
+              "path": "/tmp/log-migration-final-20261124/baseline/final-restore/metadata-recovery-20261125T003504Z/ORIGINAL_UNREGISTER_POST_ASYNC_EVIDENCE_REVIEW.json",
+              "sha256": "6d06fd47a85ff7304d90b6c0cdec339185a2c308d4243787478443a7cc7a1362"
+            },
+            "historicalTimeline": {
+              "path": "/tmp/log-migration-final-20261124/baseline/final-restore/metadata-recovery-20261125T003504Z/PENDING2_HISTORICAL_TIMELINE.json",
+              "sha256": "d226097b12b2de20eba0ec85f05e569f9dde1a97b94d6f4e6bd1f892b875df2b"
+            },
+            "individualMetadata": {
+              "path": "/tmp/log-migration-final-20261124/baseline/final-restore/metadata-recovery-20261125T003504Z/individual-provider-metadata-20261125T010115Z/comparison.json",
+              "sha256": "27fd2e74386e6170c983bc18e9d2f7d319b392465530d84f8973003af2aa413f"
+            }
+          },
+          "correlationIds": {
+            "Microsoft.Network": "a1049a8d-04a0-4a0d-91c8-49dce944a457",
+            "Microsoft.Compute": "8230fdea-aecc-4c3f-a861-1b82f7b88653"
+          },
+          "internalCauseKnown": false,
+          "supportRequestDraftPrepared": true,
+          "supportMessageSent": false,
+          "reregistrationApproved": false
+        }
       }
     }
   },
