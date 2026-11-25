@@ -1,6 +1,6 @@
 {
-  "status": "COMPREHENSIVE_FRESH_NORMAL_AND_SIMPLIFIED_FIXTURE_FOCUSED_PASS_ALL_RESOURCES_REMOVED_PROVIDERS_RESTORING",
-  "updatedUtc": "2026-11-25T04:50:34.364716+00:00",
+  "status": "TESTS_PASS_ALL_RESOURCES_AUTH_RESTORED_26_REGISTRATIONS_RESTORED_TWO_AZURE_PENDING",
+  "updatedUtc": "2026-11-25T05:05:20.272660+00:00",
   "canonicalSha256": {
     "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
     "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
@@ -261,8 +261,8 @@
       "hostProofSha256": "28a289c0486436a446479c2743ed702a5cfdff4d6d6d75c85b1ab5aba2db959c"
     },
     "additionalFreshNormalRun": {
-      "status": "NORMAL_FOUR_PHASES_PASS_ALL_TEST_RESOURCES_REMOVED_PROVIDERS_RESTORING",
-      "sequence": "Normal four migration phases passed on frozen production code. Main fixture, native Windows, artifact and prepared networks are removed. Pre-unregister service and global metadata snapshot passed27 checks with resource/RG counts0. Only final provider restoration remains.",
+      "status": "NORMAL_FOUR_PHASES_PASS_ALL_ASSETS_AUTH_RESTORED_26_PROVIDER_PAIRS_RESTORED_TWO_PENDING",
+      "sequence": "All production migration and focused delivery-fixture tests passed. All physical test resources, authorization and management-group state are restored.28 unregister posts accepted once,26 pairs NotRegistered; only B Compute/Network remain Unregistering. Metadata-only final comparison preserves the one failed provider-state comparison. Initial private GET-monitor assertion stop is retained separately; Root prepares GET-only continuation without POST retransmission.",
       "azureDeploymentAuthorized": true,
       "estimateDocument": "test-results/ADDITIONAL_NORMAL_ESTIMATE.md",
       "approvedCurrentBudgetJPY": 6000,
@@ -407,7 +407,7 @@
         "normalPhasesStartedScope": "Historical observation at App Service creation proof, before the subsequent normal execution."
       },
       "normalFourPhasesCompleted": true,
-      "freshCleanupStatus": "ALL_ASSETS_REMOVED_PRE_PROVIDER_ROOT0_27_CHECKS_PASS_PROVIDER_RESTORATION_PENDING",
+      "freshCleanupStatus": "ALL_ASSETS_AUTH_RESTORED_26_PROVIDER_PAIRS_RESTORED_TWO_AZURE_PENDING",
       "preparationObservationScope": "Preparation fields preserve observations before the normal execution; current migration results are recorded in normalExecution.",
       "normalExecution": {
         "result": "PASS",
@@ -594,7 +594,133 @@
       "providersFinallyRestored": false,
       "allPhysicalTestResourcesAndGroupsRemoved": true,
       "preProviderRoot0Verification": "PASS_27_CHECKS",
-      "providerRestoreInitiated": true
+      "providerRestoreInitiated": true,
+      "providerRestorationObservation": {
+        "status": "EXPECTED_PENDING_TWO_PROVIDER_STATES",
+        "snapshotUtc": "2026-11-25T04:58:35.935851+00:00",
+        "completeFinalRestorationClaimed": false,
+        "resourceAndAuthorizationAndManagementStateRestored": true,
+        "subscriptionCounts": {
+          "5f1b809c-f59f-4489-8211-4bef16a0463a": {
+            "resources": 0,
+            "resourceGroups": 0,
+            "roleAssignments": 3,
+            "policyAssignments": 3,
+            "policyExemptions": 0,
+            "policyDefinitions": 0
+          },
+          "bfda36ec-1aed-4b0c-a907-4d4809c63888": {
+            "resources": 0,
+            "resourceGroups": 0,
+            "roleAssignments": 3,
+            "policyAssignments": 3,
+            "policyExemptions": 0,
+            "policyDefinitions": 0
+          }
+        },
+        "targetedProviderPairs": 28,
+        "acceptedUnregisterPosts": 28,
+        "unregisterPostRetries": 0,
+        "confirmedNotRegisteredPairs": 26,
+        "pendingProviderPairs": [
+          {
+            "subscriptionId": "bfda36ec-1aed-4b0c-a907-4d4809c63888",
+            "namespace": "Microsoft.Compute",
+            "state": "Unregistering"
+          },
+          {
+            "subscriptionId": "bfda36ec-1aed-4b0c-a907-4d4809c63888",
+            "namespace": "Microsoft.Network",
+            "state": "Unregistering"
+          }
+        ],
+        "metadataOnlySnapshot": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/baseline/fresh-post-observed-index.json",
+          "sha256": "1c7b95a143fadbdfbd612734d4fe190b33c4fbd2f80617f457224fddb7e3eed1",
+          "status": "COMPLETE"
+        },
+        "sourceVerification": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/baseline/fresh-post-observed-verification.json",
+          "sha256": "ba329b2790c5e5ed581dfb1c90f3a7624d4aff53c801f87c76700864d93f4ef0",
+          "status": "FAIL",
+          "counts": {
+            "passed": 16,
+            "failed": 1,
+            "notRepeatedOrUnknown": 9
+          },
+          "failedCheck": {
+            "name": "known-provider-registration-states",
+            "subscriptionId": "bfda36ec-1aed-4b0c-a907-4d4809c63888",
+            "namespaceDifferences": {
+              "microsoft.network": {
+                "expected": "NotRegistered",
+                "observed": "Unregistering"
+              },
+              "microsoft.compute": {
+                "expected": "NotRegistered",
+                "observed": "Unregistering"
+              }
+            }
+          },
+          "sourceFailResultRetained": true
+        },
+        "serviceApisNotRepeatedAfterUnregister": true,
+        "preUnregisterFullServiceAndMetadataVerification": {
+          "path": "/tmp/log-migration-fresh-normal-20261125/baseline/fresh-pre-verification.json",
+          "sha256": "08ecb3e0f65f49b483cd0de513bfb6e41b62fcbe112bc807278614ac48c9f3ec",
+          "status": "PASS",
+          "checks": 27
+        },
+        "initialPostUnregisterGetMonitorStop": {
+          "journalPath": "/tmp/log-migration-fresh-normal-20261125/baseline/provider-restore-journal.json",
+          "journalSha256": "9f9274796b5c7f37e616b92d33f2e379f5447f3d699225b455fb89172620d723",
+          "journalStatus": "FAILED",
+          "failureType": "AssertionError during provider-list GET response status/value-array validation",
+          "failureResponseBodySaved": false,
+          "failureHttpStatusKnown": false,
+          "rootCauseDetermined": false,
+          "all28UnregisterPostsAcceptedBeforeStop": true,
+          "priorPollsConfirmed26UnregisteredAndTwoPending": true,
+          "originalFailedJournalPreserved": true,
+          "getOnlyContinuationPlanned": false,
+          "productionMigrationOrDeliveryFixtureFailure": false
+        },
+        "getOnlyContinuation": {
+          "statusAtObservation": "GET_ONLY_MONITORING",
+          "snapshotPath": "/tmp/log-migration-fresh-normal-20261125/baseline/provider-get-continuation-observed.json",
+          "snapshotSha256": "853906208c1ed71701208694582ed411d2e075afdf63646875ce6f4ffdd7ca6b",
+          "actualResourceMutations": 0,
+          "requestMethod": "GET",
+          "observedStates": [
+            {
+              "subscriptionId": "bfda36ec-1aed-4b0c-a907-4d4809c63888",
+              "namespace": "Microsoft.Compute",
+              "state": "Unregistering"
+            },
+            {
+              "subscriptionId": "bfda36ec-1aed-4b0c-a907-4d4809c63888",
+              "namespace": "Microsoft.Network",
+              "state": "Unregistering"
+            }
+          ],
+          "allObservedHttpStatuses": 200,
+          "newUnregisterPosts": 0,
+          "continuesOutsideDistribution": true
+        }
+      },
+      "confirmedProviderPairsRestored": 26,
+      "pendingProviderPairs": [
+        {
+          "subscriptionId": "bfda36ec-1aed-4b0c-a907-4d4809c63888",
+          "namespace": "Microsoft.Compute",
+          "state": "Unregistering"
+        },
+        {
+          "subscriptionId": "bfda36ec-1aed-4b0c-a907-4d4809c63888",
+          "namespace": "Microsoft.Network",
+          "state": "Unregistering"
+        }
+      ]
     },
     "currentRcFull300": {
       "result": "PASS",
