@@ -1,10 +1,10 @@
 ﻿#Requires -Version 7.0
-# SkipCsvは定義だけ読み込み、CSV・サブスクリプション・リージョン略称の取得を省く。
 param([switch]$SkipCsv)
 
+
 # ---
-# 実行する環境に合わせて変更する変数。
-# locationは保存先RG・Log Analytics・DCRを作るリージョン。
+# 設定するべき変数（変数の切り替えで開発・検証・本番共通で使用できる。）
+# locationはストレージ用RG・Log Analytics・DCRのリージョン
 # ---
 $targetWorkspaceId = '/subscriptions/43fc6c39-e53d-449d-9871-6d66f95ed2f3/resourcegroups/rg-hub-sand-resource-01/providers/microsoft.operationalinsights/workspaces/log-hub-sand-collection-01'
 $environment = 'dev'
@@ -12,8 +12,8 @@ $newDiagnosticSettingName = 'setByAzurePlatformTeam'
 $location = 'japaneast'
 
 # ---
-# 環境ごとの旧DCR・ポリシー割り当て。IDは下で組み立てる。
-# policyReferenceIdsは3件目のイニシアティブで除外する参照ID。
+# 環境ごとの旧DCRとポリシー割り当てを指定し、後で完全なIDへ組み立てる。
+# policyReferenceIdsは、initiative-<環境名>イニシアティブで除外する参照IDを指定する。
 # ---
 $environmentSettings = @{
     prod = @{
@@ -54,7 +54,7 @@ $policyReferenceIds = @(
 )
 
 # ---
-# 以下は各スクリプトで使う共通設定。
+# 共通変数。基本変更しない。
 # ---
 $parallelLimit = 5
 $commonScript = $PSCommandPath
@@ -100,36 +100,36 @@ $OutputEncoding = [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 $env:PYTHONIOENCODING = 'utf-8'
 
 function Invoke-ArmRequest {
-    <#
-    .SYNOPSIS
-    Azureのリソースを取得・作成・更新・削除する。
-    .DESCRIPTION
-    呼び出し元の$subscriptionIdで認証し、指定したAPIへ要求を送る。
-    一時的な通信・HTTPエラーは最大4回試す（初回を含む）。
-    .PARAMETER ResourceId
-    一覧取得などで直接操作するリソースID、またはAPI版を含む完全なURL。
-    Resourceを指定する場合は不要。
-    .PARAMETER Method
-    Get＝取得、Put＝作成・更新、Patch＝更新、Delete＝削除、Post＝個別操作。省略時はGet。
-    .PARAMETER Body
-    作成・更新する設定の本文。切り戻しなどでResource.Bodyと異なる値を送るときに指定する。
-    未指定のPut・Patch・PostではResource.Bodyを使う。
-    .PARAMETER ApiVersion
-    操作に使うAzure APIの版。ResourceIdに付ける。省略時は2024-03-11。
-    Resource指定時はその項目から選び、完全なURLではURL内の版を使う。
-    .PARAMETER Optional
-    作成前・削除済みのリソースの存在確認に使う。
-    404は未存在として$nullを返す。省略時はエラー。
-    .PARAMETER Resource
-    作業記録の1項目（Id・Kind・Body）をまとめて渡すときに使う。
-    指定時はResourceId・ApiVersionより、この項目のID・API版を優先する。
-    .PARAMETER Wait
-    作成中の保存先を使わないよう、SucceededまでGETで待つ。Failed・Canceledはエラー。
-    省略時は待たずに応答を返す。
-    .OUTPUTS
-    System.Object
-    JSON応答を変換した辞書など。本文なし・Optional指定の404は$null。
-    #>
+<#
+.SYNOPSIS
+Azureのリソースを取得・作成・更新・削除する。
+.DESCRIPTION
+ResourceIdまたはResource.IdのAPIへMethod・Bodyを送り、JSON応答を各工程の作成・照合処理へ返す。
+呼び出し側の$subscriptionIdでAzure CLIの認証情報を取得する。一時的な通信失敗・HTTPエラーは初回を含め最大4回リトライする。
+.PARAMETER ResourceId
+一覧取得などで直接操作するリソースID、またはAPI版を含む完全なURL。
+Resourceを指定する場合は不要。
+.PARAMETER Method
+Get＝取得、Put＝作成・更新、Patch＝更新、Delete＝削除、Post＝個別操作。省略時はGet。
+.PARAMETER Body
+作成・更新する設定の本文。切り戻しなどでResource.Bodyと異なる値を送るときに指定する。
+未指定のPut・Patch・PostではResource.Bodyを使う。
+.PARAMETER ApiVersion
+操作に使うAzure APIの版。ResourceIdに付ける。省略時は2024-03-11。
+Resource指定時はその項目から選び、完全なURLではURL内の版を使う。
+.PARAMETER Optional
+作成前・削除済みのリソースの存在確認に使う。
+404は未存在として$nullを返す。省略時はエラー。
+.PARAMETER Resource
+作業記録の1項目（Id・Kind・Body）をまとめて渡すときに使う。
+指定時はResourceId・ApiVersionより、この項目のID・API版を優先する。
+.PARAMETER Wait
+作成中の保存先を使わないよう、SucceededまでGETで待つ。Failed・Canceledはエラー。
+省略時は待たずに応答を返す。
+.OUTPUTS
+System.Object
+JSON応答を変換した辞書など。本文なし・Optional指定の404は$null。
+#>
     param($ResourceId, $Method = 'Get', $Body, $ApiVersion = '2024-03-11', [switch]$Optional, $Resource, [switch]$Wait)
     # ---
     # 作業項目からID・API版・本文を取り出すか、直接指定したIDからURLを作る。
