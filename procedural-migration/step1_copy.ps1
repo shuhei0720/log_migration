@@ -4,8 +4,9 @@ $failures = @()
 $null = New-Item $recordDirectory -ItemType Directory -Force
 
 # ---
-# サブスクリプションごとに調査し、変更前の設定を保存する
-# 再実行では最初のBeforeを保持し、新しく見つかった対象だけ追記する。
+# CSVの対象をサブスクリプションごとにAzureで調べ直し、旧診断設定・旧DCR関連付けを取得する。
+# 旧設定と、新しく作る保存先・送信設定の内容を$planにまとめ、Azureを変更する前にJSONへ保存する。
+# 再実行では保存済みJSONも読み、最初に取得した変更前の内容を残す。
 # ---
 foreach ($target in $targets) {
     $subscriptionId = $target.SubscriptionId
@@ -15,7 +16,9 @@ foreach ($target in $targets) {
         $plan = Get-MigrationPlan -Target $target -Record $record
         $resourceGroupId = "/subscriptions/$subscriptionId/resourceGroups/$($target.ResourceGroup)"
         # ---
-        # Waiverと、全行で準備するRG・Log Analyticsの設定値を指定する。
+        # 選択した環境のポリシー割り当てに対し、サブスクリプション単位のWaiverを作る内容を$planへ加える。
+        # CSVのリソースグループとLog Analyticsも作成対象に加え、ワークスペース全体の保持期間を365日にする。
+        # 送信をNone・空欄にした場合も、保存先の準備は省略しない。
         # ---
         foreach ($assignment in $policyAssignments) {
             $assignmentName = ($assignment.Id -split '/')[-1]
@@ -55,7 +58,9 @@ foreach ($target in $targets) {
         }
 
         # ---
-        # 調査した地域ごとにStorageの構成と1095日保持を指定する。
+        # 調査で求めた地域別StorageのIDに、ZRS・暗号化・通信制限などの作成内容を加える。
+        # Blobのバージョン管理、最終更新から1095日を超えたappendBlobの削除、Defender無効化も準備する。
+        # 地域とStorage IDの対応を$storageIdsへ入れ、後で診断設定の送信先を選ぶために使う。
         # ---
         $storageIds = @{}
         foreach ($storage in $plan.Discovery.Storages) {
@@ -121,8 +126,8 @@ foreach ($target in $targets) {
         }
 
         # ---
-        # 旧VM対象があればテーブルを準備し、VM送信を続ける場合だけ新DCRに関連付ける。
-        # 既存DCR・関連付けのその他の設定は、下のBefore取得で引き継ぐ。
+        # 指定した旧DCRに関連付いたVM・VMSSがあれば、新Log AnalyticsにEvent・Syslogテーブルを準備する。
+        # テーブル単位の合計保持期間を1095日にし、VM側の送信を省略する場合も保持期間は設定する。
         # ---
         $oldAssociations = @($plan.OldSettings | Where-Object { $_.Kind -eq 'Association' })
         if ($oldAssociations.Count -gt 0) {
@@ -139,6 +144,10 @@ foreach ($target in $targets) {
                 }
             }
         }
+        # ---
+        # VmLogDestinationがLogの場合だけ、WindowsイベントとSyslogを新Log Analyticsへ送るDCRを組み立てる。
+        # 旧DCRに関連付いていたVM・VMSSには、新DCRへの関連付けを$plan.NewSettingsへ加える。
+        # ---
         if ($plan.Discovery.Dcr) {
             $dcrId = $plan.Discovery.Dcr.Id
             $dcrBody = @{
@@ -199,7 +208,9 @@ foreach ($target in $targets) {
         }
 
         # ---
-        # 旧診断のログ・メトリックを引き継ぎ、選択された宛先だけを設定する。
+        # 移行元Log Analyticsへ送っている旧診断設定から、収集するログ・メトリックの指定を新診断設定へ移す。
+        # CSVがStorageならリソースと同じ地域のStorage、Logなら新Log Analyticsを送信先にする。
+        # None・空欄の場合は調査結果に新診断設定が入らないため、複製用のデータは作らない。
         # ---
         foreach ($diagnostic in $plan.Discovery.Diagnostics) {
             $original = @($plan.OldSettings | Where-Object Id -eq $diagnostic.OldId)[0]
@@ -225,8 +236,9 @@ foreach ($target in $targets) {
             }
         }
         # ---
-        # Waiver・DCR・関連付けの変更前情報をまとめて取得する。
-        # 再実行は記録したBeforeを使い、DCR・関連の変更対象以外の項目も引き継ぐ。
+        # Waiver・新DCR・新関連付けが既にあるかAzureへ照会し、変更前の本体をBeforeに残す。
+        # 再実行ではJSONの最初のBeforeを使い、ロールバックで実行前の内容へ戻せるようにする。
+        # 既存DCR・関連付けの本体から今回変更する項目だけを置き換え、それ以外の項目は引き継ぐ。
         # ---
         foreach ($setting in @($plan.NewSettings | Where-Object Kind -ne 'Diagnostic')) {
             $saved = @($record.NewSettings | Where-Object Id -eq $setting.Id)
@@ -252,6 +264,11 @@ foreach ($target in $targets) {
         }
         $plan.Remove('Discovery')
 
+        # ---
+        # 前回のJSONにある旧診断設定・旧DCR関連付けを、今回Azureから取得した内容と照合する。
+        # 旧設定が変わっていたり、同じIDの作成内容が前回と違えば、このサブスクリプションを変更せず停止する。
+        # 新しく見つかった対象だけを既存の一覧へ加え、最初に保存したBeforeを残す。
+        # ---
         $recordChanged = -not $record
         if ($record) {
             foreach ($saved in $record.OldSettings) {
@@ -276,6 +293,10 @@ foreach ($target in $targets) {
         else {
             $record = $plan
         }
+        # ---
+        # 旧設定の復元用データと、作成する保存先・送信設定をサブスクリプション別のJSONへ保存する。
+        # 一時ファイルを書き終えてから置き換え、この保存が成功するまでAzureは変更しない。
+        # ---
         if ($recordChanged) {
             $recordPath = Join-Path $recordDirectory "$subscriptionId.json"
             $temporaryPath = "$recordPath.tmp"
@@ -289,14 +310,19 @@ foreach ($target in $targets) {
         }
 
         # ---
-        # 適用除外、保存先、新しい送信設定の順に準備する
-        # 一致する設定は書き込まない。失敗したSubは以降の処理を中断し、旧設定を残す。
+        # JSONの内容を使い、Waiver→保存先→新DCR・関連付けの順でAzureへ作成する。
+        # 各IDの現在値を取得し、作成内容と一致するものは書き込まず次へ進む。
+        # 途中で失敗したらこのサブスクリプションの残りを止め、旧設定を残したまま次のサブスクリプションへ進む。
         # ---
         $providersReady = $false
         $resources = @($record.NewSettings | Where-Object Kind -eq 'Exemption')
         $resources += @($record.Destinations)
         $resources += @($record.NewSettings | Where-Object { $_.Kind -notin @('Exemption', 'Diagnostic') })
         foreach ($resource in $resources) {
+            # ---
+            # 保存先やDCRを作る前に、必要なAzureサービスの利用登録を確認する。
+            # 未登録なら登録を要求し、Registeredになるまで待ってから作成を続ける。
+            # ---
             if (-not $providersReady -and $resource.Kind -ne 'Exemption') {
                 $namespaces = @('Microsoft.Insights', 'Microsoft.OperationalInsights')
                 if (@($record.Destinations | Where-Object Kind -eq 'Storage').Count) {
@@ -340,8 +366,9 @@ foreach ($target in $targets) {
             $method = 'Put'
 
             # ---
-            # 既存の保存先で、変更対象以外の設定を残す
-            # Storageの通信規則、LAのfeatures、他名のライフサイクルルールを保持する。
+            # 保存先が既にある場合は、Azureから取得した現在値を使って今回変更しない項目を残す。
+            # Storageの既存IP・VNet許可規則、Log Analyticsの他のfeatures、他名のライフサイクルルールを引き継ぐ。
+            # Storageの地域・SKU・暗号化・不変性、Log Analyticsの地域が作成内容と違えば停止する。
             # ---
             if ($current -and $resource.Kind -eq 'Storage') {
                 $immutable = @{
@@ -378,7 +405,8 @@ foreach ($target in $targets) {
                 $body = @{ properties = @{ totalRetentionInDays = 1095 } }
             }
             # ---
-            # 組み込みEvent・Syslogテーブルの反映待ちだけ再送する。
+            # DCRから参照するEvent・Syslogテーブルが未反映で作成に失敗した場合だけ、10秒待って再送する。
+            # それ以外の作成エラーはこのループで再送せず、サブスクリプション単位の失敗として扱う。
             # ---
             while ($true) {
                 try {
@@ -395,6 +423,10 @@ foreach ($target in $targets) {
                     Start-Sleep -Seconds 10
                 }
             }
+            # ---
+            # 作成後にAzureから同じIDを取得し直し、JSONに保存した作成内容と一致するか確認する。
+            # テーブル保持期間はワークスペースの既定値ではなく、1095日が個別指定されていることも確認する。
+            # ---
             $current = Invoke-ArmRequest -Resource $resource -Wait
             if (-not (Test-Configuration $current $expected -Kind $resource.Kind) -or
                 ($resource.Kind -eq 'Table' -and $current.properties.totalRetentionInDaysAsDefault)) {
@@ -403,8 +435,9 @@ foreach ($target in $targets) {
         }
 
         # ---
-        # 保存先が準備できたら、診断設定を最大5件ずつ複製する。
-        # 一致する設定はスキップし、全件の結果を親へ返して失敗だけCSVにまとめる。
+        # 保存先とDCRの準備後、JSON内の新診断設定を並列に作成する（同時に最大$parallelLimit件）。
+        # 同じIDで内容が一致するものはスキップし、不一致や作成失敗はID・理由・設定値を結果に残す。
+        # すべての対象の結果を集め、失敗があれば最後にcopy_failures.csvへ出す。
         # ---
         $accessToken = $script:accessToken
         $diagnostics = @($record.NewSettings | Where-Object Kind -eq 'Diagnostic')
@@ -454,6 +487,10 @@ foreach ($target in $targets) {
         }
     }
 }
+# ---
+# 蓄積した失敗理由と対象ID・設定値をcopy_failures.csvへ出力し、エラーで終了する。
+# 全件成功なら前回の失敗CSVを削除し、旧設定を保持したままstep2での確認へ進める。
+# ---
 $failurePath = Join-Path $PSScriptRoot 'copy_failures.csv'
 if ($failures.Count) {
     $failures | Export-Csv $failurePath -Encoding utf8BOM

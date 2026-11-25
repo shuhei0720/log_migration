@@ -1,6 +1,8 @@
 # 診断設定・VMログの段階移行
 
-Azureの診断設定とVM・VMSSのログ送信先を移行するスクリプトです。正本は`procedural-migration`フォルダにあります。
+Azureの診断設定とVM・VMSSのログ送信先を移行するスクリプトです。実行する正本は`procedural-migration`フォルダにあります。
+
+作業する場合は[使い方](procedural-migration/README.md)、コードを理解したい場合は[学習ガイド](procedural-migration/CODE_LEARNING.md)から読んでください。
 
 **総合テストと追加の正常通し試験が成功し、全試験資源を撤去しました。** 元の認可設定・MG所属との一致も確認しました。利用登録は28件中26件を復元し、サブスクリプション2のCompute・Networkの2件はAzure側で解除処理中です。構成・実測時間・配布用テストコードの確認範囲は[検証結果](test-results/REPORT.md)に記録しています。
 

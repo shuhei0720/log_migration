@@ -1,6 +1,8 @@
 # リソース網羅テストの環境
 
-PowerShell 7と、Ownerでログイン済みのAzure CLIで実行します。会社の既存ポリシーが旧診断設定とDCR関連付けを付与する前提です。MG・ポリシー・サブスクリプションの所属は変更しません。移行スクリプトの実行結果と、各版の確認範囲は[検証結果](../test-results/REPORT.md)を参照してください。
+移行テストで使うVM・Storage・App Serviceなどを、2つのサブスクリプションへ作成します。PowerShell 7と、Ownerでログイン済みのAzure CLIで実行します。
+
+作成したリソースへの旧診断設定とDCR関連付けは、会社の既存ポリシーで設定される前提です。このスクリプトはMG・ポリシー・サブスクリプションの所属を変更しません。実施済みの構成と確認範囲は[検証結果](../test-results/REPORT.md)に記録しています。
 
 ## 指定する値
 
@@ -20,13 +22,16 @@ VNet・サブネットを作成・更新したり、NSG・ルートテーブル�
 
 ## 実行
 
-|Action|処理|
-|---|---|
-|Plan|型と依存関係、作成する正確なID・RG・リージョンをファイルへ出す。Azureへのアクセスはない|
-|Deploy|同名RGと既存サブネットを確認し、必要な利用登録・専用RG・資源を作成する|
-|Capture|実在資源、既知の子スコープ、診断カテゴリと現在の診断設定を読み取る|
+|Action|実行する内容|確認するファイル|
+|---|---|---|
+|Plan|選択したリソースタイプと依存先から、作成する名前・ID・RG・リージョンを組み立てる。Azureへのアクセスはない|`runs/<RunId>/plan.json`の`resources`と`skipped`|
+|Deploy|同名RGの不存在と既存サブネットの条件を確認し、必要な利用登録・専用RG・リソースを作る。続けて作成結果も取得する|`runs/<RunId>/run-ledger.json`の`deployments`・`inventory`・`managedGroups`|
+|Capture|作成後のリソース、Storageの子サービスなど、診断カテゴリ、現在の診断設定をAzureから取得して台帳を更新する|同JSONの`scopes`|
+
+リポジトリのルートから、次の順に実行します。`Plan`の内容を確認し、`Deploy`にも同じ変数を渡します。
 
 ```powershell
+Set-Location .\test-environment
 $run = 'sample261119'
 $options = @{
     RunId = $run
@@ -39,13 +44,17 @@ $options = @{
 .\resource_types_fixture.ps1 -Action Plan @options
 # plan.jsonを確認してから、同じ設定で作成する。
 .\resource_types_fixture.ps1 -Action Deploy @options
-# 会社ポリシーによる設定を確認したい時に実行する。
+# 作成後、会社ポリシーによる診断設定を取得する。
 .\resource_types_fixture.ps1 -Action Capture -RunId $run
 ```
 
 `RunId`は英小文字・数字8～13文字です。台帳は`runs/<RunId>/run-ledger.json`へ保存します。旧設定を生成するSeedと撤去用のCleanupはありません。終了後は今回の専用RGと、残っていれば台帳に記録した管理RGを削除してください。AKS用に既存PrivateSubnetへ付与するNetwork ContributorのRBACはRG削除後も残ります。
 
-DCR1本と、DCR・Application Insights用のLAWを作成しますが、このスクリプトから診断設定やDCR関連付けは作成しません。`Capture`のカテゴリ取得成功は、診断設定の作成成功を意味しません。実際に付与された設定は`diagnosticSettings`を確認してください。
+DCR1本と、DCR・Application Insights用のLAWを作成しますが、このスクリプトから診断設定やDCR関連付けは作成しません。
+
+`Capture`の結果は`run-ledger.json`の`scopes`で確認します。正常に取得した`diagnosticSettings.value`に実在する診断設定が入り、空配列なら取得時点では設定されていません。`actualStatus=READ_ONLY_CAPTURED`は取得成功を表します。`FAILED`や`UNRESOLVED`は`resourceId`と`actualErrorCode`を確認してください。
+
+会社ポリシーが必要な診断設定・DCR関連付けを設定したことを確認してから、[移行スクリプト](../procedural-migration/README.md)でテストします。`Capture`はDCR関連付けを取得しないため、DCR側の対象は移行用の任意precheckなどで確認します。
 
 ## 対象と制約
 

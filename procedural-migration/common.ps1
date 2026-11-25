@@ -2,8 +2,8 @@
 param([switch]$SkipCsv)
 
 # ---
-# 設定するべき変数（変数の切り替えで開発・検証・本番共通で使用できる。）
-# locationはストレージ用RG・Log Analytics・DCRのリージョン。
+# 移行元LAW・実行環境・追加する診断設定名を指定する。
+# locationは新規RG・Log Analytics・DCRの配置先。Storageの地域は移行対象から決める。
 # ---
 $targetWorkspaceId = '/subscriptions/43fc6c39-e53d-449d-9871-6d66f95ed2f3/resourcegroups/rg-hub-sand-resource-01/providers/microsoft.operationalinsights/workspaces/log-hub-sand-collection-01'
 $environment = 'dev'
@@ -11,7 +11,8 @@ $newDiagnosticSettingName = 'setByAzurePlatformTeam'
 $location = 'japaneast'
 
 # ---
-# 環境ごとの旧DCRとポリシー割り当ての情報。
+# 環境ごとの旧DCR2本とポリシー割り当て3件を指定し、後で完全なIDへ組み立てる。
+# policyReferenceIdsは、3件目のイニシアティブで除外する参照IDを指定する。
 # ---
 $environmentSettings = @{
     prod = @{
@@ -52,7 +53,8 @@ $policyReferenceIds = @(
 )
 
 # ---
-# 共通処理で使う変数。基本変更しない。
+# 各工程で使う並列数・API版・リソースIDの接尾辞を用意する。
+# 選んだ環境のDCR・ポリシーIDと、再開時の照合情報・JSON保存先もここで作る。
 # ---
 $parallelLimit = 5
 $commonScript = $PSCommandPath
@@ -97,14 +99,37 @@ $ErrorActionPreference = 'Stop'
 $OutputEncoding = [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 $env:PYTHONIOENCODING = 'utf-8'
 
-# ---
-# Azure REST APIを呼び出す共通関数。
-# ResourceId、またはId・Kind・Bodyを持つResourceを渡し、JSON応答を辞書で返す。
-# 通信切断・通信timeoutと一時HTTPエラーは最大4回リトライする。
-# Waitは終端状態までGETで待ち、失敗状態なら止める。既存記録のAPI版も利用する。
-# ---
+<#
+.SYNOPSIS
+リソースの取得・作成・更新・削除に使うAzure REST APIを呼び出す。
+.DESCRIPTION
+ResourceIdまたはResource.IdのAPIへMethod・Bodyを送り、JSON応答を各工程の作成・照合処理へ返す。
+呼び出し側の$subscriptionIdでAzure CLIの認証情報を取得する。一時的な通信失敗・HTTPエラーは初回を含め最大4回試す。
+.PARAMETER ResourceId
+操作先のリソースID、またはAPI版を含む完全なURL。
+.PARAMETER Method
+Get・Put・Patch・Post・DeleteなどのHTTPメソッド。省略時はGet。
+.PARAMETER Body
+送信するpropertiesなどの本文。JSONへ変換して送る。Resource.Bodyより、明示したこの値を優先する。
+.PARAMETER ApiVersion
+Resourceを使わない場合に、リソースIDへ付けるAPI版。完全なURLではURL内の版を使う。
+.PARAMETER Optional
+指定したリソースがない場合の404を例外にせず、$nullを返す。
+.PARAMETER Resource
+Id・Kind・Bodyなどを持つ作業記録の1項目。操作先とAPI版はこの記録を優先し、Body未指定のPut・Patch・Postでは記録のBodyも使う。
+.PARAMETER Wait
+作成状態を持つ応答はprovisioningStateがSucceededになるまでGETで確認する。Failed・Canceledでは例外にする。
+.OUTPUTS
+System.Object
+JSON応答を変換した辞書など。各工程はid・propertiesや一覧のvalue・nextLinkを取り出して使う。
+本文がない場合やOptional指定時の404は$null。
+#>
 function Invoke-ArmRequest {
     param($ResourceId, $Method = 'Get', $Body, $ApiVersion = '2024-03-11', [switch]$Optional, $Resource, [switch]$Wait)
+    # ---
+    # Resourceに記録の1項目を渡した場合は、Id・API版・Bodyを取り出す。
+    # ResourceIdだけの場合は、指定したIDとAPI版から接続先URLを作る。
+    # ---
     if ($Resource) {
         $ResourceId = $Resource.Id
         $ApiVersion = $Resource.ApiVersion ?? $apiVersions[$Resource.Kind]
@@ -117,6 +142,10 @@ function Invoke-ArmRequest {
         $uri = "https://management.azure.com${ResourceId}?api-version=$ApiVersion"
     }
     $deleteResponseLost = $false
+    # ---
+    # 対象Subの認証情報が未取得・期限間近ならAzure CLIから取得し、要求を送る。
+    # BodyがあればJSONへ変換し、Azureへ送信する本文にする。
+    # ---
     for ($attempt = 0; $attempt -lt 4; $attempt++) {
         if (-not $script:accessToken -or $script:tokenSubscription -ne $subscriptionId -or
             [long]$script:accessToken.expires_on -le [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() + 300) {
@@ -143,6 +172,10 @@ function Invoke-ArmRequest {
             $response = Invoke-WebRequest @request -SkipHttpErrorCheck
         }
         catch [System.Net.Http.HttpRequestException], [System.IO.IOException], [System.TimeoutException], [System.Threading.Tasks.TaskCanceledException] {
+            # ---
+            # HTTP応答が得られないエラーのうち、一時的な切断・タイムアウトなどを再試行する。
+            # DELETEの応答だけ失った場合は、再試行時の404を削除済みとして扱う。
+            # ---
             $transportError = $_.Exception
             $cause = $transportError.GetBaseException()
             $networkError = [string]$transportError.HttpRequestError
@@ -162,6 +195,10 @@ function Invoke-ArmRequest {
             Start-Sleep -Seconds 2
             continue
         }
+        # ---
+        # 成功応答のJSONを呼び出し元へ返す。Wait指定で作成途中ならGETを繰り返す。
+        # 401は認証情報を更新し、一時HTTPエラーは待って再試行する。それ以外は例外にする。
+        # ---
         $status = [int]$response.StatusCode
         if ($status -lt 400) {
             $result = $response.Content | ConvertFrom-Json -AsHashtable
@@ -197,13 +234,30 @@ function Invoke-ArmRequest {
     }
 }
 
-# ---
-# 現在値と期待値を比較する
-# Expectedの項目がそろえばtrue。Exactは余分な項目も確認し、配列は順不同で比較する。
-# 送信設定は正規化して全項目を照合し、Lifecycleは管理ルールと旧365日の残存を確認する。
-# ---
+<#
+.SYNOPSIS
+Azureの現在値や作業記録を、期待する項目・値と比較する。
+.DESCRIPTION
+ActualとExpectedを比較し、copyのスキップやverifyのOK・NG、rollbackの復元判断に使う。
+診断設定・DCR・DCR関連付けは書き込み用本文にそろえて比較する。配列の並び順は区別しない。
+.PARAMETER Actual
+照合元の値。AzureのGET応答、作業記録やその中の項目を渡す。
+.PARAMETER Expected
+期待する保存先ID・保持期間・ログやメトリックなどの項目と値。
+.PARAMETER Kind
+リソースの種類。Diagnostic・Dcr・Associationは書き込み項目を比較し、Lifecycleは新1095日ルールと旧365日ルールの残存を確認する。
+.PARAMETER Exact
+ActualとExpectedを双方向に比較する。Diagnostic・Dcr・Associationでは自動的に有効になる。
+.OUTPUTS
+System.Boolean
+一致すれば$true、不足・相違があれば$false。各工程はこの結果でスキップ・NG・停止を判断する。
+#>
 function Test-Configuration {
     param($Actual, $Expected, $Kind, [switch]$Exact)
+    # ---
+    # Azureの作成状態を確認し、送信設定はGET応答とJSONの期待値を同じ項目にそろえる。
+    # Exactなら双方を入れ替えて比較する。Lifecycleは管理対象の保持ルールだけを照合する。
+    # ---
     if ($Kind -and $Actual.properties.provisioningState -and $Actual.properties.provisioningState -ne 'Succeeded') {
         return $false
     }
@@ -224,6 +278,10 @@ function Test-Configuration {
         $Actual = @($Actual.properties.policy.rules | Where-Object name -eq 'log-append-1095')
         $Expected = @($Expected.properties.policy.rules)
     }
+    # ---
+    # ActualとExpectedの要素を1件ずつ対応させ、配列の並び順だけでは不一致にしない。
+    # 対応した要素は候補から外し、同じ要素を二重に一致と数えない。
+    # ---
     if ($Expected -is [array]) {
         [Collections.ArrayList]$remaining = @($Actual | Where-Object { $null -ne $_ })
         if ($remaining.Count -ne $Expected.Count) {
@@ -244,6 +302,10 @@ function Test-Configuration {
         }
         return $true
     }
+    # ---
+    # 辞書はExpectedにある項目ごとにActualの値を取り出し、同じ関数で比較する。
+    # 値なしの場合と、文字列・数値などの単一値もここで判定する。
+    # ---
     if ($null -eq $Actual -or $null -eq $Expected) {
         return $null -eq $Actual -and $null -eq $Expected
     }
@@ -258,11 +320,21 @@ function Test-Configuration {
     return $Actual -eq $Expected
 }
 
-# ---
-# GET応答から保存・復元に使う本文を取り出す
-# ResourceとKindを渡し、PUT用のHashtableを返す。値なしならnull。
-# DCRの読み取り専用項目を除き、LAW宛てだけ格納方式を比較する。
-# ---
+<#
+.SYNOPSIS
+AzureのGET応答から、照合・作成・復元に使える本文を取り出す。
+.DESCRIPTION
+propertiesからログ・メトリックや参照先DCRなどの書き込み項目を取り出す。
+DCRはlocation・identityなども残し、Azureが返した内部IDやエンドポイントを除く。作成・更新が未完了なら例外にする。
+.PARAMETER Resource
+propertiesを持つAzureのGET応答、または作業記録のBody。値がなければ$nullを返す。
+.PARAMETER Kind
+Diagnostic（診断設定）・Dcr（収集ルール）・Association（DCR関連付け）に応じて取り出す項目を選ぶ。
+.OUTPUTS
+System.Collections.Hashtable
+propertiesに書き込み可能な値を持つ本文。DCRではlocation・kind・tags・identityも含む。
+旧設定の保存や、各工程のPUT・照合に使う。Resourceがなければ$null。
+#>
 function Get-WritableBody {
     param($Resource, $Kind)
     if (-not $Resource) {
@@ -271,6 +343,10 @@ function Get-WritableBody {
     if ($Resource.properties.provisioningState -and $Resource.properties.provisioningState -ne 'Succeeded') {
         throw 'リソースの作成・更新が完了していません。'
     }
+    # ---
+    # GET応答のpropertiesから、PUTする項目をbody.propertiesへ取り出す。
+    # DCRは入れ子のIDを削除するため、元のGET応答をコピーして使う。
+    # ---
     $copy = $Resource
     if ($Kind -eq 'Dcr') {
         $copy = ConvertTo-Json $Resource -Depth 40 | ConvertFrom-Json -AsHashtable
@@ -288,12 +364,20 @@ function Get-WritableBody {
             $body.properties[$key] = $copy.properties.$key
         }
     }
+    # ---
+    # workspaceIdがある診断設定だけ、Log Analyticsの格納方式を本文に含める。
+    # Storage宛てにAzureが返す格納方式は、比較・再送信する本文から除く。
+    # ---
     if ($Kind -eq 'Diagnostic' -and $body.properties.workspaceId -and -not $body.properties.logAnalyticsDestinationType) {
         $body.properties.logAnalyticsDestinationType = 'AzureDiagnostics'
     }
     if ($Kind -eq 'Diagnostic' -and -not $body.properties.workspaceId) {
         $body.properties.Remove('logAnalyticsDestinationType')
     }
+    # ---
+    # DCRのlocation・kind・tags・identityをPUT本文へ引き継ぐ。
+    # 再作成時に指定できない内部IDやエンドポイントは除く。
+    # ---
     if ($Kind -eq 'Dcr') {
         foreach ($key in @('location', 'kind', 'tags', 'identity')) {
             if ($null -ne $copy.$key) {
@@ -322,11 +406,19 @@ function Get-WritableBody {
     return $body
 }
 
-# ---
-# サブスクリプションの変更前記録を読む
-# Targetに対応するJSONを返す。まだ保存していなければnull。
-# 別環境・別の移行元・作業途中のCSV変更は、この時点で停止する。
-# ---
+<#
+.SYNOPSIS
+対象SubのJSONを読み、再開に使える変更前記録か確認する。
+.DESCRIPTION
+records/<環境>/<SubscriptionId>.jsonから、旧設定・保存先・新設定などの情報を読み込む。
+JSON内のContextとTargetを今回の環境・移行元・CSVと比べ、別作業のJSONを再開に使うことを防ぐ。
+.PARAMETER Target
+CSVから作った対象Sub・保存先名・送信先フラグなどの情報。SubscriptionIdでJSONを選び、JSON内のTargetと比べる。
+.OUTPUTS
+System.Collections.Hashtable
+Context・Target・Destinations・NewSettings・OldSettingsなどを持つ変更前記録。
+各工程が作成結果の確認、旧設定の削除・復元に使う。初回でJSONがなければ$null。
+#>
 function Read-MigrationRecord {
     param($Target)
     $path = Join-Path $recordDirectory "$($Target.SubscriptionId).json"
@@ -334,6 +426,10 @@ function Read-MigrationRecord {
         return $null
     }
     $record = Get-Content $path -Raw -Encoding UTF8 | ConvertFrom-Json -AsHashtable
+    # ---
+    # JSON内のContext・Targetと、今回の環境・CSVを照合する。
+    # 保存先・新設定・旧設定の一覧がそろう場合だけ、後続の工程へ返す。
+    # ---
     if (-not (Test-Configuration $record.Context $migrationContext -Exact) -or
         -not (Test-Configuration $record.Target $Target -Exact)) {
         throw "変更前記録と環境・CSVが一致しません: $path"
@@ -347,8 +443,8 @@ function Read-MigrationRecord {
 }
 
 # ---
-# CSVを読み、サブスクリプションを一意に特定する
-# 送信を止める行でも保存先を準備する。VM用の列がない旧CSVだけLogを既定値にする。
+# CSVの対象Sub・保存先名・送信先フラグを読み、Sub ID・Workspace IDを補ったtargets一覧を作る。
+# Storage名があれば地域略称を取得し、後続のStorage名の変換に使う。
 # ---
 $targets = @()
 $regionNames = @()
@@ -399,11 +495,23 @@ if (-not $SkipCsv) {
     }
 }
 
-# ---
-# 現在の旧設定、地域、作成予定名と追加枠を調べる。
-# TargetはCSVの1行、Recordは保存済み記録。OnlyOldSettingsは旧設定だけを返す。
-# 通常はcopy用の軽いDiscoveryも返す。設定内容の組立やAzureの変更は行わない。
-# ---
+<#
+.SYNOPSIS
+Azureから旧診断設定・旧DCR関連を取得し、作成前の確認情報をまとめる。
+.DESCRIPTION
+targetWorkspaceIdのLAW宛ての診断設定と指定した旧2DCRの関連を取得し、IDと本文をOldSettingsへまとめる。
+通常は保存先の地域・予定名・追加枠・適用ポリシーも確認し、copyで使う情報をDiscoveryへまとめる。Azureの設定は変更しない。
+.PARAMETER Target
+CSVの1行から作った、対象Sub ID・保存先名・診断設定とVMの送信先フラグなどの情報。
+.PARAMETER Record
+Read-MigrationRecordで読んだ変更前記録。Destinations・NewSettings内のIDを、再開時の名前重複判定に使う。
+.PARAMETER OnlyOldSettings
+OldSettingsの収集で終了し、保存先名・新設定の追加枠・ポリシーの確認を省く。verify・deleteが旧設定の増加や改変の確認に使う。
+.OUTPUTS
+System.Collections.Hashtable
+OldSettings（旧設定のId・Kind・Body）を含む計画。通常はDiscovery（保存先や新設定のID・地域）も含む。
+precheck・copy・verify・deleteが、作成前の確認や現在値との照合に使う。
+#>
 function Get-MigrationPlan {
     param($Target, $Record, [switch]$OnlyOldSettings)
 
@@ -418,7 +526,8 @@ function Get-MigrationPlan {
     }
 
     # ---
-    # 通常のリソース一覧にStorage・Redisの子リソースを加え、旧診断設定を探す。
+    # Azureのリソース一覧からID・地域を集め、診断設定を調べる対象IDを作る。
+    # Storageの各サービスとRedisの子DBも対象に加える。
     # ---
     $resourceLocations = @{}
     $resourcePage = "https://management.azure.com/subscriptions/$subscriptionId/resources?api-version=2021-04-01"
@@ -446,7 +555,7 @@ function Get-MigrationPlan {
                 }
             }
             # ---
-            # 一覧に出ないRedisの子DBを実APIから追加し、親のリージョンを引き継ぐ。
+            # Redis Enterpriseのdatabase一覧から子DBのIDを集め、親のリージョンを付ける。
             # ---
             if ($resource.type -eq 'Microsoft.Cache/redisEnterprise') {
                 $databasePage = "https://management.azure.com$($resource.id)/databases?api-version=2025-04-01"
@@ -461,6 +570,10 @@ function Get-MigrationPlan {
         }
         $resourcePage = $page.nextLink
     }
+    # ---
+    # 各リソースの診断設定をAzureから取得し、targetWorkspaceIdのLAWへ送るものを選ぶ。
+    # 設定IDとログ・メトリック等の本文をOldSettingsへ、地域を診断対象のLocationへ格納する。
+    # ---
     $accessToken = $script:accessToken
     $sourceWorkspace = $targetWorkspaceId
     $listedSettings = @($resourceLocations.Keys | ForEach-Object -Parallel {
@@ -504,8 +617,8 @@ function Get-MigrationPlan {
     }
 
     # ---
-    # 旧2DCRの関連から、このSubの元の関連付けを保存する。
-    # 一覧だけでは省略される項目があるため、各関連の本体も取得する。
+    # 旧2DCRの関連一覧から、このサブスクリプションのDCR関連付けを選ぶ。
+    # 各関連の本体を取得し、IDと参照先DCR等の本文をOldSettingsへ追加する。
     # ---
     foreach ($oldDcrId in $oldDcrIds) {
         $associationPage = "$oldDcrId/associations"
@@ -536,8 +649,9 @@ function Get-MigrationPlan {
     }
 
     # ---
-    # このSubに適用される3割り当てと、指定した参照IDを確認する。
-    # 同じイニシアティブの定義は、処理中に1回だけ取得する。
+    # 対象Subに適用される割り当てを取得し、指定した3割り当てのIDが含まれるか確認する。
+    # 3件目のイニシアティブ定義を読み、指定した参照IDが存在するか確認する。
+    # 同じ定義は一度だけ取得し、次のSubでも使う。
     # ---
     $assignments = @()
     $assignmentPage = "https://management.azure.com/subscriptions/$subscriptionId/providers/Microsoft.Authorization/policyAssignments?api-version=2022-06-01&`$filter=atScope()"
@@ -574,7 +688,8 @@ function Get-MigrationPlan {
     }
 
     # ---
-    # 保存先Storageの地域・名前・ZRS対応を調べる。
+    # 移行対象の診断設定がある地域ごとにStorage名とIDを作り、ZRS対応と名前の空きを調べる。
+    # 作成するStorageのId・Name・LocationをDiscovery.Storagesへまとめる。
     # ---
     if ($Target.StorageAccount) {
         $storageLocations = @($diagnosticSources.Location | Sort-Object -Unique)
@@ -613,8 +728,8 @@ function Get-MigrationPlan {
     }
 
     # ---
-    # 作成するDCR・関連付け・診断設定のIDと追加枠を確認する。
-    # 設定内容とBeforeは、変更を行うcopy側で組み立てる。
+    # 追加するDCR・DCR関連付け・新診断設定のIDを作り、新旧IDや診断設定名の重複・追加枠を確認する。
+    # 各IDをDiscoveryへ渡す。送信する本文と変更前のBeforeはstep1_copyで組み立てる。
     # ---
     $oldAssociations = @($plan.OldSettings | Where-Object Kind -eq 'Association')
     if ($oldAssociations.Count -gt 0 -and $Target.VmLogDestination -eq 'Log') {

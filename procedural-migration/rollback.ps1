@@ -4,7 +4,9 @@ $subscriptionFilterProvided = $PSBoundParameters.ContainsKey('SubscriptionIds')
 . (Join-Path $PSScriptRoot 'common.ps1') -SkipCsv
 
 # ---
-# 保存記録から、全体または指定したSubを選ぶ。
+# CSVは読まず、records/<環境>/<SubID>.jsonから旧設定の本体と、新設定の作成値・変更前のBeforeを取得する。
+# -SubscriptionIdsを指定すればそのSubだけ、未指定なら保存済みJSONの全Subを切り戻す。
+# ファイル名とJSON内のSubID、JSONと今回の実行環境が一致するかも確認する。
 # ---
 $recordFiles = @(Get-ChildItem $recordDirectory -Filter '*.json')
 if ($subscriptionFilterProvided) {
@@ -28,8 +30,9 @@ if (-not $records.Count) {
 $failurePath = Join-Path $PSScriptRoot 'rollback_failures.csv'
 try {
     # ---
-    # 外部で変わった同名設定を上書きしないよう、先に全件照合する。
-    # 新規DCR本体と、もともとあったWaiverは変更しない。
+    # JSONのIDで旧設定・新設定をAzureから取得し、Body（旧設定の本体／新設定の作成値）かBefore（変更前の値）と照合する。
+    # どちらとも異なる値は上書きせず、全Subの切り戻しを開始前に止める。
+    # 新規DCR本体ともともと存在したWaiverは残すため、照合からも除外する。
     # ---
     foreach ($record in $records) {
         $subscriptionId = $record.Target.SubscriptionId
@@ -47,8 +50,9 @@ try {
     }
 
     # ---
-    # 旧関連→旧診断を全件復元した後で、新側を変更前へ戻す。
-    # 各書込みをGETで確認し、失敗した時点で以降の処理を止める。
+    # 全Subの旧DCR関連付け→旧診断設定をJSONのBodyで復元し、完了してから新設定をBeforeへ戻す。
+    # 今回追加した診断設定・関連付け・Waiverは削除し、元からあったDCR・関連付けは変更前の値に戻す。
+    # 保存先と保存済みログ、新規DCR本体、もともと存在したWaiverは残す。
     # ---
     foreach ($phase in @('Old', 'New')) {
         $kinds = @('Association', 'Diagnostic')
@@ -66,6 +70,10 @@ try {
                     if ($setting.KeepOnRollback -or ($kind -eq 'Exemption' -and $setting.Before)) {
                         continue
                     }
+                    # ---
+                    # 戻す値は旧設定ならBody、新設定ならBeforeから選ぶ。Azureがすでにその値なら書き込まず次へ進む。
+                    # 事前の照合後に別の値へ変わっていた場合も、その値を上書きせず停止する。
+                    # ---
                     $expectedBody = $setting.Body
                     if ($phase -eq 'New') {
                         $expectedBody = $setting.Before
@@ -78,6 +86,10 @@ try {
                         -not (Test-Configuration $current $setting.Body -Exact))) {
                         throw "切り戻し直前に設定が変わっています: $($setting.Id)"
                     }
+                    # ---
+                    # 削除済みの旧診断設定を戻す前に、親リソースの診断設定一覧を取得する。
+                    # 上限5件に達していれば、ほかの診断設定を消さずに停止する。
+                    # ---
                     if ($kind -eq 'Diagnostic' -and $expectedBody -and -not $current) {
                         $listId = $setting.Id -replace '/diagnosticSettings/[^/]+$', '/diagnosticSettings'
                         $existing = Invoke-ArmRequest -ResourceId $listId -ApiVersion $apiVersions.Diagnostic
@@ -85,6 +97,10 @@ try {
                             throw "旧設定を戻す空きがありません: $($setting.Id)"
                         }
                     }
+                    # ---
+                    # 戻す値がnullなら今回追加した設定をDELETEし、値があればその本体をPUTする。
+                    # 同じIDをGETし直して復元値と照合し、一致しなければほかのSubを含む残りの処理を停止する。
+                    # ---
                     if ($null -eq $expectedBody) {
                         $null = Invoke-ArmRequest -Resource $setting -Method Delete
                     }
@@ -102,6 +118,10 @@ try {
     }
 }
 catch {
+    # ---
+    # 停止したSub・設定ID・理由をrollback_failures.csvへ出し、例外を返す。
+    # それ以前に復元できた設定は、再実行時に一致を確認してスキップする。
+    # ---
     [pscustomobject]@{
         SubscriptionId = $subscriptionId
         ResourceId = $setting.Id

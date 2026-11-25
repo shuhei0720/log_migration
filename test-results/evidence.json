@@ -1,13 +1,13 @@
 {
   "status": "TESTS_PASS_ALL_RESOURCES_AUTH_RESTORED_26_REGISTRATIONS_RESTORED_TWO_AZURE_PENDING",
-  "updatedUtc": "2026-11-25T05:05:20.272660+00:00",
+  "updatedUtc": "2026-11-25T06:00:02.478316+00:00",
   "canonicalSha256": {
-    "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
-    "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
-    "rollback.ps1": "e8ead03928c7abd8a4e2deadb8269ab09372e54d0a7745aa868705230e9e1b80",
-    "step1_copy.ps1": "faa28e88354d878d92dd69764802a1587ee5580baf7f4fdf3676369495ffe4ab",
-    "step2_verify.ps1": "e07a7db5d9a567b8730c2cac741d1d76ce5a4b61b67a00ab365ff614f7aea603",
-    "precheck.ps1": "f406b778b82e496980c19a7eb4ddd35d5079f86b6b66d5da8d5c33a7df73d1e4"
+    "common.ps1": "86ca3f92da6148769c2ef46d0aebac89a896802945c94e2670469e9a6e297fd3",
+    "precheck.ps1": "b459b4fd77be27976cf73a62aa143b42083560f3c3b7be6581da336a66f99e56",
+    "step1_copy.ps1": "2aab82a61c5f4e95e66ad5ea3516a69dc6d0e8b0a18f096e2978dfce98ed3ed7",
+    "step2_verify.ps1": "8b46138fc240774891650687ab77cd86fdd9403769f785407db883053b59c3fc",
+    "step3_delete.ps1": "732b8bace683d5e0500064b8972fb2afa8f8f30c7f3f572e51b33944b3f694ad",
+    "rollback.ps1": "4728000c4de0b35f4769805286c75caa6234a49234fd38b8c41401d2aa28ab47"
   },
   "testSha256": "128cb62b1f3778fa74ccd7ad70b6763b2580427baa25e8e3d939ff91a3343096",
   "linuxReplay": {
@@ -1770,6 +1770,97 @@
         "sha256": "f4787020000f6066a135db60d8adce38975df6ce436efd2210838f9d93f821b3",
         "result": "PASS_INDEPENDENT_DECIMAL_RAW_RECONCILIATION"
       }
+    }
+  },
+  "priorExecutedCanonicalSha256BeforeCommentRevision": {
+    "common.ps1": "fedad825e55b17c4d727bc88fa451b048705680395c38cf486ed9f698ec9e5d3",
+    "precheck.ps1": "f406b778b82e496980c19a7eb4ddd35d5079f86b6b66d5da8d5c33a7df73d1e4",
+    "step1_copy.ps1": "faa28e88354d878d92dd69764802a1587ee5580baf7f4fdf3676369495ffe4ab",
+    "step2_verify.ps1": "e07a7db5d9a567b8730c2cac741d1d76ce5a4b61b67a00ab365ff614f7aea603",
+    "step3_delete.ps1": "0e6889e3852439c542fa2760e21b5a2ccf92ea6588f235470baef2ea94baa82d",
+    "rollback.ps1": "e8ead03928c7abd8a4e2deadb8269ab09372e54d0a7745aa868705230e9e1b80"
+  },
+  "commentBasedHelpRevision": {
+    "status": "PASS_LOCAL_COMMENT_HELP_AND_EXECUTABLE_EQUIVALENCE",
+    "updatedUtc": "2026-11-25T05:51:09.515480+00:00",
+    "userReferenceCommit": "b97b19c",
+    "baseMergedCommit": "dde1159733db881dad5193dcb112248b4f10cae6",
+    "scope": "Six canonical scripts: function help plus concrete processing block comments; learning guide updated separately.",
+    "functionCount": 5,
+    "helpSections": [
+      "SYNOPSIS",
+      "DESCRIPTION",
+      "PARAMETER",
+      "OUTPUTS"
+    ],
+    "examplesInFunctionHelp": 0,
+    "examplesInLearningGuide": true,
+    "userBaselineCommonSha256": "c90850889fe3ab23536f6448c4391a22e1ede17eaea7c142edfb38e680fa3330",
+    "codeTokensAndAstIdenticalToUserBaseline": true,
+    "fiveFunctionImplementationsIdenticalToAzureExecutedVersion": true,
+    "otherFiveScriptsExecutableCodeIdenticalToAzureExecutedVersion": true,
+    "intentionalUserConfigurationDifferenceFromAzureExecutedVersion": {
+      "variable": "newDiagnosticSettingName",
+      "previousValue": "storage-archive",
+      "currentValue": "setByAzurePlatformTeam",
+      "source": "User commit b97b19c; preserved, not introduced by comment revision."
+    },
+    "getHelpFullForFiveFunctionsConfirmed": true,
+    "azureCallsForThisRevision": 0,
+    "azureExecutionRerunForThisRevision": false,
+    "previousAzureAndReplayEvidencePreserved": true,
+    "proofs": {
+      "FUNCTION_HELP_QA.json": {
+        "path": "/tmp/log-migration-fresh-normal-20261125/comment-help-revision/FUNCTION_HELP_QA.json",
+        "sha256": "3c7682257384d76b2852c0f2ba92d9b0e05e10d0236afac06000eb0b6bd5b991"
+      },
+      "copy-comment-proof.json": {
+        "path": "/tmp/log-migration-fresh-normal-20261125/comment-help-revision/copy-comment-proof.json",
+        "sha256": "1175dc7e9ca98a6af195275550f5a590dc174d8505192991522be4f9df7b504d"
+      },
+      "OTHER_STEP_COMMENTS_STATIC_PROOF.json": {
+        "path": "/tmp/log-migration-fresh-normal-20261125/comment-help-revision/OTHER_STEP_COMMENTS_STATIC_PROOF.json",
+        "sha256": "834b3c70a48be965e8c9310a7b3cdc26a4f25047fc4f8e51316ad04a35a8af3f"
+      },
+      "OTHER_STEP_COMMENTS_TEXT_PROOF.json": {
+        "path": "/tmp/log-migration-fresh-normal-20261125/comment-help-revision/OTHER_STEP_COMMENTS_TEXT_PROOF.json",
+        "sha256": "729e7eee4288745ffdafe193239b4176ff13d95216801f92cbeb5b2a4b8a94d2"
+      },
+      "FINAL_COMMENT_CONTENT_REVIEW.json": {
+        "path": "/tmp/log-migration-fresh-normal-20261125/comment-help-revision/FINAL_COMMENT_CONTENT_REVIEW.json",
+        "sha256": "8bd8aba708e2627f278eb01c55e23f1591e44d6defc4781153d0dfab2d79fa21"
+      }
+    },
+    "learningGuideAndReadmesReviewed": true,
+    "learningGuideLineRangesVerified": 77,
+    "learningGuideSearchAnchorsVerified": 99,
+    "documentationProofs": {
+      "DOC_VALIDATION.json": {
+        "path": "/tmp/log-migration-fresh-normal-20261125/comment-help-revision/DOC_VALIDATION.json",
+        "sha256": "ed6dcd131c0d56754e66ceef65d6cab22ec48d127ebc2ce657efca5e7b82ddb1"
+      },
+      "DOC_LINE_REFERENCES.json": {
+        "path": "/tmp/log-migration-fresh-normal-20261125/comment-help-revision/DOC_LINE_REFERENCES.json",
+        "sha256": "13a51b18cc486c4eb60fd473ea6814a5f52a68d2fce79c5eea4f85f23a6f47fb"
+      },
+      "DOC_GET_HELP.json": {
+        "path": "/tmp/log-migration-fresh-normal-20261125/comment-help-revision/DOC_GET_HELP.json",
+        "sha256": "2a4da968c85f5cbed730b37db1609c659f97e0f02e2f83ec27aa529c54d1dcb8"
+      },
+      "DOC_REVIEW.json": {
+        "path": "/tmp/log-migration-fresh-normal-20261125/comment-help-revision/DOC_REVIEW.json",
+        "sha256": "33d54fa8a5d61856189922808d37ed43abcd56b36eba872d840517489b371894"
+      },
+      "DOC_HANDOFF.json": {
+        "path": "/tmp/log-migration-fresh-normal-20261125/comment-help-revision/DOC_HANDOFF.json",
+        "sha256": "a234af9f594cbea2f92ce8658279c83e1b139242af47e0478894d403bddb85b7"
+      }
+    },
+    "documentSha256": {
+      "README.md": "ea3c5218fedf5a81a98d421360d8c7f8e4e5aeff8af48cff9eeb5e52b8274b87",
+      "procedural-migration/README.md": "ec73820609b36f588bb243474a16f861fe4f72f39f25473926286ebb0587fd92",
+      "procedural-migration/CODE_LEARNING.md": "8f3beba3f2698fde520689e10df1d49a57f05758591518aa3ab4cde1406b738c",
+      "test-environment/README.md": "1ebaf4fd05583aed3037138924ca16521fb1f364947f5880b3a71f5ccc85d805"
     }
   }
 }
