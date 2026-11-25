@@ -74,7 +74,7 @@ foreach ($target in $targets) {
                     properties = @{
                         encryption = @{ requireInfrastructureEncryption = $true }
                         immutableStorageWithVersioning = @{ enabled = $true }
-                        publicNetworkAccess = 'Enabled'
+                        publicNetworkAccess = 'Disabled'
                         allowBlobPublicAccess = $false
                         allowSharedKeyAccess = $false
                         supportsHttpsTrafficOnly = $true
@@ -338,7 +338,7 @@ foreach ($target in $targets) {
             $current = Invoke-ArmRequest -Resource $resource -Optional -Wait
             $currentBody = Get-WritableBody $current -Kind $resource.Kind
             $expected = $resource.Body
-            # RGは存在すれば再利用するため、地域は一致条件に含めない。
+            # 作業記録にある作成済みRGは、再開時に存在だけを確認して使う。
             if ($resource.Kind -eq 'Group') {
                 $expected = @{}
             }
@@ -394,7 +394,7 @@ foreach ($target in $targets) {
             }
             if ($resource.Kind -eq 'Lifecycle') {
                 $body.properties.policy.rules = @($current.properties.policy.rules | Where-Object {
-                    $null -ne $_ -and $_.name -notin @('log-append-365', 'log-append-1095')
+                    $null -ne $_ -and $_.name -ne 'log-append-1095'
                 }) + @($resource.Body.properties.policy.rules)
             }
             # 既存テーブルの列定義などを保つため、保持期間だけをPATCHで更新する。

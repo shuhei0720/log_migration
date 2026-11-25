@@ -31,7 +31,7 @@ foreach ($target in $targets) {
             try {
                 $current = Invoke-ArmRequest -Resource $resource -Optional
                 $expected = $resource.Body
-                # RGは存在すれば再利用するため、地域は一致条件に含めない。
+                # RGは作成済みであることを確認する。
                 if ($resource.Kind -eq 'Group') {
                     $expected = @{}
                 }

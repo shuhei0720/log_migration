@@ -298,7 +298,7 @@ function Invoke-RestMethod {
             throw 'TEST_WRITE_BEFORE_BACKUP'
         }
         $fixture.BackupWitnesses.Add((Get-Content $recordPath -Raw -Encoding UTF8 | ConvertFrom-Json))
-        if ($methodName -eq 'DELETE' -and $path -like '*/diagnosticSettings/storage-archive') {
+        if ($methodName -eq 'DELETE' -and $path -like "*/diagnosticSettings/$($fixture.DiagnosticName)") {
             $activeRecords = @(Get-ChildItem (Join-Path $fixture.Repository 'records/dev') -Filter '*.json' | Where-Object {
                 -not $fixture.RollbackSubscriptions -or $_.BaseName -in $fixture.RollbackSubscriptions
             } | ForEach-Object {
@@ -409,10 +409,10 @@ function Add-FixtureDiagnostic {
     Add-FixtureResource "$ParentId/providers/Microsoft.Insights/diagnosticSettings/$Name" $body
 }
 function Write-FixtureCsv {
-    param([switch]$Legacy)
+    param([string]$OmitColumn)
     $rows = @($global:ProceduralFixture.Rows)
-    if ($Legacy) {
-        $rows = @($rows | Select-Object SubscriptionName, ResourceGroup, StorageAccount, WorkspaceName, LogDestination)
+    if ($OmitColumn) {
+        $rows = @($rows | Select-Object -Property * -ExcludeProperty $OmitColumn)
     }
     $rows | Export-Csv (Join-Path $global:ProceduralFixture.Repository 'targets.csv') -NoTypeInformation -Encoding UTF8
 }
@@ -474,12 +474,14 @@ function Reset-Fixture {
         . (Join-Path $root 'common.ps1') -SkipCsv
         @{
             SourceWorkspace = $targetWorkspaceId
+            DiagnosticName = $newDiagnosticSettingName
             OldDcrIds = @($oldDcrIds)
             ReferenceIds = @($policyReferenceIds)
             Assignments = @($policyAssignments)
         }
     }
     $global:ProceduralFixture.SourceWorkspace = $configuration.SourceWorkspace
+    $global:ProceduralFixture.DiagnosticName = $configuration.DiagnosticName
     $global:ProceduralFixture.OldDcrIds = $configuration.OldDcrIds
     $global:ProceduralFixture.ReferenceIds = $configuration.ReferenceIds
     $global:ProceduralFixture.Assignments = $configuration.Assignments
@@ -613,6 +615,28 @@ try {
                 Assert-Replay (@($record.Destinations | Where-Object Kind -eq 'Storage').Count -eq 1) '全フラグで指定Storageを準備'
                 Assert-Replay (@($record.Destinations | Where-Object Kind -eq 'Workspace').Count -eq 1) '全フラグでLAWを準備'
                 Assert-Replay (@($record.Destinations | Where-Object Kind -eq 'Table').Count -eq 2) 'VMを止める場合もEvent/Syslogを準備'
+                $storage = @($record.Destinations | Where-Object Kind -eq 'Storage')[0]
+                $storageProperties = $global:ProceduralFixture.Resources[$storage.Id].properties
+                Assert-Replay ($storageProperties.publicNetworkAccess -eq 'Disabled') '原本どおりStorage公開アクセス無効'
+                Assert-Replay ($storageProperties.networkAcls.defaultAction -eq 'Deny' -and $storageProperties.networkAcls.bypass -eq 'AzureServices') '原本どおり既定拒否とAzureServices例外'
+                Assert-Replay ($storageProperties.allowBlobPublicAccess -eq $false -and $storageProperties.allowSharedKeyAccess -eq $false) 'Blob匿名公開と共有キーを無効化'
+                $workspace = @($record.Destinations | Where-Object Kind -eq 'Workspace')[0]
+                $workspaceProperties = $global:ProceduralFixture.Resources[$workspace.Id].properties
+                Assert-Replay ($workspaceProperties.publicNetworkAccessForIngestion -eq 'Enabled' -and $workspaceProperties.publicNetworkAccessForQuery -eq 'Enabled') '原本どおりLAWの取込とクエリの公開アクセス有効'
+                Assert-Replay ($workspaceProperties.retentionInDays -eq 90) '指定どおりLAW全体を90日保持'
+                $exemptions = @($record.NewSettings | Where-Object Kind -eq 'Exemption')
+                Assert-Replay ($exemptions.Count -eq 3) '環境別3割り当ての除外を準備'
+                for ($index = 0; $index -lt 3; $index++) {
+                    $assignment = $global:ProceduralFixture.Assignments[$index]
+                    $exemption = @($exemptions | Where-Object { $_.Body.properties.policyAssignmentId -eq $assignment.Id })[0]
+                    $sent = @($global:ProceduralFixture.Writes | Where-Object { $_.Id -eq $exemption.Id -and $_.Method -eq 'PUT' })[0].Body.properties
+                    if ($index -lt 2) {
+                        Assert-Replay ('policyDefinitionReferenceIds' -in $sent.PSObject.Properties.Name -and @($sent.policyDefinitionReferenceIds).Count -eq 0) '最初の2割り当ては空参照IDで全体除外'
+                    }
+                    else {
+                        Assert-Replay (@($sent.policyDefinitionReferenceIds).Count -eq 12 -and (($sent.policyDefinitionReferenceIds | Sort-Object) -join '|') -ceq (($global:ProceduralFixture.ReferenceIds | Sort-Object) -join '|')) '3件目だけ指定12参照IDを除外'
+                    }
+                }
                 $diagnosticCount = @($record.NewSettings | Where-Object Kind -eq 'Diagnostic').Count
                 $associationCount = @($record.NewSettings | Where-Object Kind -eq 'Association').Count
                 Assert-Replay (($diagnosticCount -eq 1) -eq ($mode.Diagnostic -in @('Storage', 'Log'))) '新診断は選択した側だけ'
@@ -704,12 +728,13 @@ try {
             Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id)) '方式不一致なら全旧設定を保持'
         }
     }
-    Invoke-ReplayCase '旧CSVはVM列なしをLog扱いにする' {
-        Write-FixtureCsv -Legacy
-        Invoke-ReplayStep copy
-        foreach ($record in Get-FixtureRecords) {
-            Assert-Replay ($record.Target.VmLogDestination -eq 'Log') 'VM既定値を記録'
-            Assert-Replay (@($record.NewSettings | Where-Object Kind -eq 'Association').Count -eq 1) '旧VMとVMSSに新関連を追加'
+    Invoke-ReplayCase 'CSV列欠落は空欄と区別して書込み前に停止する' {
+        foreach ($column in @('SubscriptionName', 'ResourceGroup', 'StorageAccount', 'WorkspaceName', 'LogDestination', 'VmLogDestination')) {
+            Write-FixtureCsv -OmitColumn $column
+            Invoke-ReplayStep copy -ExpectFailure
+            Assert-Replay ($global:ProceduralFixture.LastError.Exception.Message -match [regex]::Escape($column)) '不足列を理由に停止'
+            Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '列欠落でAzure変更なし'
+            Assert-Replay (-not (Test-Path (Join-Path $global:ProceduralFixture.Repository 'records'))) '列欠落で作業記録を作らない'
         }
     }
     Invoke-ReplayCase '対象0件でも東日本StorageとLAWを準備する' -NoSources -Diagnostic 'None' -Vm 'None' -Body {
@@ -792,7 +817,7 @@ try {
         }
         Add-FixtureDiagnostic $database
         $oldId = "$database/providers/Microsoft.Insights/diagnosticSettings/old"
-        $newId = "$database/providers/Microsoft.Insights/diagnosticSettings/storage-archive"
+        $newId = "$database/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)"
 
         Invoke-ReplayStep copy
         $record = @(Get-FixtureRecords | Where-Object { $_.Target.SubscriptionId -eq $subscription })[0]
@@ -858,7 +883,7 @@ try {
         Assert-Replay (@($record.OldSettings | Where-Object Kind -eq 'Diagnostic').Count -eq 3) 'DB両ページと通常の次ページを保存'
         Assert-Replay (@($record.NewSettings | Where-Object Kind -eq 'Diagnostic').Count -eq 3) '3対象すべてへ新診断を追加'
         foreach ($resourceId in @($archive, $second, $other)) {
-            $new = @($record.NewSettings | Where-Object Id -eq "$resourceId/providers/Microsoft.Insights/diagnosticSettings/storage-archive")[0]
+            $new = @($record.NewSettings | Where-Object Id -eq "$resourceId/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)")[0]
             $storageName = 'stcac1111'
             if ($resourceId -eq $other) {
                 $storageName = 'stjpw1111'
@@ -870,7 +895,7 @@ try {
         Invoke-ReplayStep rollback
         foreach ($resourceId in @($archive, $second, $other)) {
             Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey("$resourceId/providers/Microsoft.Insights/diagnosticSettings/old")) '次ページの旧設定も復元'
-            Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey("$resourceId/providers/Microsoft.Insights/diagnosticSettings/storage-archive")) '次ページの新設定も解除'
+            Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey("$resourceId/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)")) '次ページの新設定も解除'
         }
     }
     foreach ($invalid in @(
@@ -890,6 +915,30 @@ try {
             Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '入力異常は変更前に停止'
         }
     }
+    Invoke-ReplayCase '初回の既存RGは同地域でも別地域でも変更前に停止する' {
+        $configuration = & {
+            . (Join-Path $global:ProceduralFixture.Repository 'common.ps1') -SkipCsv
+            $location
+        }
+        $otherLocation = if ($configuration -eq 'japaneast') { 'japanwest' } else { 'japaneast' }
+        foreach ($existingLocation in @($configuration, $otherLocation)) {
+            $beforeGroups = @{}
+            foreach ($subscription in $global:ProceduralFixture.Subscriptions) {
+                $ids = Get-FixtureIds $subscription
+                Add-FixtureResource $ids.Group @{ location = $existingLocation; properties = @{} }
+                $beforeGroups[$ids.Group] = ConvertTo-Json $global:ProceduralFixture.Resources[$ids.Group] -Depth 20
+            }
+            Invoke-ReplayStep precheck -ExpectFailure
+            Invoke-ReplayStep copy -ExpectFailure
+            Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '両Subとも既存RGへ書込みなし'
+            Assert-Replay (@(Get-ChildItem (Join-Path $global:ProceduralFixture.Repository 'records/dev') -Filter '*.json' -ErrorAction SilentlyContinue).Count -eq 0) '既存RGで作業記録を保存しない'
+            $failures = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'copy_failures.csv'))
+            Assert-Replay ($failures.Count -eq 2 -and @($failures | Where-Object { $_.Reason -notmatch 'リソースグループ' }).Count -eq 0) '両SubのRG衝突を報告'
+            foreach ($id in $beforeGroups.Keys) {
+                Assert-Replay ($beforeGroups[$id] -ceq (ConvertTo-Json $global:ProceduralFixture.Resources[$id] -Depth 20)) '既存RGの本文を保持'
+            }
+        }
+    }
     Invoke-ReplayCase '初回の既存Storage名を事前停止する' {
         $global:ProceduralFixture.UnavailableNames = @('stjpe1111')
         Invoke-ReplayStep precheck -ExpectFailure
@@ -902,7 +951,7 @@ try {
     }
     Invoke-ReplayCase '初回の同名新診断を再利用しない' {
         $parent = $global:ProceduralFixture.Inventory[0].id
-        Add-FixtureDiagnostic $parent 'storage-archive' '/unrelated-workspace'
+        Add-FixtureDiagnostic $parent $global:ProceduralFixture.DiagnosticName '/unrelated-workspace'
         Invoke-ReplayStep precheck -ExpectFailure
         Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '診断名衝突の変更0'
     }
@@ -916,14 +965,14 @@ try {
     }
     Invoke-ReplayCase '両Noneは同名新診断と5件上限に触れない' -Diagnostic 'None' -Vm 'None' -Body {
         $parent = $global:ProceduralFixture.Inventory[0].id
-        foreach ($name in @('storage-archive', 'keep-2', 'keep-3')) {
+        foreach ($name in @($global:ProceduralFixture.DiagnosticName, 'keep-2', 'keep-3')) {
             Add-FixtureDiagnostic $parent $name '/unrelated-workspace'
         }
-        $before = ConvertTo-Json $global:ProceduralFixture.Resources["$parent/providers/Microsoft.Insights/diagnosticSettings/storage-archive"] -Depth 50
+        $before = ConvertTo-Json $global:ProceduralFixture.Resources["$parent/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)"] -Depth 50
         Invoke-ReplayStep copy
         Invoke-ReplayStep delete
         Invoke-ReplayStep rollback
-        $after = ConvertTo-Json $global:ProceduralFixture.Resources["$parent/providers/Microsoft.Insights/diagnosticSettings/storage-archive"] -Depth 50
+        $after = ConvertTo-Json $global:ProceduralFixture.Resources["$parent/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)"] -Depth 50
         Assert-Replay ($before -ceq $after) '無関係の同名設定を完全保持'
     }
     Invoke-ReplayCase '関係のないVM・VMSSには新関連を作らない' {
@@ -958,12 +1007,10 @@ try {
         $actualTable.properties.totalRetentionInDays = 365
         Set-FixtureProperty $actualTable.properties 'totalRetentionInDaysAsDefault' $true
         $actualLifecycle = $global:ProceduralFixture.Resources[$lifecycle.Id]
-        $legacy = Copy-FixtureValue @($actualLifecycle.properties.policy.rules | Where-Object name -eq 'log-append-1095')[0]
-        $legacy.name = 'log-append-365'
-        $otherRule = Copy-FixtureValue $legacy
+        $otherRule = Copy-FixtureValue @($actualLifecycle.properties.policy.rules | Where-Object name -eq 'log-append-1095')[0]
         $otherRule.name = 'keep-other-rule'
         $otherRule.definition.actions.baseBlob.delete.daysAfterModificationGreaterThan = 7
-        $actualLifecycle.properties.policy.rules = @($legacy, $otherRule)
+        $actualLifecycle.properties.policy.rules = @($otherRule)
         Reset-Observation
         Invoke-ReplayStep copy
         Assert-Replay ($global:ProceduralFixture.Resources[$storage.Id].properties.networkAcls.ipRules[0].value -eq '192.0.2.1') 'IP規則保持'
@@ -975,7 +1022,7 @@ try {
         Assert-Replay ($afterTable.properties.totalRetentionInDays -eq 1095 -and -not $afterTable.properties.totalRetentionInDaysAsDefault) '総保持だけ1095に明示設定'
         Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Id -eq $table.Id -and $_.Method -eq 'PATCH' }).Count -eq 1) '既存TableはPATCH'
         $rules = @($global:ProceduralFixture.Resources[$lifecycle.Id].properties.policy.rules)
-        Assert-Replay (@($rules | Where-Object name -eq 'log-append-365').Count -eq 0) '旧365管理ルール除去'
+        Assert-Replay (@($rules | Where-Object name -eq 'keep-other-rule')[0].definition.actions.baseBlob.delete.daysAfterModificationGreaterThan -eq 7) '他名ライフルールの設定値保持'
         Assert-Replay (@($rules | Where-Object name -eq 'log-append-1095').Count -eq 1) '1095管理ルール1つ'
         Assert-Replay (@($rules | Where-Object name -eq 'keep-other-rule').Count -eq 1) '他名ライフルール保持'
         Invoke-ReplayStep verify
@@ -1024,7 +1071,7 @@ try {
     }
     Invoke-ReplayCase 'copy途中失敗から未完了だけを再開する' {
         $firstParent = $global:ProceduralFixture.Inventory[0].id
-        $id = "$firstParent/providers/Microsoft.Insights/diagnosticSettings/storage-archive"
+        $id = "$firstParent/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)"
         $global:ProceduralFixture.Failures["PUT $id"] = 4
         Invoke-ReplayStep copy -ExpectFailure
         $hashes = @{}
@@ -1147,7 +1194,7 @@ try {
         $global:ProceduralFixture.Failures["PUT $($old.Id)"] = 4
         Reset-Observation
         Invoke-ReplayStep rollback -ExpectFailure
-        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Method -eq 'DELETE' -and $_.Id -like '*/diagnosticSettings/storage-archive' }).Count -eq 0) '旧復元失敗で新診断DELETE0'
+        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Method -eq 'DELETE' -and $_.Id -like "*/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)" }).Count -eq 0) '旧復元失敗で新診断DELETE0'
         Assert-Replay (-not $global:ProceduralFixture.UnsafeNewDelete) '旧未復元の新設定は保持'
         Invoke-ReplayStep rollback
     }
@@ -1254,7 +1301,7 @@ try {
         Reset-Observation
         . (Join-Path $global:ProceduralFixture.Repository 'common.ps1') -SkipCsv
         $subscriptionId = $global:ProceduralFixture.Subscriptions[0]
-        $null = Invoke-ArmRequest $ids.Workspace -Method Put -ApiVersion '2023-09-01' -Body @{ location = 'japaneast'; properties = @{ retentionInDays = 365 } } -Wait
+        $null = Invoke-ArmRequest $ids.Workspace -Method Put -ApiVersion '2023-09-01' -Body @{ location = 'japaneast'; properties = @{ retentionInDays = 90 } } -Wait
         $requests = @($global:ProceduralFixture.Requests | Where-Object Id -eq $ids.Workspace)
         Assert-Replay (@($requests | Where-Object Method -eq 'PUT').Count -eq 1) 'PUTを繰り返して作成を再開始しない'
         Assert-Replay (@($requests | Where-Object Method -eq 'GET').Count -eq 7) '5分後もSucceededまでGETを続ける'
@@ -1304,12 +1351,12 @@ try {
         $oldId = "$parent/providers/Microsoft.Insights/diagnosticSettings/old"
         $old = $global:ProceduralFixture.Resources[$oldId]
         $global:ProceduralFixture.Resources.Remove($oldId)
-        Add-FixtureResource "$parent/providers/Microsoft.Insights/diagnosticSettings/storage-archive" $old
+        Add-FixtureResource "$parent/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)" $old
         Invoke-ReplayStep copy
         Invoke-ReplayStep delete
-        Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey("$parent/providers/Microsoft.Insights/diagnosticSettings/storage-archive")) '同名でも対象旧設定は削除'
+        Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey("$parent/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)")) '同名でも対象旧設定は削除'
         Invoke-ReplayStep rollback
-        Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey("$parent/providers/Microsoft.Insights/diagnosticSettings/storage-archive")) '元の同名旧設定を復元'
+        Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey("$parent/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)")) '元の同名旧設定を復元'
     }
     Invoke-ReplayCase '指定2DCRでも対象外Subの関連を変更しない' {
         $outside = '/subscriptions/33333333-3333-3333-3333-333333333333/resourceGroups/source/providers/Microsoft.Compute/virtualMachines/outside/providers/Microsoft.Insights/dataCollectionRuleAssociations/old'
@@ -1367,7 +1414,7 @@ try {
     }
     Invoke-ReplayCase 'コピー途中の失敗状態から直接切り戻せる' {
         $parent = $global:ProceduralFixture.Inventory[0].id
-        $global:ProceduralFixture.Failures["PUT $parent/providers/Microsoft.Insights/diagnosticSettings/storage-archive"] = 4
+        $global:ProceduralFixture.Failures["PUT $parent/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)"] = 4
         Invoke-ReplayStep copy -ExpectFailure
         $records = @(Get-FixtureRecords)
         Reset-Observation
@@ -1607,7 +1654,7 @@ try {
         }
         $workers = @($global:ProceduralFixture.Requests | Where-Object { $_.RunspaceId -ne $script:mainRunspaceId })
         Assert-Replay (@($workers | Where-Object { $_.Method -eq 'GET' -and $_.Id -like '*/diagnosticSettings' }).Count -ge 5) '別runspaceから診断GET5件以上'
-        Assert-Replay (@($workers | Where-Object { $_.Method -eq 'PUT' -and $_.Id -like '*/diagnosticSettings/storage-archive' }).Count -ge 5) '別runspaceから診断PUT5件以上'
+        Assert-Replay (@($workers | Where-Object { $_.Method -eq 'PUT' -and $_.Id -like "*/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)" }).Count -ge 5) '別runspaceから診断PUT5件以上'
         Assert-Replay ($global:ProceduralFixture.WorkerRunspaceIds.Count -ge 2) '複数の実runspaceを使用'
         Invoke-ReplayStep verify
     }
@@ -1618,7 +1665,7 @@ try {
             $global:ProceduralFixture.Inventory += [pscustomobject]@{ id = $parent; type = 'Microsoft.Test/widgets'; location = 'japaneast' }
             Add-FixtureDiagnostic $parent
         }
-        $failedId = "/subscriptions/$subscription/resourceGroups/rg-source/providers/Microsoft.Test/widgets/parallel-3/providers/Microsoft.Insights/diagnosticSettings/storage-archive"
+        $failedId = "/subscriptions/$subscription/resourceGroups/rg-source/providers/Microsoft.Test/widgets/parallel-3/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)"
         $global:ProceduralFixture.Failures["PUT $failedId"] = 4
         Invoke-ReplayStep copy -ExpectFailure
         Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($failedId)) '失敗workerだけが未完了'
@@ -1628,7 +1675,7 @@ try {
         }
         Reset-Observation
         Invoke-ReplayStep copy
-        $puts = @($global:ProceduralFixture.Writes | Where-Object { $_.Method -eq 'PUT' -and $_.Id -like '*/diagnosticSettings/storage-archive' })
+        $puts = @($global:ProceduralFixture.Writes | Where-Object { $_.Method -eq 'PUT' -and $_.Id -like "*/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)" })
         Assert-Replay ($puts.Count -eq 1 -and $puts[0].Id -eq $failedId) '再実行は失敗1件だけPUT'
         Invoke-ReplayStep verify
         Invoke-ReplayStep delete

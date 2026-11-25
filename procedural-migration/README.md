@@ -30,7 +30,11 @@ Copy-Item .\procedural-migration\targets.example.csv .\procedural-migration\targ
 |`StorageAccount`|`jpe`を1か所含む小文字英数字3～24文字。Storage宛てなら必須|
 |`WorkspaceName`|保存先Log Analytics名。必須|
 |`LogDestination`|診断側：`Storage` / `Log` / `None` / 空欄|
-|`VmLogDestination`|VM側：`Log` / `None` / 空欄。列がない旧CSVは`Log`|
+|`VmLogDestination`|VM側の新送信設定：`Log`なら作成、`None`・空欄なら作成しない。送信先はLog Analytics固定|
+
+CSVは6列すべて必要です。列の欠落はエラーにし、値が空欄の指定とは区別します。
+
+初回はCSV指定のRGが既にあれば、地域に関係なく停止します。同じ作業の再開では、記録にあるRGを使います。
 
 `None`・空欄の側は新送信設定を作らず、step3で旧設定を外して送信を終了します。**保存先は準備します。** Log Analyticsは全行、Storageは名前がある行で作ります。Storageの対象地域が0件なら東日本に1つ作ります。
 
@@ -63,10 +67,10 @@ pwsh.exe -NoProfile -File .\procedural-migration\step3_delete.ps1
 1. CSVから対象Subを特定する。
 2. Sub内のリソースを列挙し、旧ワークスペース宛ての診断設定を探す。Storageの子サービスとRedis子DBも調べ、旧2DCRの関連も取得する。
 3. 指定3割り当ての適用と、3件目の12参照IDの存在を確認する。
-4. 地域別Storage名・空き・ZRS対応、新診断名の重複と5枠上限を確認する。
+4. 保存先RGの不存在、地域別Storage名・空き・ZRS対応、新診断名の重複と5枠上限を確認する。
 5. SubごとのOK/NGを`precheck_results.csv`へ出し、NGがあればエラーで終了する。
 
-Azureの変更・記録保存は行いません。再開用JSONも使わないため、作成済みStorage名は使用済みとして停止します。
+Azureの変更・記録保存は行いません。再開用JSONも使わないため、同名RG・作成済みStorage名は使用済みとして停止します。
 
 ### step1_copy.ps1：記録を保存し、新送信設定を準備
 
@@ -80,7 +84,7 @@ CSVの1Subずつ、次の順に処理します。
 |対象|設定内容|
 |---|---|
 |RG・Log Analytics|新規作成地域は`$location`。ワークスペース保持90日、取込・クエリのパブリックアクセスとリソース権限でのログ参照を有効化|
-|地域別Storage|StorageV2・Standard_ZRS、インフラ暗号化・バージョン単位の不変性を有効化。共有キー・Blob匿名公開は無効。HTTPS／TLS 1.2、通信は既定拒否・AzureServicesを許可|
+|地域別Storage|StorageV2・Standard_ZRS、インフラ暗号化・バージョン単位の不変性を有効化。共有キー・Blob匿名公開は無効。HTTPS／TLS 1.2、公開ネットワークは無効（`Disabled`）。通信規則は既定拒否・`AzureServices`例外|
 |Storageの追加設定|Blobバージョン管理、appendBlobを最終更新の1,095日後に削除するライフサイクル、個別Defenderの無効化|
 |Event・Syslog|旧DCR関連がある場合に準備し、合計保持を1,095日へ設定。VM側がNone・空欄でも対象|
 

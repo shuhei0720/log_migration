@@ -1,22 +1,22 @@
 {
   "status": "TESTS_PASS_ALL_RESOURCES_AUTH_RESTORED_26_REGISTRATIONS_RESTORED_TWO_AZURE_PENDING",
-  "updatedUtc": "2026-11-25T07:53:21.454900+00:00",
+  "updatedUtc": "2026-11-25T09:30:52.715173+00:00",
   "canonicalSha256": {
-    "step3_delete.ps1": "4b848b0b1a1ca1f3c5f765b83425db32a2154ffe596c8fe2045494ee737c5689",
-    "common.ps1": "3dceca34770c1590b133a4f394096aa36a53e65fc346b89f0fbe7aee7b23eecf",
     "rollback.ps1": "cafe6ccc395f48a76cf609b14d9300a60c558a8d2db42913b1bd628714c0497a",
-    "step1_copy.ps1": "3d50370d5aaea6b24dc6faf7c663e6de003a59127581ed351b092d930d387a91",
-    "step2_verify.ps1": "feb65bd719d68a792339776ecc33ac789ff67de928e83ec3dcd8096f147cab4e",
-    "precheck.ps1": "74d49d8b87ba2ba41d58a276c6fbb1f165a4d98afd7d3951852fbc975e08f599"
+    "step3_delete.ps1": "4b848b0b1a1ca1f3c5f765b83425db32a2154ffe596c8fe2045494ee737c5689",
+    "precheck.ps1": "74d49d8b87ba2ba41d58a276c6fbb1f165a4d98afd7d3951852fbc975e08f599",
+    "step1_copy.ps1": "3c4a0c983d9db29dd952a09e41512e2ecfd0c99327871a3e98a5633eeb909dc7",
+    "step2_verify.ps1": "d1d3788c499b163f483f7c11db85ff97c30924e5c6cb4b292d9415a6a865dbf8",
+    "common.ps1": "b7a15382646d652beeab186e89793c31ce63120d9e8bbfc0e17246c254fcc29c"
   },
-  "testSha256": "922fc60eb5b73ad0a09da6f2776a5c25a3f2d12d88be71834e3b62ca6ab374f9",
+  "testSha256": "37bef30539f3791280d21c1e17d93d3a6f6c5f236266833aee1a8a3e9873ceb2",
   "linuxReplay": {
     "result": "PASS",
     "runtime": "7.5.4",
-    "cases": 89,
-    "checks": 1145,
+    "cases": 90,
+    "checks": 1304,
     "azureRequests": 0,
-    "reportSha256": "843317503efe3baeb15af606c1ed99cde9de157d46142aef57daafb9075f1062"
+    "reportSha256": "fb65361fbdfd0447eb77f6686006fc083c37cd4be24998885083fa23dba99e5e"
   },
   "azureIntegration": {
     "resultBeforeFix": "FAIL",
@@ -2173,5 +2173,429 @@
       "procedural-migration/README.md": "72ad976ac353e8b7c020502fe84975eeb4f57990c52cc17c9d27337843224512",
       "procedural-migration/CODE_LEARNING.md": "7b76d74ba1933854c249cfdee9030afa92109ad3cb20c01ea2a85fa539277d93"
     }
+  },
+  "linuxReplaysBeforeProductionReview": [
+    {
+      "result": "PASS",
+      "runtime": "7.5.4",
+      "cases": 89,
+      "checks": 1145,
+      "azureRequests": 0,
+      "reportSha256": "843317503efe3baeb15af606c1ed99cde9de157d46142aef57daafb9075f1062"
+    }
+  ],
+  "productionSettingsReviewRevision": {
+    "status": "PASS_ORIGINAL_AND_LATER_REQUIREMENTS_RECONCILED",
+    "baselineCommit": "c629ce025e29f3be926276960e678d224475d71e",
+    "precedence": "Later user instructions take precedence over the original script.",
+    "approvedSecurityCorrection": {
+      "property": "Storage publicNetworkAccess",
+      "before": "Enabled",
+      "after": "Disabled"
+    },
+    "initialResourceGroup": "Must not already exist regardless of region; checked in precheck and copy before subscription changes.",
+    "resourceGroupResume": "Reuse only a Group destination with the same ID in the same validated work record.",
+    "notAdoptedProposals": [
+      "Additional resource-group region restriction",
+      "Additional DCR resource-type filter",
+      "Different representation for whole-policy exemption reference IDs"
+    ],
+    "userDcrScopePremise": "No resource types other than VM/VMSS are associated with the specified old DCRs.",
+    "existingWholeExemptionArrayRepresentationRetained": true,
+    "unnecessaryDevelopmentVersionRuleHandlingRemoved": true,
+    "csvColumnsRequired": [
+      "SubscriptionName",
+      "ResourceGroup",
+      "StorageAccount",
+      "WorkspaceName",
+      "LogDestination",
+      "VmLogDestination"
+    ],
+    "missingCsvColumnsNeverDefaultToLogOrBlank": true,
+    "vmDestinationIsAlwaysLogAnalytics": true,
+    "vmColumnControlsWhetherNewSendingConfigurationIsCreated": true,
+    "retentionDays": {
+      "workspace": 90,
+      "eventSyslogTotal": 1095,
+      "storageLifecycle": 1095
+    },
+    "originalDestinationSettingsCompared": 37,
+    "originalDestinationSettingComparisons": [
+      {
+        "section": "ResourceGroup",
+        "setting": "location",
+        "original": "$location (japaneast default)",
+        "current": "$location (japaneast default)",
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "Storage",
+        "setting": "name",
+        "original": "$target.StorageAccount",
+        "current": "jpe replaced with resource-region abbreviation",
+        "classification": "REQUESTED_CHANGE",
+        "basis": "Regional storage accounts explicitly requested"
+      },
+      {
+        "section": "Storage",
+        "setting": "location",
+        "original": "$location",
+        "current": "resource region; japaneast fallback for global/empty",
+        "classification": "REQUESTED_CHANGE",
+        "basis": "Regional storage accounts explicitly requested"
+      },
+      {
+        "section": "Storage",
+        "setting": "kind",
+        "original": "StorageV2",
+        "current": "StorageV2",
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "Storage",
+        "setting": "sku.name",
+        "original": "Standard_ZRS",
+        "current": "Standard_ZRS",
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "Storage",
+        "setting": "publicNetworkAccess",
+        "original": "Disabled",
+        "current": "Disabled",
+        "classification": "RESTORED_ORIGINAL",
+        "basis": "The previously distributed Enabled value was an unrequested difference; root restored Disabled before this comparison"
+      },
+      {
+        "section": "Storage",
+        "setting": "networkAcls.defaultAction",
+        "original": "Deny",
+        "current": "Deny",
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "Storage",
+        "setting": "networkAcls.bypass",
+        "original": "AzureServices",
+        "current": "AzureServices",
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "Storage",
+        "setting": "allowBlobPublicAccess",
+        "original": false,
+        "current": false,
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "Storage",
+        "setting": "allowSharedKeyAccess",
+        "original": false,
+        "current": false,
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "Storage",
+        "setting": "supportsHttpsTrafficOnly",
+        "original": true,
+        "current": true,
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "Storage",
+        "setting": "minimumTlsVersion",
+        "original": "TLS1_2",
+        "current": "TLS1_2",
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "Storage",
+        "setting": "encryption.requireInfrastructureEncryption",
+        "original": true,
+        "current": true,
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "Storage",
+        "setting": "immutableStorageWithVersioning.enabled",
+        "original": "--enable-alw true",
+        "current": true,
+        "classification": "MATCH_EQUIVALENT_CLI_ARM",
+        "basis": "CLI enable-alw is account-level immutability; ARM equivalent is immutableStorageWithVersioning.enabled"
+      },
+      {
+        "section": "Blob",
+        "setting": "isVersioningEnabled",
+        "original": "--enable-versioning true",
+        "current": true,
+        "classification": "MATCH_EQUIVALENT_CLI_ARM",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "Lifecycle",
+        "setting": "rule.name",
+        "original": "log-append-365",
+        "current": "log-append-1095",
+        "classification": "REQUESTED_CHANGE",
+        "basis": "Retention changed to three years; own rule name follows configured retention"
+      },
+      {
+        "section": "Lifecycle",
+        "setting": "rule.enabled",
+        "original": true,
+        "current": true,
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "Lifecycle",
+        "setting": "rule.type",
+        "original": "Lifecycle",
+        "current": "Lifecycle",
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "Lifecycle",
+        "setting": "rule.definition.filters.blobTypes",
+        "original": [
+          "appendBlob"
+        ],
+        "current": [
+          "appendBlob"
+        ],
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "Lifecycle",
+        "setting": "delete operation",
+        "original": "baseBlob.delete.daysAfterModificationGreaterThan",
+        "current": "baseBlob.delete.daysAfterModificationGreaterThan",
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "Lifecycle",
+        "setting": "delete.daysAfterModificationGreaterThan",
+        "original": 365,
+        "current": 1095,
+        "classification": "REQUESTED_CHANGE",
+        "basis": "User explicitly requested three-year Storage lifecycle"
+      },
+      {
+        "section": "Lifecycle",
+        "setting": "other rule treatment",
+        "original": "PUT replaces policy rules",
+        "current": "preserve all other rule names; replace own log-append-1095 only",
+        "classification": "REQUESTED_BEHAVIOR_EXTENSION",
+        "basis": "Same-script resume and preservation of unrelated existing settings; no past log-append-365 special handling remains"
+      },
+      {
+        "section": "DefenderForStorage",
+        "setting": "isEnabled",
+        "original": false,
+        "current": false,
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "DefenderForStorage",
+        "setting": "overrideSubscriptionLevelSettings",
+        "original": true,
+        "current": true,
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "DefenderForStorage",
+        "setting": "apiVersion",
+        "original": "2025-01-01",
+        "current": "2025-01-01",
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "LogAnalytics",
+        "setting": "location",
+        "original": "$location (japaneast default)",
+        "current": "$location (japaneast default)",
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "LogAnalytics",
+        "setting": "name",
+        "original": "CSV WorkspaceName",
+        "current": "CSV WorkspaceName",
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "LogAnalytics",
+        "setting": "publicNetworkAccessForIngestion",
+        "original": "Enabled",
+        "current": "Enabled",
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "LogAnalytics",
+        "setting": "publicNetworkAccessForQuery",
+        "original": "Enabled",
+        "current": "Enabled",
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "LogAnalytics",
+        "setting": "features.enableLogAccessUsingOnlyResourcePermissions",
+        "original": true,
+        "current": true,
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "LogAnalytics",
+        "setting": "apiVersion",
+        "original": "2023-09-01",
+        "current": "2023-09-01",
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "LogAnalytics",
+        "setting": "retentionInDays",
+        "original": 365,
+        "current": 90,
+        "classification": "REQUESTED_CHANGE",
+        "basis": "User explicitly set overall workspace retention to 90 days"
+      },
+      {
+        "section": "LogAnalytics",
+        "setting": "other features",
+        "original": "only resource-permission feature set via resource update",
+        "current": "preserve existing features and set resource-permission feature",
+        "classification": "REQUESTED_BEHAVIOR_EXTENSION",
+        "basis": "Preserve unrelated existing configuration during resume/update"
+      },
+      {
+        "section": "Tables",
+        "setting": "schema.name",
+        "original": [
+          "Event",
+          "Syslog"
+        ],
+        "current": [
+          "Event",
+          "Syslog"
+        ],
+        "classification": "MATCH",
+        "basis": "Original setting preserved"
+      },
+      {
+        "section": "Tables",
+        "setting": "totalRetentionInDays",
+        "original": "not explicitly set",
+        "current": 1095,
+        "classification": "REQUESTED_CHANGE",
+        "basis": "User explicitly requested Event/Syslog total retention of three years"
+      },
+      {
+        "section": "Tables",
+        "setting": "selection condition",
+        "original": "any VM exists",
+        "current": "old configured DCR association exists on VM/VMSS",
+        "classification": "REQUESTED_CHANGE",
+        "basis": "Only VM/VMSS with old settings are new-setting targets"
+      },
+      {
+        "section": "Tables",
+        "setting": "existing table write",
+        "original": "PUT schema",
+        "current": "PATCH totalRetentionInDays only",
+        "classification": "REQUESTED_BEHAVIOR_EXTENSION",
+        "basis": "Preserve existing table schema and analytical retention"
+      }
+    ],
+    "dcrCollectionBodyStructurallyMatchesOriginal": true,
+    "additionalConfirmedUnrequestedSettingDifferencesAfterCorrection": [],
+    "functionDescriptionsExpanded": 5,
+    "caseCount": 90,
+    "assertions": 1304,
+    "runtime": "7.5.4",
+    "exitCode": 0,
+    "sourceConfigurationEditedForReplay": false,
+    "azureRequests": 0,
+    "azureExecutionRerun": false,
+    "windowsExecutionRerun": false,
+    "historicalExecutionEvidencePreserved": true,
+    "historicalCaseCatalog": {
+      "commit": "c629ce025e29f3be926276960e678d224475d71e",
+      "sha256": {
+        "PROCEDURAL_CASES.md": "17be09e9b0f818d368b5f10b47e4f0d0ea8b55afba0101f89877959a8d24eb10",
+        "PROCEDURAL_CASES.csv": "bba198c40906cbfadebc4abe7cf0a10bbdca66cf7398296cb7430fb7188c346d"
+      }
+    },
+    "learningGuideStyle": "Read the actual main scripts from the top; follow links to function DESCRIPTION sections instead of repeating internals.",
+    "learningGuideValidation": {
+      "Status": "PASS_LEARNING_GUIDE_EXECUTION_FLOW_REFERENCES",
+      "Structure": "step1 main flow -> step2 -> step3 -> rollback when needed -> optional precheck -> short syntax supplement",
+      "StartsWithActualProcessing": true,
+      "FunctionInternalChaptersRemoved": true,
+      "FunctionDetailsViaDescriptionLinks": true,
+      "SourceRangesValidated": 28,
+      "SearchAnchorsValidated": 54,
+      "LinksValidated": 40,
+      "DescriptionLinksValidated": 8,
+      "GuideLines": 195,
+      "GuideCharacters": 8316,
+      "Sha256": "34e026d5c2eee5b2940c32064e2d29c9d18db89bb1b8af9df72a13f4dcb633cc",
+      "AzureRequests": 0,
+      "SourceEdited": false
+    },
+    "originalFilesSha256": {
+      "log_migration.ps1": "231ad2e2273bfb32866c5c2e4b73463db4507a9f322c35e0f40d99bbe997ea88",
+      "log_migration_targets.csv": "8c783df0e4f9ad8092f86ad67ba26b09a78a3dd04d0461f62517f7dffcf78a9d"
+    },
+    "executedAndSubmittedSourceSha256": {
+      "rollback.ps1": "cafe6ccc395f48a76cf609b14d9300a60c558a8d2db42913b1bd628714c0497a",
+      "step3_delete.ps1": "4b848b0b1a1ca1f3c5f765b83425db32a2154ffe596c8fe2045494ee737c5689",
+      "precheck.ps1": "74d49d8b87ba2ba41d58a276c6fbb1f165a4d98afd7d3951852fbc975e08f599",
+      "step1_copy.ps1": "3c4a0c983d9db29dd952a09e41512e2ecfd0c99327871a3e98a5633eeb909dc7",
+      "step2_verify.ps1": "d1d3788c499b163f483f7c11db85ff97c30924e5c6cb4b292d9415a6a865dbf8",
+      "common.ps1": "b7a15382646d652beeab186e89793c31ce63120d9e8bbfc0e17246c254fcc29c"
+    },
+    "proofDirectory": "/tmp/log-migration-fresh-normal-20261125/production-cleanup-review",
+    "proofSha256": {
+      "COMMON_AUDIT.json": "5207da08f9ca9022e61cdffcade4d364e85ca0f56358637f450b168cfe4eebe9",
+      "STEPS_AUDIT.json": "4d215a0f17aa28449f350679ae5a577904bffcf427ebe58b9e35ddd44ca985b4",
+      "DISTRIBUTION_AUDIT.json": "3333d2fe2807a57ac53a40ea562463c908226af994fd91e64b1938927ee82979",
+      "ORIGINAL_DESTINATION_COMPARISON.json": "cb6a416207ee9a3a01a287a7d4b74be5ec202bedd50750c2e78a2197c45e070e",
+      "ORIGINAL_DCR_COMPARISON.json": "f0accafc005c04e22da25feea73e0dab920bd82a67035c5f9d67fa32348be828",
+      "ORIGINAL_OTHER_COMPARISON.json": "84b9c165c1e60aeb5f8617221ba44bafd49e75ed859fc566c172f1483ab62ffc",
+      "FINAL_DECISIONS.json": "9938bd00eb533c8775c807fab8e330e29478961fca350d7dde2a0aed20a9e4af",
+      "FINAL_FULL_REPLAY.json": "fb65361fbdfd0447eb77f6686006fc083c37cd4be24998885083fa23dba99e5e",
+      "FINAL_HARNESS_REVISION.json": "6d438e34a9fb02b588312107e3a8c597d9a2441b6d213df080e9faa5d76d04e4",
+      "FINAL_SUBMISSION_QA.json": "b825fe6551014c97094af36720ea91b7104b7319e8a4d582c0615d7b0de54a32",
+      "LEARNING_FLOW_QA.json": "d449af8f67c4a5ab8e18cc1a0ab4f253e0c6c8f279f583373d5c77220200aea0"
+    },
+    "documentSha256": {
+      "procedural-migration/README.md": "e9ea6c697474426ee53b04a7ffb6261b11e682933c8c6e76f1e1209ecfa24099",
+      "procedural-migration/CODE_LEARNING.md": "34e026d5c2eee5b2940c32064e2d29c9d18db89bb1b8af9df72a13f4dcb633cc",
+      "test-results/PROCEDURAL_CASES.md": "d12e4829945543c64ab17b77fd0541e65ce8f628d89e2d173f1847c8797e7d33",
+      "test-results/PROCEDURAL_CASES.csv": "cb3d6bb53c781fb5b5a26d8608b6952d78bc9cd37c5545f75ffcc7436522ba5c"
+    },
+    "caseCatalog": "test-results/PROCEDURAL_CASES.csv"
   }
 }

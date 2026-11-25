@@ -107,8 +107,12 @@ function Invoke-ArmRequest {
     .SYNOPSIS
     Azureのリソースを取得・作成・更新・削除する。
     .DESCRIPTION
+    作業記録または直接指定された値から、接続先URLとJSON形式の送信本文を用意する。
     呼び出し元の$subscriptionIdで認証し、指定したAPIへ要求を送る。
     一時的な通信・HTTPエラーは最大4回試す。
+    成功したJSON応答を辞書へ変換して返す。本文がない応答や、存在確認で許可した404は$nullを返す。
+    作成状態が返される場合は、待機指定に従いGETでSucceededになるまで確認し、Failed・Canceledならエラーにする。
+    再試行の対象外のエラーや、試行を使い切った失敗は呼び出し元へ伝える。
     .PARAMETER ResourceId
     一覧取得などで直接操作するリソースID、またはAPI版を含む完全なURL。
     Resourceを指定する場合は不要。
@@ -251,8 +255,10 @@ function Test-Configuration {
     .SYNOPSIS
     現在の設定が期待値と一致するか調べる。
     .DESCRIPTION
-    作成済み設定のスキップ、移行後の確認、切り戻し前の確認に使う。
-    Azureが追加した項目は通常無視し、配列の順番は区別しない。
+    Azureから取得した現在値や作業記録の値を、今回の期待値と比較する。
+    診断設定・DCR・関連付けは書き込み用の本文にそろえ、Lifecycleは今回の保持ルールだけを調べる。
+    辞書は項目ごとに値を比較し、配列は順番を問わず件数と要素を照合する。
+    一致すれば$true、不足や相違があれば$falseを返し、一致済み設定の作成省略や削除・切り戻し前の判断に使う。
     .PARAMETER Actual
     Azureの現在値、または作業記録から読み込んだ値。
     .PARAMETER Expected
@@ -285,11 +291,7 @@ function Test-Configuration {
         return (Test-Configuration $Actual $Expected -Kind $Kind) -and
             (Test-Configuration $Expected $Actual -Kind $Kind)
     }
-    # 旧365日ルールが残ると3年を待たずログが消えるため、新ルールの一致だけでなく旧ルールの不在も確認する。
     if ($Kind -eq 'Lifecycle') {
-        if (@($Actual.properties.policy.rules | Where-Object name -eq 'log-append-365').Count) {
-            return $false
-        }
         $Actual = @($Actual.properties.policy.rules | Where-Object name -eq 'log-append-1095')
         $Expected = @($Expected.properties.policy.rules)
     }
@@ -339,8 +341,11 @@ function Get-WritableBody {
     .SYNOPSIS
     取得した設定から、書き込み・比較に使う本文を作る。
     .DESCRIPTION
-    Azureが返す内部IDなどを除き、旧設定の保存や作成・復元に使う。
-    作成・更新が未完了ならエラーにする。
+    Azureから取得した設定を、作業記録への保存・再作成・比較に使う本文へ組み直す。
+    診断設定のログ・メトリック・送信先や、DCR関連付けの参照先を取り出し、読み取り専用の値は除く。
+    DCRは元データをコピーし、リージョン・タグ・マネージドIDを残したまま、Azureが付けた内部IDなどを取り除く。
+    診断設定の格納方式はLog Analytics宛てかどうかに応じて補完・除去し、比較や再送信で使う本文を返す。
+    入力がなければ$nullを返し、作成・更新が未完了ならエラーにする。
     .PARAMETER Resource
     Azureから取得した設定、または作業記録の本文。値がなければ$nullを返す。
     .PARAMETER Kind
@@ -424,8 +429,10 @@ function Read-MigrationRecord {
     .SYNOPSIS
     サブスクリプションの作業記録を読み、今回の作業に使えるか調べる。
     .DESCRIPTION
-    records/<環境>/<SubscriptionId>.jsonを読む。
-    環境・移行元・CSVが一致しない記録は、誤って再利用しないようエラーにする。
+    対象SubのIDに対応するrecords/<環境>/<Sub ID>.jsonを読み込む。
+    環境・移行元などの作業条件と、対象Sub・保存先・送信先フラグが今回の指定と一致するか照合する。
+    保存先・新設定・旧設定の3種類の一覧があることも確かめ、不一致や不足があれば記録を使わずエラーにする。
+    確認した記録を返し、再実行・設定確認・削除・切り戻しで使う。ファイルがまだなければ、初回作業として扱えるよう$nullを返す。
     .PARAMETER Target
     対象Sub・保存先名・送信先フラグ（CSVまたは保存済み記録から取得）。
     SubscriptionIdで記録を選び、他の値も記録と一致するか調べる。
@@ -461,18 +468,24 @@ function Read-MigrationRecord {
 $targets = @()
 $regionNames = @()
 if (-not $SkipCsv) {
+    $requiredColumns = @('SubscriptionName', 'ResourceGroup', 'StorageAccount', 'WorkspaceName', 'LogDestination', 'VmLogDestination')
+    $csvRows = @(Import-Csv (Join-Path $PSScriptRoot 'targets.csv') -Encoding UTF8)
+    if (-not $csvRows.Count) {
+        throw 'CSVに対象がありません。'
+    }
+    # 列の欠落を入力ミスとして止め、送信終了を意味する意図的な空欄と区別する。
+    $missingColumns = @($requiredColumns | Where-Object { $_ -notin $csvRows[0].PSObject.Properties.Name })
+    if ($missingColumns.Count) {
+        throw "CSVに必要な列がありません: $($missingColumns -join ', ')"
+    }
     $accounts = az account list --all --output json --only-show-errors | ConvertFrom-Json
     if ($LASTEXITCODE -ne 0) {
         throw 'サブスクリプション一覧を取得できません。'
     }
-    foreach ($row in Import-Csv (Join-Path $PSScriptRoot 'targets.csv') -Encoding UTF8) {
+    foreach ($row in $csvRows) {
         $target = [ordered]@{}
-        foreach ($name in @('SubscriptionName', 'ResourceGroup', 'StorageAccount', 'WorkspaceName', 'LogDestination')) {
+        foreach ($name in $requiredColumns) {
             $target[$name] = ([string]$row.$name).Trim()
-        }
-        $target.VmLogDestination = 'Log'
-        if ('VmLogDestination' -in $row.PSObject.Properties.Name) {
-            $target.VmLogDestination = ([string]$row.VmLogDestination).Trim()
         }
         if ($target.LogDestination -notin @('Storage', 'Log', 'None', '') -or
             $target.VmLogDestination -notin @('Log', 'None', '')) {
@@ -500,8 +513,8 @@ if (-not $SkipCsv) {
         }
         $targets += $target
     }
-    if (-not $targets.Count -or @($targets | Group-Object { $_.SubscriptionId } | Where-Object Count -gt 1).Count) {
-        throw 'CSVが空か、同じサブスクリプションが重複しています。'
+    if (@($targets | Group-Object { $_.SubscriptionId } | Where-Object Count -gt 1).Count) {
+        throw '同じサブスクリプションが重複しています。'
     }
     if (@($targets | Where-Object StorageAccount).Count) {
         $regionNames = Invoke-RestMethod 'https://raw.githubusercontent.com/mspnp/AzureNamingTool/main/src/repository/resourcelocations.json'
@@ -513,8 +526,12 @@ function Get-MigrationPlan {
     .SYNOPSIS
     旧設定を調べ、保存先・新設定の作成前に必要な確認を行う。
     .DESCRIPTION
-    指定したワークスペース宛ての診断設定と、旧2DCRへの関連付けを集める。
-    保存先名・地域・新設定の追加枠・ポリシーも調べる。Azureの設定は変更しない。
+    初回は保存先RGの不存在を確認し、再開時は作業記録にあるRGを使う。
+    対象SubのリソースとStorage・Redisの子リソースを列挙し、移行元ワークスペース宛ての診断設定を集める。
+    指定旧DCRに関連する対象SubのID・種類・復元用の本文も合わせ、OldSettingsへまとめる。
+    作成時には適用ポリシー、Storage名の空き・ZRS対応、新診断設定の同名・枠数を調べる。
+    新設定の本文をcopyが組み立てるための作成先IDとリージョンをDiscoveryへまとめ、計画として返す。
+    旧設定だけの確認では作成前の検査を省略する。Azureへの書込みは行わない。
     .PARAMETER Target
     対象Sub・保存先名・送信先フラグを持つCSVの1行分。
     調査する範囲と作成する保存先・新設定を決めるために使う。
@@ -538,6 +555,15 @@ function Get-MigrationPlan {
         Destinations = @()
         NewSettings = @()
         OldSettings = @()
+    }
+
+    # 初回は既存RGを使わない。作業記録にあるRGだけは、同じ作業の再開で利用する。
+    if (-not $OnlyOldSettings) {
+        $existingGroup = Invoke-ArmRequest $resourceGroupId -ApiVersion $apiVersions.Group -Optional
+        $recordedGroup = @($Record.Destinations | Where-Object { $_.Kind -eq 'Group' -and $_.Id -eq $resourceGroupId })
+        if ($existingGroup -and $recordedGroup.Count -ne 1) {
+            throw "CSVで指定したリソースグループは既に存在します: $resourceGroupId"
+        }
     }
 
     # ---
