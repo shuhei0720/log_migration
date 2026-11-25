@@ -105,7 +105,7 @@ function Invoke-ArmRequest {
     Azureのリソースを取得・作成・更新・削除する。
     .DESCRIPTION
     呼び出し元の$subscriptionIdで認証し、指定したAPIへ要求を送る。
-    一時的な通信・HTTPエラーは最大4回試す（初回を含む）。
+    一時的な通信・HTTPエラーは最大4回試す。
     .PARAMETER ResourceId
     一覧取得などで直接操作するリソースID、またはAPI版を含む完全なURL。
     Resourceを指定する場合は不要。
@@ -150,6 +150,7 @@ function Invoke-ArmRequest {
     # 対象Subの認証情報を取得・更新し、本文があればJSONにして要求を送る。
     # ---
     for ($attempt = 0; $attempt -lt 4; $attempt++) {
+        # トークン未取得 or サブ切り替え後 or 期限切れ5分前でないか
         if (-not $script:accessToken -or $script:tokenSubscription -ne $subscriptionId -or
             [long]$script:accessToken.expires_on -le [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() + 300) {
             $script:accessToken = az account get-access-token --subscription $subscriptionId --output json --only-show-errors | ConvertFrom-Json -AsHashtable
