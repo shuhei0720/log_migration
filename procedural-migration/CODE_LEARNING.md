@@ -6,7 +6,7 @@
 
 **[1～4行](step1_copy.ps1#L1)｜`common.ps1`、`$failures = @()`**
 
-2行目のドットで`common.ps1`を読み込み、設定値・共通関数・対象一覧`$targets`を使えるようにします。このとき[環境設定](common.ps1#L9)を組み立て、[CSV読込](common.ps1#L470)で6列を検査し、Sub名をIDへ解決します。Storage名があれば地域略称も取得します。
+2行目のドットで`common.ps1`を読み込み、設定値・共通関数・対象一覧`$targets`を使えるようにします。このとき[環境設定](common.ps1#L9)を組み立て、[CSV読込](common.ps1#L470)で6列を検査し、Sub名からIDを調べます。Storage名があれば地域略称も取得します。
 
 続いて失敗一覧`$failures`を空にし、作業記録を保存するローカルフォルダを用意します。関数の本文は、後で呼び出したときに動きます。
 
@@ -29,7 +29,7 @@ Waiverは3割り当て分で、最初の2件は空の参照ID配列で全体除�
 
 地域別StorageのIDを`$storageIds[地域]`へ入れます。後の診断設定が、リソースと同じ地域のStorageを選ぶための対応表です。
 
-Storage本体・Blob設定・1,095日のライフサイクル・Defender設定を`Destinations`へ加えます。公開ネットワークは`Disabled`で、通信規則は既定拒否・`AzureServices`例外です。CSVにStorage名がなければ、このループは0件になります。
+Storage本体・Blob設定・ライフサイクル・Defender設定を`Destinations`へ加えます。ライフサイクルは、最終更新から1,095日を超えたappendBlobを削除する設定です。公開ネットワークは`Disabled`で、通信規則は既定拒否・`AzureServices`例外です。CSVにStorage名がなければ、このループは0件になります。
 
 **[129～143行](step1_copy.ps1#L129)｜`$oldAssociations.Count -gt 0`、`totalRetentionInDays = 1095`**
 
@@ -143,7 +143,7 @@ CSVではなく`records/<環境>/`のJSONから対象を選びます。`-Subscri
 
 **[37～50行](rollback.ps1#L37)｜`$matchesBody`、`$matchesBefore`**
 
-全対象の現在値を読み、記録の`Body`（今回の作成値）か`Before`（変更前）か、不在であることを確認します。どれとも違う変更があれば、書き込み前に止めます。
+旧設定と、切り戻す新設定の現在値を読み、記録の`Body`（記録した設定値）か`Before`（変更前）か、不在であることを確認します。どれとも違う変更があれば、書き込み前に止めます。残す新規DCR本体・元からあるWaiverは照合対象から外します。
 
 **[56～111行](rollback.ps1#L56)｜`foreach ($phase in @('Old', 'New'))`、`$expectedBody = $setting.Body`**
 
@@ -186,7 +186,7 @@ commonで用意した対象一覧を1Subずつ調べ、OKと理由を結果表�
 |`-eq`・`-ne`・`-in`・`-notin`|等しい・異なる・一覧に含まれる・含まれない|
 |`-and`・`-or`・`-not`|両方満たす・どちらか満たす・条件を反転|
 |`$null`・`??`|値がない状態・左がnullなら右を使う。CSVの文字列`None`とは別|
-|`|`・`$_`|左の結果を右へ渡す・処理中の1件|
+|`\|`・`$_`|左の結果を右へ渡す・処理中の1件|
 |先頭の`.`・`&`|別ファイルの定義を読み込む・別スクリプトを実行する|
 |`$using:`|並列処理へ外側の値を渡す|
 |`[型]::名前`|その型に用意された値や処理を使う|

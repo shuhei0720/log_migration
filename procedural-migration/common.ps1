@@ -275,8 +275,8 @@ function Test-Configuration {
     #>
     param($Actual, $Expected, $Kind, [switch]$Exact)
     # ---
-    # 作成中は不一致とし、送信設定は書き込み用の項目にそろえる。
-    # Exactは双方の値を、Lifecycleは今回管理する保持ルールを比べる。
+    # 送信設定は書き込み用の項目にそろえ、Lifecycleは今回の保持ルールを比べる。作成中は不一致とする。
+    # Exactでは比較方向を入れ替えて2回照合し、期待値にない余分な項目も検出する。
     # ---
     if ($Kind -and $Actual.properties.provisioningState -and $Actual.properties.provisioningState -ne 'Succeeded') {
         return $false
@@ -526,21 +526,21 @@ function Get-MigrationPlan {
     .SYNOPSIS
     旧設定を調べ、保存先・新設定の作成前に必要な確認を行う。
     .DESCRIPTION
-    初回は保存先RGの不存在を確認し、再開時は作業記録にあるRGを使う。
+    初回は保存先RGがまだ存在しないことを確認し、再開時は作業記録にあるRGを使う。
     対象SubのリソースとStorage・Redisの子リソースを列挙し、移行元ワークスペース宛ての診断設定を集める。
-    指定旧DCRに関連する対象SubのID・種類・復元用の本文も合わせ、OldSettingsへまとめる。
-    作成時には適用ポリシー、Storage名の空き・ZRS対応、新診断設定の同名・枠数を調べる。
+    対象Subの旧DCR関連付けも集め、診断設定とともにID・種類・復元用の本文をOldSettingsへまとめる。
+    作成前には、指定ポリシー割り当ての適用状況、Storage名の空き・ZRS対応、新診断設定の名前重複・空き枠を調べる。
     新設定の本文をcopyが組み立てるための作成先IDとリージョンをDiscoveryへまとめ、計画として返す。
     旧設定だけの確認では作成前の検査を省略する。Azureへの書込みは行わない。
     .PARAMETER Target
     対象Sub・保存先名・送信先フラグを持つCSVの1行分。
     調査する範囲と作成する保存先・新設定を決めるために使う。
     .PARAMETER Record
-    中断後の再開で、自分が作成したIDを名前の重複とみなさないために使う。
+    中断後の再開で、記録した作成先IDを名前の重複とみなさないために使う。
     省略時は初回として、同名のStorage・新診断設定があれば停止する。
     .PARAMETER OnlyOldSettings
     作成後の確認・削除で、旧設定の追加・変更を調べるために指定する。
-    作成済みの名前を調べ直さず、旧設定の収集で返す。省略時は作成前の確認も行う。
+    作成済みの名前を調べ直さず、旧設定を集めた時点で返す。省略時は作成前の確認も行う。
     .OUTPUTS
     System.Collections.Hashtable
     旧設定のID・本文と、保存先・新設定の予定。OnlyOldSettings指定時は作成予定を含まない。

@@ -207,7 +207,7 @@ foreach ($target in $targets) {
 
         # ---
         # 旧診断設定のログ・メトリックを引き継ぎ、送信先を同じ地域のStorageまたは新Log Analyticsへ変える。
-        # None・空欄のときは調査結果が空なので、新診断設定を作らない。
+        # None・空欄では新診断設定の作成対象が空になるため、ここでは作成しない。旧設定は記録に残す。
         # ---
         foreach ($diagnostic in $plan.Discovery.Diagnostics) {
             $original = @($plan.OldSettings | Where-Object Id -eq $diagnostic.OldId)[0]

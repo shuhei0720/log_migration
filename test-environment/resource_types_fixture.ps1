@@ -212,7 +212,7 @@ function Wait-Resource {
 
 # ---
 # Plan: 56型から対象と依存を選び、配置先とリソースIDを組み立てる。
-# 各Subで1つの専用RGを使い、4つのbundleで資源のリージョンを分ける。
+# 各Subで1つの専用RGを使う。bundleはSubとリージョンの組合せで、全体で4つ用意する。
 # ---
 if ($Action -in @('Plan', 'Deploy')){
     $keys = @()

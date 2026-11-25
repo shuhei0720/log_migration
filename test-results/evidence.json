@@ -1,13 +1,13 @@
 {
   "status": "TESTS_PASS_ALL_RESOURCES_AUTH_RESTORED_26_REGISTRATIONS_RESTORED_TWO_AZURE_PENDING",
-  "updatedUtc": "2026-11-25T09:30:52.715173+00:00",
+  "updatedUtc": "2026-11-25T09:49:40.312200+00:00",
   "canonicalSha256": {
     "rollback.ps1": "cafe6ccc395f48a76cf609b14d9300a60c558a8d2db42913b1bd628714c0497a",
     "step3_delete.ps1": "4b848b0b1a1ca1f3c5f765b83425db32a2154ffe596c8fe2045494ee737c5689",
     "precheck.ps1": "74d49d8b87ba2ba41d58a276c6fbb1f165a4d98afd7d3951852fbc975e08f599",
-    "step1_copy.ps1": "3c4a0c983d9db29dd952a09e41512e2ecfd0c99327871a3e98a5633eeb909dc7",
-    "step2_verify.ps1": "d1d3788c499b163f483f7c11db85ff97c30924e5c6cb4b292d9415a6a865dbf8",
-    "common.ps1": "b7a15382646d652beeab186e89793c31ce63120d9e8bbfc0e17246c254fcc29c"
+    "step1_copy.ps1": "059448e5fb0e19face541c7120af21ae03dbca00708ed17f3090ac4a06dc2013",
+    "step2_verify.ps1": "579011e13c917a1b6c8708e0541d8276de3d40463bb3407001c2453e5ca66bb6",
+    "common.ps1": "3c443b680915d34ae33c3aac1286a639f96a2a9002357546f4f58bea0f83a9c8"
   },
   "testSha256": "37bef30539f3791280d21c1e17d93d3a6f6c5f236266833aee1a8a3e9873ceb2",
   "linuxReplay": {
@@ -2597,5 +2597,43 @@
       "test-results/PROCEDURAL_CASES.csv": "cb3d6bb53c781fb5b5a26d8608b6952d78bc9cd37c5545f75ffcc7436522ba5c"
     },
     "caseCatalog": "test-results/PROCEDURAL_CASES.csv"
+  },
+  "readabilityReviewRevision": {
+    "status": "PASS_COMMENT_ONLY_FINAL_READABILITY_REVIEW",
+    "baselineCommit": "2b27ce4920244fff8be9a5a82456e53ea3dacbe4",
+    "reviewedScope": "All six canonical scripts, the test deployment script, the execution guide and learning guide",
+    "runtime": "7.5.4",
+    "sourceFilesParsed": 7,
+    "nonCommentCodeUnchanged": true,
+    "settingsUnchanged": true,
+    "sourceLineCountsUnchanged": true,
+    "userConfigurationCommentsAndInvokeFunctionUnchanged": true,
+    "commonFunctions": 5,
+    "nativeFunctionHelpDescriptionsChecked": 5,
+    "nativeFunctionHelpParametersChecked": 17,
+    "learningGuideSourceRangesChecked": 28,
+    "learningGuideSearchAnchorsChecked": 54,
+    "localDocumentLinksChecked": 48,
+    "learningGuideDescriptionLinksChecked": 8,
+    "markdownTableRowsChecked": 82,
+    "learningGuideLines": 195,
+    "documentSha256": {
+      "README.md": "fbdb48d294af6fe68b13adc2ae0190c4d9335ce9afac36236e0f37e108ef3292",
+      "procedural-migration/README.md": "ef2d95034d12a030e07fc6572aa4c0e67124400ca8a47f149f6d1be438626e76",
+      "procedural-migration/CODE_LEARNING.md": "123fb7e2bf8c0bdf9dc4a5872ac0d9f3f2b0bdd59138f78cd0b4d27de6c44851",
+      "test-environment/README.md": "af12a7cd375fde4dee15e36fed44b42041fa50d26c620a869d848409f2271980"
+    },
+    "testDeploymentSourceSha256": "22b4d677c36cd3720c9d316e19d71c423d39572db6f62587a94cb3fe7e67d974",
+    "previousReplayCases": 90,
+    "previousReplayAssertions": 1304,
+    "previousReplayExecutableSourceMatches": true,
+    "replayRerunForCommentOnlyRevision": false,
+    "azureRequests": 0,
+    "originalFilesAndTestHarnessUnchanged": true,
+    "proofDirectory": "/tmp/log-migration-fresh-normal-20261125/final-readability-review",
+    "proofSha256": {
+      "SOURCE_QA.json": "4ff18298c768927fb7f6067544a0035082829a6d13c705d6e1ba641c83046024",
+      "DOC_QA.json": "debda54b23cd5b8cc3044bbd499bbe5c48732df8660482594ae424eabb5bf522"
+    }
   }
 }

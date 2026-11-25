@@ -83,9 +83,9 @@ CSVの1Subずつ、次の順に処理します。
 
 |対象|設定内容|
 |---|---|
-|RG・Log Analytics|新規作成地域は`$location`。ワークスペース保持90日、取込・クエリのパブリックアクセスとリソース権限でのログ参照を有効化|
-|地域別Storage|StorageV2・Standard_ZRS、インフラ暗号化・バージョン単位の不変性を有効化。共有キー・Blob匿名公開は無効。HTTPS／TLS 1.2、公開ネットワークは無効（`Disabled`）。通信規則は既定拒否・`AzureServices`例外|
-|Storageの追加設定|Blobバージョン管理、appendBlobを最終更新の1,095日後に削除するライフサイクル、個別Defenderの無効化|
+|RG・Log Analytics|新規作成地域は`$location`。ワークスペース保持90日、取込・クエリのパブリックアクセスを有効化。リソースまたはワークスペースの権限でログを参照できるようにする|
+|地域別Storage|StorageV2・Standard_ZRS、インフラ暗号化・バージョン単位の不変性のサポートを有効化。共有キー・Blob匿名公開は無効。HTTPS／TLS 1.2、公開ネットワークは無効（`Disabled`）。通信規則は既定拒否・`AzureServices`例外|
+|Storageの追加設定|Blobバージョン管理、最終更新から1,095日を超えたappendBlobを削除するライフサイクル、個別Defenderの無効化|
 |Event・Syslog|旧DCR関連がある場合に準備し、合計保持を1,095日へ設定。VM側がNone・空欄でも対象|
 
 5. 旧DCR関連がありVM側がLogなら、新DCRとVM・VMSSへの関連を準備する。収集条件は固定のWindowsイベント（Application・Security・System）とSyslog、宛先はCSVのLog Analytics。DCR名はワークスペース名の先頭`log`を`dcr`へ置換する。
@@ -119,7 +119,7 @@ Azureの変更は行いません。手動対応後も同じ検査を使います
 ### rollback.ps1：旧送信を復元し、新側を変更前へ戻す
 
 1. 環境別JSONから全Sub、または`-SubscriptionIds`の対象を選ぶ。CSVは使わず、環境と記録を照合する。
-2. 全対象の現在値が`Body`・`Before`・不在のいずれかを確認する。他の変更があれば書込み前に停止する。
+2. 旧設定と、切り戻す新設定の現在値が`Body`・`Before`・不在のいずれかを確認する。他の変更があれば書込み前に停止する。残す新規DCR本体・元からあるWaiverは照合しない。
 3. 全対象Subの旧DCR関連→旧診断を`OldSettings.Body`から復元する。一致済みは省略し、旧診断の再作成前には5枠の空きを確認する。
 4. 新側をDCR→関連→診断→Waiverの順に`Before`へ戻す。nullなら今回の追加分を削除するが、新設DCR本体と元からあるWaiverは残す。
 5. GETで照合し、失敗は`rollback_failures.csv`へ出して全体を停止する。

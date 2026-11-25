@@ -7,7 +7,7 @@ $records = @()
 
 # ---
 # CSVの各SubのJSONを読み、環境・移行元Workspace・CSVが作成時と同じか確認する。
-# 旧設定をAzureから探し直し、JSONにない追加・変更を検出する。削除済みは許可し、Azureは変更しない。
+# 旧設定を探し直して記録後の追加・変更を検出する。step3の再実行にも使うため、削除済みの旧設定は許可する。Azureは変更しない。
 # ---
 foreach ($target in $targets) {
     $subscriptionId = $target.SubscriptionId
