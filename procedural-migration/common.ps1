@@ -100,36 +100,36 @@ $OutputEncoding = [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 $env:PYTHONIOENCODING = 'utf-8'
 
 function Invoke-ArmRequest {
-<#
-.SYNOPSIS
-Azureのリソースを取得・作成・更新・削除する。
-.DESCRIPTION
-呼び出し元の$subscriptionIdで認証し、指定したAPIへ要求を送る。
-一時的な通信・HTTPエラーは最大4回試す（初回を含む）。
-.PARAMETER ResourceId
-一覧取得などで直接操作するリソースID、またはAPI版を含む完全なURL。
-Resourceを指定する場合は不要。
-.PARAMETER Method
-Get＝取得、Put＝作成・更新、Patch＝更新、Delete＝削除、Post＝個別操作。省略時はGet。
-.PARAMETER Body
-作成・更新する設定の本文。切り戻しなどでResource.Bodyと異なる値を送るときに指定する。
-未指定のPut・Patch・PostではResource.Bodyを使う。
-.PARAMETER ApiVersion
-操作に使うAzure APIの版。ResourceIdに付ける。省略時は2024-03-11。
-Resource指定時はその項目から選び、完全なURLではURL内の版を使う。
-.PARAMETER Optional
-作成前・削除済みのリソースの存在確認に使う。
-404は未存在として$nullを返す。省略時はエラー。
-.PARAMETER Resource
-作業記録の1項目（Id・Kind・Body）をまとめて渡すときに使う。
-指定時はResourceId・ApiVersionより、この項目のID・API版を優先する。
-.PARAMETER Wait
-作成中の保存先を使わないよう、SucceededまでGETで待つ。Failed・Canceledはエラー。
-省略時は待たずに応答を返す。
-.OUTPUTS
-System.Object
-JSON応答を変換した辞書など。本文なし・Optional指定の404は$null。
-#>
+    <#
+    .SYNOPSIS
+    Azureのリソースを取得・作成・更新・削除する。
+    .DESCRIPTION
+    呼び出し元の$subscriptionIdで認証し、指定したAPIへ要求を送る。
+    一時的な通信・HTTPエラーは最大4回試す（初回を含む）。
+    .PARAMETER ResourceId
+    一覧取得などで直接操作するリソースID、またはAPI版を含む完全なURL。
+    Resourceを指定する場合は不要。
+    .PARAMETER Method
+    Get＝取得、Put＝作成・更新、Patch＝更新、Delete＝削除、Post＝個別操作。省略時はGet。
+    .PARAMETER Body
+    作成・更新する設定の本文。切り戻しなどでResource.Bodyと異なる値を送るときに指定する。
+    未指定のPut・Patch・PostではResource.Bodyを使う。
+    .PARAMETER ApiVersion
+    操作に使うAzure APIの版。ResourceIdに付ける。省略時は2024-03-11。
+    Resource指定時はその項目から選び、完全なURLではURL内の版を使う。
+    .PARAMETER Optional
+    作成前・削除済みのリソースの存在確認に使う。
+    404は未存在として$nullを返す。省略時はエラー。
+    .PARAMETER Resource
+    作業記録の1項目（Id・Kind・Body）をまとめて渡すときに使う。
+    指定時はResourceId・ApiVersionより、この項目のID・API版を優先する。
+    .PARAMETER Wait
+    作成中の保存先を使わないよう、SucceededまでGETで待つ。Failed・Canceledはエラー。
+    省略時は待たずに応答を返す。
+    .OUTPUTS
+    System.Object
+    JSON応答を変換した辞書など。本文なし・Optional指定の404は$null。
+    #>
     param($ResourceId, $Method = 'Get', $Body, $ApiVersion = '2024-03-11', [switch]$Optional, $Resource, [switch]$Wait)
     # ---
     # 作業項目からID・API版・本文を取り出すか、直接指定したIDからURLを作る。
