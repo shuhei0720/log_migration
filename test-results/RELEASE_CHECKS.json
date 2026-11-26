@@ -806,5 +806,15 @@
     "tests/migration-smoke.ps1": "032bee0664fd352c542bb8ca47ca6d1c9853567e9a08cba4973f2248a92cc977",
     "tools/create_targets.ps1": "fed76252936f8ae66ebb432b109dca49ac8ceeb53a9b16a5e48a242ce46b53fa"
   },
-  "CodeHashNotes": "MigrationReplay・CsvGenerator・PromotionEquivalence・RuntimeCodeHashes・ShippingLayout・Documentsはコメント見直し前の確認記録。CurrentRuntimeCodeHashesとCommentReviewは見直し後の確認。過去の試験時のSHAは保持している。"
+  "CodeHashNotes": "MigrationReplay・CsvGenerator・PromotionEquivalence・RuntimeCodeHashes・ShippingLayout・Documentsはコメント見直し前の確認記録。CurrentRuntimeCodeHashesとCommentReviewは見直し後の確認。過去の試験時のSHAは保持している。",
+  "ExampleCsvReview": {
+    "Status": "PASS",
+    "Path": "migration/targets.example.csv",
+    "Environment": "dev",
+    "Rows": 5,
+    "NamingRuleMatched": true,
+    "FlagsAndBlankCellsUnchanged": true,
+    "PreviousSha256": "48dabdc69b778c2b3bc751d0e7ae8f25798a03e28fa74f6746c562cfdfad639d",
+    "CurrentSha256": "71e02cac2b1ef275cebafb52cd1cd9317f98580a3423297324f91f2dd1eb9238"
+  }
 }

@@ -39,6 +39,8 @@ PowerShell 7とAzure CLIを使います。対象サブスクリプションのOw
 
 [CSV作成スクリプト](../tools/README.md)で環境別に作成できます。手入力する場合は、次の例をコピーして記入します。
 
+例のリソース名は開発の`dev`で統一しています。検証・本番では、名前の環境部分も`stg`・`prod`へ変更してください。
+
 ```powershell
 Copy-Item .\migration\targets.example.csv .\migration\targets.csv
 ```

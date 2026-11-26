@@ -1,6 +1,6 @@
 SubscriptionName,ResourceGroup,StorageAccount,WorkspaceName,LogDestination,VmLogDestination
-subscription-name-1,rg-log-archive-01,stlogjpearchive01,log-archive-01,Storage,Log
-subscription-name-2,rg-log-archive-02,,log-archive-02,Log,None
-subscription-name-3,rg-log-archive-03,,log-archive-03,None,Log
-subscription-name-4,rg-log-archive-04,stlogjpearchive04,log-archive-04,Storage,
-subscription-name-5,rg-log-archive-05,stlogjpearchive05,log-archive-05,None,None
+subscription-name-1,rg-pay-dev-monitor-01,stpaydevarchjpe01,log-pay-dev-archive-01,Storage,Log
+subscription-name-2,rg-order-dev-monitor-01,,log-order-dev-archive-01,Log,None
+subscription-name-3,rg-web-dev-monitor-01,,log-web-dev-archive-01,None,Log
+subscription-name-4,rg-batch-dev-monitor-01,stbatchdevarchjpe01,log-batch-dev-archive-01,Storage,
+subscription-name-5,rg-audit-dev-monitor-01,stauditdevarchjpe01,log-audit-dev-archive-01,None,None
