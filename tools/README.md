@@ -1,23 +1,23 @@
 # 管理グループから移行用CSVを作る
 
-[create_targets.ps1](create_targets.ps1)は、管理グループ配下のサブスクリプションを調べ、本番・検証・開発のCSVを作ります。AzureへはGETだけを送り、リソースや設定は変更しません。
+[create_targets.ps1](create_targets.ps1)は、指定した環境の管理グループ配下を調べ、その環境の移行用CSVを作ります。AzureへはGETだけを送り、リソースや設定は変更しません。
 
 ## 実行する
 
-会社のAzureへログインし、リポジトリのルートからPowerShell 7で実行します。
+会社のAzureへログインし、リポジトリのルートからPowerShell 7で実行します。`-Environment`に開発は`dev`、検証は`stg`、本番は`prod`を指定します。次は開発の例です。
 
 ```powershell
 az login
-pwsh.exe -NoProfile -File .\tools\create_targets.ps1
+pwsh.exe -NoProfile -File .\tools\create_targets.ps1 -Environment dev
 ```
 
-`procedural-migration/generated/`に次の3ファイルができます。このフォルダはGitへ登録しません。
+`procedural-migration/generated/`に、指定した環境のファイルだけを作ります。ほかの環境は調べず、そのCSVも変更しません。このフォルダはGitへ登録しません。
 
-|ファイル|管理グループIDの末尾|名前に使う環境名|
-|---|---|---|
-|`targets-prod.csv`|`producrion`|`prod`|
-|`targets-stg.csv`|`staging`|`stg`|
-|`targets-dev.csv`|`sandbox`|`dev`|
+|`-Environment`|出力ファイル|管理グループIDの末尾|名前に使う環境名|
+|---|---|---|---|
+|`dev`|`targets-dev.csv`|`sandbox`|`dev`|
+|`stg`|`targets-stg.csv`|`staging`|`stg`|
+|`prod`|`targets-prod.csv`|`producrion`|`prod`|
 
 管理グループのIDは、ご提示の値を設定しています。`producrion`の綴りも変更していません。開発の名前には`dev`を使い、管理グループIDの`sandbox`とは区別します。
 
@@ -42,7 +42,7 @@ pwsh.exe -NoProfile -File .\tools\create_targets.ps1
 - 生成したストレージ名が24文字を超える、記号が入る、`jpe`が2か所以上ある：略称を省略せず、その名前をCSVへ出して警告します。移行前に修正が必要です。
 - 配下にサブスクリプションがない：見出しだけのCSVを作ります。
 
-一覧の取得に失敗した場合は、CSVを出力せずに停止します。全環境の取得が終わってから書き出すため、取得失敗で前回のCSVを上書きしません。正常に取得できた場合は、出力先の3ファイルを上書きします。
+一覧の取得に失敗した場合は、CSVを出力せずに停止します。選択した環境の全サブスクリプションを調べ終わってから書き出すため、取得失敗で前回のCSVを上書きしません。正常に取得できた場合は、その環境のファイルだけを作成・上書きします。
 
 内容を確認し、作業する環境のCSVだけを`targets.csv`へコピーします。本番の例です。
 

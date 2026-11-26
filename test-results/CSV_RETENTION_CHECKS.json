@@ -1,24 +1,25 @@
 {
-  "RecordedAt": "2026-11-26T12:06:32+09:00",
+  "RecordedAt": "2026-11-26T12:28:30+09:00",
   "Scope": "CLI・HTTPの応答を置き換えたローカル試験。Azureの実設定を検証した結果ではない。",
   "CsvGenerator": {
     "Status": "PASS",
     "PowerShell": "7.5.4",
-    "Scenarios": 3,
-    "Assertions": 27,
+    "Scenarios": 5,
+    "Assertions": 48,
     "AzureRequests": 0,
-    "ScenariosCovered": [
-      "3環境のCSV、子管理グループ、APIページング、重複除去、サービス略称抽出、異なる環境のグループ除外、0候補・複数候補、大小文字、24文字・25文字・記号・jpe重複、列順・フラグ・UTF8 BOM",
-      "0サブスクリプション時にヘッダーだけの3CSV",
-      "最後の管理グループ取得失敗時は既存3CSVのSHAを保持"
+    "OnlyTestFileEdited": "tests/create-targets-smoke.ps1",
+    "Coverage": [
+      "dev/stg/prodを個別実行。他環境の管理グループとサブスクリプションへ要求しない。他環境の既存CSVのSHAを保持する。大文字の環境指定も小文字の出力名となる。",
+      "子管理グループ、2種の一覧APIのページング、サブスクリプション重複除去、略称0件/複数件、名前/フラグ/UTF8 BOM、大文字略称、環境違い、24/25文字、記号、jpe重複。",
+      "空の各環境では、選択した環境の見出しのみのCSVを1つだけ新規作成。",
+      "選択した環境でRG一覧の2ページ目が失敗した場合、既存CSV3本のSHAを保持。",
+      "allとnullはAzure要求0・出力先作成0で拒否。未指定相当のnullを使い、対話入力は求めない。"
     ],
     "Files": {
-      "tools/create_targets.ps1": "ed538faff99c192d0409bd2adbc6989cd246d42f54c8be65754a9b170317f913",
-      "tests/create-targets-smoke.ps1": "e52e4669c0bf2c0a057befe486f445a87de97a572fd757d8bf562bd0cff9eb88"
+      "tools/create_targets.ps1": "f1db1eee27de1da81827e46eff60042a389c4980a280d2955444a5d2f1582467",
+      "tests/create-targets-smoke.ps1": "21c0f5b81928a6e757373cb2fb9d881581d3aedcdc2a0232e3f57d5c43531b2d"
     },
-    "Result": "PASS: 3シナリオ、27 判定。Azureへの通信は0件。",
-    "DevelopmentResourceNamePart": "dev",
-    "DevelopmentManagementGroup": "sandbox"
+    "Result": "PASS: 5シナリオ、48 判定。Azureへの通信は0件。"
   },
   "MigrationReplay": {
     "Result": "PASS",
@@ -495,7 +496,7 @@
     "RequestsFromParallelRunspaces": 1339
   },
   "TestScriptsSha256": {
-    "tests/create-targets-smoke.ps1": "e52e4669c0bf2c0a057befe486f445a87de97a572fd757d8bf562bd0cff9eb88",
+    "tests/create-targets-smoke.ps1": "21c0f5b81928a6e757373cb2fb9d881581d3aedcdc2a0232e3f57d5c43531b2d",
     "tests/procedural-smoke.ps1": "1a4554cba8d9e7248a405281ebb20eeed9ffbf526934842c161323faaf41f83d"
   }
 }

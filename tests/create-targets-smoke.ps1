@@ -29,7 +29,8 @@ function az {
     $global:LASTEXITCODE = 0
     $uri = [uri]$url
     $path = $uri.AbsolutePath.ToLowerInvariant()
-    if ($global:CsvGeneratorFixture.Scenario -eq '取得失敗' -and $path -match '/managementgroups/sandbox/descendants$') {
+    if ($global:CsvGeneratorFixture.Scenario -eq '取得失敗' -and
+        $path -eq "/subscriptions/$($global:CsvGeneratorFixture.Ids[0])/resourcegroups" -and $uri.Query -match 'page=2') {
         $global:LASTEXITCODE = 1
         return '{"error":{"message":"テスト用の取得失敗"}}'
     }
@@ -86,8 +87,34 @@ function az {
 }
 
 try {
-    # 3環境の名前、子管理グループ、ページング、重複除去、略称を決められない行をまとめて確認する。
-    & $Generator -OutputDirectory $scratch *> (Join-Path $scratch 'normal.log')
+    # 環境を一つずつ大文字で指定する。ほかの管理グループを読まず、ほかの環境のCSVを変更しないことも確認する。
+    foreach ($environment in @('prod', 'stg', 'dev')) {
+        "previous-$environment" | Set-Content (Join-Path $scratch "targets-$environment.csv")
+    }
+    $managementGroups = @{ prod = 'producrion'; stg = 'staging'; dev = 'sandbox' }
+    $membersByEnvironment = @{ prod = @($ids[0], $ids[1]) + @($ids[5..8]); stg = @($ids[2]); dev = @($ids[3], $ids[4]) }
+    foreach ($environment in @('prod', 'stg', 'dev')) {
+        $otherHashes = @{}
+        foreach ($other in @('prod', 'stg', 'dev') | Where-Object { $_ -ne $environment }) {
+            $otherHashes[$other] = (Get-FileHash (Join-Path $scratch "targets-$other.csv")).Hash
+        }
+        $requestStart = $global:CsvGeneratorFixture.Requests.Count
+        & $Generator -Environment ($environment.ToUpperInvariant()) -OutputDirectory $scratch *> (Join-Path $scratch "normal-$environment.log")
+        $foreignRequests = @($global:CsvGeneratorFixture.Requests | Select-Object -Skip $requestStart | Where-Object {
+            $requestPath = ([uri]$_).AbsolutePath
+            if ($requestPath -match '/managementGroups/([^/]+)/descendants$') {
+                $Matches[1] -ne $managementGroups[$environment]
+            }
+            elseif ($requestPath -match '^/subscriptions/([^/]+)/resourcegroups$') {
+                $Matches[1] -notin $membersByEnvironment[$environment]
+            }
+            else { $true }
+        })
+        Assert-CsvTest ($foreignRequests.Count -eq 0) "$environment / ほかの環境のAzure一覧を読んでいます。"
+        foreach ($other in $otherHashes.Keys) {
+            Assert-CsvTest ((Get-FileHash (Join-Path $scratch "targets-$other.csv")).Hash -ceq $otherHashes[$other]) "$environment / $other のCSVを書き換えています。"
+        }
+    }
     $prod = @(Import-Csv (Join-Path $scratch 'targets-prod.csv'))
     $stg = @(Import-Csv (Join-Path $scratch 'targets-stg.csv'))
     $dev = @(Import-Csv (Join-Path $scratch 'targets-dev.csv'))
@@ -117,22 +144,26 @@ try {
     Assert-CsvTest ($over.StorageAccount -ceq 'st1234567890prodarchjpe01' -and $over.StorageAccount.Length -eq 25) '25文字の名前を勝手に縮めています。'
     Assert-CsvTest ($symbol.StorageAccount -ceq 'stab-cprodarchjpe01') '略称内の記号を勝手に消しています。'
     Assert-CsvTest ($repeated.StorageAccount -ceq 'stjpexprodarchjpe01') '略称に含まれるjpeを書き換えています。'
-    $warnings = Get-Content (Join-Path $scratch 'normal.log') -Raw
+    $warnings = Get-Content (Join-Path $scratch 'normal-prod.log') -Raw
     Assert-CsvTest ([regex]::Matches($warnings, '条件を満たしません').Count -eq 3) '25文字・記号・jpe重複の3件を警告していません。'
 
 
-    # サブスクリプションがない環境でも、架空の行を作らず6列の見出しを残す。
+    # 空の環境では、指定した環境のCSVだけを新規作成し、6列の見出しを残す。
     $scenario = '空'
     $global:CsvGeneratorFixture.Scenario = $scenario
-    & $Generator -OutputDirectory $scratch *> (Join-Path $scratch 'empty.log')
     foreach ($environment in @('prod', 'stg', 'dev')) {
-        $path = Join-Path $scratch "targets-$environment.csv"
+        $emptyDirectory = Join-Path $scratch "empty-$environment"
+        $requestStart = $global:CsvGeneratorFixture.Requests.Count
+        & $Generator -Environment $environment -OutputDirectory $emptyDirectory *> (Join-Path $scratch "empty-$environment.log")
+        $path = Join-Path $emptyDirectory "targets-$environment.csv"
         Assert-CsvTest (@(Import-Csv $path).Count -eq 0) "$environment / 空のCSVにデータ行があります。"
         $header = Get-Content $path -TotalCount 1
         Assert-CsvTest (($header -replace '"', '') -ceq ($columns -join ',')) "$environment / 空のCSVに6列の見出しがありません。"
+        Assert-CsvTest (@(Get-ChildItem $emptyDirectory -Filter '*.csv').Count -eq 1) "$environment / ほかの環境のCSVも作成しています。"
+        Assert-CsvTest (($global:CsvGeneratorFixture.Requests.Count - $requestStart) -eq 1) "$environment / 空の一覧以外にもAzureへ要求しています。"
     }
 
-    # 最後の環境の取得が失敗した場合、前回作った3ファイルをどれも上書きしない。
+    # 選んだ環境でリソースグループの2ページ目を取得できない場合、既存CSVをどれも上書きしない。
     $scenario = '取得失敗'
     $global:CsvGeneratorFixture.Scenario = $scenario
     $before = @{}
@@ -141,14 +172,26 @@ try {
         $before[$environment] = (Get-FileHash $path).Hash
     }
     $failed = $false
-    try { & $Generator -OutputDirectory $scratch *> (Join-Path $scratch 'failure.log') }
+    try { & $Generator -Environment prod -OutputDirectory $scratch *> (Join-Path $scratch 'failure.log') }
     catch { $failed = $true }
     Assert-CsvTest $failed 'Azure取得失敗を成功として扱っています。'
     foreach ($environment in @('prod', 'stg', 'dev')) {
         $path = Join-Path $scratch "targets-$environment.csv"
         Assert-CsvTest ((Get-FileHash $path).Hash -ceq $before[$environment]) "$environment / 取得失敗時に既存CSVを上書きしています。"
     }
-    "PASS: 3シナリオ、$checks 判定。Azureへの通信は0件。"
+    # 無効な環境名と空の指定は、Azureを読まず、出力フォルダも作らずに拒否する。
+    $scenario = '引数の拒否'
+    foreach ($invalidEnvironment in @('all', $null)) {
+        $invalidDirectory = Join-Path $scratch 'invalid'
+        $requestStart = $global:CsvGeneratorFixture.Requests.Count
+        $failed = $false
+        try { & $Generator -Environment $invalidEnvironment -OutputDirectory $invalidDirectory *> (Join-Path $scratch 'invalid.log') }
+        catch { $failed = $true }
+        Assert-CsvTest $failed '無効または空の環境指定を受け入れています。'
+        Assert-CsvTest ($global:CsvGeneratorFixture.Requests.Count -eq $requestStart) '引数のエラーでもAzureを読んでいます。'
+        Assert-CsvTest (-not (Test-Path $invalidDirectory)) '引数のエラーでも出力先を作っています。'
+    }
+    "PASS: 5シナリオ、$checks 判定。Azureへの通信は0件。"
 }
 finally {
     Remove-Item $scratch -Recurse -Force
