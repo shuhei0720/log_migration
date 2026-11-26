@@ -19,17 +19,21 @@ CSVの1行を`$target`へ取り出し、そのサブスクリプションの作�
 - `Read-MigrationRecord`で前回の作業記録を読み、`$record`へ入れます。初回は記録がないため`$null`です。[Read-MigrationRecordのDESCRIPTION](common.ps1#L433)
 - `Get-MigrationPlan`で現在の旧設定と作成先を調べます。`$plan.OldSettings`には旧診断設定・旧DCR関連付けのIDと設定値、`Discovery`には新設定の作成先IDと地域が入ります。[Get-MigrationPlanのDESCRIPTION](common.ps1#L535)
 
+名前確認に必要な`Microsoft.Storage`が未登録なら、この呼び出しで登録して完了を待ちます。
+
 以降のコードで、この調査結果に「Azureへ渡す設定値」を加えます。
 
 **[21～56行](step1_copy.ps1#L21)｜`$plan.NewSettings += @{`、`$plan.Destinations += @{`**
 
-ポリシーの適用除外（Waiver）を`NewSettings`へ、リソースグループとLog Analyticsを`Destinations`へ追加します。各項目の`Id`は作成先、`Kind`は設定の種類、`Body`はAzureへ送る設定値です。まだAzureの設定は変更しません。
+ポリシーの適用除外（Waiver）を`NewSettings`へ、リソースグループとLog Analyticsを`Destinations`へ追加します。各項目の`Id`は作成先、`Kind`は設定の種類、`Body`はAzureへ送る設定値です。ここでは設定値を組み立てるだけで、Azureへは書き込みません。
 
 適用除外は3つ作ります。先頭2つはポリシー割り当て全体、3つ目は指定した12個の参照IDを除外します。Log Analyticsの保持期間は90日です。新しい送信設定を作らない指定でも、保存先は作成します。
 
 **[60～121行](step1_copy.ps1#L60)｜`$storageIds[$storageLocation] = $storageId`、`name = 'log-append-1095'`**
 
 `$storageIds`に、地域とストレージアカウントのIDを組にして入れます。後で診断設定を作るときに、この辞書から同じ地域の送り先を選びます。`LogDestination=Storage`なら、移行先のLog Analytics自身の送り先も必要なため、`$location`のストレージも含みます。
+
+`$storage.SkuName`をアカウントの`sku.name`へ入れます。新設時は同じ地域のZRSを優先し、非対応ならLRSを使います。再実行では記録した冗長性を使います。
 
 `Destinations`には、アカウント本体、Blobのバージョン管理、Defenderの無効化、ログの削除ルールを加えます。削除するのは、最終更新から1,095日を超えたappendBlobです。CSVにストレージ名がなければ、この繰り返しは実行しません。
 
@@ -67,13 +71,13 @@ DCR（データ収集ルール）は、VM・VMSSから集めるログと保存�
 
 前回の記録と、今回調べたID・設定値を比べます。記録した旧設定が消えた、または値が変わった場合は、そのサブスクリプションの作業を止めます。同じIDに作成する設定値が前回と違う場合も止め、新しく見つかったIDだけを追記します。初回は`$plan`をそのまま記録にします。
 
-JSONを一時ファイルに書き終えてから、作業記録のファイルと置き換えます。書込みに失敗しても前回の記録を残すためです。保存後にAzureの変更へ進みます。
+JSONを一時ファイルに書き終えてから、作業記録のファイルと置き換えます。書込みに失敗しても前回の記録を残すためです。保存後に適用除外や保存先の変更へ進みます。
 
 **[341～364行](step1_copy.ps1#L341)｜`$resources = @($record.NewSettings`、`$providersReady`**
 
 `$resources`へ、適用除外、保存先と保持期間、DCRと関連付けの順に設定を並べます。適用除外3件を作成・照合してから保存先へ進みます。新診断設定は、この一覧の処理後に作成します。
 
-保存先を作る前に、使うAzureリソースの利用登録を確認します。未登録なら登録して完了を待ちます。`$providersReady`は、同じサブスクリプションでこの確認を繰り返さないための印です。
+保存先とDCRに必要なサービスの登録状態を確認します。Storage以外の未登録サービスは、この段階で登録して完了を待ちます。`$providersReady`は、同じサブスクリプションでこの確認を繰り返さないための印です。
 
 **[365～397行](step1_copy.ps1#L365)｜`$currentBody = Get-WritableBody`、`$matched = Test-Configuration`**
 
@@ -85,7 +89,7 @@ JSONを一時ファイルに書き終えてから、作業記録のファイル�
 
 **[401～437行](step1_copy.ps1#L401)｜`$body.properties.networkAcls =`、`$method = 'Patch'`**
 
-このスクリプトが作成した保存先を再実行で補修する際は、IP・VNetの許可規則やLog Analyticsの他の`features`を残します。ログ削除ルールは`log-append-1095`だけを入れ替え、他のルールは残します。
+このスクリプトが作成した保存先を再実行で補修する際は、IP・VNetの許可規則やLog Analyticsの他の`features`を残します。ストレージの冗長性が記録と違えば、変更せず停止します。ログ削除ルールは`log-append-1095`だけを入れ替え、他のルールは残します。
 
 既存のLog Analyticsとテーブルには、変更する項目だけを送る`PATCH`を使います。保持期間の変更で、テーブルの列定義まで置き換えないためです。
 
@@ -113,7 +117,7 @@ JSONを一時ファイルに書き終えてから、作業記録のファイル�
 
 `common.ps1`を読み、CSVの各サブスクリプションの作業記録を取得します。記録がなければNGです。続いて現在の旧診断設定・旧DCR関連付けを調べ、`$currentPlan`へ入れます。
 
-`-OnlyOldSettings`は、作成前の検査を省いて旧設定だけを調べる指定です。[Get-MigrationPlanのDESCRIPTION](common.ps1#L534)
+`-OnlyOldSettings`は、作成前の検査や利用登録をせず、旧設定だけを調べる指定です。[Get-MigrationPlanのDESCRIPTION](common.ps1#L535)
 
 **[24～29行](step2_verify.ps1#L24)｜`foreach ($current in $currentPlan.OldSettings)`**
 
@@ -155,7 +159,7 @@ step2が全件OKの場合だけ、作業記録を`$records`へ受け取って削
 
 旧設定の`Body`は削除前の値です。新設定では、`Body`が今回の作成値、`Before`が作業開始前の値です。現在値が`Body`・`Before`のどちらとも違えば、復元前に止めます。設定が消えている場合は、後で作り直せるため許可します。
 
-今回作成したDCR本体と、元からあった適用除外は切り戻しでも残すため、この比較から外します。
+今回作成したDCR本体と、元からあった適用除外は切り戻しでも残すため、この比較から外します。サービスの利用登録も解除しません。
 
 **[57～107行](rollback.ps1#L57)｜`foreach ($phase in @('Old', 'New'))`、`$expectedBody = $setting.Body`**
 
@@ -169,13 +173,13 @@ step2が全件OKの場合だけ、作業記録を`$records`へ受け取って削
 
 ## 任意：precheck.ps1で事前確認する
 
-**[1～16行](precheck.ps1#L1)｜`Get-MigrationPlan -Target $target`**
+**[1～17行](precheck.ps1#L1)｜`Get-MigrationPlan -Target $target`**
 
-CSVに書いたサブスクリプションごとに、旧設定と新設定の作成先を調べます。既存の保存先は地域が一致すれば利用できます。ただし作業記録を渡さないため、同名の新診断設定があれば、今回作成したものでもNGにします。作業の再開にはstep1を使います。[Get-MigrationPlanのDESCRIPTION](common.ps1#L534)
+CSVに書いたサブスクリプションごとに、旧設定と新設定の作成先を調べます。名前確認に必要な`Microsoft.Storage`が未登録なら登録して待ちます。既存の保存先は地域が一致すれば利用できます。ただし作業記録を渡さないため、同名の新診断設定があれば、今回作成したものでもNGにします。作業の再開にはstep1を使います。[Get-MigrationPlanのDESCRIPTION](common.ps1#L535)
 
-**[18～33行](precheck.ps1#L18)｜`catch`、`$results | Export-Csv`**
+**[19～34行](precheck.ps1#L19)｜`catch`、`$results | Export-Csv`**
 
-調べられなかったサブスクリプションも理由付きでNGにし、`precheck_results.csv`へ出します。NGがあればエラーで終了します。Azureの変更や作業記録の保存はせず、step1は実行時点のAzureを調べ直します。
+調べられなかったサブスクリプションも理由付きでNGにし、`precheck_results.csv`へ出します。NGでも利用登録は解除しません。保存先・送信設定の作成や作業記録の保存はせず、step1は実行時点のAzureを調べ直します。step2・step3・rollbackでは利用登録を行いません。
 
 ## 補足：関数の説明とPowerShellの読み方
 

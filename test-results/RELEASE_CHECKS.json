@@ -795,18 +795,18 @@
     "ReplaySuitesRerun": false
   },
   "CurrentRuntimeCodeHashes": {
-    "migration/common.ps1": "d5876144d254a722141551616ddf1f87dd5d15087ee49479d249029f03df1ba6",
-    "migration/precheck.ps1": "56c53301dedf238e8c164d2a32637f0c8d8eb7e94f4fb6cba584da1c4817030f",
+    "migration/common.ps1": "d4d6cbbd3a5d213996d9973090c237bca2d7694912464f338289e6b2a3d2a509",
+    "migration/precheck.ps1": "ef76143d12dcdf4e06bf471714e3f713582a905a36f385b561faa93cf1741b1d",
     "migration/rollback.ps1": "103f7b83d800514ec78bb22197ce2daef0e16455b131c920b866962f8a880398",
-    "migration/step1_copy.ps1": "4e462154b1ac0840d66a99793b67e2eb329631b946d8553fe20ecb6cafa0bca3",
+    "migration/step1_copy.ps1": "f50d12f0c1e82c9adbf04043c90bd98b9a11616f7225fc34e89aa8d261966023",
     "migration/step2_verify.ps1": "14117514f586342c28e34981fead9c6d22c96cbffb3250ae13e2236b7395a105",
     "migration/step3_delete.ps1": "e0c40b1ab8cf9aef1b4f8200cad6714552cf5c444e08d667d491428a448716bb",
     "test-environment/resource_types_fixture.ps1": "0220eaa3cb900a73725a88f54d5a1a01d488600b1dc8d723523240a46f151c40",
     "tests/create-targets-smoke.ps1": "d920e498655a30ec967a8bac64cc126820da3d604b29b98848e0e3eca066de0d",
-    "tests/migration-smoke.ps1": "c9823d2548d021c68472f5c18d9adeb8badc13b4728f89d554b9612904ea1599",
+    "tests/migration-smoke.ps1": "ff66453381a9cc1cd81482d6e63afa41becbcc5a6ab10a2a3db240675ccb67f0",
     "tools/create_targets.ps1": "3f6808c99f1d4d1f23b7ded5dc278eef5da7920414d679ebb822022e74596cca"
   },
-  "CodeHashNotes": "MigrationReplay・CsvGenerator・PromotionEquivalence・RuntimeCodeHashes・ShippingLayout・Documents・CommentReviewは各確認時点の記録。最新の実行コードSHAはCurrentRuntimeCodeHashes、日本語JSON修正後の再試験はJSON_ENCODING_FIX.jsonを参照。過去のSHAは保持している。 最新の自己診断・既存保存先再利用の試験はWORKSPACE_DIAGNOSTIC_REUSE.jsonを参照。 最新のWindows向けCLI引数修正とCSV再試験はWINDOWS_CLI_FIX.jsonを参照。 最新のCSV生成のdev/sand対応・有効状態での絞り込みはCSV_DEV_SAND_ENABLED.jsonを参照。",
+  "CodeHashNotes": "MigrationReplay・CsvGenerator・PromotionEquivalence・RuntimeCodeHashes・ShippingLayout・Documents・CommentReviewは各確認時点の記録。最新の実行コードSHAはCurrentRuntimeCodeHashes、日本語JSON修正後の再試験はJSON_ENCODING_FIX.jsonを参照。過去のSHAは保持している。 最新の自己診断・既存保存先再利用の試験はWORKSPACE_DIAGNOSTIC_REUSE.jsonを参照。 最新のWindows向けCLI引数修正とCSV再試験はWINDOWS_CLI_FIX.jsonを参照。 最新のCSV生成のdev/sand対応・有効状態での絞り込みはCSV_DEV_SAND_ENABLED.jsonを参照。 最新のStorage事前登録・地域別ZRS/LRS選択の試験はSTORAGE_REGISTRATION_REDUNDANCY.jsonを参照。",
   "ExampleCsvReview": {
     "Status": "PASS",
     "Path": "migration/targets.example.csv",
@@ -853,5 +853,14 @@
     "Assertions": 118,
     "LiveStateApiRead": "PASS",
     "AzureResourcesCreated": 0
+  },
+  "StorageRegistrationAndRegionalRedundancy": {
+    "Status": "PASS",
+    "Details": "STORAGE_REGISTRATION_REDUNDANCY.json",
+    "MigrationCases": 101,
+    "MigrationAssertions": 1639,
+    "LiveRegisteredNameCheck": "PASS",
+    "LiveWestusLrs": "PASS",
+    "IndependentCleanup": "PASS"
   }
 }

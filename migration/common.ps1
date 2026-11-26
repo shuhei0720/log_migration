@@ -535,7 +535,8 @@ function Get-MigrationPlan {
     .DESCRIPTION
     CSVの1行を受け取り、そのサブスクリプションの旧設定と、新しい保存先・送信設定の作成場所を調べる。
     旧ワークスペース宛ての診断設定と旧2本のDCRへの関連付けを取得し、削除・復元に使う設定の一覧（OldSettings）へ入れる。
-    既存の保存先は指定地域と一致するか確認し、新規のストレージは名前の空きとStandard_ZRSへの対応を調べる。
+    既存の保存先は指定地域と一致するか確認し、新規ストレージはZRSを優先し、非対応の地域ではLRSを選ぶ。
+    名前確認が必要な場合はMicrosoft.Storageの利用登録を確認し、未登録なら登録して完了を待つ。
     新診断設定は、作業記録にない同名設定がある場合や、追加後に1リソース当たり5件を超える場合は作成できない。
     指定ポリシーが適用されていない場合も、エラーで止める。
     作成先のID・名前・地域は、一時的な項目（Discovery）にまとめて返す。
@@ -752,7 +753,7 @@ function Get-MigrationPlan {
     }
 
     # ---
-    # 5. 地域別のストレージ名を作り、名前が未使用か、その地域でStandard_ZRSを使えるか確認する。
+    # 5. 地域別のストレージ名を作り、名前の空きと、その地域で使うZRS・LRSを確認する。
     # CSVにストレージ名がある場合だけ行う。新LAW自身もStorageへ送る場合は、その地域を加える。
     # ---
     if ($Target.StorageAccount) {
@@ -764,6 +765,7 @@ function Get-MigrationPlan {
             $storageLocations = @('japaneast')
         }
         $skus = $null
+        $storageProviderReady = $false
         foreach ($storageLocation in $storageLocations) {
             $region = @($regionNames | Where-Object { ($_.name -replace '\s', '') -eq $storageLocation })
             if ($region.Count -ne 1 -or $region[0].shortName -cnotmatch '^[a-z0-9]+$') {
@@ -781,12 +783,41 @@ function Get-MigrationPlan {
             if ($existingStorage -and $storageId -notin $createdIds) {
                 $discovery.ReusedDestinations += $storageId
             }
+            # 再実行では記録した冗長性を使う。作業前からあるアカウントは現在の設定を変えない。
+            $savedStorage = @($Record.Destinations | Where-Object Id -eq $storageId)
+            $storageSkuName = $savedStorage[0].Body.sku.name ?? $existingStorage.sku.name
             if (-not $existingStorage) {
                 if (-not $skus) {
                     $skus = Invoke-ArmRequest "/subscriptions/$subscriptionId/providers/Microsoft.Storage/skus" -ApiVersion '2023-05-01'
                 }
-                if (-not ($skus.value | Where-Object { $_.name -eq 'Standard_ZRS' -and $_.kind -eq 'StorageV2' -and $storageLocation -in $_.locations })) {
-                    throw "Standard_ZRSを利用できません: $storageLocation"
+                $regionalSkus = @($skus.value | Where-Object { $_.kind -eq 'StorageV2' -and $storageLocation -in $_.locations })
+                if (-not $storageSkuName) {
+                    $storageSkuName = 'Standard_ZRS'
+                    if ($storageSkuName -notin $regionalSkus.name) {
+                        $storageSkuName = 'Standard_LRS'
+                    }
+                }
+                if ($storageSkuName -notin $regionalSkus.name) {
+                    throw "Storageの冗長性 $storageSkuName を利用できません: $storageLocation"
+                }
+                # 未登録だと名前確認APIがSubscriptionNotFoundを返すため、先にStorageの利用登録を済ませる。
+                # 登録中なら再要求せず待つ。同じサブスクリプションでは、地域が複数あっても1回だけ確認する。
+                if (-not $storageProviderReady) {
+                    $providerId = "/subscriptions/$subscriptionId/providers/Microsoft.Storage"
+                    $provider = Invoke-ArmRequest $providerId -ApiVersion '2021-04-01'
+                    $registrationRequested = $false
+                    while ($provider.registrationState -ne 'Registered') {
+                        if ($provider.registrationState -notin @('NotRegistered', 'Registering')) {
+                            throw "Microsoft.Storageの利用登録状態を確認してください: $($provider.registrationState)"
+                        }
+                        if ($provider.registrationState -eq 'NotRegistered' -and -not $registrationRequested) {
+                            $null = Invoke-ArmRequest "$providerId/register" -Method Post -ApiVersion '2021-04-01'
+                            $registrationRequested = $true
+                        }
+                        Start-Sleep -Seconds 3
+                        $provider = Invoke-ArmRequest $providerId -ApiVersion '2021-04-01'
+                    }
+                    $storageProviderReady = $true
                 }
                 $availability = Invoke-ArmRequest "/subscriptions/$subscriptionId/providers/Microsoft.Storage/checkNameAvailability" -Method Post -ApiVersion '2023-05-01' -Body @{
                     name = $storageName
@@ -800,6 +831,7 @@ function Get-MigrationPlan {
                 Id = $storageId
                 Name = $storageName
                 Location = $storageLocation
+                SkuName = $storageSkuName
             }
         }
     }

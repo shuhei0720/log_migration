@@ -3,7 +3,8 @@
 
 # ---
 # 1. サブスクリプションごとに旧設定を探し、作成前の条件を確認する。
-# 保存先の名前、診断設定の上限5件、指定ポリシーの適用を調べる。Azureは変更しない。
+# 保存先の名前、診断設定の上限5件、指定ポリシーの適用を調べる。
+# 名前確認に必要なMicrosoft.Storageが未登録なら利用登録する。リソースや送信設定は作らない。
 # ---
 $results = foreach ($target in $targets) {
     $subscriptionId = $target.SubscriptionId

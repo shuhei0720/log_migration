@@ -1,0 +1,741 @@
+{
+  "Status": "PASS",
+  "RecordedAt": "2026-11-26T11:38:12.101637+00:00",
+  "Changes": [
+    "名前確認が必要なMicrosoft.Storageはチェック段階で登録し、Registeredを待ってから名前を確認する。登録中の重複要求はしない。",
+    "新設ストレージは同じ地域でZRSを優先し、ZRS非対応ならLRSを使う。",
+    "再実行は記録した冗長性を維持し、作業前からある保存先の設定は変更しない。",
+    "事前確認NG・切り戻しでも利用登録は解除しない。他の設定変更は従来どおり記録保存後。"
+  ],
+  "MigrationReplay": {
+    "Result": "PASS",
+    "Cases": [
+      {
+        "Case": "StorageとVM: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 122
+      },
+      {
+        "Case": "LogとVM: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 122
+      },
+      {
+        "Case": "Storageのみ: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 118
+      },
+      {
+        "Case": "Logのみ: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 118
+      },
+      {
+        "Case": "VMのみ: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 108
+      },
+      {
+        "Case": "両方None: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 104
+      },
+      {
+        "Case": "両方空欄: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 104
+      },
+      {
+        "Case": "Storage宛GETのLAW既定方式付加を許容して再実行・削除・復元できる",
+        "Result": "PASS",
+        "Assertions": 14
+      },
+      {
+        "Case": "LAW宛の格納方式変更は許容せず既存設定を保持する",
+        "Result": "PASS",
+        "Assertions": 10
+      },
+      {
+        "Case": "CSV列欠落は空欄と区別して書込み前に停止する",
+        "Result": "PASS",
+        "Assertions": 24
+      },
+      {
+        "Case": "対象0件でも東日本StorageとLAWを準備する",
+        "Result": "PASS",
+        "Assertions": 10
+      },
+      {
+        "Case": "旧DCR関連なしでもEvent・Syslogは1095日保持し、新DCRは作らない",
+        "Result": "PASS",
+        "Assertions": 37
+      },
+      {
+        "Case": "東日本・西日本・globalの地域別Storageへ送信する",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "Canadaの旧設定と新LAW自身を地域別Storageへ送り、削除後も確認する",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "Storage kind=StorageV2 の子スコープを探索",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "Storage kind=BlobStorage の子スコープを探索",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "Storage kind=BlockBlobStorage の子スコープを探索",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "Storage kind=FileStorage の子スコープを探索",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "通常一覧にないRedis子DBを親地域のStorageへ移行・復元する",
+        "Result": "PASS",
+        "Assertions": 12
+      },
+      {
+        "Case": "RedisのDB一覧が空なら存在しない子を調べない",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "Redis子DBと通常一覧の次ページを両方移行・復元する",
+        "Result": "PASS",
+        "Assertions": 15
+      },
+      {
+        "Case": "CSV入力拒否: 不正診断フラグ",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: 不正VMフラグ",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: 空RG",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: 空Workspace",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: 不正Storage名",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: jpeが2か所",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: Storage名25文字",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: 空Sub",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "作業前からある同地域の保存先は、設定値を変更せず全工程で再利用する",
+        "Result": "PASS",
+        "Assertions": 51
+      },
+      {
+        "Case": "別スコープで使われているStorage名は事前停止する",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "ZRS・LRSの両方が非対応の地域を事前停止する",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "初回の同名新診断を再利用しない",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "新診断を追加する空き5枠上限を事前停止する",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "両Noneは同名新診断と5件上限に触れない",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "関係のないVM・VMSSには新関連を作らない",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "Storage ACL・LAW features・分析保持・他ルールを維持する",
+        "Result": "PASS",
+        "Assertions": 13
+      },
+      {
+        "Case": "既存Storageの不変条件が違う場合は上書きしない",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "既存newDCRと関連は切戻しでBeforeへ復元する",
+        "Result": "PASS",
+        "Assertions": 9
+      },
+      {
+        "Case": "copy途中失敗から未完了だけを再開する",
+        "Result": "PASS",
+        "Assertions": 10
+      },
+      {
+        "Case": "記録保存に失敗したSubはAzure変更を始めない",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "作業途中CSV選択変更を拒否: copy",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "作業途中CSV選択変更を拒否: verify",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "作業途中CSV選択変更を拒否: delete",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "後続Subの未完了は全Subの旧DELETEを止める",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "旧削除の途中失敗は後続を止め再実行できる",
+        "Result": "PASS",
+        "Assertions": 9
+      },
+      {
+        "Case": "copy後に増えた旧対象をverify/deleteが無視しない",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "削除直前に旧設定が変われば以降の削除を止める",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "指定Subだけを切り戻し、他Subはそのまま残す",
+        "Result": "PASS",
+        "Assertions": 9
+      },
+      {
+        "Case": "不明Sub指定のrollbackは変更前に拒否する",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "旧復元失敗時は新診断設定を残す",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "切戻し対象が外部変更されたら上書きしない",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "保存先GET失敗を未存在と扱わず削除前に停止する",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "書込み後の期待値不一致を失敗一覧に出す",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "接続断・本文切断・通信timeoutから同じ要求で復旧する",
+        "Result": "PASS",
+        "Assertions": 24
+      },
+      {
+        "Case": "通信断が続けば最大4回で止まり旧設定を残す",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "TLS・明示中断・非通信IO・JSON不正を再試行しない",
+        "Result": "PASS",
+        "Assertions": 17
+      },
+      {
+        "Case": "429・503はRetryAfterを守って従来どおり再試行する",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "DELETE応答喪失後の404だけを削除済みとして継続する",
+        "Result": "PASS",
+        "Assertions": 10
+      },
+      {
+        "Case": "Wait付きPUTは1回だけ送信し以後はBody無しGETで待つ",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "作成待ちのFailed・Canceledは即停止する",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "対応IWRだけ本文timeoutを設定し未対応環境へ余計なparameterを送らない",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "一時的な401は認証を更新して再試行する",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "Storage以外の未登録providerは記録保存後に登録する",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "旧診断名と新診断名が同じでもNone側は旧を削除・復元する",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "指定2DCRでも対象外Subの関連を変更しない",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "未知の地域略称は事前確認で停止する",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "対応する既存Waiverは切戻しでも保持する",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "内容の違う既存Waiverを上書きしない",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "コピー途中の失敗状態から直接切り戻せる",
+        "Result": "PASS",
+        "Assertions": 13
+      },
+      {
+        "Case": "コピー完了後は旧設定を書き直さず切り戻せる",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "旧設定を一部削除した失敗状態から直接切り戻せる",
+        "Result": "PASS",
+        "Assertions": 9
+      },
+      {
+        "Case": "DCR更新中の応答を待って完了を確認する",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "StorageのResolvingDnsを待って設定を完了する",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "LAWのProvisioningを待って設定を完了する",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "保存先の作成待ちは5分を超えても成功までGETだけで待つ",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "総保持が1095でも既定値フラグのままなら明示設定する",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "変更前記録がなければ確認と削除を開始しない",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "通常一覧にある主要タイプと子IDを同じ診断処理へ通す",
+        "Result": "PASS",
+        "Assertions": 13
+      },
+      {
+        "Case": "DCRのInvalidOutputTableだけは反映を待って再試行する",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "組み込みSyslogの反映遅延が5分を超えてもDCRを完了する",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "custom tableのInvalidOutputTableを反映待ちと誤認しない",
+        "Result": "PASS",
+        "Assertions": 8
+      },
+      {
+        "Case": "DCRの一般400は再試行せずそのSubを止める",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "新診断の余分なWorkspaceとEventHubを許容しない",
+        "Result": "PASS",
+        "Assertions": 9
+      },
+      {
+        "Case": "既存DCRへの余分な収集源追加を許容せず切戻しも上書きしない",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "未選択Subの記録JSONが壊れていても指定Subだけを切り戻せる",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "実runspaceで5件以上の診断GETとPUTを処理する",
+        "Result": "PASS",
+        "Assertions": 16
+      },
+      {
+        "Case": "並列worker1件の失敗を記録し再実行で欠落だけを補う",
+        "Result": "PASS",
+        "Assertions": 20
+      },
+      {
+        "Case": "既存DCRのIdentity[SystemAssigned]を維持して全工程と切戻しを行う",
+        "Result": "PASS",
+        "Assertions": 12
+      },
+      {
+        "Case": "既存DCRのIdentity[None]を維持して全工程と切戻しを行う",
+        "Result": "PASS",
+        "Assertions": 12
+      },
+      {
+        "Case": "既存DCRのIdentity[SystemAssigned, UserAssigned]を維持して全工程と切戻しを行う",
+        "Result": "PASS",
+        "Assertions": 23
+      },
+      {
+        "Case": "西日本だけに旧設定があっても、新LAW自身用の東日本Storageを事前確認して作る",
+        "Result": "PASS",
+        "Assertions": 27
+      },
+      {
+        "Case": "新LAW自身の診断の欠落は再開で補い、値の違いは削除前に停止する",
+        "Result": "PASS",
+        "Assertions": 33
+      },
+      {
+        "Case": "新LAWに旧ポリシーの診断が追加されても、自身の新診断を二重に作らない",
+        "Result": "PASS",
+        "Assertions": 15
+      },
+      {
+        "Case": "既存RG・LAW・Storageの地域が違う場合は、Azure変更前に停止する",
+        "Result": "PASS",
+        "Assertions": 15
+      },
+      {
+        "Case": "再利用Storage本体と子サービスの診断を同じStorage自身へ送る指定は事前停止する",
+        "Result": "PASS",
+        "Assertions": 8
+      },
+      {
+        "Case": "Storageの事前登録は名前確認より前に行い、後段NGでも登録を保持する",
+        "Result": "PASS",
+        "Assertions": 29
+      },
+      {
+        "Case": "Storageの事前登録が進行中なら再要求せず完了を待つ",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "Storageの事前登録に失敗した場合と不明な登録状態は名前確認へ進まない",
+        "Result": "PASS",
+        "Assertions": 20
+      },
+      {
+        "Case": "Storageの事前登録は保存先不要と既存再利用の場合には行わない",
+        "Result": "PASS",
+        "Assertions": 13
+      },
+      {
+        "Case": "ZRS非対応のwestusはLRSを使い、再実行でも記録した冗長性を変えない",
+        "Result": "PASS",
+        "Assertions": 28
+      }
+    ],
+    "CaseCount": 101,
+    "Checks": 1639,
+    "AzureRequests": 0,
+    "PowerShellVersion": "7.5.4",
+    "Hashes": {
+      "rollback.ps1": "103F7B83D800514EC78BB22197CE2DAEF0E16455B131C920B866962F8A880398",
+      "step2_verify.ps1": "14117514F586342C28E34981FEAD9C6D22C96CBFFB3250AE13E2236B7395A105",
+      "step1_copy.ps1": "F50D12F0C1E82C9ADBF04043C90BD98B9A11616F7225FC34E89AA8D261966023",
+      "step3_delete.ps1": "E0C40B1AB8CF9AEF1B4F8200CAD6714552CF5C444E08D667D491428A448716BB",
+      "precheck.ps1": "EF76143D12DCDF4E06BF471714E3F713582A905A36F385B561FAA93CF1741B1D",
+      "common.ps1": "D4D6CBBD3A5D213996D9973090C237BCA2D7694912464F338289E6B2A3D2A509"
+    },
+    "RealParallelRunspaces": 1382,
+    "RequestsFromParallelRunspaces": 2044
+  },
+  "RegistrationNegativeRegression": {
+    "Status": "PASS",
+    "RegistrationRemovedRejected": true,
+    "ReportedProblemReproduced": "SubscriptionNotFound",
+    "Subscriptions": 2,
+    "AzureRequests": 0
+  },
+  "LrsNegativeRegression": {
+    "Status": "PASS",
+    "FallbackRemovedRejected": true,
+    "ReportedProblemReproduced": "westus cannot use Standard_ZRS",
+    "Subscriptions": 2,
+    "NoResourceWrites": true,
+    "AzureRequests": 0
+  },
+  "LiveRegisteredNameCheck": {
+    "Status": "PASS",
+    "Scope": "正本のStorage事前確認ブロックを、登録済みのラボで実APIへ実行。登録POSTは禁止。",
+    "ProviderAfter": "Registered",
+    "ResourcesCreated": 0,
+    "StoragePlans": [
+      {
+        "Name": "strpcheck5a40f00jpe01",
+        "Location": "japaneast",
+        "SkuName": "Standard_ZRS"
+      },
+      {
+        "Name": "strpcheck5a40f00usw01",
+        "Location": "westus",
+        "SkuName": "Standard_LRS"
+      }
+    ],
+    "RegistrationRequests": 0,
+    "PowerShell": "7.5.4",
+    "Requests": [
+      {
+        "Method": "Get",
+        "Id": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Storage"
+      },
+      {
+        "Method": "Get",
+        "Id": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-name-api-readonly-check/providers/Microsoft.Storage/storageAccounts/strpcheck5a40f00jpe01"
+      },
+      {
+        "Method": "Get",
+        "Id": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Storage/skus"
+      },
+      {
+        "Method": "Get",
+        "Id": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Storage"
+      },
+      {
+        "Method": "Post",
+        "Id": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Storage/checkNameAvailability"
+      },
+      {
+        "Method": "Get",
+        "Id": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-name-api-readonly-check/providers/Microsoft.Storage/storageAccounts/strpcheck5a40f00usw01"
+      },
+      {
+        "Method": "Post",
+        "Id": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Storage/checkNameAvailability"
+      },
+      {
+        "Method": "Get",
+        "Id": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/providers/Microsoft.Storage"
+      }
+    ],
+    "NameAvailable": true,
+    "SourceSha256": "d4d6cbbd3a5d213996d9973090c237bca2d7694912464f338289e6b2a3d2a509",
+    "ProviderBefore": "Registered"
+  },
+  "LiveWestusLrs": {
+    "DataSubmitted": false,
+    "Status": "PASS",
+    "ProviderPolicyRbacChanges": 0,
+    "GroupsAfter": 0,
+    "GroupsBefore": 0,
+    "OriginalGroupsRestored": true,
+    "AllFourSourceSettingsMatched": true,
+    "SourcesUnchanged": true,
+    "OwnedGroupDeleted404": true,
+    "ProviderStatesBefore": {
+      "Microsoft.Security": "Registered",
+      "Microsoft.Storage": "Registered"
+    },
+    "CheckedAt": "2026-11-26T11:35:21.1014785+00:00",
+    "LedgerCleanupMetadataErrors": [],
+    "ResourcesAfter": 0,
+    "ActualSku": "Standard_LRS",
+    "SourceHashes": {
+      "common.ps1": "d4d6cbbd3a5d213996d9973090c237bca2d7694912464f338289e6b2a3d2a509",
+      "step1_copy.ps1": "f50d12f0c1e82c9adbf04043c90bd98b9a11616f7225fc34e89aa8d261966023"
+    },
+    "ProviderStatesAfter": {
+      "Microsoft.Security": "Registered",
+      "Microsoft.Storage": "Registered"
+    },
+    "ProviderStatesUnchanged": true,
+    "OriginalResourcesRestored": true,
+    "ConfigurationChecks": [
+      {
+        "Matched": true,
+        "Id": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-lrs-check-0105ada7/providers/Microsoft.Storage/storageAccounts/stlrstest0105ada7",
+        "Kind": "Storage"
+      },
+      {
+        "Matched": true,
+        "Id": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-lrs-check-0105ada7/providers/Microsoft.Storage/storageAccounts/stlrstest0105ada7/blobServices/default",
+        "Kind": "Blob"
+      },
+      {
+        "Matched": true,
+        "Id": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-lrs-check-0105ada7/providers/Microsoft.Storage/storageAccounts/stlrstest0105ada7/managementPolicies/default",
+        "Kind": "Lifecycle"
+      },
+      {
+        "Matched": true,
+        "Id": "/subscriptions/5f1b809c-f59f-4489-8211-4bef16a0463a/resourceGroups/rg-lrs-check-0105ada7/providers/Microsoft.Storage/storageAccounts/stlrstest0105ada7/providers/Microsoft.Security/defenderForStorageSettings/current",
+        "Kind": "Defender"
+      }
+    ],
+    "ActualLocation": "westus",
+    "ResourcesBefore": 0
+  },
+  "IndependentCleanup": {
+    "Status": "PASS",
+    "IndependentReadOnlyConfirmation": true,
+    "Counts": [
+      {
+        "SubscriptionId": "5f1b809c-f59f-4489-8211-4bef16a0463a",
+        "Kind": "group",
+        "Count": 0
+      },
+      {
+        "SubscriptionId": "5f1b809c-f59f-4489-8211-4bef16a0463a",
+        "Kind": "resource",
+        "Count": 0
+      },
+      {
+        "SubscriptionId": "bfda36ec-1aed-4b0c-a907-4d4809c63888",
+        "Kind": "group",
+        "Count": 0
+      },
+      {
+        "SubscriptionId": "bfda36ec-1aed-4b0c-a907-4d4809c63888",
+        "Kind": "resource",
+        "Count": 0
+      }
+    ]
+  },
+  "SourceScope": {
+    "CommonFunctions": 5,
+    "Status": "PASS",
+    "AzureRequests": 0,
+    "Scope": "Microsoft.Storageの名前確認直前の利用登録と、地域・記録に従うZRS/LRSの選択だけを追加。他の実行コードは不変。",
+    "Scripts": [
+      {
+        "SyntaxValid": true,
+        "Path": "migration/common.ps1",
+        "OnlyAuthorizedChanges": true,
+        "Sha256": "d4d6cbbd3a5d213996d9973090c237bca2d7694912464f338289e6b2a3d2a509"
+      },
+      {
+        "SyntaxValid": true,
+        "Path": "migration/precheck.ps1",
+        "OnlyAuthorizedChanges": true,
+        "Sha256": "ef76143d12dcdf4e06bf471714e3f713582a905a36f385b561faa93cf1741b1d"
+      },
+      {
+        "SyntaxValid": true,
+        "Path": "migration/step1_copy.ps1",
+        "OnlyAuthorizedChanges": true,
+        "Sha256": "f50d12f0c1e82c9adbf04043c90bd98b9a11616f7225fc34e89aa8d261966023"
+      }
+    ]
+  },
+  "DocumentReview": {
+    "Status": "PASS",
+    "SourceRanges": 29,
+    "SearchAnchors": 56,
+    "LinksInTwoDocuments": 44,
+    "DescriptionLinks": 8,
+    "GetMigrationPlanDescriptionLinks": 3,
+    "NewStorageSku": "ZRS preferred, otherwise LRS in the same region",
+    "RecordedSkuPreserved": true,
+    "ExistingStorageSkuPreserved": true,
+    "FinalAllRepositoryLinks": 76,
+    "FinalLearningRanges": 29,
+    "FinalSearchAnchors": 56
+  },
+  "CurrentRuntimeCodeHashes": {
+    "migration/common.ps1": "d4d6cbbd3a5d213996d9973090c237bca2d7694912464f338289e6b2a3d2a509",
+    "migration/precheck.ps1": "ef76143d12dcdf4e06bf471714e3f713582a905a36f385b561faa93cf1741b1d",
+    "migration/rollback.ps1": "103f7b83d800514ec78bb22197ce2daef0e16455b131c920b866962f8a880398",
+    "migration/step1_copy.ps1": "f50d12f0c1e82c9adbf04043c90bd98b9a11616f7225fc34e89aa8d261966023",
+    "migration/step2_verify.ps1": "14117514f586342c28e34981fead9c6d22c96cbffb3250ae13e2236b7395a105",
+    "migration/step3_delete.ps1": "e0c40b1ab8cf9aef1b4f8200cad6714552cf5c444e08d667d491428a448716bb",
+    "test-environment/resource_types_fixture.ps1": "0220eaa3cb900a73725a88f54d5a1a01d488600b1dc8d723523240a46f151c40",
+    "tests/create-targets-smoke.ps1": "d920e498655a30ec967a8bac64cc126820da3d604b29b98848e0e3eca066de0d",
+    "tests/migration-smoke.ps1": "ff66453381a9cc1cd81482d6e63afa41becbcc5a6ab10a2a3db240675ccb67f0",
+    "tools/create_targets.ps1": "3f6808c99f1d4d1f23b7ded5dc278eef5da7920414d679ebb822022e74596cca"
+  },
+  "Limits": [
+    "未登録・登録中・登録拒否などの登録経路はAzure応答を置き換えた試験。実機は登録済みのラボで名前確認とLRS設定を検証。",
+    "再現のために既存の登録済みプロバイダーを解除していない。実ログの到着確認は対象外。"
+  ]
+}

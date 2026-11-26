@@ -5,7 +5,7 @@ $null = New-Item $recordDirectory -ItemType Directory -Force
 
 # ---
 # 1. 前回の作業記録を読み、現在の旧設定・作成先・ポリシーを確認する。
-# 既存の保存先は地域を確認する。再実行では、環境とCSVが前回の記録と同じことも確認する。
+# 名前確認に必要なMicrosoft.Storageは、この段階で利用登録する。再実行では環境とCSVも照合する。
 # ---
 foreach ($target in $targets) {
     $subscriptionId = $target.SubscriptionId
@@ -55,7 +55,7 @@ foreach ($target in $targets) {
             }
         }
 
-        # リソースの地域ごとに、ストレージアカウントとその保存・通信設定を用意する。
+        # リソースの地域ごとに、利用できるZRS・LRSを使うストレージと、その保存・通信設定を用意する。
         # 最終更新から1,095日を超えたappendBlobを削除するルールも用意する。地域別のIDは診断設定の送信先に使う。
         $storageIds = @{}
         foreach ($storage in $plan.Discovery.Storages) {
@@ -68,7 +68,7 @@ foreach ($target in $targets) {
                 Body = @{
                     location = $storageLocation
                     kind = 'StorageV2'
-                    sku = @{ name = 'Standard_ZRS' }
+                    sku = @{ name = $storage.SkuName }
                     properties = @{
                         encryption = @{ requireInfrastructureEncryption = $true }
                         immutableStorageWithVersioning = @{ enabled = $true }
@@ -294,7 +294,7 @@ foreach ($target in $targets) {
 
         # ---
         # 3. 旧設定と作成する設定値を、切り戻し・再実行用のJSONへ保存する。
-        # 前回の記録と値が違えば止め、新しく見つかった設定だけを追記する。保存後にAzureの変更へ進む。
+        # 前回の記録と値が違えば止め、新しく見つかった設定だけを追記する。保存後に適用除外・保存先などを設定する。
         # ---
         $recordChanged = -not $record
         if ($record) {

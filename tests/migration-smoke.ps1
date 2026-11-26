@@ -158,7 +158,8 @@ function Invoke-RestMethod {
             $regions = @(
                 [pscustomobject]@{ name = 'japaneast'; shortName = 'jpe' },
                 [pscustomobject]@{ name = 'japanwest'; shortName = 'jpw' },
-                [pscustomobject]@{ name = 'canadacentral'; shortName = 'cac' }
+                [pscustomobject]@{ name = 'canadacentral'; shortName = 'cac' },
+                [pscustomobject]@{ name = 'westus'; shortName = 'wus' }
             )
             return ,$regions
         }
@@ -215,6 +216,10 @@ function Invoke-RestMethod {
             throw (New-Object ProceduralReplay.HttpFailure 401, 'TEST_EXPIRED_TOKEN')
         }
         if ($methodName -eq 'POST' -and $path -like '*/Microsoft.Storage/checkNameAvailability') {
+            $providerPath = $path -replace '/checkNameAvailability$', ''
+            if ($fixture.UnregisteredProviders.ContainsKey($providerPath) -and $fixture.UnregisteredProviders[$providerPath] -ne 'Registered') {
+                throw (New-Object ProceduralReplay.HttpFailure 404, 'SubscriptionNotFound')
+            }
             $payload = [Text.Encoding]::UTF8.GetString($Body) | ConvertFrom-Json
             $existingNames = @($fixture.Resources.Keys | Where-Object { $_ -match '/Microsoft.Storage/storageAccounts/[^/]+$' } | ForEach-Object { ($_ -split '/')[-1] })
             $available = $payload.name -notin @($fixture.UnavailableNames) + $existingNames
@@ -231,7 +236,8 @@ function Invoke-RestMethod {
             }
             if ($path -like '*/Microsoft.Storage/skus') {
                 return [pscustomobject]@{ value = @(
-                    [pscustomobject]@{ name = 'Standard_ZRS'; kind = 'StorageV2'; locations = @($fixture.ZrsLocations) }
+                    [pscustomobject]@{ name = 'Standard_ZRS'; kind = 'StorageV2'; locations = @($fixture.ZrsLocations) },
+                    [pscustomobject]@{ name = 'Standard_LRS'; kind = 'StorageV2'; locations = @($fixture.LrsLocations) }
                 ) }
             }
             if ($path -like '*/dataCollectionRules/*/associations') {
@@ -293,11 +299,15 @@ function Invoke-RestMethod {
         }
         $subscription = ($path -split '/')[2]
         $recordPath = Join-Path $fixture.Repository "records/dev/$subscription.json"
-        if (-not (Test-Path $recordPath)) {
+        # 名前確認のためのStorage登録だけは、事前確認中・記録保存前でも許可する。
+        $storageRegistration = $methodName -eq 'POST' -and $path -match '^/subscriptions/[^/]+/providers/Microsoft\.Storage/register$'
+        if (-not (Test-Path $recordPath) -and -not $storageRegistration) {
             $fixture.WriteBeforeBackup = $true
             throw 'TEST_WRITE_BEFORE_BACKUP'
         }
-        $fixture.BackupWitnesses.Add((Get-Content $recordPath -Raw -Encoding UTF8 | ConvertFrom-Json))
+        if (Test-Path $recordPath) {
+            $fixture.BackupWitnesses.Add((Get-Content $recordPath -Raw -Encoding UTF8 | ConvertFrom-Json))
+        }
         if ($methodName -eq 'DELETE' -and $path -like "*/diagnosticSettings/$($fixture.DiagnosticName)") {
             $activeRecords = @(Get-ChildItem (Join-Path $fixture.Repository 'records/dev') -Filter '*.json' | Where-Object {
                 -not $fixture.RollbackSubscriptions -or $_.BaseName -in $fixture.RollbackSubscriptions
@@ -452,6 +462,7 @@ function Reset-Fixture {
         UnregisteredProviders = @{}
         UnavailableNames = @()
         ZrsLocations = @('japaneast', 'japanwest', 'canadacentral')
+        LrsLocations = @('japaneast', 'japanwest', 'canadacentral', 'westus')
         Reads = [Collections.Generic.List[string]]::new()
         Requests = [Collections.Generic.List[object]]::new()
         Writes = [Collections.Generic.List[object]]::new()
@@ -1049,8 +1060,9 @@ try {
         Invoke-ReplayStep precheck -ExpectFailure
         Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '名前衝突の変更0'
     }
-    Invoke-ReplayCase 'ZRS非対応の地域を事前停止する' {
+    Invoke-ReplayCase 'ZRS・LRSの両方が非対応の地域を事前停止する' {
         $global:ProceduralFixture.ZrsLocations = @('canadacentral')
+        $global:ProceduralFixture.LrsLocations = @('canadacentral')
         Invoke-ReplayStep precheck -ExpectFailure
         Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) 'SKU非対応の変更0'
     }
@@ -1440,9 +1452,9 @@ try {
         Assert-Replay ($global:ProceduralFixture.TokenReads -ge 2) '401でtoken再取得'
         Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '認証更新は設定変更なし'
     }
-    Invoke-ReplayCase '登録前providerは記録保存後に登録する' {
+    Invoke-ReplayCase 'Storage以外の未登録providerは記録保存後に登録する' {
         $subscription = $global:ProceduralFixture.Subscriptions[0]
-        $provider = "/subscriptions/$subscription/providers/Microsoft.Storage"
+        $provider = "/subscriptions/$subscription/providers/Microsoft.Insights"
         $global:ProceduralFixture.UnregisteredProviders[$provider] = 'NotRegistered'
         $global:ProceduralFixture.ProviderPendingReads[$provider] = 6
         $global:ProceduralFixture.ClockStep = 60
@@ -2017,6 +2029,189 @@ try {
             Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) 'Storage自身へ戻る診断設定は1件も作らない'
             $failures = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'copy_failures.csv'))
             Assert-Replay ($failures.Count -eq 2 -and @($failures | Where-Object { $_.Reason -notlike '*同じStorageへ送信できません*' }).Count -eq 0) 'Storage本体と子サービスの両方で理由を報告する'
+        }
+    }
+    Invoke-ReplayCase 'Storageの事前登録は名前確認より前に行い、後段NGでも登録を保持する' {
+        foreach ($subscription in $global:ProceduralFixture.Subscriptions) {
+            $provider = "/subscriptions/$subscription/providers/Microsoft.Storage"
+            $global:ProceduralFixture.UnregisteredProviders[$provider] = 'NotRegistered'
+            $global:ProceduralFixture.ProviderPendingReads[$provider] = 6
+            $parent = "/subscriptions/$subscription/resourceGroups/rg-source/providers/Microsoft.Test/widgets/west"
+            $global:ProceduralFixture.Inventory += [pscustomobject]@{ id = $parent; type = 'Microsoft.Test/widgets'; location = 'japanwest' }
+            Add-FixtureDiagnostic $parent
+        }
+        $beforeResources = ConvertTo-Json $global:ProceduralFixture.Resources -Depth 30 -Compress
+        . (Join-Path $global:ProceduralFixture.Repository 'common.ps1')
+        foreach ($target in $targets) {
+            $subscriptionId = $target.SubscriptionId
+            $oldPlan = Get-MigrationPlan -Target $target -OnlyOldSettings
+            Assert-Replay (-not $oldPlan.ContainsKey('Discovery')) '旧設定だけの取得では保存先の作成計画を作らない'
+        }
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) 'Storage指定あり・未登録でも旧設定の取得で登録しない'
+        Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object Id -match '/providers/Microsoft\.Storage(/register)?$').Count -eq 0) '旧設定だけの取得ではStorageの登録状態も調べない'
+        Reset-Observation
+        $global:ProceduralFixture.ClockStep = 60
+        $global:ProceduralFixture.UnavailableNames = @('stjpe1111')
+        Invoke-ReplayStep precheck -ExpectFailure
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 2 -and @($global:ProceduralFixture.Writes | Where-Object { $_.Method -ne 'POST' -or $_.Id -notlike '*/Microsoft.Storage/register' }).Count -eq 0) '事前確認で許可する書込みは各SubのStorage利用登録だけ'
+        Assert-Replay ((ConvertTo-Json $global:ProceduralFixture.Resources -Depth 30 -Compress) -ceq $beforeResources) '後段NGでも既存リソース・旧設定を変更しない'
+        Assert-Replay (@(Get-ChildItem (Join-Path $global:ProceduralFixture.Repository 'records/dev') -Filter '*.json' -ErrorAction SilentlyContinue).Count -eq 0) '事前確認は変更前記録を作らない'
+        Assert-Replay (-not $global:ProceduralFixture.WriteBeforeBackup) 'Storage登録以外の記録前変更を許可しない'
+        Assert-Replay ($global:ProceduralFixture.ClockOffset -gt 300) '5分を超える登録待機でも途中で打ち切らない'
+        $results = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'precheck_results.csv'))
+        Assert-Replay (@($results | Where-Object Result -eq 'NG').Count -eq 1) '名前使用済みのSubだけをNGにする'
+        foreach ($subscription in $global:ProceduralFixture.Subscriptions) {
+            $provider = "/subscriptions/$subscription/providers/Microsoft.Storage"
+            $requests = @($global:ProceduralFixture.Requests | Where-Object { $_.Id -like "/subscriptions/$subscription/*" })
+            $registerIndex = [Array]::IndexOf(@($requests.Id), "$provider/register")
+            $nameIndex = [Array]::IndexOf(@($requests.Id), "$provider/checkNameAvailability")
+            Assert-Replay ($registerIndex -ge 0 -and $nameIndex -gt $registerIndex) '利用登録が完了してから名前を確認する'
+            Assert-Replay (@($requests | Where-Object Id -eq "$provider/register").Count -eq 1) '複数地域でも同じSubの登録要求は1回だけ'
+            Assert-Replay ($global:ProceduralFixture.UnregisteredProviders[$provider] -eq 'Registered' -and $global:ProceduralFixture.ProviderPendingReads[$provider] -eq 0) '後段NGのSubも登録完了状態を保持する'
+        }
+        $global:ProceduralFixture.UnavailableNames = @()
+        Reset-Observation
+        Invoke-ReplayStep precheck
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '登録済みの再確認ではAzureを書き換えない'
+        foreach ($subscription in $global:ProceduralFixture.Subscriptions) {
+            $provider = "/subscriptions/$subscription/providers/Microsoft.Storage"
+            Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object { $_.Method -eq 'GET' -and $_.Id -eq $provider }).Count -eq 1) '登録済み状態は同じSubで1回だけ確認する'
+            Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object Id -eq "$provider/checkNameAvailability").Count -eq 2) '登録後は東日本・西日本の両方の名前を確認する'
+        }
+        Invoke-ReplayStep copy
+        Reset-Observation
+        Invoke-ReplayStep verify
+        Invoke-ReplayStep delete
+        Invoke-ReplayStep rollback
+        Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object { $_.Id -like '*/Microsoft.Storage/register' -or $_.Id -like '*/Microsoft.Storage/unregister' }).Count -eq 0) '確認・削除・切り戻しでStorage利用登録を変更しない'
+        Assert-Replay (@($global:ProceduralFixture.UnregisteredProviders.Values | Where-Object { $_ -ne 'Registered' }).Count -eq 0) '切り戻し後もStorage利用登録を残す'
+    }
+    Invoke-ReplayCase 'Storageの事前登録が進行中なら再要求せず完了を待つ' {
+        foreach ($subscription in $global:ProceduralFixture.Subscriptions) {
+            $provider = "/subscriptions/$subscription/providers/Microsoft.Storage"
+            $global:ProceduralFixture.UnregisteredProviders[$provider] = 'Registering'
+            $global:ProceduralFixture.ProviderPendingReads[$provider] = 6
+        }
+        $global:ProceduralFixture.ClockStep = 60
+        Invoke-ReplayStep precheck
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) 'Registeringでは重複した登録POSTを送らない'
+        Assert-Replay ($global:ProceduralFixture.ClockOffset -gt 300) '登録中は5分後もRegisteredになるまで待つ'
+        foreach ($subscription in $global:ProceduralFixture.Subscriptions) {
+            $provider = "/subscriptions/$subscription/providers/Microsoft.Storage"
+            Assert-Replay ($global:ProceduralFixture.UnregisteredProviders[$provider] -eq 'Registered') '既存の登録処理が完了している'
+            Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object Id -eq "$provider/checkNameAvailability").Count -eq 1) '登録完了後に名前確認へ進む'
+        }
+    }
+    Invoke-ReplayCase 'Storageの事前登録に失敗した場合と不明な登録状態は名前確認へ進まない' {
+        foreach ($subscription in $global:ProceduralFixture.Subscriptions) {
+            $provider = "/subscriptions/$subscription/providers/Microsoft.Storage"
+            $global:ProceduralFixture.UnregisteredProviders[$provider] = 'NotRegistered'
+            $global:ProceduralFixture.HttpFailures["POST $provider/register"] = @{ Status = 403; Remaining = 1; Code = 'TEST_STORAGE_REGISTER_DENIED' }
+        }
+        Invoke-ReplayStep precheck -ExpectFailure
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '登録が拒否されたら保存先や送信設定を変更しない'
+        Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object Id -like '*/Microsoft.Storage/checkNameAvailability').Count -eq 0) '登録失敗を無視して名前確認しない'
+        $results = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'precheck_results.csv'))
+        Assert-Replay ($results.Count -eq 2 -and @($results | Where-Object { $_.Result -ne 'NG' -or $_.Reason -notlike '*TEST_STORAGE_REGISTER_DENIED*' }).Count -eq 0) '登録失敗のSubと理由をNGへ残す'
+        foreach ($state in @('Unregistering', 'Unknown', '', $null)) {
+            Reset-Fixture
+            foreach ($subscription in $global:ProceduralFixture.Subscriptions) {
+                $global:ProceduralFixture.UnregisteredProviders["/subscriptions/$subscription/providers/Microsoft.Storage"] = $state
+            }
+            Invoke-ReplayStep precheck -ExpectFailure
+            Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '確認できない状態を勝手に登録し直さない'
+            Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object Id -like '*/Microsoft.Storage/checkNameAvailability').Count -eq 0) '確認できない状態で名前確認しない'
+            Assert-Replay ($global:ProceduralFixture.SleepCalls -eq 0) '不明な状態で無期限に待機しない'
+        }
+    }
+    Invoke-ReplayCase 'Storageの事前登録は保存先不要と既存再利用の場合には行わない' -Diagnostic 'Log' -Vm 'None' -Body {
+        foreach ($subscription in $global:ProceduralFixture.Subscriptions) {
+            $global:ProceduralFixture.UnregisteredProviders["/subscriptions/$subscription/providers/Microsoft.Storage"] = 'NotRegistered'
+        }
+        foreach ($row in $global:ProceduralFixture.Rows) {
+            $row.StorageAccount = ''
+        }
+        Write-FixtureCsv
+        Invoke-ReplayStep precheck
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) 'ストレージ名が空欄なら事前登録しない'
+        Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object Id -like '*/providers/Microsoft.Storage*').Count -eq 0) '保存先不要ならStorage APIを呼ばない'
+        Invoke-ReplayStep copy
+        Reset-Observation
+        Invoke-ReplayStep verify
+        Invoke-ReplayStep delete
+        Invoke-ReplayStep rollback
+        Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object Id -like '*/providers/Microsoft.Storage*').Count -eq 0) '確認・削除・切り戻しは未登録Storageを登録しない'
+
+        Reset-Fixture -Diagnostic 'None' -Vm 'None'
+        Invoke-ReplayStep copy
+        Remove-Item (Join-Path $global:ProceduralFixture.Repository 'records/dev') -Recurse -Force
+        foreach ($subscription in $global:ProceduralFixture.Subscriptions) {
+            $global:ProceduralFixture.UnregisteredProviders["/subscriptions/$subscription/providers/Microsoft.Storage"] = 'NotRegistered'
+        }
+        Reset-Observation
+        Invoke-ReplayStep precheck
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '既存Storageを再利用する事前確認では登録しない'
+        Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object { $_.Id -like '*/Microsoft.Storage/checkNameAvailability' -or $_.Id -match '/providers/Microsoft\.Storage(/register)?$' }).Count -eq 0) '既存の保存先に名前確認や利用登録は行わない'
+        Assert-Replay (@(Get-ChildItem (Join-Path $global:ProceduralFixture.Repository 'records/dev') -Filter '*.json' -ErrorAction SilentlyContinue).Count -eq 0) '既存再利用の事前確認でもJSONを保存しない'
+    }
+    Invoke-ReplayCase 'ZRS非対応のwestusはLRSを使い、再実行でも記録した冗長性を変えない' -Vm 'None' -Body {
+        foreach ($resource in $global:ProceduralFixture.Inventory) {
+            $resource.location = 'westus'
+        }
+        foreach ($subscription in $global:ProceduralFixture.Subscriptions) {
+            $global:ProceduralFixture.UnregisteredProviders["/subscriptions/$subscription/providers/Microsoft.Storage"] = 'NotRegistered'
+        }
+        Invoke-ReplayStep copy
+        $records = @(Get-FixtureRecords)
+        $recordHashes = @{}
+        foreach ($record in $records) {
+            $subscription = $record.Target.SubscriptionId
+            $storages = @($record.Destinations | Where-Object Kind -eq 'Storage')
+            $west = @($storages | Where-Object { $_.Body.location -eq 'westus' })[0]
+            $east = @($storages | Where-Object { $_.Body.location -eq 'japaneast' })[0]
+            Assert-Replay ($storages.Count -eq 2 -and $west.Body.sku.name -eq 'Standard_LRS' -and $east.Body.sku.name -eq 'Standard_ZRS') '地域ごとに、ZRS対応の東日本はZRS・非対応のwestusはLRSを作る'
+            Assert-Replay ($west.Id -like "*/stwus$($subscription.Substring(0, 4))") 'LRSでもjpeだけをwestusの略称へ置き換える'
+            Assert-Replay ($global:ProceduralFixture.Resources[$west.Id].sku.name -eq 'Standard_LRS') '作成したwestusのアカウントは記録と同じLRS'
+            $properties = $global:ProceduralFixture.Resources[$west.Id].properties
+            Assert-Replay ($properties.publicNetworkAccess -eq 'Disabled' -and $properties.allowSharedKeyAccess -eq $false -and $properties.allowBlobPublicAccess -eq $false -and $properties.encryption.requireInfrastructureEncryption -eq $true) 'LRSでも通信・共有キー・匿名公開・暗号化の設定を維持する'
+            $source = @($global:ProceduralFixture.Inventory | Where-Object { $_.id -like "/subscriptions/$subscription/*/Microsoft.Test/widgets/*" })[0]
+            $settingId = "$($source.id)/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)"
+            Assert-Replay ($global:ProceduralFixture.Resources[$settingId].properties.storageAccountId -eq $west.Id) 'westusの診断設定は同じ地域のLRSへ送る'
+            Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object Id -eq "/subscriptions/$subscription/providers/Microsoft.Storage/register").Count -eq 1) 'precheckを省略したcopyでも、LRSの名前確認前にStorageを1回登録する'
+            $recordHashes[$subscription] = (Get-FileHash (Join-Path $global:ProceduralFixture.Repository "records/dev/$subscription.json")).Hash
+        }
+        $global:ProceduralFixture.ZrsLocations += 'westus'
+        Reset-Observation
+        Invoke-ReplayStep copy
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '後からwestusがZRS対応になっても、作業中のLRSを変更しない'
+        foreach ($record in $records) {
+            $west = @($record.Destinations | Where-Object { $_.Kind -eq 'Storage' -and $_.Body.location -eq 'westus' })[0]
+            $global:ProceduralFixture.Resources.Remove($west.Id)
+        }
+        Reset-Observation
+        Invoke-ReplayStep copy
+        $storageWrites = @($global:ProceduralFixture.Writes | Where-Object Id -match '/Microsoft\.Storage/storageAccounts/[^/]+$')
+        Assert-Replay ($storageWrites.Count -eq 2 -and @($storageWrites | Where-Object { $_.Body.sku.name -ne 'Standard_LRS' }).Count -eq 0) '欠落したアカウントを再作成するときも記録したLRSを使う'
+        foreach ($record in $records) {
+            $recordPath = Join-Path $global:ProceduralFixture.Repository "records/dev/$($record.Target.SubscriptionId).json"
+            Assert-Replay ((Get-FileHash $recordPath).Hash -eq $recordHashes[$record.Target.SubscriptionId]) '再開で元の記録を変更しない'
+            $west = @($record.Destinations | Where-Object { $_.Kind -eq 'Storage' -and $_.Body.location -eq 'westus' })[0]
+            $global:ProceduralFixture.Resources.Remove($west.Id)
+        }
+        $global:ProceduralFixture.LrsLocations = @('japaneast', 'japanwest', 'canadacentral')
+        Reset-Observation
+        Invoke-ReplayStep copy -ExpectFailure
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '記録したLRSが使えなければZRSへ変更せず止める'
+        $failures = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'copy_failures.csv'))
+        Assert-Replay ($failures.Count -eq 2 -and @($failures | Where-Object { $_.Reason -notlike '*Standard_LRS*' }).Count -eq 0) '記録した冗長性が使えない理由を報告する'
+        $global:ProceduralFixture.LrsLocations += 'westus'
+        Invoke-ReplayStep copy
+        Invoke-ReplayStep verify
+        Invoke-ReplayStep delete
+        Invoke-ReplayStep rollback
+        foreach ($record in $records) {
+            $west = @($record.Destinations | Where-Object { $_.Kind -eq 'Storage' -and $_.Body.location -eq 'westus' })[0]
+            Assert-Replay ($global:ProceduralFixture.Resources[$west.Id].sku.name -eq 'Standard_LRS') '切り戻し後も保存先のLRSを残す'
         }
     }
     # --------------------------------------------------

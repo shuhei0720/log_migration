@@ -152,7 +152,7 @@ Import-Csv "$casePath\verify_results.csv" | Group-Object Result | Select-Object 
 |旧診断設定・旧DCR関連付け|元の値のまま残る|
 |新診断設定|旧ログ・メトリック設定を引き継ぎ、CSVの送り先になっている|
 |Log Analytics自身の新診断設定|allLogsだけが有効。Storageなら同地域のストレージ、Logなら自身へ送る。メトリックは無効|
-|地域別ストレージ|診断を付けるリソースと同じ地域。空欄・globalは東日本|
+|地域別ストレージ|診断を付けるリソースと同じ地域。空欄・globalは東日本。新設はZRSを優先し、非対応地域はLRS|
 |新規保存先の保持期間と通信設定|Log Analytics全体90日、Event・Syslogは合計1,095日。ストレージの公開ネットワークはDisabled、appendBlobは最終更新から1,095日を超えると削除する設定|
 |作業前からある保存先|指定地域と一致し、元の保持期間・セキュリティ設定が変わっていない。既存LAWの未作成テーブルだけは合計1,095日で用意する|
 
