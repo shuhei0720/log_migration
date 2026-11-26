@@ -171,10 +171,10 @@ CSVに書いたサブスクリプションごとに、旧設定と新設定の�
 
 ## 補足：関数の説明とPowerShellの読み方
 
-この説明版のヘルプを読むときは、`reading-version`フォルダを開いて次を実行します。`-SkipCsv`でCSVやAzureの一覧取得を省き、設定値と関数だけを読み込みます。関数名を変えると、他の関数の説明も表示できます。
+リポジトリのルートから次を実行すると、関数の説明を表示できます。`-SkipCsv`でCSVやAzureの一覧取得を省き、設定値と関数だけを読み込みます。関数名を変えると、他の関数の説明も表示できます。
 
 ```powershell
-. .\procedural-migration\common.ps1 -SkipCsv
+. .\migration\common.ps1 -SkipCsv
 (Get-Help Get-MigrationPlan -Full).Description.Text
 ```
 

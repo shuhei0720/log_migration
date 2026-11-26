@@ -1,16 +1,16 @@
 # 診断設定・VMログの段階移行
 
-Azureの診断設定とVM・VMSSのログ送信先を移行します。正本は`procedural-migration`です。
+Azureの診断設定とVM・VMSSのログ送信先を移行します。実行するスクリプトは`migration/`にまとめています。PowerShell 7とAzure CLIを使います。
 
-|資料|内容|
+|資料・フォルダ|用途|
 |---|---|
-|[使い方](procedural-migration/README.md)|環境・CSV・実行順・各ファイルの処理・再実行・切り戻し|
-|[コード学習ガイド](procedural-migration/CODE_LEARNING.md)|step1からコードを上から読むための解説と、構文の補足|
-|[環境別CSVの作成](tools/README.md)|管理グループ配下のサブスクリプションとalert用リソースグループから、保存先の名前を生成|
-|[テスト環境の作成](test-environment/README.md)|既存VNet・会社ポリシーを使うテスト資源の作成手順|
-|[自社2Subでの総合テスト手順](test-environment/INTEGRATION_TEST.md)|正常系と、複製後・旧設定削除後の切り戻しを確認する手順|
-|[検証結果](test-results/REPORT.md)|実施内容・結果・実測時間・未実施項目|
+|[移行スクリプトの使い方](migration/README.md)|設定する変数・CSV・実行順・再開・切り戻し|
+|[コード学習ガイド](migration/CODE_LEARNING.md)|コードを上から読み、各部分の処理を理解する|
+|[環境別CSVの作成](tools/README.md)|管理グループとalert用リソースグループから、移行先の名前を作る|
+|[テスト環境の作成](test-environment/README.md)|既存VNetと会社ポリシーを使い、移行テスト用のリソースを作る|
+|[2サブスクリプションでの総合テスト手順](test-environment/INTEGRATION_TEST.md)|正常系と、複製後・旧設定削除後の切り戻しを確認する|
+|[検証結果](test-results/REPORT.md)|テストケース・結果・確認できていない範囲|
+|`tests/`|Azureへの通信を試験用の応答に置き換えて、コードを検証する|
+|`archive/`|改修前の原本と、過去の検証記録を参照用に保存する|
 
-総合テスト・追加の正常通し試験は成功し、試験資源は撤去済みです。認可設定・MG所属も元に戻っています。利用登録は28件中26件を復元し、Sub2のCompute・NetworkはAzure側で解除処理中です。詳細は検証結果を参照してください。
-
-ルートの`log_migration.ps1`と`log_migration_targets.csv`は原本です。
+原本の[log_migration.ps1](archive/original/log_migration.ps1)と[入力CSV](archive/original/log_migration_targets.csv)は、内容を変えずに保管しています。

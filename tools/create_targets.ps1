@@ -1,7 +1,7 @@
 #Requires -Version 7.0
 param(
     [Parameter(Mandatory)][ValidateSet('dev', 'stg', 'prod')][string]$Environment,
-    [string]$OutputDirectory = (Join-Path $PSScriptRoot '../procedural-migration/generated')
+    [string]$OutputDirectory = (Join-Path $PSScriptRoot '../migration/generated')
 )
 
 # ---

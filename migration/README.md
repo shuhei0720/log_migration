@@ -2,7 +2,7 @@
 
 現在のログ送信を続けたまま、新しい保存先への送信設定を追加します。設定値を確認してから、元の診断設定とVM・VMSSのDCR関連付けを削除します。保存済みのログは元の保存先に残ります。
 
-実行には[元の正本](../../procedural-migration/README.md)を使います。このページのコマンドは、元のリポジトリのルートから実行してください。コードの説明は[学習ガイド](CODE_LEARNING.md)にあります。
+このフォルダが移行スクリプトの正本です。コマンドはリポジトリのルートから実行してください。コードの説明は[学習ガイド](CODE_LEARNING.md)にあります。
 
 ## 作業の流れ
 
@@ -37,8 +37,10 @@ PowerShell 7とAzure CLIを使います。対象サブスクリプションのOw
 
 ### CSVに作業先を指定する
 
+[CSV作成スクリプト](../tools/README.md)で環境別に作成できます。手入力する場合は、次の例をコピーして記入します。
+
 ```powershell
-Copy-Item .\procedural-migration\targets.example.csv .\procedural-migration\targets.csv
+Copy-Item .\migration\targets.example.csv .\migration\targets.csv
 ```
 
 `targets.csv`には、1サブスクリプションにつき1行を書きます。
@@ -70,16 +72,16 @@ Copy-Item .\procedural-migration\targets.example.csv .\procedural-migration\targ
 az login
 
 # 任意。前日などに確認する。
-pwsh.exe -NoProfile -File .\procedural-migration\precheck.ps1
+pwsh.exe -NoProfile -File .\migration\precheck.ps1
 
 # 旧設定を残して新設定を準備する。
-pwsh.exe -NoProfile -File .\procedural-migration\step1_copy.ps1
+pwsh.exe -NoProfile -File .\migration\step1_copy.ps1
 
 # verify_results.csvを確認する。
-pwsh.exe -NoProfile -File .\procedural-migration\step2_verify.ps1
+pwsh.exe -NoProfile -File .\migration\step2_verify.ps1
 
 # 確認後、旧設定を削除する。
-pwsh.exe -NoProfile -File .\procedural-migration\step3_delete.ps1
+pwsh.exe -NoProfile -File .\migration\step3_delete.ps1
 ```
 
 ### precheck：作成前の問題を見つける
@@ -135,6 +137,8 @@ Azureは変更せず、結果を`verify_results.csv`へ出します。Result列�
 
 ## 3. 途中で止まった作業を再開する
 
+旧フォルダで作業中の場合は、そのフォルダを保管し、使用中の`targets.csv`と`records/`を`migration/`へコピーします。新しい`common.ps1`の先頭にある利用者設定も、使用中の値に合わせます。
+
 **common設定・CSV・recordsを変えずに**、止まった工程を再実行します。step1は設定済みを省略し、新たに見つかった旧設定を記録へ追加します。最初に記録した変更前の値は残し、記録済みの旧設定が消失・変更していれば停止します。
 
 作業記録は`records/<環境>/<サブスクリプションID>.json`です。設定値だけを保存し、サブスクリプション全体やログデータは保存しません。
@@ -164,13 +168,13 @@ step1・step3の途中でも完了後でも、同じ`rollback.ps1`を使いま�
 
 ```powershell
 # 全体を戻す。
-pwsh.exe -NoProfile -File .\procedural-migration\rollback.ps1
+pwsh.exe -NoProfile -File .\migration\rollback.ps1
 
 # 指定Subだけを戻す。PowerShell 7から実行する。
-.\procedural-migration\rollback.ps1 -SubscriptionIds '対象Sub ID'
+.\migration\rollback.ps1 -SubscriptionIds '対象Sub ID'
 
 # 複数Subを戻す。
-.\procedural-migration\rollback.ps1 -SubscriptionIds '対象Sub ID 1', '対象Sub ID 2'
+.\migration\rollback.ps1 -SubscriptionIds '対象Sub ID 1', '対象Sub ID 2'
 ```
 
 切り戻す設定の現在値を作業記録と比べ、記録にない変更があれば書き込み前に停止します。旧DCR関連付け、旧診断設定の順に全対象へ復元してから、新しい設定を戻します。

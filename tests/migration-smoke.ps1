@@ -1,6 +1,6 @@
 ﻿#Requires -Version 7.0
 param(
-    [string]$Repository = (Join-Path (Split-Path -Parent $PSScriptRoot) 'procedural-migration'),
+    [string]$Repository = (Join-Path (Split-Path -Parent $PSScriptRoot) 'migration'),
     [string]$ReportPath,
     [switch]$PassThru
 )
@@ -12,7 +12,7 @@ foreach ($name in $sourceFiles) {
 }
 $checks = 0
 $cases = [Collections.Generic.List[object]]::new()
-$scratch = Join-Path ([IO.Path]::GetTempPath()) ('procedural-migration-' + [guid]::NewGuid().ToString('N'))
+$scratch = Join-Path ([IO.Path]::GetTempPath()) ('migration-' + [guid]::NewGuid().ToString('N'))
 $null = New-Item -ItemType Directory -Path $scratch
 if (-not ('ProceduralReplay.SharedFixture' -as [type])) {
     Add-Type -TypeDefinition @'

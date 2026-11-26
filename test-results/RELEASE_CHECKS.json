@@ -1,0 +1,652 @@
+{
+  "Status": "PASS",
+  "RecordedAt": "2026-11-26T13:42:45+09:00",
+  "Scope": "reading-versionをmigrationへ昇格した出荷構成の確認。Azureへの通信は試験用の応答に置き換えている。",
+  "MigrationReplay": {
+    "Result": "PASS",
+    "Cases": [
+      {
+        "Case": "StorageとVM: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 108
+      },
+      {
+        "Case": "LogとVM: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 108
+      },
+      {
+        "Case": "Storageのみ: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 104
+      },
+      {
+        "Case": "Logのみ: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 104
+      },
+      {
+        "Case": "VMのみ: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 106
+      },
+      {
+        "Case": "両方None: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 102
+      },
+      {
+        "Case": "両方空欄: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 102
+      },
+      {
+        "Case": "Storage宛GETのLAW既定方式付加を許容して再実行・削除・復元できる",
+        "Result": "PASS",
+        "Assertions": 14
+      },
+      {
+        "Case": "LAW宛の格納方式変更は許容せず既存設定を保持する",
+        "Result": "PASS",
+        "Assertions": 10
+      },
+      {
+        "Case": "CSV列欠落は空欄と区別して書込み前に停止する",
+        "Result": "PASS",
+        "Assertions": 24
+      },
+      {
+        "Case": "対象0件でも東日本StorageとLAWを準備する",
+        "Result": "PASS",
+        "Assertions": 10
+      },
+      {
+        "Case": "旧DCR関連なしでもEvent・Syslogは1095日保持し、新DCRは作らない",
+        "Result": "PASS",
+        "Assertions": 37
+      },
+      {
+        "Case": "東日本・西日本・globalの地域別Storageへ送信する",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "Canadaのみの旧設定を削除後もJPEを要求しない",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "Storage kind=StorageV2 の子スコープを探索",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "Storage kind=BlobStorage の子スコープを探索",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "Storage kind=BlockBlobStorage の子スコープを探索",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "Storage kind=FileStorage の子スコープを探索",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "通常一覧にないRedis子DBを親地域のStorageへ移行・復元する",
+        "Result": "PASS",
+        "Assertions": 12
+      },
+      {
+        "Case": "RedisのDB一覧が空なら存在しない子を調べない",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "Redis子DBと通常一覧の次ページを両方移行・復元する",
+        "Result": "PASS",
+        "Assertions": 15
+      },
+      {
+        "Case": "CSV入力拒否: 不正診断フラグ",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: 不正VMフラグ",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: 空RG",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: 空Workspace",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: 不正Storage名",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: jpeが2か所",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: Storage名25文字",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: 空Sub",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "初回の既存RGは同地域でも別地域でも変更前に停止する",
+        "Result": "PASS",
+        "Assertions": 14
+      },
+      {
+        "Case": "初回の既存Storage名を事前停止する",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "ZRS非対応の地域を事前停止する",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "初回の同名新診断を再利用しない",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "新診断を追加する空き5枠上限を事前停止する",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "両Noneは同名新診断と5件上限に触れない",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "関係のないVM・VMSSには新関連を作らない",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "Storage ACL・LAW features・分析保持・他ルールを維持する",
+        "Result": "PASS",
+        "Assertions": 13
+      },
+      {
+        "Case": "既存Storageの不変条件が違う場合は上書きしない",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "既存newDCRと関連は切戻しでBeforeへ復元する",
+        "Result": "PASS",
+        "Assertions": 9
+      },
+      {
+        "Case": "copy途中失敗から未完了だけを再開する",
+        "Result": "PASS",
+        "Assertions": 10
+      },
+      {
+        "Case": "記録保存に失敗したSubはAzure変更を始めない",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "作業途中CSV選択変更を拒否: copy",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "作業途中CSV選択変更を拒否: verify",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "作業途中CSV選択変更を拒否: delete",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "後続Subの未完了は全Subの旧DELETEを止める",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "旧削除の途中失敗は後続を止め再実行できる",
+        "Result": "PASS",
+        "Assertions": 9
+      },
+      {
+        "Case": "copy後に増えた旧対象をverify/deleteが無視しない",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "削除直前に旧設定が変われば以降の削除を止める",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "指定Subだけを切り戻し、他Subはそのまま残す",
+        "Result": "PASS",
+        "Assertions": 9
+      },
+      {
+        "Case": "不明Sub指定のrollbackは変更前に拒否する",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "旧復元失敗時は新診断設定を残す",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "切戻し対象が外部変更されたら上書きしない",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "保存先GET失敗を未存在と扱わず削除前に停止する",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "書込み後の期待値不一致を失敗一覧に出す",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "接続断・本文切断・通信timeoutから同じ要求で復旧する",
+        "Result": "PASS",
+        "Assertions": 24
+      },
+      {
+        "Case": "通信断が続けば最大4回で止まり旧設定を残す",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "TLS・明示中断・非通信IO・JSON不正を再試行しない",
+        "Result": "PASS",
+        "Assertions": 17
+      },
+      {
+        "Case": "429・503はRetryAfterを守って従来どおり再試行する",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "DELETE応答喪失後の404だけを削除済みとして継続する",
+        "Result": "PASS",
+        "Assertions": 10
+      },
+      {
+        "Case": "Wait付きPUTは1回だけ送信し以後はBody無しGETで待つ",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "作成待ちのFailed・Canceledは即停止する",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "対応IWRだけ本文timeoutを設定し未対応環境へ余計なparameterを送らない",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "一時的な401は認証を更新して再試行する",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "登録前providerは記録保存後に登録する",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "旧診断名と新診断名が同じでもNone側は旧を削除・復元する",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "指定2DCRでも対象外Subの関連を変更しない",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "未知の地域略称は事前確認で停止する",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "対応する既存Waiverは切戻しでも保持する",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "内容の違う既存Waiverを上書きしない",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "コピー途中の失敗状態から直接切り戻せる",
+        "Result": "PASS",
+        "Assertions": 11
+      },
+      {
+        "Case": "コピー完了後は旧設定を書き直さず切り戻せる",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "旧設定を一部削除した失敗状態から直接切り戻せる",
+        "Result": "PASS",
+        "Assertions": 9
+      },
+      {
+        "Case": "DCR更新中の応答を待って完了を確認する",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "StorageのResolvingDnsを待って設定を完了する",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "LAWのProvisioningを待って設定を完了する",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "保存先の作成待ちは5分を超えても成功までGETだけで待つ",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "総保持が1095でも既定値フラグのままなら明示設定する",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "変更前記録がなければ確認と削除を開始しない",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "通常一覧にある主要タイプと子IDを同じ診断処理へ通す",
+        "Result": "PASS",
+        "Assertions": 13
+      },
+      {
+        "Case": "DCRのInvalidOutputTableだけは反映を待って再試行する",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "組み込みSyslogの反映遅延が5分を超えてもDCRを完了する",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "custom tableのInvalidOutputTableを反映待ちと誤認しない",
+        "Result": "PASS",
+        "Assertions": 8
+      },
+      {
+        "Case": "DCRの一般400は再試行せずそのSubを止める",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "新診断の余分なWorkspaceとEventHubを許容しない",
+        "Result": "PASS",
+        "Assertions": 9
+      },
+      {
+        "Case": "既存DCRへの余分な収集源追加を許容せず切戻しも上書きしない",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "未選択Subの記録JSONが壊れていても指定Subだけを切り戻せる",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "実runspaceで5件以上の診断GETとPUTを処理する",
+        "Result": "PASS",
+        "Assertions": 15
+      },
+      {
+        "Case": "並列worker1件の失敗を記録し再実行で欠落だけを補う",
+        "Result": "PASS",
+        "Assertions": 20
+      },
+      {
+        "Case": "既存DCRのIdentity[SystemAssigned]を維持して全工程と切戻しを行う",
+        "Result": "PASS",
+        "Assertions": 12
+      },
+      {
+        "Case": "既存DCRのIdentity[None]を維持して全工程と切戻しを行う",
+        "Result": "PASS",
+        "Assertions": 12
+      },
+      {
+        "Case": "既存DCRのIdentity[SystemAssigned, UserAssigned]を維持して全工程と切戻しを行う",
+        "Result": "PASS",
+        "Assertions": 23
+      }
+    ],
+    "CaseCount": 91,
+    "Checks": 1341,
+    "AzureRequests": 0,
+    "PowerShellVersion": "7.5.4",
+    "Hashes": {
+      "step1_copy.ps1": "07C0C3869E17FE07A5F80E2EE7BA95A200A7A129581CFFB95AC667BAFBAB7253",
+      "step2_verify.ps1": "819C7530A02F0511EBF9FF705D043C28EDD1604BB38002A3FF2CD9008825B0EA",
+      "step3_delete.ps1": "A6ACFC22414A07AFA3ADD78D7E255D3A582CB140A7B7207652A797A5BD9791C7",
+      "common.ps1": "73D84D7EC33B98E815BFE2F3184A7AF57D33EC434563B0C171762663A428C9DE",
+      "precheck.ps1": "AAEFA70C4FA557BD3DA3886004F23D47C11C703840CCCCD40F85D6134FCCA9A3",
+      "rollback.ps1": "FF3914215092B6DB483A671B3319932C4F15765219B80295F93F7B1057847A91"
+    },
+    "RealParallelRunspaces": 974,
+    "RequestsFromParallelRunspaces": 1339
+  },
+  "CsvGenerator": {
+    "Status": "PASS",
+    "PowerShell": "7.5.4",
+    "Scenarios": 6,
+    "Assertions": 52,
+    "AzureRequests": 0,
+    "DefaultOutput": {
+      "TemporaryRepositoryLayout": true,
+      "SelectedCsv": "migration/generated/targets-stg.csv",
+      "OnlySelectedCsvCreated": true,
+      "BytesMatchExplicitOutput": true,
+      "LegacyDirectoryNotCreated": true
+    },
+    "Prior48AssertionsPassed": true,
+    "OnlyTestFileEditedByTestAgent": "tests/create-targets-smoke.ps1",
+    "Files": {
+      "tools/create_targets.ps1": "302ee17c66072914743ad3f54b769a818b42683a2cb314c703e6b75c68c62659",
+      "tests/create-targets-smoke.ps1": "718b144e1831720522f3ad415ade2c4ec70a57a1e0fd6cf1124de1de668e98c1"
+    },
+    "Result": "PASS: 6シナリオ、52 判定。Azureへの通信は0件。"
+  },
+  "PromotionEquivalence": {
+    "AzureRequests": 0,
+    "CommonFunctionHelp": [
+      {
+        "Parameters": 7,
+        "Name": "Invoke-ArmRequest"
+      },
+      {
+        "Parameters": 4,
+        "Name": "Test-Configuration"
+      },
+      {
+        "Parameters": 2,
+        "Name": "Get-WritableBody"
+      },
+      {
+        "Parameters": 1,
+        "Name": "Read-MigrationRecord"
+      },
+      {
+        "Parameters": 3,
+        "Name": "Get-MigrationPlan"
+      }
+    ],
+    "Core": [
+      {
+        "BytesIdenticalToReadingVersion": true,
+        "Sha256": "73d84d7ec33b98e815bfe2f3184a7af57d33ec434563b0c171762663a428c9de",
+        "File": "migration/common.ps1",
+        "ExecutableTokensIdenticalToPreviousMaster": true
+      },
+      {
+        "BytesIdenticalToReadingVersion": true,
+        "Sha256": "aaefa70c4fa557bd3da3886004f23d47c11c703840ccccd40f85d6134fcca9a3",
+        "File": "migration/precheck.ps1",
+        "ExecutableTokensIdenticalToPreviousMaster": true
+      },
+      {
+        "BytesIdenticalToReadingVersion": true,
+        "Sha256": "07c0c3869e17fe07a5f80e2ee7ba95a200a7a129581cffb95ac667bafbab7253",
+        "File": "migration/step1_copy.ps1",
+        "ExecutableTokensIdenticalToPreviousMaster": true
+      },
+      {
+        "BytesIdenticalToReadingVersion": true,
+        "Sha256": "819c7530a02f0511ebf9ff705d043c28edd1604bb38002a3ff2cd9008825b0ea",
+        "File": "migration/step2_verify.ps1",
+        "ExecutableTokensIdenticalToPreviousMaster": true
+      },
+      {
+        "BytesIdenticalToReadingVersion": true,
+        "Sha256": "a6acfc22414a07afa3add78d7e255d3a582cb140a7b7207652a797a5bd9791c7",
+        "File": "migration/step3_delete.ps1",
+        "ExecutableTokensIdenticalToPreviousMaster": true
+      },
+      {
+        "BytesIdenticalToReadingVersion": true,
+        "Sha256": "ff3914215092b6db483a671b3319932c4f15765219b80295f93f7b1057847a91",
+        "File": "migration/rollback.ps1",
+        "ExecutableTokensIdenticalToPreviousMaster": true
+      },
+      {
+        "Sha256": "302ee17c66072914743ad3f54b769a818b42683a2cb314c703e6b75c68c62659",
+        "File": "tools/create_targets.ps1",
+        "OnlyExecutableChange": "default output ../procedural-migration/generated -> ../migration/generated"
+      }
+    ],
+    "Status": "PASS"
+  },
+  "PreservedOriginalsAndHistoricalEvidence": [
+    {
+      "Before": "log_migration.ps1",
+      "After": "archive/original/log_migration.ps1",
+      "BytesUnchanged": true,
+      "Sha256": "231ad2e2273bfb32866c5c2e4b73463db4507a9f322c35e0f40d99bbe997ea88"
+    },
+    {
+      "Before": "log_migration_targets.csv",
+      "After": "archive/original/log_migration_targets.csv",
+      "BytesUnchanged": true,
+      "Sha256": "8c783df0e4f9ad8092f86ad67ba26b09a78a3dd04d0461f62517f7dffcf78a9d"
+    },
+    {
+      "Before": "test-results/evidence.json",
+      "After": "archive/test-results/evidence.json",
+      "BytesUnchanged": true,
+      "Sha256": "a4c6a874cb165c56a6fe1835c5dbc1b597a1c596590e2955391339522b24e7cc"
+    },
+    {
+      "Before": "test-results/AZURE_CASES.csv",
+      "After": "archive/test-results/AZURE_CASES.csv",
+      "BytesUnchanged": true,
+      "Sha256": "6a0fc1715ec8815ec33e03a3cf556b789d282296dfa70e96095901b34e45d0e2"
+    },
+    {
+      "Before": "test-results/RESOURCE_COVERAGE.csv",
+      "After": "archive/test-results/RESOURCE_COVERAGE.csv",
+      "BytesUnchanged": true,
+      "Sha256": "e027f7902d5ddd37c03682a637c4535057f4b95b811a342b48751fc4f0ed865f"
+    },
+    {
+      "Before": "test-results/PROCEDURAL_CASES.csv",
+      "After": "archive/test-results/PROCEDURAL_CASES.csv",
+      "BytesUnchanged": true,
+      "Sha256": "cb3d6bb53c781fb5b5a26d8608b6952d78bc9cd37c5545f75ffcc7436522ba5c"
+    }
+  ],
+  "RuntimeCodeHashes": {
+    "migration/common.ps1": "73d84d7ec33b98e815bfe2f3184a7af57d33ec434563b0c171762663a428c9de",
+    "migration/precheck.ps1": "aaefa70c4fa557bd3da3886004f23d47c11c703840ccccd40f85d6134fcca9a3",
+    "migration/rollback.ps1": "ff3914215092b6db483a671b3319932c4f15765219b80295f93f7b1057847a91",
+    "migration/step1_copy.ps1": "07c0c3869e17fe07a5f80e2ee7ba95a200a7a129581cffb95ac667bafbab7253",
+    "migration/step2_verify.ps1": "819c7530a02f0511ebf9ff705d043c28edd1604bb38002a3ff2cd9008825b0ea",
+    "migration/step3_delete.ps1": "a6acfc22414a07afa3add78d7e255d3a582cb140a7b7207652a797a5bd9791c7",
+    "test-environment/resource_types_fixture.ps1": "c63c811859fed6ac7e4e1a345d36c41ee35fceddf2c13311bbb9025ec0e6bfb9",
+    "tests/create-targets-smoke.ps1": "718b144e1831720522f3ad415ade2c4ec70a57a1e0fd6cf1124de1de668e98c1",
+    "tests/migration-smoke.ps1": "032bee0664fd352c542bb8ca47ca6d1c9853567e9a08cba4973f2248a92cc977",
+    "tools/create_targets.ps1": "302ee17c66072914743ad3f54b769a818b42683a2cb314c703e6b75c68c62659"
+  },
+  "LiveAzureReference": "CSV_GENERATOR_AZURE.json",
+  "LiveAzureRelationship": "実機確認済みCSVスクリプトからの実行コード変更は、既定出力先をmigration/generatedへ移した1か所だけ。移行の正本6本は以前と実行トークンが同一。",
+  "Documents": {
+    "Status": "PASS",
+    "Links": 84,
+    "LearningSections": 28,
+    "PowerShellExamples": 22
+  },
+  "ShippingLayout": {
+    "MasterFolder": "migration",
+    "MainScriptCount": 6,
+    "RemovedDuplicateFolders": [
+      "reading-version",
+      "procedural-migration"
+    ],
+    "ArchivedOriginalFolder": "archive/original",
+    "HistoricalEvidenceFolder": "archive/test-results",
+    "CandidateCodeAndInputsMatchRepository": true,
+    "CodeAndInputHashes": {
+      "tests/create-targets-smoke.ps1": "718b144e1831720522f3ad415ade2c4ec70a57a1e0fd6cf1124de1de668e98c1",
+      "tests/migration-smoke.ps1": "032bee0664fd352c542bb8ca47ca6d1c9853567e9a08cba4973f2248a92cc977",
+      "test-environment/resource_types.arm.json": "e453927c096732eb3b034b3a7d261f0926b1867f740fb613cee936ac6457bda0",
+      "test-environment/resource_types_fixture.ps1": "c63c811859fed6ac7e4e1a345d36c41ee35fceddf2c13311bbb9025ec0e6bfb9",
+      "migration/step3_delete.ps1": "a6acfc22414a07afa3add78d7e255d3a582cb140a7b7207652a797a5bd9791c7",
+      "migration/common.ps1": "73d84d7ec33b98e815bfe2f3184a7af57d33ec434563b0c171762663a428c9de",
+      "migration/rollback.ps1": "ff3914215092b6db483a671b3319932c4f15765219b80295f93f7b1057847a91",
+      "migration/step1_copy.ps1": "07c0c3869e17fe07a5f80e2ee7ba95a200a7a129581cffb95ac667bafbab7253",
+      "migration/step2_verify.ps1": "819c7530a02f0511ebf9ff705d043c28edd1604bb38002a3ff2cd9008825b0ea",
+      "migration/targets.example.csv": "48dabdc69b778c2b3bc751d0e7ae8f25798a03e28fa74f6746c562cfdfad639d",
+      "migration/precheck.ps1": "aaefa70c4fa557bd3da3886004f23d47c11c703840ccccd40f85d6134fcca9a3",
+      "tools/create_targets.ps1": "302ee17c66072914743ad3f54b769a818b42683a2cb314c703e6b75c68c62659"
+    }
+  }
+}

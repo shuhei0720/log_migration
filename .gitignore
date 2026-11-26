@@ -1,7 +1,7 @@
-procedural-migration/targets.csv
-procedural-migration/generated/
-procedural-migration/records/
-procedural-migration/*_results.csv
-procedural-migration/*_failures.csv
-procedural-migration/*.tmp
+migration/targets.csv
+migration/generated/
+migration/records/
+migration/*_results.csv
+migration/*_failures.csv
+migration/*.tmp
 test-environment/runs/

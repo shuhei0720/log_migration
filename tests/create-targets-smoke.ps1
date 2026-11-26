@@ -148,6 +148,21 @@ try {
     Assert-CsvTest ([regex]::Matches($warnings, '条件を満たしません').Count -eq 3) '25文字・記号・jpe重複の3件を警告していません。'
 
 
+    # 配布時と同じ配置を一時フォルダに作り、出力先を省略したときの保存先を確かめる。
+    $scenario = '既定の出力先'
+    $temporaryRepository = Join-Path $scratch 'default-output'
+    $temporaryTools = Join-Path $temporaryRepository 'tools'
+    $null = New-Item $temporaryTools -ItemType Directory -Force
+    $temporaryGenerator = Join-Path $temporaryTools 'create_targets.ps1'
+    Copy-Item $Generator $temporaryGenerator
+    & $temporaryGenerator -Environment stg *> (Join-Path $scratch 'default-output.log')
+    $defaultDirectory = Join-Path $temporaryRepository 'migration/generated'
+    $defaultCsv = Join-Path $defaultDirectory 'targets-stg.csv'
+    Assert-CsvTest (Test-Path $defaultCsv) '既定の出力先がmigration/generatedではありません。'
+    Assert-CsvTest (@(Get-ChildItem $defaultDirectory -Filter '*.csv').Count -eq 1) '既定出力でほかの環境のCSVも作っています。'
+    Assert-CsvTest ((Get-FileHash $defaultCsv).Hash -ceq (Get-FileHash (Join-Path $scratch 'targets-stg.csv')).Hash) '既定出力と明示出力でCSVの内容が違います。'
+    Assert-CsvTest (-not (Test-Path (Join-Path $temporaryRepository 'procedural-migration'))) '旧フォルダへ出力しています。'
+
     # 空の環境では、指定した環境のCSVだけを新規作成し、6列の見出しを残す。
     $scenario = '空'
     $global:CsvGeneratorFixture.Scenario = $scenario
@@ -191,7 +206,7 @@ try {
         Assert-CsvTest ($global:CsvGeneratorFixture.Requests.Count -eq $requestStart) '引数のエラーでもAzureを読んでいます。'
         Assert-CsvTest (-not (Test-Path $invalidDirectory)) '引数のエラーでも出力先を作っています。'
     }
-    "PASS: 5シナリオ、$checks 判定。Azureへの通信は0件。"
+    "PASS: 6シナリオ、$checks 判定。Azureへの通信は0件。"
 }
 finally {
     Remove-Item $scratch -Recurse -Force

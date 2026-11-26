@@ -14,9 +14,9 @@ param(
 )
 
 # ---
-# 利用者設定。2つのサブスクリプションと既存VNet ID、配置リージョンを指定する。
-# VNet・サブネットの作成/更新と、NSG・ルートテーブルの関連付けはしない。
-# Databricksと旧Redisは既定で省略する。
+# テストする2つのサブスクリプションと、使う既存VNet、作成先のリージョンを設定する。
+# VNetとサブネットの設定は変えない。NSGやルートテーブルも関連付けない。
+# Databricksと旧Redisは、SkipTypesで除外している。
 # ---
 $SubscriptionIds = @('5f1b809c-f59f-4489-8211-4bef16a0463a', 'bfda36ec-1aed-4b0c-a907-4d4809c63888')
 $ExistingVnetIds = @(
@@ -45,9 +45,9 @@ $accessToken = $null
 $tokenExpiry = [DateTimeOffset]::MinValue
 
 # ---
-# ARM要求を送る。Optionalは明示404だけnull、AllowErrorはAPIのerrorオブジェクトを返す。
-# GET一覧のnextLinkはここで全件取得する。
-# 変更前に操作先を台帳へ記録する。要求本文や認証情報は保存しない。
+# AzureのAPIを呼び、一覧は最後のページまで取得する。
+# Optionalは存在確認に使い、404ならnullを返す。AllowErrorはAPIのエラー内容を返す。
+# 作成や更新の前に、操作先のIDをrun-ledger.jsonへ記録する。
 # ---
 function Invoke-Arm {
     param($Method, $Id, $ApiVersion, $Body = $null, [switch]$Optional, [switch]$AllowError)
@@ -56,7 +56,7 @@ function Invoke-Arm {
     }else{
         $ArmBase + $Id
     }
-    # 認証情報を別ホストへ送らないよう、直接指定したURLもnextLinkもARMの接続先だけに限定する。
+    # 認証情報を別のサーバーへ送らないよう、Azure管理APIのURLだけを受け付ける。
     if (([Uri]$uri).GetLeftPart([UriPartial]::Authority) -cne $ArmBase){
         throw 'Unexpected ARM host.'
     }
@@ -71,7 +71,8 @@ function Invoke-Arm {
         }) + 'api-version=' + $ApiVersion
     }
     $operation = $null
-    # 予算確認時の実行時間を超えたら新しい変更だけ止め、状態を調べるGET/HEADは許可する。
+    # 開始からMaximumHoursを過ぎたら、Azureへの変更を止める。
+    # 状態を調べるGETとHEADは、その後も実行できる。
     if ($state -and $Method -notin @('GET', 'HEAD') -and [DateTimeOffset]::UtcNow -ge ([DateTimeOffset]$state.startedUtc).AddHours($MaximumHours)) {
         throw 'Run lifetime exceeded; delete the test resource groups.'
     }
@@ -90,7 +91,7 @@ function Invoke-Arm {
     $page = $null
     $listStarted = $false
     do {
-        # 要求中に認証期限が切れないよう、残り2分になったらトークンを取り直す。
+        # 有効期限が残り2分以内なら、通信前に認証トークンを取り直す。
         if ([DateTimeOffset]::UtcNow.AddMinutes(2) -ge $script:tokenExpiry){
             $login = az account get-access-token --subscription $SubscriptionIds[0] --resource ($ArmBase + '/') --output json --only-show-errors | ConvertFrom-Json -AsHashtable
             if ($LASTEXITCODE -ne 0 -or -not $login.accessToken){
@@ -117,7 +118,8 @@ function Invoke-Arm {
             $request.ContentType = 'application/json; charset=utf-8'
             $request.Body = $Utf8.GetBytes(($Body | ConvertTo-Json -Depth 100))
         }
-        # 混雑や一時的なサーバーエラーだけ待って再送し、設定・権限のエラーはそのまま返す。
+        # 混雑や一時的なサーバーエラーなら、待ってから同じ要求を送る。
+        # 設定や権限のエラーは再送せず、呼出し元へ伝える。
         for ($attempt = 0;$attempt -lt 4;$attempt++){
             $response = Invoke-WebRequest @request
             if ([int]$response.StatusCode -notin @(408, 429, 500, 502, 503, 504) -or $attempt -eq 3){
@@ -153,7 +155,8 @@ function Invoke-Arm {
             }
             throw ('ARM ' + $response.StatusCode + ' ' + $page.error.code + ' ' + $Id)
         }
-        # 一覧の途中でvalueが欠けた応答を成功扱いにすると資源を取りこぼすため、ここで停止する。
+        # 一覧の各ページにvalueがあることを確かめる。
+        # 途中のページから欠けた場合は、全件取得できていないので止める。
         if ($page -and $page.ContainsKey('value')) {
             if ($page.value -isnot [array]) {
                 throw 'ARM list response does not contain a value array.'
@@ -179,7 +182,8 @@ function Invoke-Arm {
 }
 
 # ---
-# 作成したIDと操作結果を一時ファイルへ保存し、完成してから台帳を置き換える。
+# リソースのIDと操作結果をrun-ledger.jsonへ保存する。
+# 一時ファイルを書き終えてから置き換え、書込み途中の内容を読ませない。
 # ---
 function Save-State {
     [IO.File]::WriteAllText(($StatePath + '.pending'), ($state | ConvertTo-Json -Depth 100), $Utf8)
@@ -187,7 +191,8 @@ function Save-State {
 }
 
 # ---
-# 作成完了を待つ。Failed/Canceledはその時点で止める。
+# 作成完了を待つ。失敗やキャンセルが返った場合は止める。
+# 完了を確認できないまま90分を過ぎた場合も止める。
 # ---
 function Wait-Resource {
     param($Id, $ApiVersion)
@@ -198,7 +203,8 @@ function Wait-Resource {
             if ($current.properties.provisioningState -in @('Failed', 'Canceled')) {
                 throw ('Provisioning failed: ' + $Id)
             }
-            # 作成状態を返さない種類はGETで存在を確認できれば完了とし、状態がある種類だけSucceededを待つ。
+            # 作成状態を返さないAPIでは、リソースが取得できれば完了とする。
+            # 作成状態があるAPIでは、Succeededになるまで待つ。
             if (-not $current.properties -or -not $current.properties.ContainsKey('provisioningState') -or $current.properties.provisioningState -eq 'Succeeded') {
                 return $current
             }
@@ -211,8 +217,9 @@ function Wait-Resource {
 }
 
 # ---
-# Plan: 56型から対象と依存を選び、配置先とリソースIDを組み立てる。
-# 各Subで1つの専用RGを使う。bundleはSubとリージョンの組合せで、全体で4つ用意する。
+# Plan: 作成するリソースを選び、名前・ID・作成先を決める。
+# サブスクリプションごとに1つのリソースグループを使い、その中で地域を分ける。
+# bundleは「サブスクリプションとリージョンの組」で、A-R1など4組を使う。
 # ---
 if ($Action -in @('Plan', 'Deploy')){
     $keys = @()
@@ -233,8 +240,8 @@ if ($Action -in @('Plan', 'Deploy')){
             $keys+=@($type.keys)
         }
     }
-    # 選んだ資源の依存先を、これ以上増えなくなるまで加える。
-    # 明示的に省略した型が依存先として必要になった場合は、黙って作らず停止する。
+    # 選んだリソースを作るために必要なリソースも、作成一覧へ加える。
+    # SkipTypesで除外した種類が必要になった場合は、作成せずに止める。
     do {
         $before = $keys.Count
         foreach ($resource in $Template.resources){
@@ -257,7 +264,7 @@ if ($Action -in @('Plan', 'Deploy')){
     $bundles = @()
     $resources = @()
     for ($index = 0;$index -lt 2;$index++){
-        # 別SubやサブネットのIDをVNetとして使わないよう、対象Sub内のVNetの完全なIDだけを受け付ける。
+        # VNetのIDに、別サブスクリプションのIDやサブネットのIDが入っていれば止める。
         if ($ExistingVnetIds[$index] -notmatch ('^(/subscriptions/' + [regex]::Escape($SubscriptionIds[$index]) + '/resourceGroups/[^/?#\s]+)/providers/Microsoft.Network/virtualNetworks/[^/?#\s]+$')){
             throw 'ExistingVnetIds must be exact IDs in the configured subscriptions.'
         }
@@ -285,7 +292,7 @@ if ($Action -in @('Plan', 'Deploy')){
         $name = $meta.nameTemplate.Replace('{runId}', $RunId)
         $types = $resource.type.Split('/')
         $names = $name.Split('/')
-        # 子リソースは種類と名前が階層ごとに対応するため、個数を照合してから順番にIDへ連結する。
+        # 種類と名前の階層数が合わなければ止め、合っていれば親から順にIDを組み立てる。
         if ($names.Count -ne $types.Count - 1){
             throw 'ARM name metadata does not match its resource type.'
         }
@@ -313,7 +320,7 @@ if ($Action -in @('Plan', 'Deploy')){
             managedName = $meta.managedResourceGroupNameTemplate
         }
     }
-    # 負荷用NSGを2つのSubへ交互に分け、追加分が片方だけに集中しないようにする。
+    # 負荷テスト用のNSGを、2つのサブスクリプションへ交互に追加する。
     for ($number = 0; $number -lt $LoadCount; $number++) {
         $bundle = $bundles[$(if ($number % 2) {
                     2
@@ -362,7 +369,8 @@ if ($Action -in @('Plan', 'Deploy')){
     if (Test-Path $StatePath){
         throw 'Run ledger already exists. Use Capture or another RunId.'
     }
-    # 確認済みPlanとコード・選択資源が一致する場合だけ配置し、確認後の構成変更を防ぐ。
+    # Planの後に、作成するリソースやコードが変わっていないか確認する。
+    # 変わっていれば、保存済みの計画では作成を始めない。
     $reviewed = Get-Content (Join-Path $RunPath 'plan.json') -Raw | ConvertFrom-Json -AsHashtable
     foreach ($field in @('scriptSha256', 'templateSha256')){
         if ($plan[$field] -cne $reviewed[$field]){
@@ -393,7 +401,7 @@ if ($Action -in @('Plan', 'Deploy')){
     }
     Save-State
 }else{
-    # 別の実行の資源を調べないよう、RunId・Subと、作成時のPS1・ARMテンプレートを台帳と照合する。
+    # 別の試験の記録を使わないよう、RunId・サブスクリプションID・コードを作成時の記録と比べる。
     $state = Get-Content $StatePath -Raw -Encoding utf8 | ConvertFrom-Json -AsHashtable
     if ($state.runId -cne $RunId -or ($state.plan.subscriptionIds -join ',') -cne ($SubscriptionIds -join ',')){
         throw 'Run/subscription identity differs from the ledger.'
@@ -404,7 +412,8 @@ if ($Action -in @('Plan', 'Deploy')){
 }
 
 # ---
-# Deploy: 同名RGの不存在と既存サブネットを確認し、各Subの専用RGへ資源を作る。
+# Deploy: 作成先のグループ名と既存VNetの設定を確認してから、リソースを作る。
+# 同名のリソースグループがあれば、既存のリソースを上書きしないように止める。
 # ---
 $groups = @($state.plan.bundles | Group-Object subscriptionId | ForEach-Object { $_.Group[0] })
 if ($Action -eq 'Deploy'){
@@ -413,7 +422,8 @@ if ($Action -eq 'Deploy'){
             throw 'A planned resource group already exists.'
         }
     }
-    # VNetを更新できないため、配置に必要なリージョン・サブネットサイズ・委任が既にそろっているか確認する。
+    # 既存VNetの地域、サブネットの大きさ、サービスに必要な委任を確認する。
+    # 足りない設定があっても、ここでは書き換えずに止める。
     foreach ($network in $state.plan.existingNetworks){
         $body = Invoke-Arm GET $network.vnetId '2024-05-01'
         $subnets = @{}
@@ -458,7 +468,7 @@ if ($Action -eq 'Deploy'){
         }
         $state.managedGroups += @{ id = $groupId;ownerId = $resource.id;beforeAbsent = $true }
     }
-    # 作成するリソース型から必要なサービスを集め、未登録のものだけ登録してから配置へ進む。
+    # 作成するサービスごとに利用登録を確認し、未登録なら登録が終わるまで待つ。
     foreach ($subscription in $SubscriptionIds){
         $needed = @('Microsoft.Insights', 'Microsoft.OperationalInsights', 'Microsoft.Resources') + @($state.resources | Where-Object {
                 $_.id.StartsWith('/subscriptions/' + $subscription + '/')
@@ -481,7 +491,7 @@ if ($Action -eq 'Deploy'){
             }
         }
     }
-    # 利用登録などの待機中に同名RGが作られていないか、作成直前にもう一度確認する。
+    # 利用登録を待つ間に同名のリソースグループが作られた場合も、作成前に止める。
     foreach ($bundle in $groups){
         if (Invoke-Arm GET ('/subscriptions/' + $bundle.subscriptionId + '/resourceGroups/' + $bundle.resourceGroup) '2022-09-01' -Optional) {
             throw 'Resource-group name collided before creation.'
@@ -506,8 +516,8 @@ if ($Action -eq 'Deploy'){
         throw 'Azure account lookup failed.'
     }
     $tenantId = $account.tenantId
-    # AKS用IDなどの基盤を先に作り、必要な権限を付けてから全資源を配置する。
-    # 2段階目も基盤を含め、ARMテンプレート内の依存関係を成立させる。
+    # AKS用マネージドIDを先に作り、サブネットを使う権限を付けてから残りを作る。
+    # 2段階目にも先に作ったリソースを含め、テンプレートの依存関係を崩さない。
     foreach ($phase in @('foundation', 'resources')){
         $tickets = @()
         foreach ($bundle in $state.plan.bundles){
@@ -553,7 +563,8 @@ if ($Action -eq 'Deploy'){
         if ($phase -eq 'foundation'){
             $identity = @($state.resources | Where-Object key -EQ 'aksIdentity')
             if ($identity.Count){
-                # 新規AKS用IDにA側PrivateSubnetのNetwork Contributorを付け、既存サブネットへ接続できるようにする。
+                # AKSで使うマネージドIDに、A側PrivateSubnetのNetwork Contributorを割り当てる。
+                # これでAKSが既存サブネットを使えるようにする。
                 $principal = (Invoke-Arm GET $identity[0].id $identity[0].apiVersion).properties.principalId
                 $subnet = @($state.existingNetworks | Where-Object role -EQ 'A')[0].subnets.Private.id
                 $roleId = $subnet + '/providers/Microsoft.Authorization/roleAssignments/' + [Guid]::NewGuid().ToString()
@@ -578,7 +589,8 @@ if ($Action -eq 'Deploy'){
 }
 
 # ---
-# Capture: 各Subの専用RGの実在庫と、サービスが作った管理用RGのIDを記録する。
+# Capture: 作成先のグループから、実際に存在するリソースのIDを取得する。
+# Azureが別に作った管理用グループも、後片付けで確認できるように記録する。
 # ---
 if ($Action -in @('Deploy', 'Capture')) {
     foreach ($bundle in $groups) {
@@ -597,8 +609,7 @@ if ($Action -in @('Deploy', 'Capture')) {
             }
         }
     }
-    # サービスが作る管理RGも後で確認できるように記録する。
-    # Monitorアカウントは、Azureが返した既定DCRのIDから管理RGを求める。
+    # Azure Monitorの管理用グループは、既定DCRのIDから読み取る。
     foreach ($resource in @($state.resources | Where-Object {
                 $_.managedName -or $_.resourceType -eq 'microsoft.monitor/accounts'
     })) {
@@ -622,8 +633,8 @@ if ($Action -in @('Deploy', 'Capture')) {
 }
 
 # ---
-# Capture: 親・既知の子・既存VNetのカテゴリと現在の診断設定を読み取る。
-# 旧設定の作成は既存ポリシーに任せる。カテゴリ取得成功を設定作成成功と扱わない。
+# Capture: 各リソースと子リソース、既存VNetの診断設定と、出力できるログの種類を調べる。
+# 旧設定は会社ポリシーが作る。取得に成功しても、診断設定が付いているとは限らない。
 # ---
 if ($Action -in @('Deploy', 'Capture')) {
     $candidates = @($state.resources)

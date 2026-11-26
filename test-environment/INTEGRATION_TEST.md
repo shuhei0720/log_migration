@@ -1,24 +1,29 @@
-# 自社2サブスクリプションでの総合テスト手順
+# 自社の2サブスクリプションで移行と切り戻しを試す
 
-PowerShell 7で実行します。テスト資源を一度作り、次の順に確認します。
+テスト用リソースを一度作り、2回の複製で次の3項目を確認します。
 
-|順序|試験|確認すること|
+|順序|試験|成功したときの状態|
 |---|---|---|
-|1|切り戻し①：複製後・削除前|Sub1だけ戻し、続けて全体を戻せる|
-|2|正常系|事前確認→複製→照合→旧設定削除が成功する|
-|3|切り戻し②：旧設定削除後|正常系で削除した旧設定を、両Subへ復元できる|
+|1|複製後・削除前の切り戻し|Sub1だけを戻した後、両方のサブスクリプションを戻せる|
+|2|正常系|事前確認・複製・値の確認・旧設定の削除がすべて成功する|
+|3|旧設定削除後の切り戻し|削除した旧設定を、両方のサブスクリプションへ復元できる|
 
-正本は`procedural-migration`です。試験では正本の作業用コピーを2つ用意し、CSV・作業記録・保存先名を分けます。**途中で別ケースの記録を使わないでください。**
+この手順では、2つのサブスクリプションをSub1・Sub2と呼びます。実行には`migration`を使います。コマンドはリポジトリのルートから始めてください。
 
-## 開始前に確認すること
+## 作業を始める条件
 
-- 対象2SubでOwnerとしてAzure CLIへログインする。2Subは同じ環境（prod／stg／dev）として実行できること。
-- クライアントPCからAzure管理APIと、地域略称を取得する`raw.githubusercontent.com`へ接続できること。
-- **移行範囲はテスト用RGに限定されません。** CSVのSub全体から、指定の旧ワークスペース宛て診断設定と旧2DCRの関連付けを探します。既存資源も含む対象一覧を確認してから進めます。
-- 旧診断設定・VM／VMSSの旧DCR関連付けは、会社の既存ポリシーで作られる前提です。配布テストコードは作りません。
-- 両Subに対象の旧診断設定があり、VM・VMSSが指定旧DCRへ関連付いていることを確認します。**対象0件でも処理が成功する場合があるため、成功表示だけでは合格にしません。**
+- PowerShell 7とAzure CLIを使い、両方のサブスクリプションでOwnerとしてログインする。
+- 2つとも、同じ環境（prod・stg・dev）の設定で実行できる。
+- クライアントPCからAzure管理APIと`raw.githubusercontent.com`へ接続できる。
+- 会社のポリシーにより、両方に旧診断設定が付き、VM・VMSSが旧データ収集ルール（DCR）に関連付いている。
 
-リポジトリのルートを開き、以下を実際の値へ置き換えます。
+**移行スクリプトはサブスクリプション全体を調べます。テスト用リソースグループだけには絞りません。** 旧ワークスペース宛ての診断設定と、指定旧DCR2本の関連付けが対象です。付録Aで、既存リソースを含めた一覧を確認してから複製します。
+
+旧設定が0件でもスクリプトが成功する場合があります。試したいリソースに旧設定が付いていなければ、そのリソースは検証できたと数えません。
+
+## 1. 入力と作業場所を用意する
+
+以下のサブスクリプションIDと作業フォルダを、実際の値へ置き換えます。
 
 ```powershell
 $ErrorActionPreference = 'Stop'
@@ -35,21 +40,21 @@ $null = New-Item $workRoot -ItemType Directory
 az login
 ```
 
-正本の`common.ps1`先頭で、`targetWorkspaceId`・`environment`・`newDiagnosticSettingName`・`location`・`environmentSettings`・`policyReferenceIds`を確認します。旧DCR・3ポリシー割り当ては会社の既存IDを使います。設定した正本を、後で2ケースの作業フォルダへコピーします。
+正本の`common.ps1`先頭の[6変数](../migration/README.md#commonps1に移行元と環境を指定する)に、移行元ワークスペース・環境・既存の旧DCRとポリシーを指定します。設定後のファイルを、後でケースごとにコピーします。
 
-各コマンドでエラーが出たら、その時点で止めます。`az`の実行後は`$LASTEXITCODE`が0であることも確認してください。
+各コマンドは一つずつ実行します。エラーが出たら次へ進みません。`az`の実行後は、`$LASTEXITCODE`が0であることも確認してください。
 
-## テスト資源を作成する
+## 2. テスト用リソースを作る
 
-`resource_types_fixture.ps1`先頭の次の値を設定します。上の`$subscription1`・`$subscription2`を入力しただけでは、ファイル内の設定は変わりません。
+`resource_types_fixture.ps1`先頭に、次の値を設定します。上の変数へIDを入れるだけでは、ファイル内の設定は変わりません。
 
-|設定|指定内容|
+|変数|指定する値|
 |---|---|
-|`$SubscriptionIds`|上記Sub1・Sub2と同じID、同じ順序|
-|`$ExistingVnetIds`|それぞれのSubの既存VNetリソースID|
-|`$Locations`|4配置先。A-R1／B-R2は対応する既存VNetの地域に合わせる|
+|`$SubscriptionIds`|Sub1・Sub2のID。同じ順序で指定する|
+|`$ExistingVnetIds`|それぞれのサブスクリプションにあるVNetのリソースID|
+|`$Locations`|4つの配置先地域。A-R1とB-R2は対応するVNetの地域に合わせる|
 
-既存VNetにはProtectSubnet `/27`、PrivateSubnet `/26`、ApplicationGatewaySubnet `/24`、VNetIntegrationSubnet `/26`、AzureFirewallSubnet `/26`が必要です。ASE／Container Appsを作る場合の既存の委任も[環境作成の説明](README.md)で確認します。**既存VNet・サブネットの設定は変更せず、NSG・ルートテーブルも関連付けません。**
+必要な5サブネットとASE・Container Apps用の委任は、[作成先の指定](README.md#1-作成先を指定する)で確認してください。スクリプトは既存VNet・サブネットを変更せず、NSG・ルートテーブルも関連付けません。
 
 ```powershell
 # 後片付けで既存RGを消さないよう、作成前の一覧を保存する。
@@ -74,7 +79,9 @@ $options = @{
 & $fixture -Action Plan @options
 ```
 
-`$fixtureRunRoot\$run\plan.json`の資源・地域・`skipped`を確認してから、**設定と選択条件を変えずに**実行します。Code Signing・Bing・ExpressRouteなどの省略理由も記録します。負荷300件を選ぶと、後続の探索・照合にも時間が加わります。
+`$fixtureRunRoot\$run\plan.json`を開き、作成するリソースと地域、`skipped`にある省略理由を確認します。負荷テストも行う場合は、Plan前に`LoadCount`を300にします。300件を追加すると、後の探索・値の確認にも時間が加わります。
+
+Planを確認したら、設定と選択条件を変えずに実行します。
 
 ```powershell
 & $fixture -Action Deploy @options
@@ -85,19 +92,29 @@ $ledger = Get-Content $ledgerPath -Raw | ConvertFrom-Json -AsHashtable
 $ledger.scopes | Group-Object actualStatus | Select-Object Name, Count
 ```
 
-`FAILED`／`UNRESOLVED`は解消してから進めます。`EXPECTED_UNSUPPORTED`は診断非対応として記録します。`READ_ONLY_CAPTURED`は取得成功であり、旧設定の存在は`diagnosticSettings.value`の`workspaceId`で確認します。DCR関連はCaptureに含まれないため、VM・VMSSの「データ収集ルール」で別途確認します。
+会社のポリシーが旧設定を付けるまで待ち、Captureの結果を確認します。
 
-StorageのBlob／File／Queue／Table、Foundry子プロジェクト、SQL master、App Service・Functionsのスロット、AKSなどについて、**作成できた資源・旧設定がある資源・診断非対応の資源**を分けて記録してください。
+|結果|進む前に確認すること|
+|---|---|
+|`READ_ONLY_CAPTURED`|取得は成功。`diagnosticSettings.value`に、旧ワークスペースの`workspaceId`を持つ設定があること|
+|`EXPECTED_UNSUPPORTED`|診断設定に対応しないリソースとして記録する|
+|`FAILED`・`UNRESOLVED`|取得エラーや未確認の内容を解消する|
 
-## 2ケースの作業用コピーを用意する
+DCR関連付けはCaptureに含まれません。VM・VMSSの「データ収集ルール」で、指定した旧DCRとの関連付けを確認します。配布テストコードは旧診断設定・旧DCR関連付けを作りません。
 
-rb1はSub1=Log／Sub2=Storage、n01は逆にします。VM側は両方Logです。これで両SubのStorage・Log Analytics経路を確認します。
+ストレージのBlob・File・Queue・Table、Foundry子プロジェクト、SQL master、Web・Functionsのスロット、AKSも確認します。種類ごとに「作成できた」「旧設定が付いている」「診断設定に非対応」を記録してください。
+
+## 3. ケースごとのコピーと保存先名を用意する
+
+`rb1`は複製後の切り戻し、`n01`は正常系と削除後の切り戻しに使います。**CSV・作業記録・保存先名を分けます。**
+
+rb1ではSub1をLog Analytics、Sub2をストレージへ送ります。n01では逆にします。VMログは両方ともLog Analyticsへ送り、両サブスクリプションで2種類の診断ログ送信先を試します。
 
 ```powershell
 foreach ($scenario in @('rb1', 'n01')) {
     $casePath = Join-Path $workRoot $scenario
     $null = New-Item $casePath -ItemType Directory
-    Copy-Item "$repo\procedural-migration\*.ps1" $casePath
+    Copy-Item "$repo\migration\*.ps1" $casePath
     $destination1 = if ($scenario -eq 'rb1') { 'Log' } else { 'Storage' }
     $destination2 = if ($scenario -eq 'rb1') { 'Storage' } else { 'Log' }
     @"
@@ -108,11 +125,11 @@ $subscription2,rg-lm-$run-$scenario-b,lm${run}jpe${scenario}b,log-$run-$scenario
 }
 ```
 
-CSVのRGは**まだ存在しない新規の保存先RG**です。fixtureの作成済みRGを指定しません。コピー後は、各ケースのcommon設定・CSV・recordsを途中で変更しません。
+CSVに書く保存先リソースグループは、まだ存在しない名前にします。テスト用リソースを作ったグループは指定しません。コピー後は、各ケースのcommon設定・CSV・recordsを変更しません。
 
-## 切り戻し①：複製後・削除前
+## 4. 切り戻し①：複製後、Sub1だけ戻してから全体を戻す
 
-以降のコマンドは一つずつ実行し、期待状態を確認して次へ進みます。
+まずrb1で事前確認します。
 
 ```powershell
 $casePath = Join-Path $workRoot 'rb1'
@@ -120,7 +137,7 @@ $casePath = Join-Path $workRoot 'rb1'
 Import-Csv "$casePath\precheck_results.csv" | Format-Table
 ```
 
-両SubがOKなら、付録Aで移行対象一覧を出し、想定資源が含まれることを確認します。
+両方がOKなら、付録Aの一覧で移行するリソースを確認してから複製します。
 
 ```powershell
 & "$casePath\step1_copy.ps1"
@@ -128,16 +145,16 @@ Import-Csv "$casePath\precheck_results.csv" | Format-Table
 Import-Csv "$casePath\verify_results.csv" | Group-Object Result | Select-Object Name, Count
 ```
 
-付録Bを`after-copy`で実行し、旧設定も全件`Exists=true, Matches=true`であることを確認します。step2は旧設定の不在を許可するため、この確認とは分けます。
+`verify_results.csv`のResult列がすべてOKであることを確認します。続いて付録Bを`after-copy`として実行し、旧設定がすべて`Exists=true, Matches=true`で残っていることも確かめます。step2は削除済みの旧設定を許可するため、この確認が必要です。
 
-|確認箇所|期待状態|
+|確認する設定|複製後の状態|
 |---|---|
-|`verify_results.csv`|新設定・保存先の照合が全件OK|
-|旧設定|付録Bで旧診断・旧DCR関連の保持を確認し、新設定と共存|
-|新診断|旧ログ・メトリックを引き継ぎ、送り先はCSVどおり。Storage宛ては対象資源と同じ地域（空・globalは東日本）|
-|保存先|LAW全体90日、対象のEvent／Syslog合計1,095日。Storageの公開ネットワークDisabled、appendBlobの1,095日ルール|
+|旧診断設定・旧DCR関連付け|元の値のまま残る|
+|新診断設定|旧ログ・メトリック設定を引き継ぎ、CSVの送り先になっている|
+|地域別ストレージ|診断を付けるリソースと同じ地域。空欄・globalは東日本|
+|保持期間と通信設定|Log Analytics全体90日、対象のEvent・Syslogは合計1,095日。ストレージの公開ネットワークはDisabled、appendBlobは最終更新から1,095日を超えると削除する設定|
 
-次にSub1だけ切り戻し、Sub2が変わらないことを確認してから全体を戻します。
+次のコマンドを一つずつ実行し、間に状態を確認します。
 
 ```powershell
 & "$casePath\rollback.ps1" -SubscriptionIds $subscription1
@@ -145,14 +162,16 @@ Import-Csv "$casePath\verify_results.csv" | Group-Object Result | Select-Object 
 & "$casePath\rollback.ps1"
 ```
 
-|時点|Sub1|Sub2|
+|時点|Sub1の状態|Sub2の状態|
 |---|---|---|
-|Sub1限定切り戻し後|旧設定は元の値、新診断・新関連は解除|旧設定と新設定が共存したまま|
-|全体切り戻し後|旧設定は元の値、新診断・新関連は解除|同左|
+|Sub1だけを戻した後|旧設定は元の値。新診断設定・新DCR関連付けは削除済み|旧設定と新設定がどちらも残る|
+|全体を戻した後|旧設定は元の値。新診断設定・新DCR関連付けは削除済み|Sub1と同じ|
 
-保存先・保存済みログ・新設DCR本体は残ります。既存DCRはBeforeへ戻り、元からあったWaiverは保持、今回作成したWaiverは解除されます。付録Bでも旧設定の復元を確認します。**切り戻し後の合否判定にstep2は使いません。撤去した新設定をNGと判定するためです。**
+付録Bでも、旧設定が元の値に戻ったことを確認します。保存先・保存済みログ・今回作成したDCR本体は残ります。移行時に変更した既存DCRはBeforeへ戻ります。元からあったポリシー適用除外は残り、今回作成した適用除外は削除されます。
 
-保存先が保持されたことを確認したら、次のケースに前回資源が混ざらないよう、rb1のテスト用保存先RGだけを削除します。作業記録は残します。
+**切り戻し後の判定にstep2は使いません。** 新設定を削除したため、step2ではNGになります。
+
+保存先が残ることを確認したら、rb1のテスト用保存先リソースグループだけを削除します。次のケースに前回のリソースが混ざるのを防ぐためです。手元の作業記録は残します。
 
 ```powershell
 az group delete --subscription $subscription1 --name "rg-lm-$run-rb1-a" --yes
@@ -161,9 +180,11 @@ az group exists --subscription $subscription1 --name "rg-lm-$run-rb1-a"
 az group exists --subscription $subscription2 --name "rg-lm-$run-rb1-b"
 ```
 
-両方`false`になってから正常系へ進みます。
+両方`false`になってから、正常系へ進みます。
 
-## 正常系：最後まで移行する
+## 5. 正常系：旧設定の削除まで実行する
+
+n01のファイルを使います。各段階の結果を確認し、コメントに書いた条件を満たしてから次のコマンドへ進んでください。
 
 ```powershell
 $casePath = Join-Path $workRoot 'n01'
@@ -176,29 +197,31 @@ $casePath = Join-Path $workRoot 'n01'
 & "$casePath\step2_verify.ps1"
 ```
 
-|確認箇所|期待状態|
+|確認するもの|合格となる状態|
 |---|---|
-|旧診断・旧DCR関連|全件不在。付録Bで`Exists=false`を確認する。旧DCR本体は残る|
-|新診断・新DCR関連・保存先|全件照合OK。指定外の診断設定・DCR関連は元のまま|
-|診断の件数|旧診断1件に新診断1件。DCR関連は旧2本から新1本へまとめるため、旧・新の総件数は一致しない|
+|旧診断設定・旧DCR関連付け|付録Bで、すべて`Exists=false`。旧DCR本体は残る|
+|新診断設定・新DCR関連付け・保存先|step2の結果がすべてOK|
+|今回移行しない診断設定・DCR関連付け|作業前と同じ状態|
 
-ここで正常系の結果CSV・recordsと、代表資源の画面を保存します。ログの実着信を待つ試験は含めません。
+診断設定は旧1件に対して新1件です。DCR関連付けは旧2本から新1本へまとめるため、旧設定と新設定の総件数は同じになりません。種類別に数えます。
 
-## 切り戻し②：旧設定削除後
+結果CSV・recordsと代表リソースの画面を保存します。ログデータが実際に届くまで待つ試験は行いません。
 
-正常系のn01と**同じ作業記録**を使います。
+## 6. 切り戻し②：削除した旧設定を復元する
+
+正常系のn01と、同じ作業記録を使います。
 
 ```powershell
 & "$casePath\rollback.ps1"
 ```
 
-旧診断・旧DCR関連が元の本文で復元され、新診断・新関連が解除されたことを確認します。付録Bは`Exists=true`・`Matches=true`が全件の期待値です。保存先・ログ・新設DCR本体は保持、既存DCRとWaiverの扱いは切り戻し①と同じです。
+付録Bですべて`Exists=true, Matches=true`になれば、旧診断設定・旧DCR関連付けは記録した値に戻っています。新診断設定・新DCR関連付けの削除と、保存先・ログ・新設DCR本体が残ることも確認します。既存DCRとポリシー適用除外の扱いは、切り戻し①と同じです。
 
-API失敗や不一致が出た場合は次へ進まず、該当の`*_failures.csv`・画面エラー・recordsを保存します。同じ設定と記録を維持して対応します。
+エラーや値の不一致があれば、片付けに進みません。該当の`*_failures.csv`・画面のエラー・recordsを保存し、設定と記録を変えずに対応します。
 
-## 終了後の片付け
+## 7. 今回作ったリソースを片付ける
 
-切り戻し②が成功した後で、n01のテスト用保存先RGとfixtureの専用RGを削除します。**既存VNet・そのRGは対象に含めません。**
+切り戻し②の成功後、n01の保存先グループと、テスト用リソースを作ったグループを削除します。**既存VNetと、そのリソースグループは削除しません。**
 
 ```powershell
 az group delete --subscription $subscription1 --name "rg-lm-$run-n01-a" --yes
@@ -210,7 +233,7 @@ $fixtureGroups = @($ledger.plan.bundles | ForEach-Object {
 $fixtureGroups
 ```
 
-表示された2RGが今回作成したRGで、`fixtureRun`タグが`$run`と一致することを確認してから実行します。
+表示された2グループについて、今回作成した名前であり、`fixtureRun`タグが`$run`と一致することを確認してから削除します。
 
 ```powershell
 foreach ($groupId in $fixtureGroups) {
@@ -224,13 +247,15 @@ $ledger.managedGroups | Format-Table id, ownerId
 $ledger.ownedExternalRoles | Format-Table id
 ```
 
-親資源の削除後も管理RGが残った場合は、作成前のRG一覧に存在せず、今回の親資源専用だったものだけ削除します。既存・共有の管理RGは残します。AKS用の外部ロールも、必要なら`ownedExternalRoles`に記録された完全IDだけを`az role assignment delete --ids '<ID>'`で削除します。利用登録はこの手順では解除しません。
+管理用リソースグループが残っていたら、作成前に保存した一覧と比べます。今回の親リソース専用で、作成前の一覧になかったグループだけを削除します。既存・共有のグループは残します。
 
-最後に、今回のRGの不在、既存VNet・サブネットの保持、ポリシー適用除外が試験前の状態であることを確認します。手元の結果とrecordsはレビュー完了まで残します。
+AKSで使うマネージドIDのPrivateSubnetのNetwork Contributorロールを削除する場合は、`ownedExternalRoles`に記録された完全IDだけを`az role assignment delete --ids '<ID>'`へ渡します。Azureサービスの利用登録は、この手順では解除しません。
 
-## 付録A：変更前に移行対象を一覧で確認する
+最後に、今回のグループがなくなり、既存VNet・サブネットとポリシー適用除外が作業前の状態に戻っていることを確認します。手元の結果とrecordsは、レビューが終わるまで保管します。
 
-事前確認がOKになったケースで実行します。正本の調査関数を使う読取処理で、Azureの設定は変更しません。
+## 付録A：変更前に、移行する設定の一覧を出す
+
+事前確認がOKになったケースの`$casePath`で実行します。Azureの設定は変えず、旧設定のIDを`review-targets.csv`へ出します。
 
 ```powershell
 . "$casePath\common.ps1"
@@ -248,11 +273,11 @@ $targetList | Export-Csv "$casePath\review-targets.csv" -NoTypeInformation -Enco
 $targetList | Group-Object SubscriptionId, Kind | Select-Object Name, Count
 ```
 
-`review-targets.csv`で、両Subの旧診断とVM／VMSS関連、対象に含めたい子資源、指定外資源の混入がないことを確認します。ポリシーで未設定の種類は、移行済み・検証済みとして数えません。
+両方のサブスクリプションで、試したい旧診断設定・VM／VMSSの関連付け・子リソースが含まれているかを確認します。変更してはいけないリソースが含まれていたら、複製を始めません。
 
-## 付録B：記録した旧設定の現在値を一括確認する
+## 付録B：旧設定が残っているか、元の値と同じかを調べる
 
-複製後・削除後・切り戻し後に、対象ケースの`$casePath`で実行します。`$checkpoint`は結果を残すたびに変えます。
+複製後・削除後・切り戻し後に、対象ケースの`$casePath`で実行します。結果を上書きしないよう、`$checkpoint`は実行するたびに変えます。
 
 ```powershell
 $checkpoint = 'after-rollback'       # 例：after-copy / after-delete / after-rollback
@@ -276,4 +301,9 @@ $oldCheck | Export-Csv "$casePath\$checkpoint-old.csv" -NoTypeInformation -Encod
 $oldCheck | Group-Object Kind, Exists, Matches | Select-Object Name, Count
 ```
 
-複製後・切り戻し後は全件`Exists=true, Matches=true`、正常削除後は全件`Exists=false`です。これは旧設定の確認です。新設定は複製・削除後のstep2、切り戻し時の復元後GET照合と代表資源の画面で確認します。
+|確認した時点|旧設定の期待値|
+|---|---|
+|複製後・切り戻し後|すべて`Exists=true, Matches=true`|
+|旧設定の削除後|すべて`Exists=false`|
+
+付録Bは旧設定だけを調べます。新設定は、複製・削除後のstep2で確認します。切り戻し後はrollbackが行う復元後の値の比較と、代表リソースの画面で確認します。
