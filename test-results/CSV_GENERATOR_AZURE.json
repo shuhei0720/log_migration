@@ -1,0 +1,327 @@
+{
+  "Status": "PASS",
+  "RecordedAt": "2026-11-26T13:05:20+09:00",
+  "Scope": "環境別CSV作成スクリプトを、実Azureの2サブスクリプションで検証。CLI・HTTP応答の置き換えなし。",
+  "TestedSource": {
+    "Path": "tools/create_targets.ps1",
+    "GitCommit": "d5c80299d1e43ed509137006ced79cfb58fff95a",
+    "Sha256": "f1db1eee27de1da81827e46eff60042a389c4980a280d2955444a5d2f1582467",
+    "UnchangedBeforeAndAfter": true
+  },
+  "Runtime": {
+    "OS": "Linux",
+    "AzureCli": "2.93.0",
+    "PowerShell": "7.5.4"
+  },
+  "StartedAt": "2026-11-26T12:59:24.912995+09:00",
+  "CompletedAt": "2026-11-26T13:02:17.012357+09:00",
+  "CaseCount": 9,
+  "Cases": [
+    {
+      "Id": "CSV-LIVE-001",
+      "Environment": "prod",
+      "Seconds": 3.591,
+      "SourceUnchanged": true,
+      "OtherCsvShaAndModifiedTimeUnchanged": true,
+      "ExitCode": 0,
+      "Status": "PASS",
+      "Rows": 2,
+      "Columns": 6,
+      "Utf8Bom": true,
+      "CsvSha256": "c5858321a922900f84bd4b56a317b8999dc93b88f3d6c9abf454e7584ff194d4",
+      "WarningsChecked": 1,
+      "RequestedEnvironment": "prod",
+      "CsvRows": [
+        {
+          "SubscriptionName": "5f1b809c-f59f-4489-8211-4bef16a0463a",
+          "ResourceGroup": "rg-orders-prod-monitor-01",
+          "StorageAccount": "stordersprodarchjpe01",
+          "WorkspaceName": "log-orders-prod-archive-01",
+          "LogDestination": "Storage",
+          "VmLogDestination": "Log"
+        },
+        {
+          "SubscriptionName": "bfda36ec-1aed-4b0c-a907-4d4809c63888",
+          "ResourceGroup": "rg-<サービス略称>-prod-monitor-01",
+          "StorageAccount": "st<サービス略称>prodarchjpe01",
+          "WorkspaceName": "log-<サービス略称>-prod-archive-01",
+          "LogDestination": "Storage",
+          "VmLogDestination": "Log"
+        }
+      ]
+    },
+    {
+      "Id": "CSV-LIVE-002",
+      "Environment": "stg",
+      "Seconds": 2.531,
+      "SourceUnchanged": true,
+      "OtherCsvShaAndModifiedTimeUnchanged": true,
+      "ExitCode": 0,
+      "Status": "PASS",
+      "Rows": 1,
+      "Columns": 6,
+      "Utf8Bom": true,
+      "CsvSha256": "c2dbe31f6160cca56f9355a8cf3d71454ffa897a8695b7dbbc1fe76c3bbc6d0e",
+      "WarningsChecked": 0,
+      "RequestedEnvironment": "sTg",
+      "CsvRows": [
+        {
+          "SubscriptionName": "5f1b809c-f59f-4489-8211-4bef16a0463a",
+          "ResourceGroup": "rg-catalog-stg-monitor-01",
+          "StorageAccount": "stcatalogstgarchjpe01",
+          "WorkspaceName": "log-catalog-stg-archive-01",
+          "LogDestination": "Storage",
+          "VmLogDestination": "Log"
+        }
+      ]
+    },
+    {
+      "Id": "CSV-LIVE-003",
+      "Environment": "dev",
+      "Seconds": 1.972,
+      "SourceUnchanged": true,
+      "OtherCsvShaAndModifiedTimeUnchanged": true,
+      "ExitCode": 0,
+      "Status": "PASS",
+      "Rows": 1,
+      "Columns": 6,
+      "Utf8Bom": true,
+      "CsvSha256": "c9c0d49d700d5cb427941a7bce32495c09a19f1cdc5e2f2d07a826fc1db1b789",
+      "WarningsChecked": 0,
+      "RequestedEnvironment": "DEV",
+      "CsvRows": [
+        {
+          "SubscriptionName": "5f1b809c-f59f-4489-8211-4bef16a0463a",
+          "ResourceGroup": "rg-payments-dev-monitor-01",
+          "StorageAccount": "stpaymentsdevarchjpe01",
+          "WorkspaceName": "log-payments-dev-archive-01",
+          "LogDestination": "Storage",
+          "VmLogDestination": "Log"
+        }
+      ]
+    },
+    {
+      "Id": "CSV-LIVE-004",
+      "Environment": "dev",
+      "Seconds": 2.139,
+      "SourceUnchanged": true,
+      "OtherCsvShaAndModifiedTimeUnchanged": true,
+      "ExitCode": 0,
+      "Status": "PASS",
+      "Rows": 1,
+      "Columns": 6,
+      "Utf8Bom": true,
+      "CsvSha256": "b0499af6c60301a5b14b423c2b08434a44e37c4cda18655653ef2b4d6de85c4b",
+      "WarningsChecked": 1,
+      "RequestedEnvironment": "dev",
+      "CsvRows": [
+        {
+          "SubscriptionName": "5f1b809c-f59f-4489-8211-4bef16a0463a",
+          "ResourceGroup": "rg-<サービス略称>-dev-monitor-01",
+          "StorageAccount": "st<サービス略称>devarchjpe01",
+          "WorkspaceName": "log-<サービス略称>-dev-archive-01",
+          "LogDestination": "Storage",
+          "VmLogDestination": "Log"
+        }
+      ]
+    },
+    {
+      "Id": "CSV-LIVE-005",
+      "Environment": "stg",
+      "Seconds": 1.033,
+      "SourceUnchanged": true,
+      "OtherCsvShaAndModifiedTimeUnchanged": true,
+      "ExitCode": 0,
+      "Status": "PASS",
+      "Rows": 0,
+      "Columns": 6,
+      "Utf8Bom": true,
+      "CsvSha256": "5287cdd9d0157d3b8db3b4fde8b43d8b17b365625b56d35cf70e98625ecb51e3",
+      "WarningsChecked": 0,
+      "RequestedEnvironment": "stg",
+      "CsvRows": []
+    },
+    {
+      "Id": "CSV-LIVE-006",
+      "Environment": "prod",
+      "Seconds": 1.909,
+      "SourceUnchanged": true,
+      "OtherCsvShaAndModifiedTimeUnchanged": true,
+      "ExitCode": 0,
+      "Status": "PASS",
+      "Rows": 1,
+      "Columns": 6,
+      "Utf8Bom": true,
+      "CsvSha256": "d3bb1bb84bb745fd838483825979cf0001277e4b750abeb628ae08e83b75c407",
+      "WarningsChecked": 0,
+      "RequestedEnvironment": "prod",
+      "CsvRows": [
+        {
+          "SubscriptionName": "bfda36ec-1aed-4b0c-a907-4d4809c63888",
+          "ResourceGroup": "rg-123456789-prod-monitor-01",
+          "StorageAccount": "st123456789prodarchjpe01",
+          "WorkspaceName": "log-123456789-prod-archive-01",
+          "LogDestination": "Storage",
+          "VmLogDestination": "Log"
+        }
+      ]
+    },
+    {
+      "Id": "CSV-LIVE-007",
+      "Environment": "prod",
+      "Seconds": 2.04,
+      "SourceUnchanged": true,
+      "OtherCsvShaAndModifiedTimeUnchanged": true,
+      "ExitCode": 0,
+      "Status": "PASS",
+      "Rows": 1,
+      "Columns": 6,
+      "Utf8Bom": true,
+      "CsvSha256": "bb7738846676e2ce4b87dd7f6778c95d9a7ad1ac8ca9f14696875b7c1c856a77",
+      "WarningsChecked": 1,
+      "RequestedEnvironment": "prod",
+      "CsvRows": [
+        {
+          "SubscriptionName": "bfda36ec-1aed-4b0c-a907-4d4809c63888",
+          "ResourceGroup": "rg-1234567890-prod-monitor-01",
+          "StorageAccount": "st1234567890prodarchjpe01",
+          "WorkspaceName": "log-1234567890-prod-archive-01",
+          "LogDestination": "Storage",
+          "VmLogDestination": "Log"
+        }
+      ]
+    },
+    {
+      "Id": "CSV-LIVE-008",
+      "Environment": "prod",
+      "Seconds": 2.135,
+      "SourceUnchanged": true,
+      "OtherCsvShaAndModifiedTimeUnchanged": true,
+      "ExitCode": 0,
+      "Status": "PASS",
+      "Rows": 1,
+      "Columns": 6,
+      "Utf8Bom": true,
+      "CsvSha256": "24038bc7712a05a4e710cf77d50538d9f6e49838a65e5a69335cf776ef87a161",
+      "WarningsChecked": 1,
+      "RequestedEnvironment": "prod",
+      "CsvRows": [
+        {
+          "SubscriptionName": "bfda36ec-1aed-4b0c-a907-4d4809c63888",
+          "ResourceGroup": "rg-jpex-prod-monitor-01",
+          "StorageAccount": "stjpexprodarchjpe01",
+          "WorkspaceName": "log-jpex-prod-archive-01",
+          "LogDestination": "Storage",
+          "VmLogDestination": "Log"
+        }
+      ]
+    },
+    {
+      "Id": "CSV-LIVE-009",
+      "Environment": "stg",
+      "Seconds": 1.112,
+      "SourceUnchanged": true,
+      "OtherCsvShaAndModifiedTimeUnchanged": true,
+      "ExitCode": 1,
+      "ExpectedFailure": true,
+      "SelectedCsvUnchanged": true,
+      "Status": "PASS",
+      "RequestedEnvironment": "stg"
+    }
+  ],
+  "PreparationNote": "管理グループ一覧への反映待ちで検証準備が停止したため、準備側の確認を直接GETへ変更し、作成物を削除して準備し直した。この段階でCSVスクリプトは未実行。配布コードの変更なし。",
+  "CreatedForTest": {
+    "ManagementGroupNames": [
+      "staging",
+      "sandbox",
+      "csv-live-261126-child"
+    ],
+    "EmptyResourceGroupCount": 8,
+    "PaidResourceTypes": []
+  },
+  "CsvVerification": {
+    "Status": "PASS_ALL_LIVE_CSV_OUTPUTS_AND_SOURCE",
+    "SourceSha256": "f1db1eee27de1da81827e46eff60042a389c4980a280d2955444a5d2f1582467",
+    "CurrentSourceMatchesRunSource": true,
+    "DataCellsChecked": 48,
+    "HeaderCellsChecked": 48,
+    "FinalOutputShaAndMtimeMatchLastSuccessfulCase": true,
+    "RunCleanupCompletedAtReview": true,
+    "DevelopmentCaseInputEvidence": "run_live.py calls CSV-LIVE-003 with DEV; subprocess passes that environment directly. Ledger Environment is normalized by validator output and therefore does not preserve the input letter case.",
+    "DevelopmentLowercaseFileVerified": true,
+    "OtherCsvPreservationEvidence": "Driver compares SHA and mtime before/after; each executed case records its successful assertion. Raw per-case snapshots are local driver variables and not stored in ledger. Final files were independently compared to the last captured successful case by SHA and mtime.",
+    "DirectExecutionEvidence": "Driver invokes repository tools/create_targets.ps1 by -File via NoProfile/NonInteractive runtime wrapper; Azure CLI command is not stubbed.",
+    "LiveRunCompleted": true,
+    "LiveRunCleanupErrorCount": 0
+  },
+  "CleanupVerification": {
+    "Status": "PASS",
+    "ReadAtUtc": "2026-11-26T04:03:59.147875+00:00",
+    "Checks": {
+      "resource-groups-5f1b809c-f59f-4489-8211-4bef16a0463a": true,
+      "resources-5f1b809c-f59f-4489-8211-4bef16a0463a": true,
+      "original-parent-5f1b809c-f59f-4489-8211-4bef16a0463a": true,
+      "resource-groups-bfda36ec-1aed-4b0c-a907-4d4809c63888": true,
+      "resources-bfda36ec-1aed-4b0c-a907-4d4809c63888": true,
+      "original-parent-bfda36ec-1aed-4b0c-a907-4d4809c63888": true,
+      "existing-management-group-Producrion": true,
+      "existing-management-group-Development": true,
+      "deleted-management-group-staging": true,
+      "deleted-management-group-sandbox": true,
+      "deleted-management-group-csv-live-261126-child": true,
+      "policy-assignments-d6dbddb8-cd0c-4335-baa7-12ad416687d9": true,
+      "policy-assignments-Producrion": true,
+      "generator-source-unchanged": true,
+      "canonical-source-common.ps1": true,
+      "canonical-source-precheck.ps1": true,
+      "canonical-source-step1_copy.ps1": true,
+      "canonical-source-step2_verify.ps1": true,
+      "canonical-source-step3_delete.ps1": true,
+      "canonical-source-rollback.ps1": true
+    },
+    "OriginalParentsRestored": {
+      "5f1b809c-f59f-4489-8211-4bef16a0463a": "/providers/Microsoft.Management/managementGroups/d6dbddb8-cd0c-4335-baa7-12ad416687d9",
+      "bfda36ec-1aed-4b0c-a907-4d4809c63888": "/providers/Microsoft.Management/managementGroups/d6dbddb8-cd0c-4335-baa7-12ad416687d9"
+    },
+    "ExistingManagementGroups": {
+      "Producrion": {
+        "Id": "/providers/Microsoft.Management/managementGroups/Producrion",
+        "Name": "Producrion",
+        "Type": "Microsoft.Management/managementGroups",
+        "DisplayName": "Production",
+        "ParentId": "/providers/Microsoft.Management/managementGroups/d6dbddb8-cd0c-4335-baa7-12ad416687d9"
+      },
+      "Development": {
+        "Id": "/providers/Microsoft.Management/managementGroups/Development",
+        "Name": "Development",
+        "Type": "Microsoft.Management/managementGroups",
+        "DisplayName": "Development",
+        "ParentId": "/providers/Microsoft.Management/managementGroups/d6dbddb8-cd0c-4335-baa7-12ad416687d9"
+      }
+    },
+    "DeletedManagementGroupsHttpStatus": {
+      "staging": 404,
+      "sandbox": 404,
+      "csv-live-261126-child": 404
+    },
+    "InheritedPolicyAssignmentCount": {
+      "d6dbddb8-cd0c-4335-baa7-12ad416687d9": 3,
+      "Producrion": 3
+    },
+    "GeneratorSha256": "f1db1eee27de1da81827e46eff60042a389c4980a280d2955444a5d2f1582467",
+    "CanonicalSourceHashes": {
+      "common.ps1": "3c443b680915d34ae33c3aac1286a639f96a2a9002357546f4f58bea0f83a9c8",
+      "precheck.ps1": "74d49d8b87ba2ba41d58a276c6fbb1f165a4d98afd7d3951852fbc975e08f599",
+      "step1_copy.ps1": "9f53798ff86ee0a8853ed6cd07c63d8274796131af50f5dbc8345ceb8f8def91",
+      "step2_verify.ps1": "579011e13c917a1b6c8708e0541d8276de3d40463bb3407001c2453e5ca66bb6",
+      "step3_delete.ps1": "4b848b0b1a1ca1f3c5f765b83425db32a2154ffe596c8fe2045494ee737c5689",
+      "rollback.ps1": "cafe6ccc395f48a76cf609b14d9300a60c558a8d2db42913b1bd628714c0497a"
+    },
+    "GitHead": "d5c80299d1e43ed509137006ced79cfb58fff95a",
+    "AzureMutations": 0
+  },
+  "CoverageLimits": [
+    "実機ではAPIのページングは発生していない。次ページの取得・取得失敗はローカル試験で確認。",
+    "実機の実行環境はLinuxのPowerShell 7.5.4。"
+  ]
+}

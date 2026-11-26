@@ -21,6 +21,8 @@ pwsh.exe -NoProfile -File .\tools\create_targets.ps1 -Environment dev
 
 管理グループのIDは、ご提示の値を設定しています。`producrion`の綴りも変更していません。開発の名前には`dev`を使い、管理グループIDの`sandbox`とは区別します。
 
+Azure実機で確認した9ケースと後片付けの結果は、[検証結果](../test-results/REPORT.md)に記録しています。
+
 ## 略称を取り出して名前を作る
 
 子管理グループの配下も含めてサブスクリプションを取得し、それぞれのリソースグループを調べます。たとえば`rg-pay-prod-alert-01`があれば、略称は`pay`です。
