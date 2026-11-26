@@ -795,18 +795,18 @@
     "ReplaySuitesRerun": false
   },
   "CurrentRuntimeCodeHashes": {
-    "migration/common.ps1": "36fd3d650bfaff8574fcef948a9ee66d84558e5fc8e2efc322d14ec70c848a93",
+    "migration/common.ps1": "d088414e3ec92bb52fc74f1f0ed793da5253ea17f620ac63e7553f67e6691ac9",
     "migration/precheck.ps1": "56c53301dedf238e8c164d2a32637f0c8d8eb7e94f4fb6cba584da1c4817030f",
     "migration/rollback.ps1": "103f7b83d800514ec78bb22197ce2daef0e16455b131c920b866962f8a880398",
     "migration/step1_copy.ps1": "341959275fb165e25a359e3743a5ba425817956c7f71e6f2c91656dcb66fc58e",
     "migration/step2_verify.ps1": "62b4eb95fb8258b180d512743158e569080bdc0e221a4f94c71fa15b9a9003a4",
     "migration/step3_delete.ps1": "e0c40b1ab8cf9aef1b4f8200cad6714552cf5c444e08d667d491428a448716bb",
-    "test-environment/resource_types_fixture.ps1": "46fa581fb4d82ca12a5c6a5063eaa7ad6b698c52ea1e16daf0f2f9ba5020612c",
-    "tests/create-targets-smoke.ps1": "718b144e1831720522f3ad415ade2c4ec70a57a1e0fd6cf1124de1de668e98c1",
+    "test-environment/resource_types_fixture.ps1": "4a30b3b970e1f69250de1135bcda66c91188b6b1a93cf081895e201831c94709",
+    "tests/create-targets-smoke.ps1": "a57433c9eb3cf92bd36cf4472e90be6d55f3e87e7e720fbe232e2a7c135358fd",
     "tests/migration-smoke.ps1": "032bee0664fd352c542bb8ca47ca6d1c9853567e9a08cba4973f2248a92cc977",
-    "tools/create_targets.ps1": "fed76252936f8ae66ebb432b109dca49ac8ceeb53a9b16a5e48a242ce46b53fa"
+    "tools/create_targets.ps1": "98ff5240397cc612d3dfdc72e62cff7cacbd7eae582423d185d72df7b2edadc4"
   },
-  "CodeHashNotes": "MigrationReplay・CsvGenerator・PromotionEquivalence・RuntimeCodeHashes・ShippingLayout・Documentsはコメント見直し前の確認記録。CurrentRuntimeCodeHashesとCommentReviewは見直し後の確認。過去の試験時のSHAは保持している。",
+  "CodeHashNotes": "MigrationReplay・CsvGenerator・PromotionEquivalence・RuntimeCodeHashes・ShippingLayout・Documents・CommentReviewは各確認時点の記録。最新の実行コードSHAはCurrentRuntimeCodeHashes、日本語JSON修正後の再試験はJSON_ENCODING_FIX.jsonを参照。過去のSHAは保持している。",
   "ExampleCsvReview": {
     "Status": "PASS",
     "Path": "migration/targets.example.csv",
@@ -816,5 +816,15 @@
     "FlagsAndBlankCellsUnchanged": true,
     "PreviousSha256": "48dabdc69b778c2b3bc751d0e7ae8f25798a03e28fa74f6746c562cfdfad639d",
     "CurrentSha256": "71e02cac2b1ef275cebafb52cd1cd9317f98580a3423297324f91f2dd1eb9238"
+  },
+  "JsonEncodingFix": {
+    "Status": "PASS",
+    "Details": "JSON_ENCODING_FIX.json",
+    "MigrationCases": 91,
+    "MigrationAssertions": 1341,
+    "CsvScenarios": 7,
+    "CsvAssertions": 54,
+    "OnlyExecutableChanges": "3コマンドのJSON出力をASCIIエスケープ表記へ変更",
+    "NativeWindowsRun": false
   }
 }

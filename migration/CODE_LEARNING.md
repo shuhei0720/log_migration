@@ -17,7 +17,7 @@
 CSVの1行を`$target`へ取り出し、そのサブスクリプションの作業を始めます。
 
 - `Read-MigrationRecord`で前回の作業記録を読み、`$record`へ入れます。初回は記録がないため`$null`です。[Read-MigrationRecordのDESCRIPTION](common.ps1#L433)
-- `Get-MigrationPlan`で現在の旧設定と作成先を調べます。`$plan.OldSettings`には旧診断設定・旧DCR関連付けのIDと設定値、`Discovery`には新設定の作成先IDと地域が入ります。[Get-MigrationPlanのDESCRIPTION](common.ps1#L533)
+- `Get-MigrationPlan`で現在の旧設定と作成先を調べます。`$plan.OldSettings`には旧診断設定・旧DCR関連付けのIDと設定値、`Discovery`には新設定の作成先IDと地域が入ります。[Get-MigrationPlanのDESCRIPTION](common.ps1#L534)
 
 以降のコードで、この調査結果に「Azureへ渡す設定値」を加えます。
 
@@ -105,7 +105,7 @@ Azureの現在値を作業記録の`Body`と比べ、同じなら書き込まず
 
 `common.ps1`を読み、CSVの各サブスクリプションの作業記録を取得します。記録がなければNGです。続いて現在の旧診断設定・旧DCR関連付けを調べ、`$currentPlan`へ入れます。
 
-`-OnlyOldSettings`は、作成前の検査を省いて旧設定だけを調べる指定です。[Get-MigrationPlanのDESCRIPTION](common.ps1#L533)
+`-OnlyOldSettings`は、作成前の検査を省いて旧設定だけを調べる指定です。[Get-MigrationPlanのDESCRIPTION](common.ps1#L534)
 
 **[24～29行](step2_verify.ps1#L24)｜`foreach ($current in $currentPlan.OldSettings)`**
 
@@ -163,7 +163,7 @@ step2が全件OKの場合だけ、作業記録を`$records`へ受け取って削
 
 **[1～16行](precheck.ps1#L1)｜`Get-MigrationPlan -Target $target`**
 
-CSVに書いたサブスクリプションごとに、旧設定と新設定の作成先を調べます。作業記録を渡さないため、初回の作成前確認として動きます。作成済みのリソースグループも、使用済みの名前としてNGにします。[Get-MigrationPlanのDESCRIPTION](common.ps1#L533)
+CSVに書いたサブスクリプションごとに、旧設定と新設定の作成先を調べます。作業記録を渡さないため、初回の作成前確認として動きます。作成済みのリソースグループも、使用済みの名前としてNGにします。[Get-MigrationPlanのDESCRIPTION](common.ps1#L534)
 
 **[18～33行](precheck.ps1#L18)｜`catch`、`$results | Export-Csv`**
 

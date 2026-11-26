@@ -1,0 +1,587 @@
+{
+  "Status": "PASS",
+  "RecordedAt": "2026-11-26T16:43:36+09:00",
+  "Problem": "PowerShellでAzure CLIのJSONを受信すると、日本語のタグ内でBad JSON escape sequenceが発生する。",
+  "CauseConfirmedInReproduction": "実Azure CLIのCP932出力をUTF-8として受信すると、日本語の文字内のバイトが不正な逆斜線エスケープとして解釈される。顧客端末の実際のCLI文字コードは直接測定していない。",
+  "Fix": "対象3コマンドでto_string(@)により日本語をASCIIのJSONエスケープ表記へ変換し、tsvでそのJSON文字列を受け取る。ConvertFrom-Jsonで元の値へ戻す。",
+  "ChangedCommandScope": {
+    "Status": "PASS",
+    "AzureRequests": 0,
+    "Scripts": [
+      {
+        "Status": "PASS",
+        "Sha256": "98ff5240397cc612d3dfdc72e62cff7cacbd7eae582423d185d72df7b2edadc4",
+        "OnlyExecutableChange": "--output json -> --query to_string(@) --output tsv",
+        "Path": "tools/create_targets.ps1"
+      },
+      {
+        "Status": "PASS",
+        "Sha256": "d088414e3ec92bb52fc74f1f0ed793da5253ea17f620ac63e7553f67e6691ac9",
+        "OnlyExecutableChange": "--output json -> --query to_string(@) --output tsv",
+        "Path": "migration/common.ps1"
+      },
+      {
+        "Status": "PASS",
+        "Sha256": "4a30b3b970e1f69250de1135bcda66c91188b6b1a93cf081895e201831c94709",
+        "OnlyExecutableChange": "--output json -> --query to_string(@) --output tsv",
+        "Path": "test-environment/resource_types_fixture.ps1"
+      }
+    ]
+  },
+  "RealCliEncodingReproduction": {
+    "old-json": {
+      "JsonParsed": false,
+      "Error": "Invalid \\escape: line 8 column 26 (char 189)"
+    },
+    "ascii-json": {
+      "JsonParsed": true,
+      "OriginalValuesPreserved": true,
+      "OutputAscii": true
+    }
+  },
+  "PowerShellNativePipeline": {
+    "PowerShell": "7.5.4",
+    "NewPipelineTagValuePreserved": true,
+    "AzureRequests": 0,
+    "OldPipelineError": "Conversion from JSON failed with error: Bad JSON escape sequence: \\�. Path 'value[0].tags.cost_center', line 8, position 27.",
+    "Status": "PASS",
+    "ByteSource": "Actual Azure CLI outputs with CP932 forced",
+    "NativeWindowsRun": false
+  },
+  "RealAccountOutputEquivalence": {
+    "account-list": {
+      "Status": "PASS",
+      "OriginalValuesPreserved": true,
+      "NewOutputAscii": true
+    },
+    "account-show": {
+      "Status": "PASS",
+      "OriginalValuesPreserved": true,
+      "NewOutputAscii": true
+    }
+  },
+  "CsvGenerator": {
+    "Status": "PASS",
+    "PowerShell": "7.5.4",
+    "Scenarios": 7,
+    "Assertions": 54,
+    "AzureRequests": 0,
+    "Prior52AssertionsPassed": true,
+    "JapaneseTagExactValuePreserved": true,
+    "TagCoverage": [
+      "表",
+      "ソ",
+      "費用",
+      "quote",
+      "literal backslash",
+      "newline",
+      "emoji"
+    ],
+    "AllRequestsSpecifyAsciiJsonQueryAndTsv": true,
+    "LegacySameFixtureFailedWithCostCenterBadJsonEscape": true,
+    "LegacyReproductionFile": "LEGACY_STUB_REPRODUCTION.json",
+    "OnlyTestFileEditedByTestAgent": "tests/create-targets-smoke.ps1",
+    "Files": {
+      "tools/create_targets.ps1": "98ff5240397cc612d3dfdc72e62cff7cacbd7eae582423d185d72df7b2edadc4",
+      "tests/create-targets-smoke.ps1": "a57433c9eb3cf92bd36cf4472e90be6d55f3e87e7e720fbe232e2a7c135358fd"
+    },
+    "Result": "PASS: 7シナリオ、54 判定。Azureへの通信は0件。",
+    "LatestRunResult": "PASS: 7シナリオ、54 判定。Azureへの通信は0件。"
+  },
+  "MigrationReplay": {
+    "Result": "PASS",
+    "Cases": [
+      {
+        "Case": "StorageとVM: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 108
+      },
+      {
+        "Case": "LogとVM: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 108
+      },
+      {
+        "Case": "Storageのみ: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 104
+      },
+      {
+        "Case": "Logのみ: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 104
+      },
+      {
+        "Case": "VMのみ: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 106
+      },
+      {
+        "Case": "両方None: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 102
+      },
+      {
+        "Case": "両方空欄: 全工程・再実行・切戻し",
+        "Result": "PASS",
+        "Assertions": 102
+      },
+      {
+        "Case": "Storage宛GETのLAW既定方式付加を許容して再実行・削除・復元できる",
+        "Result": "PASS",
+        "Assertions": 14
+      },
+      {
+        "Case": "LAW宛の格納方式変更は許容せず既存設定を保持する",
+        "Result": "PASS",
+        "Assertions": 10
+      },
+      {
+        "Case": "CSV列欠落は空欄と区別して書込み前に停止する",
+        "Result": "PASS",
+        "Assertions": 24
+      },
+      {
+        "Case": "対象0件でも東日本StorageとLAWを準備する",
+        "Result": "PASS",
+        "Assertions": 10
+      },
+      {
+        "Case": "旧DCR関連なしでもEvent・Syslogは1095日保持し、新DCRは作らない",
+        "Result": "PASS",
+        "Assertions": 37
+      },
+      {
+        "Case": "東日本・西日本・globalの地域別Storageへ送信する",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "Canadaのみの旧設定を削除後もJPEを要求しない",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "Storage kind=StorageV2 の子スコープを探索",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "Storage kind=BlobStorage の子スコープを探索",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "Storage kind=BlockBlobStorage の子スコープを探索",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "Storage kind=FileStorage の子スコープを探索",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "通常一覧にないRedis子DBを親地域のStorageへ移行・復元する",
+        "Result": "PASS",
+        "Assertions": 12
+      },
+      {
+        "Case": "RedisのDB一覧が空なら存在しない子を調べない",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "Redis子DBと通常一覧の次ページを両方移行・復元する",
+        "Result": "PASS",
+        "Assertions": 15
+      },
+      {
+        "Case": "CSV入力拒否: 不正診断フラグ",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: 不正VMフラグ",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: 空RG",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: 空Workspace",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: 不正Storage名",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: jpeが2か所",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: Storage名25文字",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "CSV入力拒否: 空Sub",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "初回の既存RGは同地域でも別地域でも変更前に停止する",
+        "Result": "PASS",
+        "Assertions": 14
+      },
+      {
+        "Case": "初回の既存Storage名を事前停止する",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "ZRS非対応の地域を事前停止する",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "初回の同名新診断を再利用しない",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "新診断を追加する空き5枠上限を事前停止する",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "両Noneは同名新診断と5件上限に触れない",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "関係のないVM・VMSSには新関連を作らない",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "Storage ACL・LAW features・分析保持・他ルールを維持する",
+        "Result": "PASS",
+        "Assertions": 13
+      },
+      {
+        "Case": "既存Storageの不変条件が違う場合は上書きしない",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "既存newDCRと関連は切戻しでBeforeへ復元する",
+        "Result": "PASS",
+        "Assertions": 9
+      },
+      {
+        "Case": "copy途中失敗から未完了だけを再開する",
+        "Result": "PASS",
+        "Assertions": 10
+      },
+      {
+        "Case": "記録保存に失敗したSubはAzure変更を始めない",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "作業途中CSV選択変更を拒否: copy",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "作業途中CSV選択変更を拒否: verify",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "作業途中CSV選択変更を拒否: delete",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "後続Subの未完了は全Subの旧DELETEを止める",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "旧削除の途中失敗は後続を止め再実行できる",
+        "Result": "PASS",
+        "Assertions": 9
+      },
+      {
+        "Case": "copy後に増えた旧対象をverify/deleteが無視しない",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "削除直前に旧設定が変われば以降の削除を止める",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "指定Subだけを切り戻し、他Subはそのまま残す",
+        "Result": "PASS",
+        "Assertions": 9
+      },
+      {
+        "Case": "不明Sub指定のrollbackは変更前に拒否する",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "旧復元失敗時は新診断設定を残す",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "切戻し対象が外部変更されたら上書きしない",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "保存先GET失敗を未存在と扱わず削除前に停止する",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "書込み後の期待値不一致を失敗一覧に出す",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "接続断・本文切断・通信timeoutから同じ要求で復旧する",
+        "Result": "PASS",
+        "Assertions": 24
+      },
+      {
+        "Case": "通信断が続けば最大4回で止まり旧設定を残す",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "TLS・明示中断・非通信IO・JSON不正を再試行しない",
+        "Result": "PASS",
+        "Assertions": 17
+      },
+      {
+        "Case": "429・503はRetryAfterを守って従来どおり再試行する",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "DELETE応答喪失後の404だけを削除済みとして継続する",
+        "Result": "PASS",
+        "Assertions": 10
+      },
+      {
+        "Case": "Wait付きPUTは1回だけ送信し以後はBody無しGETで待つ",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "作成待ちのFailed・Canceledは即停止する",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "対応IWRだけ本文timeoutを設定し未対応環境へ余計なparameterを送らない",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "一時的な401は認証を更新して再試行する",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "登録前providerは記録保存後に登録する",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "旧診断名と新診断名が同じでもNone側は旧を削除・復元する",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "指定2DCRでも対象外Subの関連を変更しない",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "未知の地域略称は事前確認で停止する",
+        "Result": "PASS",
+        "Assertions": 2
+      },
+      {
+        "Case": "対応する既存Waiverは切戻しでも保持する",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "内容の違う既存Waiverを上書きしない",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "コピー途中の失敗状態から直接切り戻せる",
+        "Result": "PASS",
+        "Assertions": 11
+      },
+      {
+        "Case": "コピー完了後は旧設定を書き直さず切り戻せる",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "旧設定を一部削除した失敗状態から直接切り戻せる",
+        "Result": "PASS",
+        "Assertions": 9
+      },
+      {
+        "Case": "DCR更新中の応答を待って完了を確認する",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "StorageのResolvingDnsを待って設定を完了する",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "LAWのProvisioningを待って設定を完了する",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "保存先の作成待ちは5分を超えても成功までGETだけで待つ",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "総保持が1095でも既定値フラグのままなら明示設定する",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "変更前記録がなければ確認と削除を開始しない",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "通常一覧にある主要タイプと子IDを同じ診断処理へ通す",
+        "Result": "PASS",
+        "Assertions": 13
+      },
+      {
+        "Case": "DCRのInvalidOutputTableだけは反映を待って再試行する",
+        "Result": "PASS",
+        "Assertions": 4
+      },
+      {
+        "Case": "組み込みSyslogの反映遅延が5分を超えてもDCRを完了する",
+        "Result": "PASS",
+        "Assertions": 3
+      },
+      {
+        "Case": "custom tableのInvalidOutputTableを反映待ちと誤認しない",
+        "Result": "PASS",
+        "Assertions": 8
+      },
+      {
+        "Case": "DCRの一般400は再試行せずそのSubを止める",
+        "Result": "PASS",
+        "Assertions": 5
+      },
+      {
+        "Case": "新診断の余分なWorkspaceとEventHubを許容しない",
+        "Result": "PASS",
+        "Assertions": 9
+      },
+      {
+        "Case": "既存DCRへの余分な収集源追加を許容せず切戻しも上書きしない",
+        "Result": "PASS",
+        "Assertions": 6
+      },
+      {
+        "Case": "未選択Subの記録JSONが壊れていても指定Subだけを切り戻せる",
+        "Result": "PASS",
+        "Assertions": 7
+      },
+      {
+        "Case": "実runspaceで5件以上の診断GETとPUTを処理する",
+        "Result": "PASS",
+        "Assertions": 15
+      },
+      {
+        "Case": "並列worker1件の失敗を記録し再実行で欠落だけを補う",
+        "Result": "PASS",
+        "Assertions": 20
+      },
+      {
+        "Case": "既存DCRのIdentity[SystemAssigned]を維持して全工程と切戻しを行う",
+        "Result": "PASS",
+        "Assertions": 12
+      },
+      {
+        "Case": "既存DCRのIdentity[None]を維持して全工程と切戻しを行う",
+        "Result": "PASS",
+        "Assertions": 12
+      },
+      {
+        "Case": "既存DCRのIdentity[SystemAssigned, UserAssigned]を維持して全工程と切戻しを行う",
+        "Result": "PASS",
+        "Assertions": 23
+      }
+    ],
+    "CaseCount": 91,
+    "Checks": 1341,
+    "AzureRequests": 0,
+    "PowerShellVersion": "7.5.4",
+    "Hashes": {
+      "step2_verify.ps1": "62B4EB95FB8258B180D512743158E569080BDC0E221A4F94C71FA15B9A9003A4",
+      "common.ps1": "D088414E3EC92BB52FC74F1F0ED793DA5253EA17F620AC63E7553F67E6691AC9",
+      "precheck.ps1": "56C53301DEDF238E8C164D2A32637F0C8D8EB7E94F4FB6CBA584DA1C4817030F",
+      "step1_copy.ps1": "341959275FB165E25A359E3743A5BA425817956C7F71E6F2C91656DCB66FC58E",
+      "step3_delete.ps1": "E0C40B1AB8CF9AEF1B4F8200CAD6714552CF5C444E08D667D491428A448716BB",
+      "rollback.ps1": "103F7B83D800514EC78BB22197CE2DAEF0E16455B131C920B866962F8A880398"
+    },
+    "RealParallelRunspaces": 974,
+    "RequestsFromParallelRunspaces": 1339
+  },
+  "ActualAzureHelperTest": {
+    "Status": "PASS",
+    "JapaneseTagValueUnchanged": true,
+    "NativeWindowsRun": false,
+    "FixedHelperReadsActualAzureResponse": true,
+    "PowerShell": "7.5.4",
+    "OldError": "Conversion from JSON failed with error: Bad JSON escape sequence: \\�. Path 'value[0].tags.cost_center', line 11, position 27.",
+    "PowerShellInputEncoding": "utf-8",
+    "RequestedOutputEncoding": "cp932"
+  },
+  "Cleanup": {
+    "OriginalGroupsRestored": true,
+    "ResourceGroupsBefore": 0,
+    "ResourceGroupsAfter": 0,
+    "TemporaryGroupDeleted": "rg-jsoncheck-dev-alert-01",
+    "PaidResourcesCreated": 0,
+    "DeletionWasAsynchronous": true
+  },
+  "Limitations": [
+    "実行基盤はLinuxのPowerShell 7.5.4とAzure CLI 2.93.0。実Windows OSでの実行は未実施。",
+    "Azure実機では一覧取得関数の日本語タグ読込みを確認。今回、環境別CSV全体や移行の再デプロイは行っていない。"
+  ]
+}

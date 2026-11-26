@@ -555,7 +555,8 @@ if ($Action -eq 'Deploy'){
         $random.Dispose()
     }
     $password = 'Az9!' + [Convert]::ToBase64String($bytes)
-    $account = az account show --subscription $SubscriptionIds[0] --output json --only-show-errors | ConvertFrom-Json -AsHashtable
+    # 日本語のサブスクリプション名を含んでも、文字コードの違いでJSONが壊れない形で受け取る。
+    $account = az account show --subscription $SubscriptionIds[0] --query 'to_string(@)' --output tsv --only-show-errors | ConvertFrom-Json -AsHashtable
     if ($LASTEXITCODE -ne 0) {
         throw 'Azure account lookup failed.'
     }

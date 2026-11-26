@@ -39,7 +39,9 @@ function Get-AzureList {
     #>
     param([string]$Url)
     while ($Url) {
-        $response = az rest --method get --url $Url --output json --only-show-errors
+        # 日本語を英数字のエスケープ表記で受け取り、Windowsの文字コードでJSONが壊れるのを防ぐ。
+        # tsvはJSON文字列をそのまま出力させるために指定し、ConvertFrom-Jsonで元の値へ戻す。
+        $response = az rest --method get --url $Url --query 'to_string(@)' --output tsv --only-show-errors
         if ($LASTEXITCODE -ne 0) {
             throw "Azureの一覧を取得できません: $Url"
         }

@@ -7,7 +7,15 @@ $scratch = Join-Path ([IO.Path]::GetTempPath()) ('create-targets-' + [guid]::New
 $null = New-Item $scratch -ItemType Directory
 $columns = @('SubscriptionName', 'ResourceGroup', 'StorageAccount', 'WorkspaceName', 'LogDestination', 'VmLogDestination')
 $ids = @(1..9 | ForEach-Object { '00000000-0000-0000-0000-{0:d12}' -f $_ })
-$global:CsvGeneratorFixture = @{ Scenario = '正常'; Requests = @(); Ids = $ids }
+[Text.Encoding]::RegisterProvider([Text.CodePagesEncodingProvider]::Instance)
+$global:CsvGeneratorFixture = @{
+    Scenario = '正常'
+    Requests = @()
+    Ids = $ids
+    AsciiRequests = 0
+    Cp932 = [Text.Encoding]::GetEncoding(932)
+    TagValue = '表ソ費用\共有"引用符" 😀' + "`n2行目"
+}
 
 function Assert-CsvTest {
     param([bool]$Condition, [string]$Message)
@@ -24,6 +32,13 @@ function az {
     $url = $arguments[[Array]::IndexOf($arguments, '--url') + 1]
     if ($arguments[0] -ne 'rest' -or $method -ne 'get') {
         throw 'この試験ではAzureへのGET以外を禁止しています。'
+    }
+    $queryIndex = [Array]::IndexOf($arguments, '--query')
+    $outputIndex = [Array]::IndexOf($arguments, '--output')
+    $asciiMode = $queryIndex -ge 0 -and $arguments[$queryIndex + 1] -ceq 'to_string(@)' -and
+        $outputIndex -ge 0 -and $arguments[$outputIndex + 1] -eq 'tsv'
+    if ($asciiMode) {
+        $global:CsvGeneratorFixture.AsciiRequests++
     }
     $global:CsvGeneratorFixture.Requests += $url
     $global:LASTEXITCODE = 0
@@ -78,12 +93,19 @@ function az {
             ($global:CsvGeneratorFixture.Ids[8]) { @('rg-jpex-prod-alert-01') }
             default { throw "想定外のサブスクリプション: $subscriptionId" }
         }
-        $page.value = @($names | ForEach-Object { @{ name = $_ } })
+        $page.value = @($names | ForEach-Object { @{ name = $_; tags = @{ cost_center = $global:CsvGeneratorFixture.TagValue } } })
     }
     else {
         throw "想定外のURL: $url"
     }
-    $page | ConvertTo-Json -Depth 6 -Compress
+    if ($asciiMode) {
+        $page | ConvertTo-Json -EscapeHandling EscapeNonAscii -Depth 6 -Compress
+    }
+    else {
+        # CP932のCLI出力をUTF-8として受け取ると、日本語の一部がJSONの不正なエスケープに変わる。
+        $json = $page | ConvertTo-Json -Depth 6 -Compress
+        [Text.Encoding]::UTF8.GetString($global:CsvGeneratorFixture.Cp932.GetBytes($json))
+    }
 }
 
 try {
@@ -148,6 +170,18 @@ try {
     Assert-CsvTest ([regex]::Matches($warnings, '条件を満たしません').Count -eq 3) '25文字・記号・jpe重複の3件を警告していません。'
 
 
+    # 関数定義だけを読み、CSVには使わない日本語タグも元の文字列で返ることを確認する。
+    $scenario = '日本語タグ'
+    $generatorTokens = $null
+    $generatorErrors = $null
+    $generatorAst = [Management.Automation.Language.Parser]::ParseFile($Generator, [ref]$generatorTokens, [ref]$generatorErrors)
+    $definition = $generatorAst.Find({ param($node)
+        $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-AzureList'
+    }, $true)
+    . ([scriptblock]::Create($definition.Extent.Text))
+    $decodedGroups = @(Get-AzureList "https://management.azure.com/subscriptions/$($ids[2])/resourcegroups?api-version=2022-09-01")
+    Assert-CsvTest ($decodedGroups[0].tags.cost_center -ceq $global:CsvGeneratorFixture.TagValue) '日本語・引用符・逆斜線・改行・絵文字を含むタグが元の値と違います。'
+
     # 配布時と同じ配置を一時フォルダに作り、出力先を省略したときの保存先を確かめる。
     $scenario = '既定の出力先'
     $temporaryRepository = Join-Path $scratch 'default-output'
@@ -206,7 +240,8 @@ try {
         Assert-CsvTest ($global:CsvGeneratorFixture.Requests.Count -eq $requestStart) '引数のエラーでもAzureを読んでいます。'
         Assert-CsvTest (-not (Test-Path $invalidDirectory)) '引数のエラーでも出力先を作っています。'
     }
-    "PASS: 6シナリオ、$checks 判定。Azureへの通信は0件。"
+    Assert-CsvTest ($global:CsvGeneratorFixture.AsciiRequests -eq $global:CsvGeneratorFixture.Requests.Count) 'JSONをASCII文字で受け取るquery・tsv指定がないCLI要求があります。'
+    "PASS: 7シナリオ、$checks 判定。Azureへの通信は0件。"
 }
 finally {
     Remove-Item $scratch -Recurse -Force
