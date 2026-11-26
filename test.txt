@@ -1,0 +1,1 @@
+az provider show --subscription 4b93a665-bc38-4f0c-a021-d3360289bb5e --namespace Microsoft.Storage --query registrationState --output tsv
