@@ -5,7 +5,7 @@ param(
 )
 
 # ---
-# 管理グループと、リソース名に入れる環境名を指定する。
+# 準備：管理グループと、リソース名に入れる環境名を指定する。
 # 開発のリソース名にはdevを使い、管理グループIDのsandboxとは区別する。
 # ---
 $environmentSettings = [ordered]@{
@@ -29,7 +29,8 @@ function Get-AzureList {
     Azureから一覧を取得する。
     .DESCRIPTION
     Azure CLIのログインを使い、指定URLへGETする。
-    次のページがあれば取得を続け、全ページのvalueの要素を返す。
+    応答のvalueに入っている一覧の項目を返す。
+    続きの取得先URL（nextLink）があればそこへGETし、残りの項目も返す。
     取得に失敗した場合はエラーにし、CSVを書き出す前に処理を止める。
     .PARAMETER Url
     一覧を取得するAzure管理APIのURL。
@@ -49,19 +50,21 @@ function Get-AzureList {
 }
 
 # ---
-# 指定した環境の管理グループから、子管理グループ配下も含めてサブスクリプションを探す。
-# 全一覧を取得してからCSVを書くため、途中の取得失敗では既存CSVを上書きしない。
+# 1. 指定した環境のサブスクリプションを取得する。子管理グループの配下も含める。
 # ---
 $settings = $environmentSettings[$Environment]
 $environmentName = $settings.NamePart
 $descendants = @(Get-AzureList "$armBase$($settings.ManagementGroupId)/descendants?api-version=2020-05-01")
 $subscriptions = @($descendants | Where-Object { $_.id -match '^/subscriptions/[^/]+$' } | Sort-Object id -Unique)
+# ---
+# 2. 各サブスクリプションのalert用グループから略称を取り出し、CSVの保存先名を作る。
+# ---
 $csvRows = @()
 foreach ($subscription in $subscriptions) {
     $subscriptionId = ($subscription.id -split '/')[-1]
     $resourceGroups = @(Get-AzureList "$armBase/subscriptions/$subscriptionId/resourcegroups?api-version=2022-09-01")
 
-    # alert用グループの名前から略称を取り出す。候補が一つに決まらなければ、人が埋める欄にする。
+    # 候補が0件・複数件なら略称を決めず、CSVに人が埋める欄を残す。
     $pattern = '^rg-(?<Service>.+)-' + [regex]::Escape($environmentName) + '-alert-01$'
     $matchingGroups = @($resourceGroups | Where-Object { $_.name -match $pattern })
     $serviceAbbreviation = '<サービス略称>'
@@ -74,7 +77,7 @@ foreach ($subscription in $subscriptions) {
     }
 
     $storageAccountName = "st${serviceAbbreviation}${environmentName}archjpe01"
-    # 略称を勝手に省略しない。生成名が移行スクリプトの条件に合わなければ、修正が必要な行を知らせる。
+    # 小文字英数字3～24文字・jpeが1か所という条件を満たさなければ警告し、略称は勝手に変えない。
     if ($matchingGroups.Count -eq 1 -and ($storageAccountName -cnotmatch '^[a-z0-9]{3,24}$' -or
         [regex]::Matches($storageAccountName, 'jpe').Count -ne 1)) {
         Write-Warning "$Environment / $subscriptionId : 生成したストレージ名は小文字英数字3～24文字・jpeが1か所という条件を満たしません: $storageAccountName"
@@ -90,8 +93,8 @@ foreach ($subscription in $subscriptions) {
 }
 
 # ---
-# 指定した環境のCSVだけを、移行スクリプトと同じ6列で出力する。targets.csvは直接上書きしない。
-# サブスクリプションが0件の環境も、見出しだけのCSVを作る。
+# 3. すべて取得できたら、指定した環境のCSVだけを出力する。
+# 取得に失敗した場合はここへ進まないため、前回のCSVを残せる。
 # ---
 $null = New-Item $OutputDirectory -ItemType Directory -Force
 $path = Join-Path $OutputDirectory "targets-$Environment.csv"
@@ -99,6 +102,7 @@ if ($csvRows.Count) {
     $csvRows | Select-Object $columns | Export-Csv $path -NoTypeInformation -Encoding utf8BOM
 }
 else {
+    # サブスクリプションが0件でも、6列の見出しを残す。
     $columns -join ',' | Set-Content $path -Encoding utf8BOM
     Write-Warning "$Environment : 管理グループ配下にサブスクリプションがありません。"
 }

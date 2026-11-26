@@ -11,10 +11,8 @@ $environment = 'dev'
 $newDiagnosticSettingName = 'setByAzurePlatformTeam'
 $location = 'japaneast'
 
-# ---
 # 環境ごとの旧DCRとポリシー割り当てを指定し、後で完全なIDへ組み立てる。
 # policyReferenceIdsは、initiative-<環境名>イニシアティブで除外する参照IDを指定する。
-# ---
 $environmentSettings = @{
     prod = @{
         HubSubscriptionId = '7f043232-66a7-4d79-a660-fcb22d1644d0'
@@ -73,6 +71,10 @@ $apiVersions = @{
     Association = '2024-03-11'
     Diagnostic = '2021-05-01-preview'
 }
+# ---
+# 指定した環境から旧DCR・ポリシーのIDと、作業記録の保存先を決める。
+# 記録には環境・移行元・新診断名も残し、別の移行条件で再開することを防ぐ。
+# ---
 $settings = $environmentSettings[$environment]
 if (-not $settings) {
     throw 'environmentはprod・stg・devから指定してください。'
@@ -89,7 +91,7 @@ $policyAssignments = @(for ($index = 0; $index -lt 3; $index++) {
         })
     }
 })
-# 再実行で別の作業記録を使わないよう、環境・移行元・新診断名を記録との比較用にまとめる。
+# 今回の移行条件を、再実行時に作業記録と比べる値としてまとめる。
 $migrationContext = @{
     Environment = $environment
     SourceWorkspace = $targetWorkspaceId
@@ -107,12 +109,12 @@ function Invoke-ArmRequest {
     .SYNOPSIS
     Azureへリソースの取得・作成・更新・削除を要求する。
     .DESCRIPTION
-    指定された操作先と設定値を使い、Azure APIへリクエストを送る。
-    認証には、呼び出し側で設定した$subscriptionIdのトークンを使う。
+    リソースIDまたはURLと、取得・作成・更新・削除の操作を受け取り、Azure APIへ送る。
+    作成・更新では、Bodyに渡した設定値をJSONにする。認証には$subscriptionIdのトークンを使う。
     一時的な通信・HTTPエラーは最大4回試す。
-    成功したJSONを辞書で返す。応答に本文がない場合は$nullを返す。
-    Waitを付けると、応答に処理状態がある場合は作成完了までGETする。失敗・中止はエラーにする。
-    再試行の対象外のエラーや、4回目でも失敗した結果は呼び出し元へ伝える。
+    Waitを付けると、Azureが作成・更新中の状態を返す間はGETで確認し、完了した結果を返す。
+    応答のJSONを項目名と値の組で返し、本文がない場合は$nullを返す。
+    再試行できないエラー、4回目でも解消しないエラー、作成の失敗・中止は呼び出し元へ伝える。
     .PARAMETER ResourceId
     操作するリソースID、またはAPIの版を含む完全なURL。
     Resourceを指定する場合は省略できる。
@@ -120,7 +122,7 @@ function Invoke-ArmRequest {
     Getは取得、Putは作成・更新、Patchは一部更新、Deleteは削除、Postは個別操作。
     省略するとGetを使う。
     .PARAMETER Body
-    Azureへ送る設定値。Resourceと一緒に渡すと、Resource.Bodyよりこちらを優先する。
+    作成・更新する設定値。Resourceにも作成値がある場合は、この引数の値を優先する。
     .PARAMETER ApiVersion
     リソースIDからURLを作るときに使うAPIの版。省略すると2024-03-11を使う。
     Resourceを渡す場合は、記録のAPI版か種類から選ぶ。完全なURLならURL内の版を使う。
@@ -128,8 +130,8 @@ function Invoke-ArmRequest {
     リソースの有無を調べるときに付ける。
     見つからない応答（HTTP 404）をエラーにせず、$nullで返す。省略時はエラーになる。
     .PARAMETER Resource
-    作業記録の1件（Id・Kind・Body）を渡す。
-    この記録から操作先とAPIの版を選ぶ。Bodyを省略したPut・Patch・Postでは、記録のBodyを送る。
+    作業記録の設定1件。Idは操作先、Kindは設定の種類、Bodyは作成する設定値を表す。
+    IdとKindから接続先とAPIの版を選び、Body引数のないPut・Patch・Postでは記録の作成値を送る。
     .PARAMETER Wait
     作成・更新が完了するまで待つときに付ける。
     処理状態がSucceededになるまでGETし、Failed・Canceledならエラーにする。
@@ -139,7 +141,7 @@ function Invoke-ArmRequest {
     #>
     param($ResourceId, $Method = 'Get', $Body, $ApiVersion = '2024-03-11', [switch]$Optional, $Resource, [switch]$Wait)
     # ---
-    # 作業記録のId・Kind・Bodyを使うか、直接渡されたIDから接続先URLを作る。
+    # 1. 操作先のURLと、Azureへ送る設定値を決める。
     # ---
     if ($Resource) {
         $ResourceId = $Resource.Id
@@ -154,7 +156,8 @@ function Invoke-ArmRequest {
     }
     $deleteResponseLost = $false
     # ---
-    # 操作するサブスクリプションのトークンを用意し、設定値をJSONにして送る。
+    # 2. 操作するサブスクリプションで認証し、Azureへ要求を送る。
+    # 通信失敗や一時的なHTTPエラーでは、この繰り返しで最大4回試す。
     # ---
     for ($attempt = 0; $attempt -lt 4; $attempt++) {
         # トークン未取得 or サブ切り替え後 or 期限切れ5分前でないか
@@ -184,10 +187,8 @@ function Invoke-ArmRequest {
             $response = Invoke-WebRequest @request -SkipHttpErrorCheck
         }
         catch [System.Net.Http.HttpRequestException], [System.IO.IOException], [System.TimeoutException], [System.Threading.Tasks.TaskCanceledException] {
-            # ---
-            # 通信が切れた場合は、再送で回復するエラーか調べる。
-            # DELETE後の応答だけ失った場合は、再送時の404を削除完了として扱う。
-            # ---
+            # 応答を受け取れなかった場合に、通信エラーの原因から再送できるか判断する。
+            # DELETEの応答だけを失った場合は、再送時の404を削除完了として扱う。
             $transportError = $_.Exception
             $cause = $transportError.GetBaseException()
             $networkError = [string]$transportError.HttpRequestError
@@ -211,8 +212,8 @@ function Invoke-ArmRequest {
             continue
         }
         # ---
-        # 成功したJSONを返す。Waitを付けていて作成途中なら、完了までGETする。
-        # 認証切れの401はトークンを取り直し、一時的なHTTPエラーは待って再送する。
+        # 3. Azureの応答から、結果を返すか、待って再確認するかを決める。
+        # 作成中はGETで待ち、401は認証し直し、一時的なHTTPエラーは再送する。
         # ---
         $status = [int]$response.StatusCode
         if ($status -lt 400) {
@@ -255,15 +256,17 @@ function Test-Configuration {
     .SYNOPSIS
     二つの設定値を比べ、一致するか調べる。
     .DESCRIPTION
-    現在の設定値を、作成したい設定値や変更前の値と比べる。
-    リソースの設定比較では、作成・更新中の応答は不一致として返す。
-    通常はExpectedの項目を調べる。Exactを付けると、Actualに余分な項目がないことも調べる。
-    診断設定・DCR・DCR関連付けは、書き込みに使う項目だけにそろえ、Exactで比べる。
-    配列は順序を問わず要素と件数を比べる。ライフサイクルはlog-append-1095ルールだけを比べる。
+    比べる値をActual、正しいとする値をExpectedで受け取り、一致すれば$trueを返す。
+    通常はExpectedにある項目を一つずつ調べ、Actualの同名項目が同じ値か確認する。
+    Exactを付けると、ActualにExpected以外の項目が追加されていないことも確認する。
+    診断設定・DCR・DCR関連付けは、Azureへ書き込める項目にそろえてから、余分な項目も含めて比べる。
+    一覧は並び順を問わず中身と件数を比べる。ライフサイクルは今回のlog-append-1095ルールだけを調べる。
+    Kindでリソースの種類を指定した場合は、作成・更新が完了していない応答を不一致にする。
+    比較する項目や値が違う場合も$falseを返す。
     .PARAMETER Actual
     Azureから取得した設定値、または作業記録から読み込んだ値。
     .PARAMETER Expected
-    一致してほしい値。作成する設定値や、変更前に戻す設定値を渡す。
+    正しいとする設定値。作成したい値や、切り戻し先の値を渡す。
     .PARAMETER Kind
     比べる設定の種類。Diagnosticは診断設定、DcrはDCR、AssociationはDCR関連付け。
     Lifecycleは今回の保持ルールを選ぶ。省略すると、渡された値をそのまま比べる。
@@ -276,8 +279,8 @@ function Test-Configuration {
     #>
     param($Actual, $Expected, $Kind, [switch]$Exact)
     # ---
-    # 作成中のリソースは一致とみなさない。診断設定・DCR・関連付けは、書き込みに使う項目だけを比べる。
-    # Exactでは比較する向きを入れ替え、Expectedにない項目がActualへ追加されていないかも調べる。
+    # 1. 比較する項目を決める。作成中なら不一致とし、診断設定・DCR・関連付けは書込み項目にそろえる。
+    # Exactでは両方向に比べ、Actualにだけ増えた項目も検出する。
     # ---
     if ($Kind -and $Actual.properties.provisioningState -and $Actual.properties.provisioningState -ne 'Succeeded') {
         return $false
@@ -297,8 +300,8 @@ function Test-Configuration {
         $Expected = @($Expected.properties.policy.rules)
     }
     # ---
-    # 配列は並び順を問わず比べる。
-    # 一致した要素は候補から外し、重複する値も1件ずつ数える。
+    # 2. 値の形に合わせて比べる。一覧は順番を問わず、項目名のある値は項目ごとに調べる。
+    # 一覧では一致した値を候補から外し、同じ値が重複していても件数を比べる。
     # ---
     if ($Expected -is [array]) {
         [Collections.ArrayList]$remaining = @($Actual | Where-Object { $null -ne $_ })
@@ -320,9 +323,7 @@ function Test-Configuration {
         }
         return $true
     }
-    # ---
-    # 辞書は項目ごとにこの関数で比べる。文字列・数値は値を直接比べる。
-    # ---
+    # 項目名がある値は、この関数で各項目を比べる。文字列・数値は最後に直接比べる。
     if ($null -eq $Actual -or $null -eq $Expected) {
         return $null -eq $Actual -and $null -eq $Expected
     }
@@ -342,11 +343,12 @@ function Get-WritableBody {
     .SYNOPSIS
     取得した設定から、保存・再作成・比較に使う設定値を取り出す。
     .DESCRIPTION
-    Azureが返した設定から、保存・再作成・比較に使う項目を取り出して返す。
-    診断設定ではログ・メトリック・送信先、DCR関連付けでは参照先を残す。
-    DCRはコピーしてから内部IDを取り除き、リージョン・タグ・マネージドIDの指定は残す。
-    Log Analytics用の格納方式は、診断設定の送信先にLog Analyticsがある場合だけ含める。
-    入力がなければ$nullを返す。リソースの作成・更新が終わっていなければエラーにする。
+    Azureから取得した設定を受け取り、Azureへ送り直すための設定値を取り出す。
+    診断設定ではログ・メトリック・送信先、DCR関連付けでは関連付けるDCRや収集エンドポイントのIDを残す。
+    DCRでは収集条件・送信先・地域・タグ・マネージドIDを残し、Azureが付けた管理用の値を取り除く。
+    診断設定のログ格納方式は、Log Analyticsへ送る設定にだけ含める。
+    戻り値は作業記録への保存、設定の比較、切り戻しに使う。入力がなければ$nullを返す。
+    作成・更新中の不完全な値を記録しないよう、完了していないリソースはエラーにする。
     .PARAMETER Resource
     Azureから取得した設定、または作業記録の設定値。$nullも渡せる。
     .PARAMETER Kind
@@ -357,16 +359,16 @@ function Get-WritableBody {
     取り出した設定値を持つ辞書。入力がなければ$null。
     #>
     param($Resource, $Kind)
+    # ---
+    # 1. 取得が完了した設定から、Azureへ書き込める項目を取り出す。
+    # ---
     if (-not $Resource) {
         return $null
     }
     if ($Resource.properties.provisioningState -and $Resource.properties.provisioningState -ne 'Succeeded') {
         throw 'リソースの作成・更新が完了していません。'
     }
-    # ---
-    # 診断設定のログ・送信先や、DCR関連付けの参照先を取り出す。
-    # DCRはコピーを加工し、受け取ったデータを変えない。
-    # ---
+    # DCRは複製したデータから管理用の値を取り除き、受け取ったデータを変えない。
     $copy = $Resource
     if ($Kind -eq 'Dcr') {
         $copy = ConvertTo-Json $Resource -Depth 40 | ConvertFrom-Json -AsHashtable
@@ -385,8 +387,8 @@ function Get-WritableBody {
         }
     }
     # ---
-    # Log Analytics用の格納方式は、Log Analyticsへ送る診断設定だけに含める。
-    # ストレージだけに送る場合もAzureが返すことがあるため、その値は除く。
+    # 2. 診断設定とDCRで、作り直すときに必要な項目をそろえる。
+    # Log Analyticsの格納方式は、そこへ送信する診断設定だけに残す。
     # ---
     if ($Kind -eq 'Diagnostic' -and $body.properties.workspaceId -and -not $body.properties.logAnalyticsDestinationType) {
         $body.properties.logAnalyticsDestinationType = 'AzureDiagnostics'
@@ -394,9 +396,7 @@ function Get-WritableBody {
     if ($Kind -eq 'Diagnostic' -and -not $body.properties.workspaceId) {
         $body.properties.Remove('logAnalyticsDestinationType')
     }
-    # ---
-    # DCRのリージョン・タグ・マネージドIDは再作成にも使う。Azureが自動で付けた内部値だけを除く。
-    # ---
+    # DCRの地域・タグ・マネージドIDは残し、Azureが付けた管理用のIDだけを除く。
     if ($Kind -eq 'Dcr') {
         foreach ($key in @('location', 'kind', 'tags', 'identity')) {
             if ($null -ne $copy.$key) {
@@ -431,10 +431,10 @@ function Read-MigrationRecord {
     .SYNOPSIS
     前回の作業記録を読み、今回も同じ条件で実行しているか確かめる。
     .DESCRIPTION
-    指定サブスクリプションのrecords/<環境>/<Sub ID>.jsonを読む。
-    記録の環境・移行元・保存先・送信方法が今回の指定と同じか確認する。
-    保存先・新設定・旧設定の一覧も確認し、条件の違いや一覧の不足があればエラーにする。
-    条件が同じなら記録を返す。ファイルがまだなければ、初回実行として扱えるよう$nullを返す。
+    対象サブスクリプションのIDから、records/<環境>/<Sub ID>.jsonを選んで読む。
+    保存時の環境・移行元・保存先・送信方法を今回の指定と比べ、別の作業記録を使っていないか確認する。
+    保存先・新設定・旧設定の一覧がそろっていれば記録を返し、条件の違いや一覧の不足はエラーにする。
+    ファイルがまだなければ、初回実行として処理できるよう$nullを返す。
     .PARAMETER Target
     サブスクリプションID・保存先・送信方法を持つCSVの1行分、または記録済みのTarget。
     SubscriptionIdでファイルを選び、ほかの項目も記録の値と比べる。
@@ -443,13 +443,16 @@ function Read-MigrationRecord {
     読み込んだ作業記録。ファイルがなければ$null。
     #>
     param($Target)
+    # ---
+    # 1. 対象サブスクリプションの作業記録を読む。まだなければ初回として返す。
+    # ---
     $path = Join-Path $recordDirectory "$($Target.SubscriptionId).json"
     if (-not (Test-Path $path)) {
         return $null
     }
     $record = Get-Content $path -Raw -Encoding UTF8 | ConvertFrom-Json -AsHashtable
     # ---
-    # 記録の環境・CSVと今回の指定を比べ、保存先・新設定・旧設定の一覧も確認する。
+    # 2. 保存時の環境・CSVと今回の指定を比べ、設定一覧がそろっていることを確認する。
     # ---
     if (-not (Test-Configuration $record.Context $migrationContext -Exact) -or
         -not (Test-Configuration $record.Target $Target -Exact)) {
@@ -464,8 +467,8 @@ function Read-MigrationRecord {
 }
 
 # ---
-# CSVを読み、サブスクリプション名からIDを調べてtargetsへ入れる。
-# ストレージ名に使う地域略称も取得する。
+# CSVの各行を検査し、サブスクリプションIDと保存先IDを補った対象一覧targetsを作る。
+# ストレージ名のjpeを置き換えるために、Azureの地域略称も取得する。
 # ---
 $targets = @()
 $regionNames = @()
@@ -528,12 +531,14 @@ function Get-MigrationPlan {
     .SYNOPSIS
     移行する旧設定を集め、新しい設定を作成できるか調べる。
     .DESCRIPTION
-    CSVの1行を基に、移行する旧設定と新しい設定の作成先を調べる。
-    旧ワークスペース宛ての診断設定と、旧2本のDCRへの関連付けを取得し、復元用の設定値をOldSettingsへ入れる。
-    初回は、保存先のリソースグループが未作成か確認する。ストレージ名の空きとStandard_ZRSへの対応も調べる。
-    新診断名の重複・追加枠の不足・ポリシーの未適用があればエラーにする。
-    作成先のIDとリージョンはDiscoveryへ返す。step1_copyは、この情報から作成する設定値を組み立てる。
-    OnlyOldSettingsを付けると、作成前の確認をせず旧設定だけを返す。Azureの設定は変更しない。
+    CSVの1行を受け取り、そのサブスクリプションの旧設定と、新しい保存先・送信設定の作成場所を調べる。
+    旧ワークスペース宛ての診断設定と旧2本のDCRへの関連付けを取得し、削除・復元に使う設定の一覧（OldSettings）へ入れる。
+    初回は保存先リソースグループが未作成か確認し、地域別ストレージ名の空きとStandard_ZRSへの対応を調べる。
+    新診断設定は、作業記録にない同名設定がある場合や、追加後に1リソース当たり5件を超える場合は作成できない。
+    指定ポリシーが適用されていない場合も、エラーで止める。
+    作成先のID・名前・地域は、一時的な項目（Discovery）にまとめて返す。
+    step1_copyはDiscoveryからAzureへ送る設定値を作り、JSONへ保存する前にDiscoveryを除く。
+    OnlyOldSettingsを付けた場合は旧設定だけを集め、名前やポリシーなど作成前の確認は省く。Azureの設定は変えない。
     .PARAMETER Target
     サブスクリプション・保存先名・送信方法を持つCSVの1行分。
     .PARAMETER Record
@@ -544,11 +549,14 @@ function Get-MigrationPlan {
     リソースグループ・名前・ポリシーの作成前確認は行わない。
     .OUTPUTS
     System.Collections.Hashtable
-    OldSettingsに旧設定のIDと設定値、Discoveryに新しい作成先を持つ辞書。
-    OnlyOldSettingsを付けた場合はDiscoveryを含まない。
+    OldSettings（削除・復元する旧設定のIDと値）と、Discovery（新設定の作成先ID・名前・地域）を含む辞書。
+    OnlyOldSettingsを付けた場合は、作成先を調べないためDiscoveryを含まない。
     #>
     param($Target, $Record, [switch]$OnlyOldSettings)
 
+    # ---
+    # 1. 対象と保存先を決め、初回は保存先のリソースグループが未作成か確認する。
+    # ---
     $subscriptionId = $Target.SubscriptionId
     $resourceGroupId = "/subscriptions/$subscriptionId/resourceGroups/$($Target.ResourceGroup)"
     $plan = @{
@@ -569,7 +577,7 @@ function Get-MigrationPlan {
     }
 
     # ---
-    # サブスクリプション内のリソースIDとリージョンを集め、診断設定の取得先を決める。
+    # 2. 診断設定を調べるリソースのIDと地域を集める。
     # 通常の一覧に出ないストレージの子サービスとRedisの子データベースも加える。
     # ---
     $resourceLocations = @{}
@@ -598,9 +606,7 @@ function Get-MigrationPlan {
                     $resourceLocations["$($resource.id)/$service/default"] = $resource.location
                 }
             }
-            # ---
-            # Redis Enterpriseの子データベースを取得する。リージョンは親と同じにする。
-            # ---
+            # Redis Enterpriseの子データベースも列挙し、親と同じ地域を記録する。
             if ($resource.type -eq 'Microsoft.Cache/redisEnterprise') {
                 $databasePage = "https://management.azure.com$($resource.id)/databases?api-version=2025-04-01"
                 while ($databasePage) {
@@ -615,8 +621,8 @@ function Get-MigrationPlan {
         $resourcePage = $page.nextLink
     }
     # ---
-    # 各リソースの診断設定を取得し、旧ワークスペースへ送っている設定を選ぶ。
-    # そのIDと設定値をOldSettingsへ入れ、送信先ストレージを選ぶためにリージョンも残す。
+    # 3. 旧ワークスペース宛ての診断設定と、旧DCRへの関連付けを集める。
+    # 削除・復元する旧設定の一覧OldSettingsに、IDと設定値を入れる。
     # ---
     $accessToken = $script:accessToken
     $sourceWorkspace = $targetWorkspaceId
@@ -662,9 +668,7 @@ function Get-MigrationPlan {
         $diagnostic.Location = $resourceLocation
     }
 
-    # ---
-    # 旧2本のDCRの関連付けから、このサブスクリプションのものを選ぶ。復元用の設定値をOldSettingsへ加える。
-    # ---
+    # 旧2本のDCRの関連付けから、このサブスクリプションのものを選ぶ。
     foreach ($oldDcrId in $oldDcrIds) {
         $associationPage = "$oldDcrId/associations"
         while ($associationPage) {
@@ -694,8 +698,8 @@ function Get-MigrationPlan {
     }
 
     # ---
-    # 指定した3件の割り当てが、このサブスクリプションに適用されているか調べる。
-    # 3件目は除外する参照IDも確認する。同じイニシアティブの定義は次のサブスクリプションでも再利用する。
+    # 4. 適用除外を作る3件のポリシー割り当てが、このサブスクリプションに適用されているか確認する。
+    # 3件目は、まとめて割り当てたポリシーの中に、除外する12個の参照IDがあることも確認する。
     # ---
     $assignments = @()
     $assignmentPage = "https://management.azure.com/subscriptions/$subscriptionId/providers/Microsoft.Authorization/policyAssignments?api-version=2022-06-01&`$filter=atScope()"
@@ -714,6 +718,7 @@ function Get-MigrationPlan {
     if ($definitionId -notmatch '/policySetDefinitions/') {
         throw '3件目の割り当てがイニシアティブではありません。'
     }
+    # 同じポリシーの組を次のサブスクリプションでも使うため、定義を取得済みなら読み直さない。
     if ($script:initiativeDefinitionId -ne $definitionId) {
         $script:initiativeDefinition = Invoke-ArmRequest -ResourceId $definitionId -ApiVersion '2023-04-01'
         $script:initiativeDefinitionId = $definitionId
@@ -724,6 +729,7 @@ function Get-MigrationPlan {
         }
     }
 
+    # 作成先のID・名前・地域をまとめる一時項目。Azureへ送る設定値はstep1_copyで作る。
     $discovery = @{
         Storages = @()
         Dcr = $null
@@ -732,9 +738,8 @@ function Get-MigrationPlan {
     }
 
     # ---
-    # CSVにストレージ名があれば、旧診断設定のある地域ごとに名前を作る。旧診断設定がなければ東日本を使う。
-    # 名前の空きと、各地域でStandard_ZRSを使えるかを確認する。
-    # 作成先のID・名前・リージョンを、step1_copyで使うDiscovery.Storagesへ入れる。
+    # 5. 地域別のストレージ名を作り、名前が未使用か、その地域でStandard_ZRSを使えるか確認する。
+    # CSVにストレージ名がある場合だけ行い、旧診断設定が0件なら東日本を作成先にする。
     # ---
     if ($Target.StorageAccount) {
         $storageLocations = @($diagnosticSources.Location | Sort-Object -Unique)
@@ -773,9 +778,10 @@ function Get-MigrationPlan {
     }
 
     # ---
-    # 新DCR・関連付け・診断設定のIDを決め、同名の診断設定や追加枠の不足があれば止める。
-    # 作成する設定値と変更前の値は、step1_copyで用意する。
+    # 6. 新DCR・関連付け・診断設定の作成先IDを決める。
+    # 作業記録にない同名の新診断設定がある場合や、追加後に1リソース当たり5件を超える場合は止める。
     # ---
+    # 旧DCRの関連付けがあり、VM送信先がLogの場合だけ、新DCRと関連付けのIDを作る。
     $oldAssociations = @($plan.OldSettings | Where-Object Kind -eq 'Association')
     if ($oldAssociations.Count -gt 0 -and $Target.VmLogDestination -eq 'Log') {
         $dcrName = $Target.WorkspaceName -replace '^log', 'dcr'
@@ -796,6 +802,7 @@ function Get-MigrationPlan {
             $discovery.Associations += @{ Id = $associationId }
         }
     }
+    # 診断ログの送信を続ける行だけ、新診断設定のID・元の設定ID・送信先の地域を決める。
     if ($Target.LogDestination -in @('Storage', 'Log')) {
         foreach ($diagnostic in $diagnosticSources) {
             if ($diagnostic.Sources.Count -ne 1) {
@@ -810,6 +817,7 @@ function Get-MigrationPlan {
             if ($existing.Count -gt 0 -and $newId -notin @($Record.NewSettings.Id)) {
                 throw "新しい診断設定名が使用済みです: $newId"
             }
+            # 診断設定は1リソースにつき最大5件。新しく1件追加できるか、今の件数で判断する。
             if ($existing.Count -eq 0 -and $diagnostic.Settings.Count -ge 5) {
                 throw "診断設定を追加する空き枠がありません: $($diagnostic.ResourceId)"
             }

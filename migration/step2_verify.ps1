@@ -6,8 +6,8 @@ $results = @()
 $records = @()
 
 # ---
-# 作業記録の環境・移行元ワークスペース・CSVが、今回の指定と同じか確認する。
-# 現在の旧診断設定・旧DCR関連付けを取得し、記録にない追加や設定値の変更があればNGにする。
+# 1. 作業記録を読み、環境・移行元ワークスペース・CSVが今回と同じか確認する。
+# 続けて、現在の旧診断設定・旧DCR関連付けを取得する。
 # ---
 foreach ($target in $targets) {
     $subscriptionId = $target.SubscriptionId
@@ -16,8 +16,11 @@ foreach ($target in $targets) {
         if (-not $record) {
             throw 'step1の変更前記録がありません。'
         }
-        # step3の再実行にも使うため、削除済みの旧設定はNGにしない。
         $currentPlan = Get-MigrationPlan -Target $target -Record $record -OnlyOldSettings
+        # ---
+        # 2. 現在の旧設定を作業記録と比べ、記録にない追加や値の変更をNGにする。
+        # ---
+        # step3の再実行にも使うため、すでに削除した旧設定はNGにしない。
         foreach ($current in $currentPlan.OldSettings) {
             $saved = @($record.OldSettings | Where-Object Id -eq $current.Id)
             if ($saved.Count -ne 1 -or -not (Test-Configuration $current.Body $saved[0].Body -Exact)) {
@@ -25,7 +28,7 @@ foreach ($target in $targets) {
             }
         }
         # ---
-        # 保存先・送信設定・ポリシーの適用除外をAzureから取得し、作業記録に保存した設定値（Body）と比べる。
+        # 3. 保存先・新送信設定・適用除外をAzureから取得し、記録の設定値（Body）と比べる。
         # 値の違いや取得失敗はNGとして残し、ほかの設定の確認は続ける。
         # ---
         foreach ($resource in @($record.Destinations) + @($record.NewSettings)) {
@@ -72,8 +75,8 @@ foreach ($target in $targets) {
     }
 }
 # ---
-# 全サブスクリプションの結果と、NGの設定に指定するはずの値をverify_results.csvへ保存する。
-# NGが1件でもあれば、step3へ作業記録を返さずに止める。
+# 全サブスクリプションの結果と、NGになった設定へ指定する値をverify_results.csvへ保存する。
+# NGが1件でもあればエラーにし、step3へ作業記録を返さない。
 # ---
 $results | Export-Csv (Join-Path $PSScriptRoot 'verify_results.csv') -Encoding utf8BOM
 if ($results.Result -contains 'NG') {

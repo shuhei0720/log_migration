@@ -1,21 +1,23 @@
 ﻿#Requires -Version 7.0
 
 # ---
-# step2で全サブスクリプションの保存先・新設定を確認し、すべてOKなら削除に使う作業記録を受け取る。
-# 全サブスクリプションの旧DCR関連付けを削除してから、旧診断設定を削除する。
+# 1. step2で全サブスクリプションの保存先と新設定を確認する。
+# すべてOKの場合だけ、削除に使う作業記録を受け取る。
 # ---
 $records = @(& (Join-Path $PSScriptRoot 'step2_verify.ps1') -PassThru)
 . (Join-Path $PSScriptRoot 'common.ps1') -SkipCsv
 $resource = $null
+# ---
+# 2. 全サブスクリプションの旧DCR関連付けを削除し、その後に旧診断設定を削除する。
+# 各設定の削除直前にも、旧設定と新設定が作業記録の値と同じか確認する。
+# ---
 try {
     foreach ($kind in @('Association', 'Diagnostic')) {
         foreach ($record in $records) {
             $subscriptionId = $record.Target.SubscriptionId
             foreach ($resource in @($record.OldSettings | Where-Object Kind -eq $kind)) {
-                # ---
                 # 削除する旧設定を読み直し、作業記録と同じ値か確認する。削除済みなら次へ進む。
                 # 値が変わっていたら、ほかのサブスクリプションも含めて以降の削除を止める。
-                # ---
                 $current = Invoke-ArmRequest -Resource $resource -Optional
                 if (-not $current) {
                     continue
@@ -24,10 +26,8 @@ try {
                 if (-not (Test-Configuration $currentBody $resource.Body -Exact)) {
                     throw '削除直前に旧設定が変更されています。'
                 }
-                # ---
                 # 送信を続ける場合は、同じリソースの新診断設定・新DCR関連付けが作業記録どおりか確認する。
                 # None・空欄は送信終了の指定なので、新設定を確認せず旧設定を削除する。
-                # ---
                 $newId = ''
                 if ($kind -eq 'Diagnostic' -and $record.Target.LogDestination -in @('Storage', 'Log')) {
                     $parentId = $resource.Id -replace "$diagnosticPath/[^/]+$", ''
@@ -55,10 +55,8 @@ try {
     }
 }
 catch {
-    # ---
-    # 削除できなかった旧設定のID・理由・記録した設定値をdelete_failures.csvへ保存する。
+    # 削除を止めた旧設定のID・理由・保存した設定値をdelete_failures.csvへ残す。
     # ほかのサブスクリプションも含め、残りの削除は実行しない。
-    # ---
     [pscustomobject]@{
         SubscriptionId = $subscriptionId
         ResourceId = $resource.Id

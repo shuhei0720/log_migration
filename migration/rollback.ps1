@@ -5,8 +5,8 @@ $subscriptionFilterProvided = $PSBoundParameters.ContainsKey('SubscriptionIds')
 . (Join-Path $PSScriptRoot 'common.ps1') -SkipCsv
 
 # ---
-# 環境別JSONから、旧設定・新設定・変更前の値（Before）を読む。CSVは使わない。
-# サブスクリプションIDとファイル名を比べ、環境・移行元の指定も作業記録と同じか確認する。
+# 1. 切り戻すサブスクリプションの作業記録をJSONから読み込む。CSVは使わない。
+# 記録のサブスクリプションIDとファイル名を比べ、環境と移行元も今回の指定と同じか確認する。
 # ---
 $recordFiles = @(Get-ChildItem $recordDirectory -Filter '*.json')
 if ($subscriptionFilterProvided) {
@@ -31,10 +31,10 @@ if (-not $records.Count) {
 $failurePath = Join-Path $PSScriptRoot 'rollback_failures.csv'
 try {
     # ---
-    # Azureの現在値を、作業記録の設定値（Body）・変更前の値（Before）と比べる。
-    # どちらとも違う変更があれば、復元を始めずに止める。設定がない場合は続行する。
-    # 残す新設DCR本体と元からある適用除外は、この確認から外す。
+    # 2. 切り戻す設定の現在値を調べ、記録後に別の変更が入っていないか確認する。
+    # 保存した設定値（Body）・作業前の値（Before）のどちらとも違えば、Azureへ書き込む前に止める。
     # ---
+    # 設定がない場合も許可する。今回作成したDCR本体と元からある適用除外は、残すため比較しない。
     foreach ($record in $records) {
         $subscriptionId = $record.Target.SubscriptionId
         foreach ($setting in @($record.OldSettings) + @($record.NewSettings)) {
@@ -51,8 +51,8 @@ try {
     }
 
     # ---
-    # 全サブスクリプションの旧DCR関連付けと旧診断設定を戻してから、新設定を変更前へ戻す。
-    # 旧設定の復元に失敗したら、新設定を残して止める。
+    # 3. 全対象の旧DCR関連付けと旧診断設定を復元してから、新設定を作業前の状態へ戻す。
+    # 旧設定の復元に失敗したら、新設定を残して止める。保存先と保存済みログも残す。
     # ---
     foreach ($phase in @('Old', 'New')) {
         $kinds = @('Association', 'Diagnostic')
@@ -70,9 +70,7 @@ try {
                     if ($setting.KeepOnRollback -or ($kind -eq 'Exemption' -and $setting.Before)) {
                         continue
                     }
-                    # ---
-                    # 旧設定は保存した設定値（Body）へ、新設定は変更前の値（Before）へ戻す。すでに同じなら書き換えない。
-                    # ---
+                    # 旧設定は削除前のBody、新設定は作業前のBeforeへ戻す。すでに同じ値なら変更しない。
                     $expectedBody = $setting.Body
                     if ($phase -eq 'New') {
                         $expectedBody = $setting.Before
@@ -86,9 +84,7 @@ try {
                         -not (Test-Configuration $current $setting.Body -Exact))) {
                         throw "切り戻し直前に設定が変わっています: $($setting.Id)"
                     }
-                    # ---
-                    # 診断設定は1リソースにつき最大5件。復元する空きがなければ、ほかの設定を消さずに止める。
-                    # ---
+                    # 診断設定が上限5件に達していたら、ほかの設定を消さずに止める。旧設定を追加できないため。
                     if ($kind -eq 'Diagnostic' -and $expectedBody -and -not $current) {
                         $listId = $setting.Id -replace '/diagnosticSettings/[^/]+$', '/diagnosticSettings'
                         $existing = Invoke-ArmRequest -ResourceId $listId -ApiVersion $apiVersions.Diagnostic
@@ -96,10 +92,8 @@ try {
                             throw "旧設定を戻す空きがありません: $($setting.Id)"
                         }
                     }
-                    # ---
                     # 作業開始前に存在しなかった新設定は削除する。もともとあった設定は、記録した値で作成・更新する。
                     # Azureから読み直して戻すはずの値と比べ、違っていれば残りの切り戻しを止める。
-                    # ---
                     if ($null -eq $expectedBody) {
                         $null = Invoke-ArmRequest -Resource $setting -Method Delete
                     }
@@ -117,9 +111,7 @@ try {
     }
 }
 catch {
-    # ---
-    # 失敗したサブスクリプション・設定ID・理由をrollback_failures.csvへ保存する。再実行では、戻し終えた設定を省く。
-    # ---
+    # 復元を止めたサブスクリプション・設定ID・理由をrollback_failures.csvへ保存する。
     [pscustomobject]@{
         SubscriptionId = $subscriptionId
         ResourceId = $setting.Id

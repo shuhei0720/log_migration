@@ -648,5 +648,163 @@
       "migration/precheck.ps1": "aaefa70c4fa557bd3da3886004f23d47c11c703840ccccd40f85d6134fcca9a3",
       "tools/create_targets.ps1": "302ee17c66072914743ad3f54b769a818b42683a2cb314c703e6b75c68c62659"
     }
-  }
+  },
+  "CommentReview": {
+    "Status": "PASS",
+    "RecordedAt": "2026-11-26T14:55:42+09:00",
+    "BeforeCommit": "ab7ac8f376d89b7de5bf88bd3b82c8e7fe54f656",
+    "SourceChecks": [
+      {
+        "AfterSha256": "36fd3d650bfaff8574fcef948a9ee66d84558e5fc8e2efc322d14ec70c848a93",
+        "ExecutableTokensAndStatementBoundariesIdentical": true,
+        "RequiredPSVersionUnchanged": true,
+        "BeforeSha256": "73d84d7ec33b98e815bfe2f3184a7af57d33ec434563b0c171762663a428c9de",
+        "Path": "migration/common.ps1",
+        "SyntaxValid": true,
+        "Functions": [
+          {
+            "ParameterCount": 7,
+            "Name": "Invoke-ArmRequest",
+            "DescriptionPresent": true
+          },
+          {
+            "ParameterCount": 4,
+            "Name": "Test-Configuration",
+            "DescriptionPresent": true
+          },
+          {
+            "ParameterCount": 2,
+            "Name": "Get-WritableBody",
+            "DescriptionPresent": true
+          },
+          {
+            "ParameterCount": 1,
+            "Name": "Read-MigrationRecord",
+            "DescriptionPresent": true
+          },
+          {
+            "ParameterCount": 3,
+            "Name": "Get-MigrationPlan",
+            "DescriptionPresent": true
+          }
+        ]
+      },
+      {
+        "AfterSha256": "56c53301dedf238e8c164d2a32637f0c8d8eb7e94f4fb6cba584da1c4817030f",
+        "ExecutableTokensAndStatementBoundariesIdentical": true,
+        "RequiredPSVersionUnchanged": true,
+        "BeforeSha256": "aaefa70c4fa557bd3da3886004f23d47c11c703840ccccd40f85d6134fcca9a3",
+        "Path": "migration/precheck.ps1",
+        "SyntaxValid": true,
+        "Functions": []
+      },
+      {
+        "AfterSha256": "341959275fb165e25a359e3743a5ba425817956c7f71e6f2c91656dcb66fc58e",
+        "ExecutableTokensAndStatementBoundariesIdentical": true,
+        "RequiredPSVersionUnchanged": true,
+        "BeforeSha256": "07c0c3869e17fe07a5f80e2ee7ba95a200a7a129581cffb95ac667bafbab7253",
+        "Path": "migration/step1_copy.ps1",
+        "SyntaxValid": true,
+        "Functions": []
+      },
+      {
+        "AfterSha256": "62b4eb95fb8258b180d512743158e569080bdc0e221a4f94c71fa15b9a9003a4",
+        "ExecutableTokensAndStatementBoundariesIdentical": true,
+        "RequiredPSVersionUnchanged": true,
+        "BeforeSha256": "819c7530a02f0511ebf9ff705d043c28edd1604bb38002a3ff2cd9008825b0ea",
+        "Path": "migration/step2_verify.ps1",
+        "SyntaxValid": true,
+        "Functions": []
+      },
+      {
+        "AfterSha256": "e0c40b1ab8cf9aef1b4f8200cad6714552cf5c444e08d667d491428a448716bb",
+        "ExecutableTokensAndStatementBoundariesIdentical": true,
+        "RequiredPSVersionUnchanged": true,
+        "BeforeSha256": "a6acfc22414a07afa3add78d7e255d3a582cb140a7b7207652a797a5bd9791c7",
+        "Path": "migration/step3_delete.ps1",
+        "SyntaxValid": true,
+        "Functions": []
+      },
+      {
+        "AfterSha256": "103f7b83d800514ec78bb22197ce2daef0e16455b131c920b866962f8a880398",
+        "ExecutableTokensAndStatementBoundariesIdentical": true,
+        "RequiredPSVersionUnchanged": true,
+        "BeforeSha256": "ff3914215092b6db483a671b3319932c4f15765219b80295f93f7b1057847a91",
+        "Path": "migration/rollback.ps1",
+        "SyntaxValid": true,
+        "Functions": []
+      },
+      {
+        "AfterSha256": "fed76252936f8ae66ebb432b109dca49ac8ceeb53a9b16a5e48a242ce46b53fa",
+        "ExecutableTokensAndStatementBoundariesIdentical": true,
+        "RequiredPSVersionUnchanged": true,
+        "BeforeSha256": "302ee17c66072914743ad3f54b769a818b42683a2cb314c703e6b75c68c62659",
+        "Path": "tools/create_targets.ps1",
+        "SyntaxValid": true,
+        "Functions": [
+          {
+            "ParameterCount": 1,
+            "Name": "Get-AzureList",
+            "DescriptionPresent": true
+          }
+        ]
+      },
+      {
+        "AfterSha256": "46fa581fb4d82ca12a5c6a5063eaa7ad6b698c52ea1e16daf0f2f9ba5020612c",
+        "ExecutableTokensAndStatementBoundariesIdentical": true,
+        "RequiredPSVersionUnchanged": true,
+        "BeforeSha256": "c63c811859fed6ac7e4e1a345d36c41ee35fceddf2c13311bbb9025ec0e6bfb9",
+        "Path": "test-environment/resource_types_fixture.ps1",
+        "SyntaxValid": true,
+        "Functions": [
+          {
+            "ParameterCount": 6,
+            "Name": "Invoke-Arm",
+            "DescriptionPresent": true
+          },
+          {
+            "ParameterCount": 0,
+            "Name": "Save-State",
+            "DescriptionPresent": true
+          },
+          {
+            "ParameterCount": 2,
+            "Name": "Wait-Resource",
+            "DescriptionPresent": true
+          }
+        ]
+      }
+    ],
+    "NativeFunctionHelpCount": 9,
+    "NativeParameterHelpCount": 26,
+    "StatementBoundariesUnchanged": true,
+    "ProtectedUserAuthoredLines": 7,
+    "ReadmeStep1StagesMatched": 5,
+    "GlossaryAdded": false,
+    "LearningReferences": {
+      "Status": "PASS",
+      "SourceRanges": 28,
+      "SearchAnchors": 54,
+      "DescriptionLinks": 8,
+      "LocalLinks": 40,
+      "GlossaryAdded": false
+    },
+    "MarkdownLinks": 85,
+    "PowerShellExamplesParsed": 22,
+    "AzureRequests": 0,
+    "ReplaySuitesRerun": false
+  },
+  "CurrentRuntimeCodeHashes": {
+    "migration/common.ps1": "36fd3d650bfaff8574fcef948a9ee66d84558e5fc8e2efc322d14ec70c848a93",
+    "migration/precheck.ps1": "56c53301dedf238e8c164d2a32637f0c8d8eb7e94f4fb6cba584da1c4817030f",
+    "migration/rollback.ps1": "103f7b83d800514ec78bb22197ce2daef0e16455b131c920b866962f8a880398",
+    "migration/step1_copy.ps1": "341959275fb165e25a359e3743a5ba425817956c7f71e6f2c91656dcb66fc58e",
+    "migration/step2_verify.ps1": "62b4eb95fb8258b180d512743158e569080bdc0e221a4f94c71fa15b9a9003a4",
+    "migration/step3_delete.ps1": "e0c40b1ab8cf9aef1b4f8200cad6714552cf5c444e08d667d491428a448716bb",
+    "test-environment/resource_types_fixture.ps1": "46fa581fb4d82ca12a5c6a5063eaa7ad6b698c52ea1e16daf0f2f9ba5020612c",
+    "tests/create-targets-smoke.ps1": "718b144e1831720522f3ad415ade2c4ec70a57a1e0fd6cf1124de1de668e98c1",
+    "tests/migration-smoke.ps1": "032bee0664fd352c542bb8ca47ca6d1c9853567e9a08cba4973f2248a92cc977",
+    "tools/create_targets.ps1": "fed76252936f8ae66ebb432b109dca49ac8ceeb53a9b16a5e48a242ce46b53fa"
+  },
+  "CodeHashNotes": "MigrationReplay・CsvGenerator・PromotionEquivalence・RuntimeCodeHashes・ShippingLayout・Documentsはコメント見直し前の確認記録。CurrentRuntimeCodeHashesとCommentReviewは見直し後の確認。過去の試験時のSHAは保持している。"
 }

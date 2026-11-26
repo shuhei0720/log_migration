@@ -14,7 +14,7 @@ param(
 )
 
 # ---
-# テストする2つのサブスクリプションと、使う既存VNet、作成先のリージョンを設定する。
+# 準備：テストする2つのサブスクリプション、既存VNet、配置先の地域を指定する。
 # VNetとサブネットの設定は変えない。NSGやルートテーブルも関連付けない。
 # Databricksと旧Redisは、SkipTypesで除外している。
 # ---
@@ -44,12 +44,32 @@ $state = $null
 $accessToken = $null
 $tokenExpiry = [DateTimeOffset]::MinValue
 
-# ---
-# AzureのAPIを呼び、一覧は最後のページまで取得する。
-# Optionalは存在確認に使い、404ならnullを返す。AllowErrorはAPIのエラー内容を返す。
-# 作成や更新の前に、操作先のIDをrun-ledger.jsonへ記録する。
-# ---
 function Invoke-Arm {
+    <#
+    .SYNOPSIS
+    Azureへ操作を要求し、応答を返す。
+    .DESCRIPTION
+    呼出先URLと認証情報を用意してAzure APIへ要求する。一時的なHTTPエラーは初回を含め4回まで試す。
+    一覧のデータが複数ページなら続きも取得し、応答のvalue（一覧の項目）へ全件をまとめる。
+    GET・HEAD以外は、送信前に操作先をrun-ledger.jsonへ記録し、応答後に受付結果を残す。
+    .PARAMETER Method
+    取得はGET、作成・更新はPUT、利用登録はPOSTを渡す。
+    .PARAMETER Id
+    操作するリソースID、またはAzure管理APIのURL。
+    .PARAMETER ApiVersion
+    使用するAPIの版。IdのURLにapi-versionがあれば、その指定を使う。
+    .PARAMETER Body
+    作成・更新する設定値。省略した場合は、設定値を送らない。
+    .PARAMETER Optional
+    存在を調べるときに付ける。HTTP 404をエラーにせず、$nullを返す。
+    .PARAMETER AllowError
+    HTTPエラーも調べたいときに付ける。処理を止めず、error項目を持つ応答を返す。
+    .OUTPUTS
+    Azureの応答を持つ辞書。本文がない場合と、Optionalで404だった場合は$null。
+    #>
+    # ---
+    # 接続先を組み立て、Azureを変更する要求は送信前に操作先を記録する。
+    # ---
     param($Method, $Id, $ApiVersion, $Body = $null, [switch]$Optional, [switch]$AllowError)
     $uri = if ($Id.StartsWith('https://')){
         $Id
@@ -87,6 +107,9 @@ function Invoke-Arm {
         $state.operations+=, $operation
         Save-State
     }
+    # ---
+    # 認証して要求を送り、一覧が複数ページに分かれていれば最後まで取得する。
+    # ---
     $items = @()
     $page = $null
     $listStarted = $false
@@ -171,6 +194,9 @@ function Invoke-Arm {
             throw 'Unexpected ARM nextLink.'
         }
     } while ($uri)
+    # ---
+    # Azureに要求が受け付けられたことを記録し、取得した応答を返す。
+    # ---
     if ($operation){
         $operation.status = 'ACCEPTED'
         Save-State
@@ -181,20 +207,35 @@ function Invoke-Arm {
     return $page
 }
 
-# ---
-# リソースのIDと操作結果をrun-ledger.jsonへ保存する。
-# 一時ファイルを書き終えてから置き換え、書込み途中の内容を読ませない。
-# ---
 function Save-State {
+    <#
+    .SYNOPSIS
+    作成計画と操作結果をrun-ledger.jsonへ保存する。
+    .DESCRIPTION
+    引数は使わず、作成計画や操作結果を持つ$stateを$StatePathへ保存する。
+    一時ファイルへ書き終えてから置き換え、書込み途中の内容が作業記録として残るのを防ぐ。
+    .OUTPUTS
+    なし。
+    #>
     [IO.File]::WriteAllText(($StatePath + '.pending'), ($state | ConvertTo-Json -Depth 100), $Utf8)
     Move-Item ($StatePath + '.pending') $StatePath -Force
 }
 
-# ---
-# 作成完了を待つ。失敗やキャンセルが返った場合は止める。
-# 完了を確認できないまま90分を過ぎた場合も止める。
-# ---
 function Wait-Resource {
+    <#
+    .SYNOPSIS
+    リソースの作成状態を調べ、完了と判定した応答を返す。
+    .DESCRIPTION
+    10秒間隔で取得し直す。作成状態を返すリソースはSucceededになるまで待つ。
+    作成状態を返さないリソースは、取得できたら完了と判定する。
+    Failed・Canceledを受け取った場合や、90分以内に完了を確認できない場合はエラーにする。
+    .PARAMETER Id
+    作成完了を確認するリソースID。
+    .PARAMETER ApiVersion
+    状態の取得に使うAPIの版。
+    .OUTPUTS
+    完了と判定したAzureの応答を持つ辞書。
+    #>
     param($Id, $ApiVersion)
     $limit = [DateTimeOffset]::UtcNow.AddMinutes(90)
     do {
@@ -217,9 +258,8 @@ function Wait-Resource {
 }
 
 # ---
-# Plan: 作成するリソースを選び、名前・ID・作成先を決める。
-# サブスクリプションごとに1つのリソースグループを使い、その中で地域を分ける。
-# bundleは「サブスクリプションとリージョンの組」で、A-R1など4組を使う。
+# 1. Plan・Deploy：作成するリソースを選び、名前・ID・配置先を決める。
+# サブスクリプションごとに1つのグループを使う。配置先の一覧（bundles）は、サブスクリプションと地域の組。
 # ---
 if ($Action -in @('Plan', 'Deploy')){
     $keys = @()
@@ -260,6 +300,7 @@ if ($Action -in @('Plan', 'Deploy')){
             throw ('Skipped dependency is required: ' + $type.resourceType)
         }
     }
+    # 既存VNetの参照と、A-R1など4組の配置先をまとめる。ここではAzureへ接続しない。
     $networks = @()
     $bundles = @()
     $resources = @()
@@ -412,8 +453,8 @@ if ($Action -in @('Plan', 'Deploy')){
 }
 
 # ---
-# Deploy: 作成先のグループ名と既存VNetの設定を確認してから、リソースを作る。
-# 同名のリソースグループがあれば、既存のリソースを上書きしないように止める。
+# 2. Deploy：作成先のグループ名と、既存VNet・サブネットの設定を確認する。
+# 同名グループや必要なネットワーク設定の不足があれば、Azureを変更する前に止める。
 # ---
 $groups = @($state.plan.bundles | Group-Object subscriptionId | ForEach-Object { $_.Group[0] })
 if ($Action -eq 'Deploy'){
@@ -468,7 +509,9 @@ if ($Action -eq 'Deploy'){
         }
         $state.managedGroups += @{ id = $groupId;ownerId = $resource.id;beforeAbsent = $true }
     }
-    # 作成するサービスごとに利用登録を確認し、未登録なら登録が終わるまで待つ。
+    # ---
+    # 3. Deploy：必要なAzureサービスを利用登録し、テスト用リソースグループを作る。
+    # ---
     foreach ($subscription in $SubscriptionIds){
         $needed = @('Microsoft.Insights', 'Microsoft.OperationalInsights', 'Microsoft.Resources') + @($state.resources | Where-Object {
                 $_.id.StartsWith('/subscriptions/' + $subscription + '/')
@@ -503,6 +546,7 @@ if ($Action -eq 'Deploy'){
     foreach ($network in $state.existingNetworks){
         $networkRefs[$network.role] = @{vnetId = $network.vnetId;subnets = $network.subnets}
     }
+    # VM・データベース用のパスワードを作る。作業記録には保存せず、送信後に変数を空にする。
     $random = [Security.Cryptography.RandomNumberGenerator]::Create()
     $bytes = [byte[]]::new(32)
     try {
@@ -516,8 +560,11 @@ if ($Action -eq 'Deploy'){
         throw 'Azure account lookup failed.'
     }
     $tenantId = $account.tenantId
-    # AKS用マネージドIDを先に作り、サブネットを使う権限を付けてから残りを作る。
-    # 2段階目にも先に作ったリソースを含め、テンプレートの依存関係を崩さない。
+    # ---
+    # 4. Deploy：リソースを作り、Azureの作成完了を確認する。
+    # AKS用マネージドIDとサブネットの利用権限を先に用意し、その後で残りを作る。
+    # ---
+    # 後半にも作成済みの定義を含め、テンプレートが依存先を参照できるようにする。
     foreach ($phase in @('foundation', 'resources')){
         $tickets = @()
         foreach ($bundle in $state.plan.bundles){
@@ -589,8 +636,7 @@ if ($Action -eq 'Deploy'){
 }
 
 # ---
-# Capture: 作成先のグループから、実際に存在するリソースのIDを取得する。
-# Azureが別に作った管理用グループも、後片付けで確認できるように記録する。
+# 5. Deploy・Capture：実在するリソースのIDと、後片付けに必要な管理用グループを記録する。
 # ---
 if ($Action -in @('Deploy', 'Capture')) {
     foreach ($bundle in $groups) {
@@ -599,6 +645,7 @@ if ($Action -in @('Deploy', 'Capture')) {
         if (-not $group) {
             continue
         }
+        # 別の作業のグループを読み取らないよう、作成時のRunIdとタグを比べる。
         if ($group.tags.fixtureRun -cne $RunId) {
             throw ('Owned resource-group tag changed: ' + $groupId)
         }
@@ -633,8 +680,8 @@ if ($Action -in @('Deploy', 'Capture')) {
 }
 
 # ---
-# Capture: 各リソースと子リソース、既存VNetの診断設定と、出力できるログの種類を調べる。
-# 旧設定は会社ポリシーが作る。取得に成功しても、診断設定が付いているとは限らない。
+# 6. Deploy・Capture：各リソース・子リソース・既存VNetの診断設定と、出力できるログ項目を取得する。
+# 旧設定は会社ポリシーが作る。取得成功は、旧診断設定が付いていることを意味しない。
 # ---
 if ($Action -in @('Deploy', 'Capture')) {
     $candidates = @($state.resources)

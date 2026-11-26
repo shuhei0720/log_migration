@@ -2,8 +2,8 @@
 . (Join-Path $PSScriptRoot 'common.ps1')
 
 # ---
-# 旧ワークスペース宛ての診断設定と、旧データ収集ルール（DCR）への関連付けを探す。
-# 保存先の名前・診断設定の空き枠・ポリシーを確認する。Azureの設定は変えない。
+# 1. サブスクリプションごとに旧設定を探し、作成前の条件を確認する。
+# 保存先の名前、診断設定の上限5件、指定ポリシーの適用を調べる。Azureは変更しない。
 # ---
 $results = foreach ($target in $targets) {
     $subscriptionId = $target.SubscriptionId
@@ -24,7 +24,8 @@ $results = foreach ($target in $targets) {
     }
 }
 # ---
-# サブスクリプションごとのOK/NGと理由をprecheck_results.csvへ保存する。NGの理由を直してからstep1へ進む。
+# 2. 各サブスクリプションのOK/NGと理由をprecheck_results.csvへ保存する。
+# NGが一つでもあれば止める。理由を直してからstep1を実行する。
 # ---
 $results | Export-Csv (Join-Path $PSScriptRoot 'precheck_results.csv') -Encoding utf8BOM
 if ($results.Result -contains 'NG') {
