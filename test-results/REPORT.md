@@ -1,5 +1,21 @@
 # 検証結果
 
+## Windows版Azure CLIへの引数の渡し方を修正（2026-11-26）
+
+空白のない`to_string(@)`をPowerShellが引用符なしで渡し、Windowsのバッチ内で括弧が構文として解釈される問題を確認しました。queryを`to_string( @ )`へ変更し、次ページURLの`&`もWindowsのbatch経由に限って引用符で保護します。
+
+|確認|結果|
+|---|---|
+|PowerShell 7.5.4の引数生成|Legacy・Windows両モードで、新queryが二重引用符付きになることを確認|
+|cmdパーサ|Wineで旧queryの括弧エラーと、裸URLの分割を再現。修正後はURL・query・後続の`--output tsv`を保持|
+|CSV回帰試験|7シナリオ・55判定成功。既存54判定と、引用符を残すための空白を確認する1判定|
+|日本語JSON|実CLIのCP932出力をUTF-8として受け取る条件でも、新queryで元の日本語タグを保持|
+|queryの意味|日本語等を含む6種類のJSONと、実CLIのversion・account list・account showで旧新の値が一致|
+
+実Windows OSでの実行はしていません。実PowerShellの引数生成とWineのcmdパーサを組み合わせた確認です。[再現条件・結果・コードのSHA](WINDOWS_CLI_FIX.json)を保存しています。Azureの設定変更・リソース作成は0件です。
+
+移行処理の変更は同値なCLI queryの空白だけです。作成・確認・削除・切り戻しの処理と設定値は変わらないため、下記96ケースは再実行していません。
+
 ## Log Analytics自身の診断設定と、既存保存先の再利用（2026-11-26）
 
 移行先Log Analytics自身にも、CSVに従う診断設定を追加しました。有効にするのは`allLogs`だけです。既存のRG・Log Analytics・ストレージは、同じID・同じ地域なら設定を変更せず再利用します。

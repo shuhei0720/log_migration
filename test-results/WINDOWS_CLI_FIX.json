@@ -1,0 +1,398 @@
+{
+  "Status": "PASS",
+  "RecordedAt": "2026-11-26T09:19:58.961671+00:00",
+  "Problem": "Windows PowerShell 7.5.4からCSVを作成すると、az.cmdの引数解釈で--output was unexpected at this time.となる。",
+  "Cause": "空白のないto_string(@)はPowerShellが引用符なしで渡し、Windowsバッチ内で括弧が構文として解釈される。nextLinkの&も引用なしでは区切りとして解釈される。",
+  "Fix": [
+    "queryをto_string( @ )にし、PowerShellに二重引用符付きで渡させる。意味とASCIIエスケープ出力は同一。",
+    "Windowsでaz.cmd/az.batを使う場合だけURLを引用符で保護し、nextLinkの&を保持する。"
+  ],
+  "NativeWindowsOsTested": false,
+  "AzureResourcesCreated": 0,
+  "AzureSettingsChanged": 0,
+  "SourceScope": {
+    "Status": "PASS",
+    "AzureRequests": 0,
+    "AllowedChanges": [
+      "query内の空白追加3箇所",
+      "Windowsのbatch経由に限ったURLの引用符保護"
+    ],
+    "Scripts": [
+      {
+        "Sha256": "ca38e5010cc2beb695f8b5cef1ba96d0b4c64b2007433d682ce1c7eec281f2e3",
+        "Path": "tools/create_targets.ps1",
+        "SyntaxValid": true,
+        "OnlyAllowedChanges": true
+      },
+      {
+        "Sha256": "d5876144d254a722141551616ddf1f87dd5d15087ee49479d249029f03df1ba6",
+        "Path": "migration/common.ps1",
+        "SyntaxValid": true,
+        "OnlyAllowedChanges": true
+      },
+      {
+        "Sha256": "0220eaa3cb900a73725a88f54d5a1a01d488600b1dc8d723523240a46f151c40",
+        "Path": "test-environment/resource_types_fixture.ps1",
+        "SyntaxValid": true,
+        "OnlyAllowedChanges": true
+      }
+    ]
+  },
+  "CsvRegression": {
+    "Status": "PASS",
+    "PowerShell": "7.5.4",
+    "Scenarios": 7,
+    "Assertions": 55,
+    "Existing54AssertionsMaintained": true,
+    "AzureRequests": 0,
+    "QueryWhitespaceCheckAdded": true,
+    "OriginalWhitespaceFreeQueryRejected": true,
+    "OriginalWhitespaceFreeQueryExitCode": 1,
+    "OriginalWhitespaceFreeQueryFailure": "Windowsのaz.cmdへ括弧を保護して渡すための空白がqueryにありません。",
+    "JapaneseJsonPreserved": true,
+    "ExistingCsvPreservation": "PASS",
+    "PaginationAndFailureBehavior": "PASS",
+    "NativeWindowsRun": false,
+    "Scope": "Azure CLIをPowerShell関数で置き換えたCSV生成回帰試験。最終ソースで日本語JSON・ページング・既存CSV保持を確認。WindowsバッチへのURL引用とcmd.exeの解釈は別の境界試験。",
+    "Files": {
+      "tools/create_targets.ps1": "ca38e5010cc2beb695f8b5cef1ba96d0b4c64b2007433d682ce1c7eec281f2e3",
+      "tests/create-targets-smoke.ps1": "0dc2887f4753d4eb49f56f43688baedae522f3a74e0d7a5d7b70fca3a1c4bdd2"
+    },
+    "FinalGeneratorSourceRegressionPassed": true,
+    "WindowsBatchUrlGuardExercisedInThisMockSuite": false
+  },
+  "NativePowerShellArgumentBinding": {
+    "Status": "PASS",
+    "PowerShellVersion": "7.5.4",
+    "Host": "Linux",
+    "ActualNativeWindowsRun": false,
+    "Method": "Trace-Command ParameterBinding with an executable .cmd fixture; actual PowerShell native command argument builder",
+    "Cases": [
+      {
+        "Mode": "Legacy",
+        "Query": "old",
+        "ActualNativeCommandLine": "--query to_string(@) --output tsv",
+        "Quoted": false,
+        "Trace": "TRACE-Legacy-old.log"
+      },
+      {
+        "Mode": "Legacy",
+        "Query": "spaced",
+        "ActualNativeCommandLine": "--query \"to_string( @ )\" --output tsv",
+        "Quoted": true,
+        "Trace": "TRACE-Legacy-spaced.log"
+      },
+      {
+        "Mode": "Windows",
+        "Query": "old",
+        "ActualNativeCommandLine": "--query to_string(@) --output tsv",
+        "Quoted": false,
+        "Trace": "TRACE-Windows-old.log"
+      },
+      {
+        "Mode": "Windows",
+        "Query": "spaced",
+        "ActualNativeCommandLine": "--query \"to_string( @ )\" --output tsv",
+        "Quoted": true,
+        "Trace": "TRACE-Windows-spaced.log"
+      }
+    ],
+    "NeedQuotesReflection": [
+      {
+        "Query": "to_string(@)",
+        "NativeArgumentString": "to_string(@)",
+        "ArgumentList": [
+          "to_string(@)"
+        ],
+        "NeedQuotes": false
+      },
+      {
+        "Query": "to_string( @ )",
+        "NativeArgumentString": "\"to_string( @ )\"",
+        "ArgumentList": [
+          "to_string( @ )"
+        ],
+        "NeedQuotes": true
+      }
+    ],
+    "AzureRequests": 0
+  },
+  "WineCmdParser": {
+    "Status": "PASS",
+    "WineVersion": "10.0",
+    "NativeWindowsOS": false,
+    "PowerShellBinderVersion": "7.5.4",
+    "AzureRequests": 0,
+    "AzureMutations": 0,
+    "SourceFilesEdited": 0,
+    "SystemPackagesInstalled": 0,
+    "PrivateFilesOnly": true,
+    "OfficialAzureCliBatchSha256": "6aced45fdbf5835d9608e936ccd5b451ee5af4226b00bf168f6aab4d7668e6c7",
+    "RawEvidence": "WINE_CMD_PARSER_QA.json",
+    "Claims": {
+      "UnquotedOriginalQueryRejectedByBatchParser": true,
+      "WhitespaceQueryIsOneArgument": true,
+      "WhitespaceQueryPreservesFollowingOutputArguments": true,
+      "UnquotedNextLinkUrlIsSplitAtAmpersand": true,
+      "QuotedUrlAndWhitespaceQueryAccepted": true,
+      "QuotedUrlValueAfterCmdParsingExactlyMatchesOriginal": true,
+      "QuotedUrlPreservesQueryAndOutputArguments": true
+    },
+    "Limitations": [
+      "Wine cmd implementation; not native Windows OS execution.",
+      "Azure CLI Python execution replaced by harmless echo and cmd argument dumps; no Azure HTTP calls.",
+      "Binder command line written to ASCII batch driver to avoid extra quoting by Wine Unix argv.",
+      "Test URL contains &, $, =; percent-escaped URLs were not tested with this driver method."
+    ],
+    "Cases": [
+      {
+        "Name": "Query1",
+        "ExitCode": 255
+      },
+      {
+        "Name": "Query2",
+        "ExitCode": 0
+      },
+      {
+        "Name": "UrlOriginalQuery2",
+        "ExitCode": 1
+      },
+      {
+        "Name": "UrlLiteralQuotesQuery1",
+        "ExitCode": 255
+      },
+      {
+        "Name": "UrlLiteralQuotesQuery2",
+        "ExitCode": 0
+      }
+    ]
+  },
+  "WineCmdRawCases": {
+    "Wine": "10.0",
+    "NativeWindows": false,
+    "Method": "PS7.5.4 NativeBinder emitted command line written verbatim to ASCII .cmd driver, avoiding Wine Unix-argv quoting of embedded quotes. Official az.bat IF/%* retained; Python execution replaced by safe echo+argument dumps.",
+    "Batch": "@echo off\nsetlocal\n\nSET PYTHONPATH=%~dp0\\src;%PYTHONPATH%\nSET AZ_INSTALLER=PIP\n\nIF EXIST \"%~dp0\\python.exe\" (\n  echo EXECUTED %*\n  echo URL=\"%~5\"\n  echo QUERY=\"%~7\"\n  echo OUTPUTFLAG=\"%~8\"\n  echo OUTPUTVALUE=\"%~9\"\n) ELSE (\n  echo EXECUTED %*\n  echo URL=\"%~5\"\n  echo QUERY=\"%~7\"\n  echo OUTPUTFLAG=\"%~8\"\n  echo OUTPUTVALUE=\"%~9\"\n)\n",
+    "AzureRequests": 0,
+    "Results": [
+      {
+        "Name": "Query1",
+        "Query": "to_string(@)",
+        "InputUrl": null,
+        "NativeCommandLineInDriver": "Z:\\tmp\\log-migration-windows-cli-20261126\\wine\\parser-raw-drivers\\az.cmd rest --method get --url https://example.invalid/ --query to_string(@) --output tsv --only-show-errors",
+        "ExitCode": 255,
+        "Stdout": "",
+        "Stderr": "Syntax error: unexpected (\r\n"
+      },
+      {
+        "Name": "Query2",
+        "Query": "to_string( @ )",
+        "InputUrl": null,
+        "NativeCommandLineInDriver": "Z:\\tmp\\log-migration-windows-cli-20261126\\wine\\parser-raw-drivers\\az.cmd rest --method get --url https://example.invalid/ --query \"to_string( @ )\" --output tsv --only-show-errors",
+        "ExitCode": 0,
+        "Stdout": "EXECUTED rest --method get --url https://example.invalid/ --query \"to_string( @ )\" --output tsv --only-show-errors\r\nURL=\"https://example.invalid/\"\r\nQUERY=\"to_string( @ )\"\r\nOUTPUTFLAG=\"--output\"\r\nOUTPUTVALUE=\"tsv\"\r\n",
+        "Stderr": ""
+      },
+      {
+        "Name": "UrlOriginalQuery1",
+        "Query": "to_string(@)",
+        "InputUrl": "https://management.azure.com/x?api-version=2020&$skiptoken=token",
+        "NativeCommandLineInDriver": "Z:\\tmp\\log-migration-windows-cli-20261126\\wine\\parser-raw-drivers\\az.cmd rest --method get --url https://management.azure.com/x?api-version=2020&$skiptoken=token --query to_string(@) --output tsv",
+        "ExitCode": 1,
+        "Stdout": "EXECUTED rest --method get --url https://management.azure.com/x?api-version=2020\r\nURL=\"https://management.azure.com/x?api-version\"\r\nQUERY=\"\"\r\nOUTPUTFLAG=\"\"\r\nOUTPUTVALUE=\"\"\r\n",
+        "Stderr": "Can't recognize '$skiptoken=token --query to_string(@) --output tsv' as an internal or external command, or batch script.\r\n"
+      },
+      {
+        "Name": "UrlOriginalQuery2",
+        "Query": "to_string( @ )",
+        "InputUrl": "https://management.azure.com/x?api-version=2020&$skiptoken=token",
+        "NativeCommandLineInDriver": "Z:\\tmp\\log-migration-windows-cli-20261126\\wine\\parser-raw-drivers\\az.cmd rest --method get --url https://management.azure.com/x?api-version=2020&$skiptoken=token --query \"to_string( @ )\" --output tsv",
+        "ExitCode": 1,
+        "Stdout": "EXECUTED rest --method get --url https://management.azure.com/x?api-version=2020\r\nURL=\"https://management.azure.com/x?api-version\"\r\nQUERY=\"\"\r\nOUTPUTFLAG=\"\"\r\nOUTPUTVALUE=\"\"\r\n",
+        "Stderr": "Can't recognize '$skiptoken=token --query \"to_string( @ )\" --output tsv' as an internal or external command, or batch script.\r\n"
+      },
+      {
+        "Name": "UrlLiteralQuotesQuery1",
+        "Query": "to_string(@)",
+        "InputUrl": "\"https://management.azure.com/x?api-version=2020&$skiptoken=token\"",
+        "NativeCommandLineInDriver": "Z:\\tmp\\log-migration-windows-cli-20261126\\wine\\parser-raw-drivers\\az.cmd rest --method get --url \"https://management.azure.com/x?api-version=2020&$skiptoken=token\" --query to_string(@) --output tsv",
+        "ExitCode": 255,
+        "Stdout": "",
+        "Stderr": "Syntax error: unexpected (\r\n"
+      },
+      {
+        "Name": "UrlLiteralQuotesQuery2",
+        "Query": "to_string( @ )",
+        "InputUrl": "\"https://management.azure.com/x?api-version=2020&$skiptoken=token\"",
+        "NativeCommandLineInDriver": "Z:\\tmp\\log-migration-windows-cli-20261126\\wine\\parser-raw-drivers\\az.cmd rest --method get --url \"https://management.azure.com/x?api-version=2020&$skiptoken=token\" --query \"to_string( @ )\" --output tsv",
+        "ExitCode": 0,
+        "Stdout": "EXECUTED rest --method get --url \"https://management.azure.com/x?api-version=2020&$skiptoken=token\" --query \"to_string( @ )\" --output tsv\r\nURL=\"https://management.azure.com/x?api-version=2020&$skiptoken=token\"\r\nQUERY=\"to_string( @ )\"\r\nOUTPUTFLAG=\"--output\"\r\nOUTPUTVALUE=\"tsv\"\r\n",
+        "Stderr": ""
+      },
+      {
+        "Name": "UrlLeadingSpaceQuery1",
+        "Query": "to_string(@)",
+        "InputUrl": " https://management.azure.com/x?api-version=2020&$skiptoken=token",
+        "NativeCommandLineInDriver": "Z:\\tmp\\log-migration-windows-cli-20261126\\wine\\parser-raw-drivers\\az.cmd rest --method get --url \" https://management.azure.com/x?api-version=2020&$skiptoken=token\" --query to_string(@) --output tsv",
+        "ExitCode": 255,
+        "Stdout": "",
+        "Stderr": "Syntax error: unexpected (\r\n"
+      },
+      {
+        "Name": "UrlLeadingSpaceQuery2",
+        "Query": "to_string( @ )",
+        "InputUrl": " https://management.azure.com/x?api-version=2020&$skiptoken=token",
+        "NativeCommandLineInDriver": "Z:\\tmp\\log-migration-windows-cli-20261126\\wine\\parser-raw-drivers\\az.cmd rest --method get --url \" https://management.azure.com/x?api-version=2020&$skiptoken=token\" --query \"to_string( @ )\" --output tsv",
+        "ExitCode": 0,
+        "Stdout": "EXECUTED rest --method get --url \" https://management.azure.com/x?api-version=2020&$skiptoken=token\" --query \"to_string( @ )\" --output tsv\r\nURL=\" https://management.azure.com/x?api-version=2020&$skiptoken=token\"\r\nQUERY=\"to_string( @ )\"\r\nOUTPUTFLAG=\"--output\"\r\nOUTPUTVALUE=\"tsv\"\r\n",
+        "Stderr": ""
+      },
+      {
+        "Name": "UrlTrailingSpaceQuery1",
+        "Query": "to_string(@)",
+        "InputUrl": "https://management.azure.com/x?api-version=2020&$skiptoken=token ",
+        "NativeCommandLineInDriver": "Z:\\tmp\\log-migration-windows-cli-20261126\\wine\\parser-raw-drivers\\az.cmd rest --method get --url \"https://management.azure.com/x?api-version=2020&$skiptoken=token \" --query to_string(@) --output tsv",
+        "ExitCode": 255,
+        "Stdout": "",
+        "Stderr": "Syntax error: unexpected (\r\n"
+      },
+      {
+        "Name": "UrlTrailingSpaceQuery2",
+        "Query": "to_string( @ )",
+        "InputUrl": "https://management.azure.com/x?api-version=2020&$skiptoken=token ",
+        "NativeCommandLineInDriver": "Z:\\tmp\\log-migration-windows-cli-20261126\\wine\\parser-raw-drivers\\az.cmd rest --method get --url \"https://management.azure.com/x?api-version=2020&$skiptoken=token \" --query \"to_string( @ )\" --output tsv",
+        "ExitCode": 0,
+        "Stdout": "EXECUTED rest --method get --url \"https://management.azure.com/x?api-version=2020&$skiptoken=token \" --query \"to_string( @ )\" --output tsv\r\nURL=\"https://management.azure.com/x?api-version=2020&$skiptoken=token \"\r\nQUERY=\"to_string( @ )\"\r\nOUTPUTFLAG=\"--output\"\r\nOUTPUTVALUE=\"tsv\"\r\n",
+        "Stderr": ""
+      }
+    ]
+  },
+  "WineProcessCleanup": {
+    "Status": "PASS",
+    "PrivateWinePrefix": "/tmp/log-migration-windows-cli-20261126/wine/prefix",
+    "KillReturnCode": 1,
+    "WaitReturnCode": 0,
+    "ActivePrivateWineProcesses": [],
+    "SourceFilesEdited": 0,
+    "AzureRequests": 0,
+    "PrivateEvidenceRetained": true
+  },
+  "QueryEquivalence": {
+    "Status": "PASS",
+    "JmespathEquivalentSamples": 6,
+    "AsciiEscapedUnicodePreserved": true,
+    "ActualAzureCliVersionQueryEquivalent": true,
+    "AzureRequests": 0,
+    "NativeWindowsRun": false,
+    "ProposedQuery": "to_string( @ )",
+    "Reference": "https://github.com/Azure/azure-cli/blob/dev/doc/quoting-issues-with-powershell.md"
+  },
+  "CachedAzureCliAccounts": {
+    "Status": "PASS",
+    "CliVersion": "2.93.0",
+    "Tests": [
+      {
+        "Command": "account-list",
+        "ParsedValuesEqual": true,
+        "BothOutputsAscii": true,
+        "Items": 2
+      },
+      {
+        "Command": "account-show",
+        "ParsedValuesEqual": true,
+        "BothOutputsAscii": true,
+        "Items": 1
+      }
+    ],
+    "NativeHost": "Linux",
+    "NativeWindowsRun": false,
+    "AzureSettingsChanged": 0,
+    "ResourcesCreated": 0,
+    "TokenValuesRecorded": false
+  },
+  "CliCp932Output": {
+    "Status": "PASS",
+    "ActualAzureCliOutput": true,
+    "ForcedEncoding": "CP932",
+    "QueryOutputByteIdentical": true,
+    "AzureRequests": 0,
+    "Results": {
+      "raw-json": {
+        "Parsed": false,
+        "Error": "Invalid \\escape: line 6 column 26 (char 129)"
+      },
+      "old-ascii": {
+        "Parsed": true,
+        "OriginalValuesPreserved": true,
+        "AsciiOnly": true
+      },
+      "spaced-ascii": {
+        "Parsed": true,
+        "OriginalValuesPreserved": true,
+        "AsciiOnly": true
+      }
+    }
+  },
+  "PowerShellUtf8Pipeline": {
+    "AzureRequests": 0,
+    "PowerShell": "7.5.4",
+    "NativeWindowsRun": false,
+    "RawJsonError": "Conversion from JSON failed with error: Bad JSON escape sequence: \\�. Path 'value[0].tags.cost_center', line 6, position 27.",
+    "SpacedQueryTagPreserved": true,
+    "Status": "PASS"
+  },
+  "OfficialReferences": {
+    "References": [
+      {
+        "Path": "AZURE_CLI_AZ_BAT.txt",
+        "Url": "https://raw.githubusercontent.com/Azure/azure-cli/azure-cli-2.93.0/src/azure-cli/az.bat",
+        "SHA256": "6aced45fdbf5835d9608e936ccd5b451ee5af4226b00bf168f6aab4d7668e6c7"
+      },
+      {
+        "Path": "AZURE_CLI_POWERSHELL_QUOTING.md",
+        "Url": "https://raw.githubusercontent.com/Azure/azure-cli/azure-cli-2.93.0/doc/quoting-issues-with-powershell.md",
+        "SHA256": "e6e0fd368f48e3ba906d0abfbc4d6863896673d8402c58e14ac37c7b61587261"
+      },
+      {
+        "Path": "NativeCommandProcessor-v7.5.4.cs",
+        "Url": "https://raw.githubusercontent.com/PowerShell/PowerShell/v7.5.4/src/System.Management.Automation/engine/NativeCommandProcessor.cs",
+        "SHA256": "5fa5ed03f682c599ed7f67fa96c13dd26d7bd3bcd47ee759532c5abe1b8c1479"
+      },
+      {
+        "Path": "NativeCommandParameterBinder-v7.5.4.cs",
+        "Url": "https://raw.githubusercontent.com/PowerShell/PowerShell/v7.5.4/src/System.Management.Automation/engine/NativeCommandParameterBinder.cs",
+        "SHA256": "0f2752a707c0d0b676c2e8e8540621a513b39e7bbb4f28b2c77757ef860fd967"
+      }
+    ]
+  },
+  "CurrentRuntimeCodeHashes": {
+    "migration/common.ps1": "d5876144d254a722141551616ddf1f87dd5d15087ee49479d249029f03df1ba6",
+    "migration/precheck.ps1": "56c53301dedf238e8c164d2a32637f0c8d8eb7e94f4fb6cba584da1c4817030f",
+    "migration/rollback.ps1": "103f7b83d800514ec78bb22197ce2daef0e16455b131c920b866962f8a880398",
+    "migration/step1_copy.ps1": "4e462154b1ac0840d66a99793b67e2eb329631b946d8553fe20ecb6cafa0bca3",
+    "migration/step2_verify.ps1": "14117514f586342c28e34981fead9c6d22c96cbffb3250ae13e2236b7395a105",
+    "migration/step3_delete.ps1": "e0c40b1ab8cf9aef1b4f8200cad6714552cf5c444e08d667d491428a448716bb",
+    "test-environment/resource_types_fixture.ps1": "0220eaa3cb900a73725a88f54d5a1a01d488600b1dc8d723523240a46f151c40",
+    "tests/create-targets-smoke.ps1": "0dc2887f4753d4eb49f56f43688baedae522f3a74e0d7a5d7b70fca3a1c4bdd2",
+    "tests/migration-smoke.ps1": "c9823d2548d021c68472f5c18d9adeb8badc13b4728f89d554b9612904ea1599",
+    "tools/create_targets.ps1": "ca38e5010cc2beb695f8b5cef1ba96d0b4c64b2007433d682ce1c7eec281f2e3"
+  },
+  "MigrationReplay": {
+    "Rerun": false,
+    "PreviousCases": 96,
+    "PreviousAssertions": 1542,
+    "Reference": "WORKSPACE_DIAGNOSTIC_REUSE.json",
+    "Reason": "移行の変更は同値なCLI queryの空白だけ。設定値や作成・削除・切り戻しの処理は変更していない。"
+  },
+  "Limitations": [
+    "実Windows OSでの実行はしていない。実PowerShellの引数生成とWineのcmdパーサを組み合わせて確認した。",
+    "Wineでの旧式エラー文はunexpected (であり、顧客Windowsの文言そのものを再現したという主張ではない。",
+    "WineのnextLink実パーサ確認は&/$skiptoken/=を含む固定URLで、%を含むURLの同等確認は未実施。"
+  ],
+  "DocumentReview": {
+    "Status": "PASS",
+    "SourceRanges": 29,
+    "SearchAnchors": 56,
+    "LocalLinks": 73,
+    "GetMigrationPlanDescriptionLine": 535
+  }
+}

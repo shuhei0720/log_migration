@@ -39,9 +39,15 @@ function Get-AzureList {
     #>
     param([string]$Url)
     while ($Url) {
+        # WindowsのバッチにURLを渡すときは、nextLink内の&などがコマンドの区切りにならないよう保護する。
+        $requestUrl = $Url
+        if ($IsWindows -and (Get-Command az).Source -match '\.(cmd|bat)$') {
+            $requestUrl = '"' + $Url + '"'
+        }
         # 日本語を英数字のエスケープ表記で受け取り、Windowsの文字コードでJSONが壊れるのを防ぐ。
         # tsvはJSON文字列をそのまま出力させるために指定し、ConvertFrom-Jsonで元の値へ戻す。
-        $response = az rest --method get --url $Url --query 'to_string(@)' --output tsv --only-show-errors
+        # 式の空白は、PowerShellからaz.cmdへ引用符付きで渡し、括弧の誤解釈を防ぐために必要。
+        $response = az rest --method get --url $requestUrl --query 'to_string( @ )' --output tsv --only-show-errors
         if ($LASTEXITCODE -ne 0) {
             throw "Azureの一覧を取得できません: $Url"
         }

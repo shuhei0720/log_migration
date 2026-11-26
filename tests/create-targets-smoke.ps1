@@ -13,6 +13,7 @@ $global:CsvGeneratorFixture = @{
     Requests = @()
     Ids = $ids
     AsciiRequests = 0
+    CmdSafeRequests = 0
     Cp932 = [Text.Encoding]::GetEncoding(932)
     TagValue = '表ソ費用\共有"引用符" 😀' + "`n2行目"
 }
@@ -35,10 +36,13 @@ function az {
     }
     $queryIndex = [Array]::IndexOf($arguments, '--query')
     $outputIndex = [Array]::IndexOf($arguments, '--output')
-    $asciiMode = $queryIndex -ge 0 -and $arguments[$queryIndex + 1] -ceq 'to_string(@)' -and
+    $asciiMode = $queryIndex -ge 0 -and ($arguments[$queryIndex + 1] -replace '\s', '') -ceq 'to_string(@)' -and
         $outputIndex -ge 0 -and $arguments[$outputIndex + 1] -eq 'tsv'
     if ($asciiMode) {
         $global:CsvGeneratorFixture.AsciiRequests++
+        if ($arguments[$queryIndex + 1] -match '\s') {
+            $global:CsvGeneratorFixture.CmdSafeRequests++
+        }
     }
     $global:CsvGeneratorFixture.Requests += $url
     $global:LASTEXITCODE = 0
@@ -241,6 +245,7 @@ try {
         Assert-CsvTest (-not (Test-Path $invalidDirectory)) '引数のエラーでも出力先を作っています。'
     }
     Assert-CsvTest ($global:CsvGeneratorFixture.AsciiRequests -eq $global:CsvGeneratorFixture.Requests.Count) 'JSONをASCII文字で受け取るquery・tsv指定がないCLI要求があります。'
+    Assert-CsvTest ($global:CsvGeneratorFixture.CmdSafeRequests -eq $global:CsvGeneratorFixture.Requests.Count) 'Windowsのaz.cmdへ括弧を保護して渡すための空白がqueryにありません。'
     "PASS: 7シナリオ、$checks 判定。Azureへの通信は0件。"
 }
 finally {

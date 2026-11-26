@@ -484,7 +484,8 @@ if (-not $SkipCsv) {
         throw "CSVに必要な列がありません: $($missingColumns -join ', ')"
     }
     # 日本語のサブスクリプション名もエスケープ表記で受け取り、JSON読込み時に元の文字へ戻す。
-    $accounts = az account list --all --query 'to_string(@)' --output tsv --only-show-errors | ConvertFrom-Json
+    # 式の空白は、PowerShellからaz.cmdへ引用符付きで渡し、括弧の誤解釈を防ぐために必要。
+    $accounts = az account list --all --query 'to_string( @ )' --output tsv --only-show-errors | ConvertFrom-Json
     if ($LASTEXITCODE -ne 0) {
         throw 'サブスクリプション一覧を取得できません。'
     }

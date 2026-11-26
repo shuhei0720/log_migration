@@ -17,7 +17,7 @@
 CSVの1行を`$target`へ取り出し、そのサブスクリプションの作業を始めます。
 
 - `Read-MigrationRecord`で前回の作業記録を読み、`$record`へ入れます。初回は記録がないため`$null`です。[Read-MigrationRecordのDESCRIPTION](common.ps1#L433)
-- `Get-MigrationPlan`で現在の旧設定と作成先を調べます。`$plan.OldSettings`には旧診断設定・旧DCR関連付けのIDと設定値、`Discovery`には新設定の作成先IDと地域が入ります。[Get-MigrationPlanのDESCRIPTION](common.ps1#L534)
+- `Get-MigrationPlan`で現在の旧設定と作成先を調べます。`$plan.OldSettings`には旧診断設定・旧DCR関連付けのIDと設定値、`Discovery`には新設定の作成先IDと地域が入ります。[Get-MigrationPlanのDESCRIPTION](common.ps1#L535)
 
 以降のコードで、この調査結果に「Azureへ渡す設定値」を加えます。
 
