@@ -1,0 +1,99 @@
+{
+  "Status": "PASS",
+  "RecordedAt": "2026-11-26T10:10:59.746156+00:00",
+  "Behavior": [
+    "devはrg-<略称>-dev-alert-01とrg-<略称>-sand-alert-01の両方から略称を取り出し、出力する名前にはdevを使う。",
+    "同じ略称は1候補にまとめ、異なる略称が複数ならプレースホルダーにする。",
+    "管理グループ配下の候補と、Azureの現在の状態がEnabledの一覧を照合し、有効なものだけCSVへ出す。",
+    "状態がEnabledでないサブスクリプションのリソースグループは取得しない。状態一覧はまとめて取得する。"
+  ],
+  "CsvRegression": {
+    "Status": "PASS",
+    "PowerShell": "7.5.4",
+    "Scenarios": 19,
+    "Assertions": 118,
+    "Existing55AssertionsMaintained": true,
+    "AdditionalNamingPatterns": 8,
+    "AdditionalStateScenarios": 4,
+    "AzureRequests": 0,
+    "SourceChangedByThisAgent": [
+      "tests/create-targets-smoke.ps1"
+    ],
+    "NamingCoverage": [
+      "devのみ（既存）",
+      "sandのみ",
+      "devとsandで同じ略称・大小文字を統一",
+      "devとsandで異なる略称はプレースホルダー",
+      "環境トークン・alert末尾の境界",
+      "略称内のsand/devを保持",
+      "stg/prodではdev/sandを無視"
+    ],
+    "StateCoverage": [
+      "EnabledだけをCSVへ出力しRGを読む",
+      "Disabled/Warned/PastDue/Deleted/状態なしを除外",
+      "全件無効は見出しだけ・RG取得なし",
+      "状態一覧の次ページを取得",
+      "状態取得失敗はRG取得なし・CSV3本保持"
+    ],
+    "NegativeRegressions": {
+      "before-dev-sand": {
+        "ExitCode": 1,
+        "ExpectedNewRegressionDetected": true,
+        "ExpectedErrorContains": "sandのみ"
+      },
+      "without-state-filter": {
+        "ExitCode": 1,
+        "ExpectedNewRegressionDetected": true,
+        "ExpectedErrorContains": "Enabled以外"
+      }
+    },
+    "Files": {
+      "tools/create_targets.ps1": "3f6808c99f1d4d1f23b7ded5dc278eef5da7920414d679ebb822022e74596cca",
+      "tests/create-targets-smoke.ps1": "d920e498655a30ec967a8bac64cc126820da3d604b29b98848e0e3eca066de0d"
+    },
+    "NativeWindowsRun": false,
+    "Scope": "PowerShell上でAzure CLIを試験用のGET応答に置き換えた回帰試験。実Windows/cmd実行ではない。"
+  },
+  "LiveAzureStateApi": {
+    "Status": "PASS",
+    "CheckedAt": "2026-11-26T10:06:59.714988+00:00",
+    "Url": "https://management.azure.com/subscriptions?api-version=2022-12-01",
+    "Rows": 2,
+    "AllHaveId": true,
+    "AllHaveState": true,
+    "States": [
+      "Enabled"
+    ],
+    "NextLinkPresent": false,
+    "ReadOnly": true,
+    "AzureResourcesCreated": 0
+  },
+  "SourceScope": {
+    "Status": "PASS",
+    "NativeCliAndJsonReaderUnchanged": true,
+    "EnvironmentMappingUnchanged": true,
+    "OutputColumnsNamesAndDestinationFlagsUnchanged": true,
+    "CsvWriterUnchangedExceptEmptyWarning": true,
+    "MigrationScriptsChanged": false,
+    "SourceSha256": "3f6808c99f1d4d1f23b7ded5dc278eef5da7920414d679ebb822022e74596cca"
+  },
+  "CurrentRuntimeCodeHashes": {
+    "migration/common.ps1": "d5876144d254a722141551616ddf1f87dd5d15087ee49479d249029f03df1ba6",
+    "migration/precheck.ps1": "56c53301dedf238e8c164d2a32637f0c8d8eb7e94f4fb6cba584da1c4817030f",
+    "migration/rollback.ps1": "103f7b83d800514ec78bb22197ce2daef0e16455b131c920b866962f8a880398",
+    "migration/step1_copy.ps1": "4e462154b1ac0840d66a99793b67e2eb329631b946d8553fe20ecb6cafa0bca3",
+    "migration/step2_verify.ps1": "14117514f586342c28e34981fead9c6d22c96cbffb3250ae13e2236b7395a105",
+    "migration/step3_delete.ps1": "e0c40b1ab8cf9aef1b4f8200cad6714552cf5c444e08d667d491428a448716bb",
+    "test-environment/resource_types_fixture.ps1": "0220eaa3cb900a73725a88f54d5a1a01d488600b1dc8d723523240a46f151c40",
+    "tests/create-targets-smoke.ps1": "d920e498655a30ec967a8bac64cc126820da3d604b29b98848e0e3eca066de0d",
+    "tests/migration-smoke.ps1": "c9823d2548d021c68472f5c18d9adeb8badc13b4728f89d554b9612904ea1599",
+    "tools/create_targets.ps1": "3f6808c99f1d4d1f23b7ded5dc278eef5da7920414d679ebb822022e74596cca"
+  },
+  "AzureResourcesCreated": 0,
+  "MigrationScriptsChanged": false,
+  "Limit": "回帰試験はCLI応答を置き換えて実行。実機は状態一覧APIの読み取りと応答項目の確認のみ。",
+  "DocumentReview": {
+    "Status": "PASS",
+    "LocalLinks": 74
+  }
+}

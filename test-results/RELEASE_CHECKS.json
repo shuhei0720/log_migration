@@ -802,11 +802,11 @@
     "migration/step2_verify.ps1": "14117514f586342c28e34981fead9c6d22c96cbffb3250ae13e2236b7395a105",
     "migration/step3_delete.ps1": "e0c40b1ab8cf9aef1b4f8200cad6714552cf5c444e08d667d491428a448716bb",
     "test-environment/resource_types_fixture.ps1": "0220eaa3cb900a73725a88f54d5a1a01d488600b1dc8d723523240a46f151c40",
-    "tests/create-targets-smoke.ps1": "0dc2887f4753d4eb49f56f43688baedae522f3a74e0d7a5d7b70fca3a1c4bdd2",
+    "tests/create-targets-smoke.ps1": "d920e498655a30ec967a8bac64cc126820da3d604b29b98848e0e3eca066de0d",
     "tests/migration-smoke.ps1": "c9823d2548d021c68472f5c18d9adeb8badc13b4728f89d554b9612904ea1599",
-    "tools/create_targets.ps1": "ca38e5010cc2beb695f8b5cef1ba96d0b4c64b2007433d682ce1c7eec281f2e3"
+    "tools/create_targets.ps1": "3f6808c99f1d4d1f23b7ded5dc278eef5da7920414d679ebb822022e74596cca"
   },
-  "CodeHashNotes": "MigrationReplay・CsvGenerator・PromotionEquivalence・RuntimeCodeHashes・ShippingLayout・Documents・CommentReviewは各確認時点の記録。最新の実行コードSHAはCurrentRuntimeCodeHashes、日本語JSON修正後の再試験はJSON_ENCODING_FIX.jsonを参照。過去のSHAは保持している。 最新の自己診断・既存保存先再利用の試験はWORKSPACE_DIAGNOSTIC_REUSE.jsonを参照。 最新のWindows向けCLI引数修正とCSV再試験はWINDOWS_CLI_FIX.jsonを参照。",
+  "CodeHashNotes": "MigrationReplay・CsvGenerator・PromotionEquivalence・RuntimeCodeHashes・ShippingLayout・Documents・CommentReviewは各確認時点の記録。最新の実行コードSHAはCurrentRuntimeCodeHashes、日本語JSON修正後の再試験はJSON_ENCODING_FIX.jsonを参照。過去のSHAは保持している。 最新の自己診断・既存保存先再利用の試験はWORKSPACE_DIAGNOSTIC_REUSE.jsonを参照。 最新のWindows向けCLI引数修正とCSV再試験はWINDOWS_CLI_FIX.jsonを参照。 最新のCSV生成のdev/sand対応・有効状態での絞り込みはCSV_DEV_SAND_ENABLED.jsonを参照。",
   "ExampleCsvReview": {
     "Status": "PASS",
     "Path": "migration/targets.example.csv",
@@ -844,6 +844,14 @@
     "PowerShellNativeBinder": "PASS",
     "WineCmdParser": "PASS",
     "NativeWindowsOsTested": false,
+    "AzureResourcesCreated": 0
+  },
+  "CsvDevSandAndEnabledSubscriptions": {
+    "Status": "PASS",
+    "Details": "CSV_DEV_SAND_ENABLED.json",
+    "Scenarios": 19,
+    "Assertions": 118,
+    "LiveStateApiRead": "PASS",
     "AzureResourcesCreated": 0
   }
 }

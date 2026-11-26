@@ -58,35 +58,47 @@ function Get-AzureList {
 }
 
 # ---
-# 1. 指定した環境のサブスクリプションを取得する。子管理グループの配下も含める。
+# 1. 指定した環境配下のサブスクリプションを取得し、現在の状態がEnabledのものだけ残す。
+# 子管理グループの配下も含める。状態の一覧はまとめて取得し、1件ずつ問い合わせない。
 # ---
 $settings = $environmentSettings[$Environment]
 $environmentName = $settings.NamePart
 $descendants = @(Get-AzureList "$armBase$($settings.ManagementGroupId)/descendants?api-version=2020-05-01")
 $subscriptions = @($descendants | Where-Object { $_.id -match '^/subscriptions/[^/]+$' } | Sort-Object id -Unique)
+if ($subscriptions.Count) {
+    $enabledSubscriptions = @(Get-AzureList "$armBase/subscriptions?api-version=2022-12-01" | Where-Object state -eq 'Enabled')
+    $subscriptions = @($subscriptions | Where-Object { $_.id -in $enabledSubscriptions.id })
+}
 # ---
 # 2. 各サブスクリプションのalert用グループから略称を取り出し、CSVの保存先名を作る。
 # ---
+$alertEnvironmentPattern = [regex]::Escape($environmentName)
+if ($Environment -eq 'dev') {
+    $alertEnvironmentPattern = '(?:dev|sand)'
+}
+$pattern = '^rg-(?<Service>.+)-' + $alertEnvironmentPattern + '-alert-01$'
 $csvRows = @()
 foreach ($subscription in $subscriptions) {
     $subscriptionId = ($subscription.id -split '/')[-1]
     $resourceGroups = @(Get-AzureList "$armBase/subscriptions/$subscriptionId/resourcegroups?api-version=2022-09-01")
 
-    # 候補が0件・複数件なら略称を決めず、CSVに人が埋める欄を残す。
-    $pattern = '^rg-(?<Service>.+)-' + [regex]::Escape($environmentName) + '-alert-01$'
-    $matchingGroups = @($resourceGroups | Where-Object { $_.name -match $pattern })
+    # dev・sandで同じ略称が見つかれば1候補にまとめる。0件・複数の略称なら、人が埋める欄を残す。
+    $serviceAbbreviations = @($resourceGroups | ForEach-Object {
+        if ($_.name -match $pattern) {
+            $Matches.Service.ToLowerInvariant()
+        }
+    } | Sort-Object -Unique)
     $serviceAbbreviation = '<サービス略称>'
-    if ($matchingGroups.Count -eq 1) {
-        $null = $matchingGroups[0].name -match $pattern
-        $serviceAbbreviation = $Matches.Service.ToLowerInvariant()
+    if ($serviceAbbreviations.Count -eq 1) {
+        $serviceAbbreviation = $serviceAbbreviations[0]
     }
     else {
-        Write-Warning "$Environment / $subscriptionId : alert用グループの候補が$($matchingGroups.Count)件です。CSVの<サービス略称>を置き換えてください。"
+        Write-Warning "$Environment / $subscriptionId : alert用グループから見つかった略称が$($serviceAbbreviations.Count)件です。CSVの<サービス略称>を置き換えてください。"
     }
 
     $storageAccountName = "st${serviceAbbreviation}${environmentName}archjpe01"
     # 小文字英数字3～24文字・jpeが1か所という条件を満たさなければ警告し、略称は勝手に変えない。
-    if ($matchingGroups.Count -eq 1 -and ($storageAccountName -cnotmatch '^[a-z0-9]{3,24}$' -or
+    if ($serviceAbbreviations.Count -eq 1 -and ($storageAccountName -cnotmatch '^[a-z0-9]{3,24}$' -or
         [regex]::Matches($storageAccountName, 'jpe').Count -ne 1)) {
         Write-Warning "$Environment / $subscriptionId : 生成したストレージ名は小文字英数字3～24文字・jpeが1か所という条件を満たしません: $storageAccountName"
     }
@@ -112,6 +124,6 @@ if ($csvRows.Count) {
 else {
     # サブスクリプションが0件でも、6列の見出しを残す。
     $columns -join ',' | Set-Content $path -Encoding utf8BOM
-    Write-Warning "$Environment : 管理グループ配下にサブスクリプションがありません。"
+    Write-Warning "$Environment : 管理グループ配下に有効なサブスクリプションがありません。"
 }
 Write-Host "$Environment : $($csvRows.Count)件 -> $path"

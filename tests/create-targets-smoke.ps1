@@ -2,6 +2,7 @@
 param([string]$Generator = (Join-Path (Split-Path $PSScriptRoot -Parent) 'tools/create_targets.ps1'))
 $ErrorActionPreference = 'Stop'
 $checks = 0
+$scenarioCount = 7
 $scenario = '正常'
 $scratch = Join-Path ([IO.Path]::GetTempPath()) ('create-targets-' + [guid]::NewGuid().ToString('N'))
 $null = New-Item $scratch -ItemType Directory
@@ -14,6 +15,8 @@ $global:CsvGeneratorFixture = @{
     Ids = $ids
     AsciiRequests = 0
     CmdSafeRequests = 0
+    NameOverrides = @{}
+    StateOverrides = @{}
     Cp932 = [Text.Encoding]::GetEncoding(932)
     TagValue = '表ソ費用\共有"引用符" 😀' + "`n2行目"
 }
@@ -53,11 +56,38 @@ function az {
         $global:LASTEXITCODE = 1
         return '{"error":{"message":"テスト用の取得失敗"}}'
     }
+    if ($global:CsvGeneratorFixture.Scenario -eq '状態取得失敗' -and $path -eq '/subscriptions' -and $uri.Query -match 'page=2') {
+        $global:LASTEXITCODE = 1
+        return '{"error":{"message":"テスト用の状態一覧取得失敗"}}'
+    }
     if ($global:CsvGeneratorFixture.Scenario -eq '空') {
         return '{"value":[]}'
     }
     $page = @{ value = @() }
-    if ($path -match '/managementgroups/(producrion|staging|sandbox)/descendants$') {
+    if ($path -eq '/subscriptions') {
+        $stateIds = @($global:CsvGeneratorFixture.Ids)
+        if ($global:CsvGeneratorFixture.Scenario -in @('状態ページング', '状態取得失敗')) {
+            if ($uri.Query -match 'page=2') {
+                $stateIds = @($global:CsvGeneratorFixture.Ids[4..8])
+            }
+            else {
+                $stateIds = @($global:CsvGeneratorFixture.Ids[0..3])
+                $page.nextLink = $url + '&page=2'
+            }
+        }
+        $page.value = @(foreach ($id in $stateIds) {
+            $state = 'Enabled'
+            if ($global:CsvGeneratorFixture.StateOverrides.ContainsKey($id)) {
+                $state = $global:CsvGeneratorFixture.StateOverrides[$id]
+            }
+            $item = @{ id = "/subscriptions/$id" }
+            if ($null -ne $state) {
+                $item.state = $state
+            }
+            $item
+        })
+    }
+    elseif ($path -match '/managementgroups/(producrion|staging|sandbox)/descendants$') {
         $group = $Matches[1]
         $members = switch ($group) {
             producrion {
@@ -97,6 +127,9 @@ function az {
             ($global:CsvGeneratorFixture.Ids[8]) { @('rg-jpex-prod-alert-01') }
             default { throw "想定外のサブスクリプション: $subscriptionId" }
         }
+        if ($global:CsvGeneratorFixture.NameOverrides.ContainsKey($subscriptionId)) {
+            $names = $global:CsvGeneratorFixture.NameOverrides[$subscriptionId]
+        }
         $page.value = @($names | ForEach-Object { @{ name = $_; tags = @{ cost_center = $global:CsvGeneratorFixture.TagValue } } })
     }
     else {
@@ -128,7 +161,10 @@ try {
         & $Generator -Environment ($environment.ToUpperInvariant()) -OutputDirectory $scratch *> (Join-Path $scratch "normal-$environment.log")
         $foreignRequests = @($global:CsvGeneratorFixture.Requests | Select-Object -Skip $requestStart | Where-Object {
             $requestPath = ([uri]$_).AbsolutePath
-            if ($requestPath -match '/managementGroups/([^/]+)/descendants$') {
+            if ($requestPath -eq '/subscriptions') {
+                $false
+            }
+            elseif ($requestPath -match '/managementGroups/([^/]+)/descendants$') {
                 $Matches[1] -ne $managementGroups[$environment]
             }
             elseif ($requestPath -match '^/subscriptions/([^/]+)/resourcegroups$') {
@@ -136,7 +172,7 @@ try {
             }
             else { $true }
         })
-        Assert-CsvTest ($foreignRequests.Count -eq 0) "$environment / ほかの環境のAzure一覧を読んでいます。"
+        Assert-CsvTest ($foreignRequests.Count -eq 0) "$environment / ほかの環境の管理グループかリソースグループを読んでいます。"
         foreach ($other in $otherHashes.Keys) {
             Assert-CsvTest ((Get-FileHash (Join-Path $scratch "targets-$other.csv")).Hash -ceq $otherHashes[$other]) "$environment / $other のCSVを書き換えています。"
         }
@@ -173,6 +209,114 @@ try {
     $warnings = Get-Content (Join-Path $scratch 'normal-prod.log') -Raw
     Assert-CsvTest ([regex]::Matches($warnings, '条件を満たしません').Count -eq 3) '25文字・記号・jpe重複の3件を警告していません。'
 
+    # 開発の既存名はdev・sandの両方から略称を取り、出力名はdevへそろえる。
+    # 略称が複数なら選ばず、他環境のsandや名前の途中にある文字列は環境名として扱わない。
+    $namingCases = @(
+        @{ Name = 'sandのみ'; Environment = 'dev'; Subscription = $ids[3]; Groups = @('rg-payments-sand-alert-01'); Service = 'payments' }
+        @{ Name = 'devとsandで同じ略称'; Environment = 'dev'; Subscription = $ids[3]; Groups = @('rg-PAY-sand-alert-01', 'rg-pay-dev-alert-01'); Service = 'pay' }
+        @{ Name = 'devとsandで異なる略称'; Environment = 'dev'; Subscription = $ids[3]; Groups = @('rg-one-dev-alert-01', 'rg-two-sand-alert-01'); Service = '<サービス略称>' }
+        @{ Name = '環境名とalert末尾の不一致'; Environment = 'dev'; Subscription = $ids[3]; Groups = @('rg-pay-sandbox-alert-01', 'rg-pay-devops-alert-01', 'rg-pay-sand-alert-02', 'rg-pay-dev-alert-01-extra', 'rg-pay-sand-monitor-01'); Service = '<サービス略称>' }
+        @{ Name = '略称内のsandを保持'; Environment = 'dev'; Subscription = $ids[3]; Groups = @('rg-sand-dev-alert-01'); Service = 'sand' }
+        @{ Name = '略称内のdevを保持'; Environment = 'dev'; Subscription = $ids[3]; Groups = @('rg-devteam-sand-alert-01'); Service = 'devteam' }
+        @{ Name = '検証ではsandとdevを無視'; Environment = 'stg'; Subscription = $ids[2]; Groups = @('rg-pay-sand-alert-01', 'rg-pay-dev-alert-01'); Service = '<サービス略称>' }
+        @{ Name = '本番ではsandとdevを無視'; Environment = 'prod'; Subscription = $ids[0]; Groups = @('rg-pay-sand-alert-01', 'rg-pay-dev-alert-01'); Service = '<サービス略称>' }
+    )
+    $namingDirectory = Join-Path $scratch 'naming'
+    $null = New-Item $namingDirectory -ItemType Directory
+    foreach ($environment in @('prod', 'stg', 'dev')) {
+        "previous-$environment" | Set-Content (Join-Path $namingDirectory "targets-$environment.csv")
+    }
+    foreach ($case in $namingCases) {
+        $scenario = $case.Name
+        $global:CsvGeneratorFixture.NameOverrides = @{}
+        $global:CsvGeneratorFixture.NameOverrides[$case.Subscription] = $case.Groups
+        $otherHashes = @{}
+        foreach ($other in @('prod', 'stg', 'dev') | Where-Object { $_ -ne $case.Environment }) {
+            $otherHashes[$other] = (Get-FileHash (Join-Path $namingDirectory "targets-$other.csv")).Hash
+        }
+        $requestStart = $global:CsvGeneratorFixture.Requests.Count
+        & $Generator -Environment $case.Environment -OutputDirectory $namingDirectory *> (Join-Path $scratch 'naming.log')
+        $row = @(Import-Csv (Join-Path $namingDirectory "targets-$($case.Environment).csv") | Where-Object SubscriptionName -eq $case.Subscription)[0]
+        Assert-CsvTest ($row.ResourceGroup -ceq "rg-$($case.Service)-$($case.Environment)-monitor-01") '保存先RGの略称または環境名が違います。'
+        Assert-CsvTest ($row.StorageAccount -ceq "st$($case.Service)$($case.Environment)archjpe01") 'ストレージ名の略称または環境名が違います。'
+        Assert-CsvTest ($row.WorkspaceName -ceq "log-$($case.Service)-$($case.Environment)-archive-01") 'Log Analytics名の略称または環境名が違います。'
+        $groupRequests = @($global:CsvGeneratorFixture.Requests | Select-Object -Skip $requestStart | Where-Object { $_ -match '/managementGroups/' })
+        Assert-CsvTest ($groupRequests.Count -gt 0 -and @($groupRequests | Where-Object { $_ -notmatch "/managementGroups/$($managementGroups[$case.Environment])/descendants" }).Count -eq 0) '検索する管理グループが違います。'
+        foreach ($other in $otherHashes.Keys) {
+            Assert-CsvTest ((Get-FileHash (Join-Path $namingDirectory "targets-$other.csv")).Hash -ceq $otherHashes[$other]) "$other のCSVを書き換えています。"
+        }
+    }
+    $global:CsvGeneratorFixture.NameOverrides = @{}
+    $scenarioCount += $namingCases.Count
+
+    # 有効以外の状態はCSVに含めず、リソースグループの一覧も取得しない。
+    $scenario = '有効・無効状態の混在'
+    $scenarioCount++
+    $global:CsvGeneratorFixture.StateOverrides = @{
+        $ids[1] = 'Disabled'
+        $ids[5] = 'Warned'
+        $ids[6] = 'PastDue'
+        $ids[7] = 'Deleted'
+        $ids[8] = $null
+    }
+    $requestStart = $global:CsvGeneratorFixture.Requests.Count
+    $otherHashes = @{}
+    foreach ($other in @('stg', 'dev')) {
+        $otherHashes[$other] = (Get-FileHash (Join-Path $namingDirectory "targets-$other.csv")).Hash
+    }
+    & $Generator -Environment prod -OutputDirectory $namingDirectory *> (Join-Path $scratch 'states.log')
+    $enabledRows = @(Import-Csv (Join-Path $namingDirectory 'targets-prod.csv'))
+    Assert-CsvTest ($enabledRows.Count -eq 1 -and $enabledRows[0].SubscriptionName -eq $ids[0]) 'Enabled以外、または状態のないサブスクリプションをCSVへ含めています。'
+    $stateRequests = @($global:CsvGeneratorFixture.Requests | Select-Object -Skip $requestStart)
+    $resourceRequests = @($stateRequests | Where-Object { $_ -match '/resourcegroups\?' })
+    Assert-CsvTest ($resourceRequests.Count -eq 2 -and @($resourceRequests | Where-Object { $_ -notmatch "/subscriptions/$($ids[0])/resourcegroups" }).Count -eq 0) '無効なサブスクリプションのリソースグループを取得しています。'
+    Assert-CsvTest (@($stateRequests | Where-Object { ([uri]$_).AbsolutePath -eq '/subscriptions' }).Count -eq 1) '状態をサブスクリプションごとに問い合わせています。'
+    foreach ($other in $otherHashes.Keys) {
+        Assert-CsvTest ((Get-FileHash (Join-Path $namingDirectory "targets-$other.csv")).Hash -ceq $otherHashes[$other]) "$other のCSVを書き換えています。"
+    }
+
+    # 全件無効でもエラーにせず、見出しだけを出力する。
+    $scenario = '全件無効'
+    $scenarioCount++
+    foreach ($id in $ids) {
+        $global:CsvGeneratorFixture.StateOverrides[$id] = 'Disabled'
+    }
+    $requestStart = $global:CsvGeneratorFixture.Requests.Count
+    & $Generator -Environment dev -OutputDirectory $namingDirectory *> (Join-Path $scratch 'disabled.log')
+    $disabledPath = Join-Path $namingDirectory 'targets-dev.csv'
+    Assert-CsvTest (@(Import-Csv $disabledPath).Count -eq 0) '全件無効の環境にCSVのデータ行があります。'
+    Assert-CsvTest (((Get-Content $disabledPath -TotalCount 1) -replace '"', '') -ceq ($columns -join ',')) '全件無効のCSVに6列の見出しがありません。'
+    Assert-CsvTest (@($global:CsvGeneratorFixture.Requests | Select-Object -Skip $requestStart | Where-Object { $_ -match '/resourcegroups\?' }).Count -eq 0) '全件無効でもリソースグループを取得しています。'
+    $global:CsvGeneratorFixture.StateOverrides = @{}
+
+    # 状態一覧の次ページにある有効サブスクリプションも取得する。
+    $scenario = '状態一覧のページング'
+    $scenarioCount++
+    $global:CsvGeneratorFixture.Scenario = '状態ページング'
+    $requestStart = $global:CsvGeneratorFixture.Requests.Count
+    & $Generator -Environment dev -OutputDirectory $namingDirectory *> (Join-Path $scratch 'state-pages.log')
+    $enabledRows = @(Import-Csv (Join-Path $namingDirectory 'targets-dev.csv'))
+    Assert-CsvTest ($enabledRows.Count -eq 2 -and $ids[3] -in $enabledRows.SubscriptionName -and $ids[4] -in $enabledRows.SubscriptionName) '状態一覧の次ページにある有効サブスクリプションを取りこぼしています。'
+    Assert-CsvTest (@($global:CsvGeneratorFixture.Requests | Select-Object -Skip $requestStart | Where-Object { ([uri]$_).AbsolutePath -eq '/subscriptions' }).Count -eq 2) '状態一覧の次ページを取得していません。'
+
+    # 状態一覧の途中で失敗したら、リソースグループを読まず、既存CSVも残す。
+    $scenario = '状態一覧の取得失敗'
+    $scenarioCount++
+    $global:CsvGeneratorFixture.Scenario = '状態取得失敗'
+    $before = @{}
+    foreach ($environment in @('prod', 'stg', 'dev')) {
+        $before[$environment] = (Get-FileHash (Join-Path $namingDirectory "targets-$environment.csv")).Hash
+    }
+    $requestStart = $global:CsvGeneratorFixture.Requests.Count
+    $failed = $false
+    try { & $Generator -Environment dev -OutputDirectory $namingDirectory *> (Join-Path $scratch 'state-failure.log') }
+    catch { $failed = $true }
+    Assert-CsvTest $failed '状態一覧の取得失敗を成功として扱っています。'
+    Assert-CsvTest (@($global:CsvGeneratorFixture.Requests | Select-Object -Skip $requestStart | Where-Object { $_ -match '/resourcegroups\?' }).Count -eq 0) '状態一覧を取得し終わる前にリソースグループを読んでいます。'
+    foreach ($environment in @('prod', 'stg', 'dev')) {
+        Assert-CsvTest ((Get-FileHash (Join-Path $namingDirectory "targets-$environment.csv")).Hash -ceq $before[$environment]) "$environment のCSVを取得失敗時に上書きしています。"
+    }
+    $global:CsvGeneratorFixture.Scenario = '正常'
 
     # 関数定義だけを読み、CSVには使わない日本語タグも元の文字列で返ることを確認する。
     $scenario = '日本語タグ'
@@ -246,7 +390,7 @@ try {
     }
     Assert-CsvTest ($global:CsvGeneratorFixture.AsciiRequests -eq $global:CsvGeneratorFixture.Requests.Count) 'JSONをASCII文字で受け取るquery・tsv指定がないCLI要求があります。'
     Assert-CsvTest ($global:CsvGeneratorFixture.CmdSafeRequests -eq $global:CsvGeneratorFixture.Requests.Count) 'Windowsのaz.cmdへ括弧を保護して渡すための空白がqueryにありません。'
-    "PASS: 7シナリオ、$checks 判定。Azureへの通信は0件。"
+    "PASS: $scenarioCount シナリオ、$checks 判定。Azureへの通信は0件。"
 }
 finally {
     Remove-Item $scratch -Recurse -Force
