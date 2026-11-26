@@ -123,20 +123,17 @@ foreach ($target in $targets) {
         }
 
         # ---
-        # 旧DCRに関連付いたVM・VMSSがあれば、新しいLog AnalyticsのEvent・Syslogを合計1,095日保持にする。
-        # VMログの新しい送信設定を作らない場合も、テーブルの保持期間は設定する。
+        # すべての新しいLog Analyticsで、Event・Syslogを合計1,095日保持にする。
+        # 旧DCRの関連付けがない場合や、VMログの送信を省略する場合も設定する。
         # ---
-        $oldAssociations = @($plan.OldSettings | Where-Object { $_.Kind -eq 'Association' })
-        if ($oldAssociations.Count -gt 0) {
-            foreach ($tableName in @('Event', 'Syslog')) {
-                $plan.Destinations += @{
-                    Id = "$($Target.WorkspaceId)/tables/$tableName"
-                    Kind = 'Table'
-                    Body = @{
-                        properties = @{
-                            schema = @{ name = $tableName }
-                            totalRetentionInDays = 1095
-                        }
+        foreach ($tableName in @('Event', 'Syslog')) {
+            $plan.Destinations += @{
+                Id = "$($Target.WorkspaceId)/tables/$tableName"
+                Kind = 'Table'
+                Body = @{
+                    properties = @{
+                        schema = @{ name = $tableName }
+                        totalRetentionInDays = 1095
                     }
                 }
             }

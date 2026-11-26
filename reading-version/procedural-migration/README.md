@@ -109,7 +109,7 @@ CSVの順に、サブスクリプションごとに次を行います。
 |リソースグループ・Log Analytics|地域は`$location`。ワークスペースの保持期間は90日。取込・クエリのパブリックアクセスを有効化し、リソースまたはワークスペースの権限でログを参照できるようにする|
 |地域別ストレージアカウント|StorageV2・Standard_ZRS。インフラ暗号化と、バージョン単位の不変性のサポートを有効化。共有キー・Blobの匿名公開は無効。HTTPSとTLS 1.2を使用。公開ネットワークはDisabled、ネットワーク規則は既定拒否・AzureServices例外|
 |Blobとストレージの追加設定|Blobバージョン管理を有効化。最終更新から1,095日を超えたappendBlobを削除するルールを追加。個別のDefenderを無効化|
-|Event・Syslogテーブル|旧DCR関連付けがある場合に、合計保持期間を1,095日にする。`VmLogDestination`がNone・空欄でも設定する|
+|Event・Syslogテーブル|すべての新しいLog Analyticsで合計保持期間を1,095日にする。旧DCRの関連付けがなくても、`VmLogDestination`がNone・空欄でも設定する|
 
 既存のIP・VNet規則、Log Analyticsのほかのfeatures、別名のライフサイクルルール、DCRのマネージドIDは残します。旧設定は削除しません。
 

@@ -19,6 +19,8 @@ Storageは診断対象の地域ごとに作ります。地域が空・`global`�
 
 入力例をコピーして記入します。
 
+管理グループ配下から環境別のCSVを作る場合は、[CSV作成スクリプトの手順](../tools/README.md)を使います。
+
 ```powershell
 Copy-Item .\procedural-migration\targets.example.csv .\procedural-migration\targets.csv
 ```
@@ -86,7 +88,7 @@ CSVの1Subずつ、次の順に処理します。
 |RG・Log Analytics|新規作成地域は`$location`。ワークスペース保持90日、取込・クエリのパブリックアクセスを有効化。リソースまたはワークスペースの権限でログを参照できるようにする|
 |地域別Storage|StorageV2・Standard_ZRS、インフラ暗号化・バージョン単位の不変性のサポートを有効化。共有キー・Blob匿名公開は無効。HTTPS／TLS 1.2、公開ネットワークは無効（`Disabled`）。通信規則は既定拒否・`AzureServices`例外|
 |Storageの追加設定|Blobバージョン管理、最終更新から1,095日を超えたappendBlobを削除するライフサイクル、個別Defenderの無効化|
-|Event・Syslog|旧DCR関連がある場合に準備し、合計保持を1,095日へ設定。VM側がNone・空欄でも対象|
+|Event・Syslog|すべての新Log Analyticsで合計保持を1,095日に設定。旧DCRの関連付けがない場合や、VM側がNone・空欄の場合も対象|
 
 5. 旧DCR関連がありVM側がLogなら、新DCRとVM・VMSSへの関連を準備する。収集条件は固定のWindowsイベント（Application・Security・System）とSyslog、宛先はCSVのLog Analytics。DCR名はワークスペース名の先頭`log`を`dcr`へ置換する。
 6. 診断側がStorage／Logなら、旧診断のログ・メトリックを引き継いだ新診断を共通名で追加する。Storageは同地域へ、LogはCSVのワークスペースへ送り、旧格納方式も引き継ぐ。

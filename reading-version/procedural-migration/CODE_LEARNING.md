@@ -33,41 +33,41 @@ CSVの1行を`$target`へ取り出し、そのサブスクリプションの作�
 
 `Destinations`には、アカウント本体、Blobのバージョン管理、Defenderの無効化、ログの削除ルールを加えます。削除するのは、最終更新から1,095日を超えたappendBlobです。CSVにストレージ名がなければ、この繰り返しは実行しません。
 
-**[129～143行](step1_copy.ps1#L129)｜`$oldAssociations.Count -gt 0`、`totalRetentionInDays = 1095`**
+**[129～140行](step1_copy.ps1#L129)｜`foreach ($tableName in @('Event', 'Syslog'))`、`totalRetentionInDays = 1095`**
 
-旧DCRへの関連付けがあれば、Event・Syslogテーブルの保持期間も`Destinations`へ追加します。ワークスペース全体は90日ですが、この2テーブルは合計1,095日保持します。`VmLogDestination`が`None`・空欄でも、この設定は作成します。
+すべての新しいLog Analyticsで、Event・Syslogテーブルの保持期間を`Destinations`へ追加します。ワークスペース全体は90日ですが、この2テーブルは合計1,095日保持します。旧DCRの関連付けがなくても、`VmLogDestination`が`None`・空欄でも設定します。
 
-**[148～206行](step1_copy.ps1#L148)｜`$dcrBody.properties.dataSources`、`foreach ($association in $plan.Discovery.Associations)`**
+**[145～203行](step1_copy.ps1#L145)｜`$dcrBody.properties.dataSources`、`foreach ($association in $plan.Discovery.Associations)`**
 
 DCR（データ収集ルール）は、VM・VMSSから集めるログと保存先を指定します。`Discovery.Dcr`があれば、`dataSources`に収集内容、`destinations`に保存先、`dataFlows`にログと送り先の対応を書きます。WindowsイベントとSyslogの収集条件は固定値です。
 
 旧DCRにつながっていたVM・VMSSと、新DCRとの関連付けも作り、`NewSettings`へ入れます。`VmLogDestination=Log`ならCSVのLog Analyticsへ送る設定を作ります。`None`・空欄ならDCRも新しい関連付けも作りません。
 
-**[212～234行](step1_copy.ps1#L212)｜`$diagnosticBody = @{`、`$storageIds[$diagnostic.Location]`**
+**[209～231行](step1_copy.ps1#L209)｜`$diagnosticBody = @{`、`$storageIds[$diagnostic.Location]`**
 
 `OldId`で旧診断設定を探し、ログとメトリックの設定をコピーします。`Storage`なら地域別のストレージID、`Log`なら新しいLog AnalyticsのIDと旧設定の格納方式を指定します。作成した設定値は`NewSettings`へ加えます。
 
 `LogDestination`が`None`・空欄なら、`Discovery.Diagnostics`は空です。新しい診断設定は作りません。
 
-**[239～263行](step1_copy.ps1#L239)｜`$setting.Before =`、`$plan.Remove('Discovery')`**
+**[236～260行](step1_copy.ps1#L236)｜`$setting.Before =`、`$plan.Remove('Discovery')`**
 
 適用除外・DCR・関連付けの現在値を、切り戻し用の`Before`へ入れます。まだ存在しなければ`$null`です。再実行しても最初の値を残します。
 
 変更前の値があれば、DCRのタグや関連付けの説明など、今回変更しない項目を新設定にも残します。作成先を決めるために使った`Discovery`は、計画から外します。
 
-**[269～307行](step1_copy.ps1#L269)｜`$recordChanged = -not $record`、`[IO.File]::WriteAllText`**
+**[266～304行](step1_copy.ps1#L266)｜`$recordChanged = -not $record`、`[IO.File]::WriteAllText`**
 
 前回の記録と、今回調べたID・設定値を比べます。記録した旧設定が消えた、または値が変わった場合は、そのサブスクリプションの作業を止めます。同じIDに作成する設定値が前回と違う場合も止め、新しく見つかったIDだけを追記します。初回は`$plan`をそのまま記録にします。
 
 JSONを一時ファイルに書き終えてから、作業記録のファイルと置き換えます。書込みに失敗しても前回の記録を残すためです。保存後にAzureの変更へ進みます。
 
-**[313～338行](step1_copy.ps1#L313)｜`$resources = @($record.NewSettings`、`$providersReady`**
+**[310～335行](step1_copy.ps1#L310)｜`$resources = @($record.NewSettings`、`$providersReady`**
 
 `$resources`へ、適用除外、保存先と保持期間、DCRと関連付けの順に設定を並べます。新診断設定は、この一覧の処理後に作成します。
 
 保存先を作る前に、使うAzureリソースの利用登録を確認します。未登録なら登録して完了を待ちます。`$providersReady`は、同じサブスクリプションでこの確認を繰り返さないための印です。
 
-**[339～365行](step1_copy.ps1#L339)｜`$currentBody = Get-WritableBody`、`$matched = Test-Configuration`**
+**[336～362行](step1_copy.ps1#L336)｜`$currentBody = Get-WritableBody`、`$matched = Test-Configuration`**
 
 Azureの現在値を作業記録の`Body`と比べ、同じなら書き込まず`continue`で次へ進みます。リソースグループは存在を、テーブルは日数とテーブル単位での保持期間指定を確認します。
 
@@ -75,25 +75,25 @@ Azureの現在値を作業記録の`Body`と比べ、同じなら書き込まず
 
 更新が必要なら、`Body`をコピーして`$body`へ入れます。送信するコピーを加工し、作業記録の値は変えません。
 
-**[371～407行](step1_copy.ps1#L371)｜`$body.properties.networkAcls =`、`$method = 'Patch'`**
+**[368～404行](step1_copy.ps1#L368)｜`$body.properties.networkAcls =`、`$method = 'Patch'`**
 
 再実行で保存先がすでにある場合は、IP・VNetの許可規則やLog Analyticsの他の`features`を残します。ログ削除ルールは`log-append-1095`だけを入れ替え、他のルールは残します。
 
 既存のLog Analyticsとテーブルには、変更する項目だけを送る`PATCH`を使います。保持期間の変更で、テーブルの列定義まで置き換えないためです。
 
-**[412～438行](step1_copy.ps1#L412)｜`while ($true)`、`-Method $method -Body $body`**
+**[409～435行](step1_copy.ps1#L409)｜`while ($true)`、`-Method $method -Body $body`**
 
 設定値を`PUT`または`PATCH`で送り、Azureから読み直して作業記録の値と比べます。Event・Syslogテーブルの反映待ちでDCRを作れない場合は、10秒待って再送します。
 
 このループが待つのは、その反映遅れだけです。他の失敗は外側の`catch`へ渡し、そのサブスクリプションの残りの処理を止めます。
 
-**[444～482行](step1_copy.ps1#L444)｜`$diagnostics | ForEach-Object -Parallel`、`return $result`**
+**[441～479行](step1_copy.ps1#L441)｜`$diagnostics | ForEach-Object -Parallel`、`return $result`**
 
 保存先を作成した後、新診断設定を最大5件同時に作ります。同じID・設定値なら作成を省き、設定がなければ作って読み直します。同名で値が異なる設定は変更せず、失敗として扱います。
 
 並列処理へは共通ファイルと認証情報を渡します。結果を`$copied`へ集め、失敗したID・理由・作成したい設定値を`$failures`へ加えます。
 
-**[484～505行](step1_copy.ps1#L484)｜`$failurePath = Join-Path $PSScriptRoot`、`Export-Csv`**
+**[481～502行](step1_copy.ps1#L481)｜`$failurePath = Join-Path $PSScriptRoot`、`Export-Csv`**
 
 調査や記録の保存で止まった理由も`$failures`へ加えます。失敗があれば`copy_failures.csv`へ出してエラーで終了し、すべて成功すれば前回の失敗CSVを削除します。
 

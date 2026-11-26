@@ -1,4 +1,5 @@
 procedural-migration/targets.csv
+procedural-migration/generated/
 procedural-migration/records/
 procedural-migration/*_results.csv
 procedural-migration/*_failures.csv

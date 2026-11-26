@@ -6,6 +6,7 @@ Azureの診断設定とVM・VMSSのログ送信先を移行します。正本は
 |---|---|
 |[使い方](procedural-migration/README.md)|環境・CSV・実行順・各ファイルの処理・再実行・切り戻し|
 |[コード学習ガイド](procedural-migration/CODE_LEARNING.md)|step1からコードを上から読むための解説と、構文の補足|
+|[環境別CSVの作成](tools/README.md)|管理グループ配下のサブスクリプションとalert用リソースグループから、保存先の名前を生成|
 |[テスト環境の作成](test-environment/README.md)|既存VNet・会社ポリシーを使うテスト資源の作成手順|
 |[自社2Subでの総合テスト手順](test-environment/INTEGRATION_TEST.md)|正常系と、複製後・旧設定削除後の切り戻しを確認する手順|
 |[検証結果](test-results/REPORT.md)|実施内容・結果・実測時間・未実施項目|

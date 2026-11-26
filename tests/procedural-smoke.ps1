@@ -749,6 +749,52 @@ try {
         Invoke-ReplayStep delete
         Invoke-ReplayStep rollback
     }
+    Invoke-ReplayCase '旧DCR関連なしでもEvent・Syslogは1095日保持し、新DCRは作らない' -NoSources -Diagnostic 'None' -Vm 'None' -Body {
+        $global:ProceduralFixture.Rows[1].VmLogDestination = ''
+        Write-FixtureCsv
+        Invoke-ReplayStep copy
+        foreach ($record in Get-FixtureRecords) {
+            Assert-Replay ($record.OldSettings.Count -eq 0) '旧診断設定と旧DCR関連付けは0件'
+            $tables = @($record.Destinations | Where-Object Kind -eq 'Table')
+            Assert-Replay ($tables.Count -eq 2) '両Subでテーブルを2つ作成'
+            foreach ($tableName in @('Event', 'Syslog')) {
+                $tableId = "$($record.Target.WorkspaceId)/tables/$tableName"
+                $saved = @($tables | Where-Object Id -eq $tableId)
+                $actual = $global:ProceduralFixture.Resources[$tableId]
+                Assert-Replay ($saved.Count -eq 1 -and $saved[0].Body.properties.totalRetentionInDays -eq 1095) "$tableName の1095日設定を記録"
+                Assert-Replay ($actual.properties.totalRetentionInDays -eq 1095 -and -not $actual.properties.totalRetentionInDaysAsDefault) "$tableName をテーブル単位で1095日に設定"
+            }
+            Assert-Replay (@($record.NewSettings | Where-Object Kind -in @('Dcr', 'Association')).Count -eq 0) 'None・空欄では新DCRと関連付けを作らない'
+        }
+        Reset-Observation
+        Invoke-ReplayStep copy
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '同じ設定で再実行しても書き直さない'
+        Invoke-ReplayStep verify
+
+        # 各テーブルの日数変更をNGにし、複製の再実行で1095日へ戻せることも確認する。
+        $ids = Get-FixtureIds $global:ProceduralFixture.Subscriptions[0]
+        foreach ($tableName in @('Event', 'Syslog')) {
+            $tableId = "$($ids.Workspace)/tables/$tableName"
+            $global:ProceduralFixture.Resources[$tableId].properties.totalRetentionInDays = 365
+            Reset-Observation
+            Invoke-ReplayStep verify -ExpectFailure
+            $results = Import-Csv (Join-Path $global:ProceduralFixture.Repository 'verify_results.csv')
+            Assert-Replay (@($results | Where-Object { $_.ResourceId -eq $tableId -and $_.Result -eq 'NG' }).Count -eq 1) "$tableName の日数変更をNGにする"
+            Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '確認中は設定を変更しない'
+            Invoke-ReplayStep copy
+            Invoke-ReplayStep verify
+        }
+        # VM送信をLogにしても、旧関連付けがなければDCRは作らず、両テーブルだけを設定する。
+        Reset-Fixture -NoSources -Diagnostic 'None' -Vm 'Log'
+        Invoke-ReplayStep copy
+        foreach ($record in Get-FixtureRecords) {
+            Assert-Replay ($record.OldSettings.Count -eq 0 -and $record.Target.VmLogDestination -eq 'Log') '旧関連付けなしでVM送信Logを指定'
+            Assert-Replay (@($record.NewSettings | Where-Object Kind -in @('Dcr', 'Association')).Count -eq 0) '旧関連付けがなければ新DCRと関連付けを作らない'
+            Assert-Replay (@($record.Destinations | Where-Object Kind -eq 'Table').Count -eq 2) 'VM送信Logでも両テーブルを設定'
+        }
+        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Id -match '/Microsoft.Insights/dataCollection(Rules|RuleAssociations)/' }).Count -eq 0) 'DCRと関連付けへの書込み0'
+        Invoke-ReplayStep verify
+    }
     Invoke-ReplayCase '東日本・西日本・globalの地域別Storageへ送信する' {
         $first = $global:ProceduralFixture.Subscriptions[0]
         foreach ($region in @('japanwest', 'global')) {

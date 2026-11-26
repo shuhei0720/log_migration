@@ -31,41 +31,41 @@ Waiverは3割り当て分で、最初の2件は空の参照ID配列で全体除�
 
 Storage本体・Blob設定・ライフサイクル・Defender設定を`Destinations`へ加えます。ライフサイクルは、最終更新から1,095日を超えたappendBlobを削除する設定です。公開ネットワークは`Disabled`で、通信規則は既定拒否・`AzureServices`例外です。CSVにStorage名がなければ、このループは0件になります。
 
-**[129～143行](step1_copy.ps1#L129)｜`$oldAssociations.Count -gt 0`、`totalRetentionInDays = 1095`**
+**[129～140行](step1_copy.ps1#L129)｜`foreach ($tableName in @('Event', 'Syslog'))`、`totalRetentionInDays = 1095`**
 
-旧DCRの関連があれば、Event・Syslogテーブルの設定も`Destinations`へ追加します。テーブルの合計保持を1,095日にする本文で、ワークスペース全体の90日とは別の設定です。VM側が`None`・空欄でも準備します。
+Event・Syslogテーブルの設定を、すべての新Log Analyticsの`Destinations`へ追加します。テーブルの合計保持を1,095日にする値で、ワークスペース全体の90日とは別の設定です。旧DCRの関連付けがなくても、VM側が`None`・空欄でも設定します。
 
-**[148～206行](step1_copy.ps1#L148)｜`$dcrBody.properties.dataSources`、`foreach ($association in $plan.Discovery.Associations)`**
+**[145～203行](step1_copy.ps1#L145)｜`$dcrBody.properties.dataSources`、`foreach ($association in $plan.Discovery.Associations)`**
 
 `Discovery.Dcr`があれば、DCR（データ収集ルール）の本文を組み立てます。`dataSources`が収集内容、`destinations`が保存先、`dataFlows`が両者の結び付きです。WindowsイベントとSyslogの収集条件は固定値を使います。
 
 続いて、対象ごとに新DCRへの関連付けを作る本文を用意します。DCR本体と関連付けは、ともに`NewSettings`へ入ります。`VmLogDestination`は送り先の切替ではなく、`Log`なら新DCRと関連付けを作る指定です。送り先はCSVのLog Analyticsで、`None`・空欄ならこのブロックを通りません。
 
-**[212～234行](step1_copy.ps1#L212)｜`$diagnosticBody = @{`、`$storageIds[$diagnostic.Location]`**
+**[209～231行](step1_copy.ps1#L209)｜`$diagnosticBody = @{`、`$storageIds[$diagnostic.Location]`**
 
 `OldId`に対応する旧診断設定から、ログ・メトリックを新しい本文へコピーします。Storage宛ては先ほどの地域別ID、Log宛てはCSVのワークスペースIDを設定し、`NewSettings`へ加えます。
 
 診断側が`None`・空欄なら`Discovery.Diagnostics`が空なので、新診断設定は0件です。
 
-**[239～263行](step1_copy.ps1#L239)｜`$setting.Before =`、`$plan.Remove('Discovery')`**
+**[236～260行](step1_copy.ps1#L236)｜`$setting.Before =`、`$plan.Remove('Discovery')`**
 
 Waiver・DCR・関連付けの現在値を`Before`へ保存します。不在なら`$null`で、切り戻し時に「元へ戻すか、今回の追加分を削除するか」を決める材料になります。再実行では最初の`Before`を使います。
 
 既存DCRなどの指定外の値を引き継いだ後、組立て用の`Discovery`を外します。ここで、保存先・新設定・旧設定の一覧がそろいます。
 
-**[269～306行](step1_copy.ps1#L269)｜`$recordChanged = -not $record`、`[IO.File]::WriteAllText`**
+**[266～303行](step1_copy.ps1#L266)｜`$recordChanged = -not $record`、`[IO.File]::WriteAllText`**
 
 前回の記録があれば今回の計画と照合し、新しい対象だけを追記します。旧設定の消失・改変や、同じIDの作成値の違いは停止条件です。初回は`$plan`をそのまま記録にします。
 
 変更があればJSONを一時ファイルへ書き、既存ファイルの置換または移動で保存します。これが成功してからAzureへの書き込みへ進みます。
 
-**[312～337行](step1_copy.ps1#L312)｜`$resources = @($record.NewSettings`、`$providersReady`**
+**[309～334行](step1_copy.ps1#L309)｜`$resources = @($record.NewSettings`、`$providersReady`**
 
 作業記録から、Waiver→保存先・保持設定→DCR・関連付けの順に`$resources`を作ります。新診断設定は最後の別ループで扱います。
 
 保存先の準備に入る前に必要なサービスの利用登録を確認し、未登録なら登録完了を待ちます。`$providersReady`は、同じSubでこの確認を繰り返さないための印です。
 
-**[338～364行](step1_copy.ps1#L338)｜`$currentBody = Get-WritableBody`、`$matched = Test-Configuration`**
+**[335～361行](step1_copy.ps1#L335)｜`$currentBody = Get-WritableBody`、`$matched = Test-Configuration`**
 
 各対象の現在値を読み、作成したい`Body`と比べます。一致済みなら`continue`で次の対象へ進みます。作業記録のRGは存在を確認し、テーブルは総保持が個別指定されているかも確認します。
 
@@ -73,25 +73,25 @@ Waiver・DCR・関連付けの現在値を`Before`へ保存します。不在な
 
 更新する場合は送信用の`$body`を別コピーにし、元の記録を変えずに後の加工へ渡します。
 
-**[370～404行](step1_copy.ps1#L370)｜`$body.properties.networkAcls =`、`$method = 'Patch'`**
+**[367～401行](step1_copy.ps1#L367)｜`$body.properties.networkAcls =`、`$method = 'Patch'`**
 
 既存StorageのIP・VNet規則、Log Analyticsの他のfeaturesなどを送信本文へ引き継ぎます。ライフサイクルは今回の`log-append-1095`だけを入れ替え、他名のルールを残します。
 
 既存Log Analyticsやテーブルは必要な値だけを`PATCH`します。テーブルの列定義などを、保持期間の変更で置き換えないためです。
 
-**[409～434行](step1_copy.ps1#L409)｜`while ($true)`、`-Method $method -Body $body`**
+**[406～431行](step1_copy.ps1#L406)｜`while ($true)`、`-Method $method -Body $body`**
 
 ここで本文をPUT／PATCHし、Azureから読み直して記録の期待値と照合します。DCR作成がEvent・Syslogの反映待ちで失敗した場合だけ、10秒待って再送します。
 
 その他の失敗は外側の`catch`へ進み、そのSubの残りを止めます。
 
-**[440～478行](step1_copy.ps1#L440)｜`$diagnostics | ForEach-Object -Parallel`、`return $result`**
+**[437～475行](step1_copy.ps1#L437)｜`$diagnostics | ForEach-Object -Parallel`、`return $result`**
 
 保存先の準備後、新診断設定を最大5件同時に処理します。各処理へ共通関数と対象Subの認証情報を用意し、現在値が一致すれば省略、不在なら作成して読み直します。同名で内容が違う場合は失敗にします。
 
 各結果を`$copied`へ集め、失敗したID・理由・期待本文を`$failures`へ追加します。
 
-**[480～501行](step1_copy.ps1#L480)｜`$failurePath = Join-Path $PSScriptRoot`、`Export-Csv`**
+**[477～498行](step1_copy.ps1#L477)｜`$failurePath = Join-Path $PSScriptRoot`、`Export-Csv`**
 
 準備中に失敗したSubも、ここへ理由と対象を残します。未完了があれば`copy_failures.csv`へ出してエラー終了します。全件成功なら前回の失敗CSVを消します。
 
