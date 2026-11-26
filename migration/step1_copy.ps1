@@ -5,7 +5,7 @@ $null = New-Item $recordDirectory -ItemType Directory -Force
 
 # ---
 # 1. 前回の作業記録を読み、現在の旧設定・作成先・ポリシーを確認する。
-# 初回は名前の重複も調べる。再実行では、環境とCSVが前回の記録と同じことを確認する。
+# 既存の保存先は地域を確認する。再実行では、環境とCSVが前回の記録と同じことも確認する。
 # ---
 foreach ($target in $targets) {
     $subscriptionId = $target.SubscriptionId
@@ -120,7 +120,7 @@ foreach ($target in $targets) {
             }
         }
 
-        # すべての新しいLog Analyticsで、Event・Syslogを合計1,095日保持にする。
+        # 新しいLog Analyticsで、Event・Syslogを合計1,095日保持にする。
         # 旧DCRの関連付けがない場合や、VMログの送信を省略する場合も設定する。
         foreach ($tableName in @('Event', 'Syslog')) {
             $plan.Destinations += @{
@@ -196,15 +196,58 @@ foreach ($target in $targets) {
             }
         }
 
+        # 作業前からある保存先は、地域だけを記録し、保持期間やセキュリティ設定を変更しない。
+        # 既存Storageの子設定と、既存LAWの作成済みテーブルも変更対象から外す。未作成テーブルは用意する。
+        $reusedParents = @($plan.Discovery.ReusedDestinations | Where-Object { $_ -ne $resourceGroupId })
+        $plan.Destinations = @(foreach ($destination in $plan.Destinations) {
+            if ($destination.Id -in $plan.Discovery.ReusedDestinations) {
+                $destination.Reuse = $true
+                $destination.Body = @{ location = $destination.Body.location }
+            }
+            elseif (@($reusedParents | Where-Object { $destination.Id -like "$_/*" }).Count) {
+                if ($destination.Kind -ne 'Table' -or (Invoke-ArmRequest -Resource $destination -Optional)) {
+                    continue
+                }
+            }
+            $destination
+        })
+
         # 旧診断設定のログ・メトリックをコピーし、同じ地域のストレージまたは新しいLog Analyticsへ送る設定値を作る。
+        # 新LAW自身はallLogsだけを有効にし、CSVがLogなら自身へ、Storageなら同じ地域のストレージへ送る。
         # LogDestinationがNone・空欄なら新診断設定は作らない。旧診断設定は、後で削除するため作業記録に残す。
         foreach ($diagnostic in $plan.Discovery.Diagnostics) {
-            $original = @($plan.OldSettings | Where-Object Id -eq $diagnostic.OldId)[0]
-            $source = $original.Body.properties
-            $diagnosticBody = @{
-                properties = @{
-                    logs = @($source.logs | Where-Object { $null -ne $_ })
-                    metrics = @($source.metrics | Where-Object { $null -ne $_ })
+            $source = $null
+            if ($diagnostic.OldId) {
+                $original = @($plan.OldSettings | Where-Object Id -eq $diagnostic.OldId)[0]
+                $source = $original.Body.properties
+                $diagnosticBody = @{
+                    properties = @{
+                        logs = @($source.logs | Where-Object { $null -ne $_ })
+                        metrics = @($source.metrics | Where-Object { $null -ne $_ })
+                    }
+                }
+            }
+            else {
+                # Azureが返す無効のaudit・AllMetricsも指定し、作成後に全項目を比較できるようにする。
+                # 有効にするのはallLogsだけ。retentionPolicyは無効とし、保存期間は保存先の設定に従う。
+                $diagnosticBody = @{
+                    properties = @{
+                        logs = @(
+                            foreach ($group in @('allLogs', 'audit')) {
+                                @{
+                                    category = $null
+                                    categoryGroup = $group
+                                    enabled = $group -eq 'allLogs'
+                                    retentionPolicy = @{ enabled = $false; days = 0 }
+                                }
+                            }
+                        )
+                        metrics = @(@{
+                            category = 'AllMetrics'
+                            enabled = $false
+                            retentionPolicy = @{ enabled = $false; days = 0 }
+                        })
+                    }
                 }
             }
             if ($target.LogDestination -eq 'Storage') {
@@ -212,7 +255,7 @@ foreach ($target in $targets) {
             }
             else {
                 $diagnosticBody.properties.workspaceId = $target.WorkspaceId
-                $diagnosticBody.properties.logAnalyticsDestinationType = $source.logAnalyticsDestinationType
+                $diagnosticBody.properties.logAnalyticsDestinationType = $source.logAnalyticsDestinationType ?? 'AzureDiagnostics'
             }
             $plan.NewSettings += @{
                 Id = $diagnostic.Id
@@ -283,7 +326,8 @@ foreach ($target in $targets) {
             $temporaryPath = "$recordPath.tmp"
             [IO.File]::WriteAllText($temporaryPath, (ConvertTo-Json $record -Depth 40), [Text.Encoding]::UTF8)
             if (Test-Path $recordPath) {
-                [IO.File]::Replace($temporaryPath, $recordPath, $null)
+                # 第3引数を.NETのnullにし、別名保存を省く。$nullだと空文字に変換されエラーになる。
+                [IO.File]::Replace($temporaryPath, $recordPath, [NullString]::Value)
             }
             else {
                 [IO.File]::Move($temporaryPath, $recordPath)
@@ -319,6 +363,12 @@ foreach ($target in $targets) {
                 $providersReady = $true
             }
             $current = Invoke-ArmRequest -Resource $resource -Optional -Wait
+            if ($resource.Reuse) {
+                if (-not (Test-Configuration $current $resource.Body -Kind $resource.Kind)) {
+                    throw "再利用する保存先がないか、地域が変わっています: $($resource.Id)"
+                }
+                continue
+            }
             $currentBody = Get-WritableBody $current -Kind $resource.Kind
             $expected = $resource.Body
             # 記録した作成先のリソースグループは、再開時に存在することだけを確認する。

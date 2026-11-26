@@ -35,8 +35,8 @@ foreach ($target in $targets) {
             try {
                 $current = Invoke-ArmRequest -Resource $resource -Optional
                 $expected = $resource.Body
-                # リソースグループは、記録したIDで存在することを確認する。
-                if ($resource.Kind -eq 'Group') {
+                # 新設したリソースグループは有無を、再利用するものは記録した地域も確認する。
+                if ($resource.Kind -eq 'Group' -and -not $resource.Reuse) {
                     $expected = @{}
                 }
                 # 合計保持日数が同じでも、ワークスペースの既定値を使っているだけならNGにする。

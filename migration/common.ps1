@@ -534,7 +534,7 @@ function Get-MigrationPlan {
     .DESCRIPTION
     CSVの1行を受け取り、そのサブスクリプションの旧設定と、新しい保存先・送信設定の作成場所を調べる。
     旧ワークスペース宛ての診断設定と旧2本のDCRへの関連付けを取得し、削除・復元に使う設定の一覧（OldSettings）へ入れる。
-    初回は保存先リソースグループが未作成か確認し、地域別ストレージ名の空きとStandard_ZRSへの対応を調べる。
+    既存の保存先は指定地域と一致するか確認し、新規のストレージは名前の空きとStandard_ZRSへの対応を調べる。
     新診断設定は、作業記録にない同名設定がある場合や、追加後に1リソース当たり5件を超える場合は作成できない。
     指定ポリシーが適用されていない場合も、エラーで止める。
     作成先のID・名前・地域は、一時的な項目（Discovery）にまとめて返す。
@@ -544,7 +544,7 @@ function Get-MigrationPlan {
     サブスクリプション・保存先名・送信方法を持つCSVの1行分。
     .PARAMETER Record
     中断後の再開に使う前回の作業記録。
-    記録にあるリソースグループ・ストレージ・診断名は、初回の名前重複として扱わない。
+    記録にある新診断設定は、今回作成したものとして再利用できる。
     .PARAMETER OnlyOldSettings
     step2・step3で、現在の旧設定だけを取得するときに付ける。
     リソースグループ・名前・ポリシーの作成前確認は行わない。
@@ -556,7 +556,7 @@ function Get-MigrationPlan {
     param($Target, $Record, [switch]$OnlyOldSettings)
 
     # ---
-    # 1. 対象と保存先を決め、初回は保存先のリソースグループが未作成か確認する。
+    # 1. 対象と保存先を決め、既存のリソースグループは指定した地域と一致するか確認する。
     # ---
     $subscriptionId = $Target.SubscriptionId
     $resourceGroupId = "/subscriptions/$subscriptionId/resourceGroups/$($Target.ResourceGroup)"
@@ -568,12 +568,15 @@ function Get-MigrationPlan {
         OldSettings = @()
     }
 
-    # 初回は、保存先のリソースグループがすでにあれば止める。再開時は、作業記録にあるものだけを使う。
+    # リソースグループは既存でも利用する。地域が違う場合は、設定を変更する前に止める。
     if (-not $OnlyOldSettings) {
-        $existingGroup = Invoke-ArmRequest $resourceGroupId -ApiVersion $apiVersions.Group -Optional
-        $recordedGroup = @($Record.Destinations | Where-Object { $_.Kind -eq 'Group' -and $_.Id -eq $resourceGroupId })
-        if ($existingGroup -and $recordedGroup.Count -ne 1) {
-            throw "CSVで指定したリソースグループは既に存在します: $resourceGroupId"
+        $existingGroup = Invoke-ArmRequest $resourceGroupId -ApiVersion $apiVersions.Group -Optional -Wait
+        if ($existingGroup -and ($existingGroup.location -replace '\s', '') -ne $location) {
+            throw "既存リソースグループの地域が予定と異なります: $resourceGroupId"
+        }
+        $existingWorkspace = Invoke-ArmRequest $Target.WorkspaceId -ApiVersion $apiVersions.Workspace -Optional -Wait
+        if ($existingWorkspace -and ($existingWorkspace.location -replace '\s', '') -ne $location) {
+            throw "既存Log Analyticsの地域が予定と異なります: $($Target.WorkspaceId)"
         }
     }
 
@@ -736,18 +739,30 @@ function Get-MigrationPlan {
         Dcr = $null
         Associations = @()
         Diagnostics = @()
+        ReusedDestinations = @()
+    }
+    # 作業前からある保存先だけ再利用する。前回このスクリプトが作ったものは、引き続き指定値で確認する。
+    $createdIds = @($Record.Destinations | Where-Object { -not $_.Reuse } | ForEach-Object Id)
+    if ($existingGroup -and $resourceGroupId -notin $createdIds) {
+        $discovery.ReusedDestinations += $resourceGroupId
+    }
+    if ($existingWorkspace -and $Target.WorkspaceId -notin $createdIds) {
+        $discovery.ReusedDestinations += $Target.WorkspaceId
     }
 
     # ---
     # 5. 地域別のストレージ名を作り、名前が未使用か、その地域でStandard_ZRSを使えるか確認する。
-    # CSVにストレージ名がある場合だけ行い、旧診断設定が0件なら東日本を作成先にする。
+    # CSVにストレージ名がある場合だけ行う。新LAW自身もStorageへ送る場合は、その地域を加える。
     # ---
     if ($Target.StorageAccount) {
         $storageLocations = @($diagnosticSources.Location | Sort-Object -Unique)
+        if ($Target.LogDestination -eq 'Storage') {
+            $storageLocations = @(@($storageLocations) + $location | Sort-Object -Unique)
+        }
         if ($storageLocations.Count -eq 0) {
             $storageLocations = @('japaneast')
         }
-        $skus = Invoke-ArmRequest "/subscriptions/$subscriptionId/providers/Microsoft.Storage/skus" -ApiVersion '2023-05-01'
+        $skus = $null
         foreach ($storageLocation in $storageLocations) {
             $region = @($regionNames | Where-Object { ($_.name -replace '\s', '') -eq $storageLocation })
             if ($region.Count -ne 1 -or $region[0].shortName -cnotmatch '^[a-z0-9]+$') {
@@ -757,11 +772,21 @@ function Get-MigrationPlan {
             if ($storageName -cnotmatch '^[a-z0-9]{3,24}$') {
                 throw "変換後のStorage名が不正です: $storageName"
             }
-            if (-not ($skus.value | Where-Object { $_.name -eq 'Standard_ZRS' -and $_.kind -eq 'StorageV2' -and $storageLocation -in $_.locations })) {
-                throw "Standard_ZRSを利用できません: $storageLocation"
-            }
             $storageId = "$resourceGroupId/providers/Microsoft.Storage/storageAccounts/$storageName"
-            if ($storageId -notin @($Record.Destinations.Id)) {
+            $existingStorage = Invoke-ArmRequest $storageId -ApiVersion $apiVersions.Storage -Optional -Wait
+            if ($existingStorage -and ($existingStorage.location -replace '\s', '') -ne $storageLocation) {
+                throw "既存Storageの地域が予定と異なります: $storageId"
+            }
+            if ($existingStorage -and $storageId -notin $createdIds) {
+                $discovery.ReusedDestinations += $storageId
+            }
+            if (-not $existingStorage) {
+                if (-not $skus) {
+                    $skus = Invoke-ArmRequest "/subscriptions/$subscriptionId/providers/Microsoft.Storage/skus" -ApiVersion '2023-05-01'
+                }
+                if (-not ($skus.value | Where-Object { $_.name -eq 'Standard_ZRS' -and $_.kind -eq 'StorageV2' -and $storageLocation -in $_.locations })) {
+                    throw "Standard_ZRSを利用できません: $storageLocation"
+                }
                 $availability = Invoke-ArmRequest "/subscriptions/$subscriptionId/providers/Microsoft.Storage/checkNameAvailability" -Method Post -ApiVersion '2023-05-01' -Body @{
                     name = $storageName
                     type = 'Microsoft.Storage/storageAccounts'
@@ -804,10 +829,28 @@ function Get-MigrationPlan {
         }
     }
     # 診断ログの送信を続ける行だけ、新診断設定のID・元の設定ID・送信先の地域を決める。
+    # 新LAW自身も対象に加える。再実行で既に存在する場合は、調査済みの全診断設定で名前と件数を確認する。
     if ($Target.LogDestination -in @('Storage', 'Log')) {
-        foreach ($diagnostic in $diagnosticSources) {
-            if ($diagnostic.Sources.Count -ne 1) {
+        $diagnosticTargets = @($diagnosticSources)
+        if ($Target.WorkspaceId -notin $diagnosticTargets.ResourceId) {
+            $workspaceSettings = @($listedSettings | Where-Object ResourceId -eq $Target.WorkspaceId)
+            $diagnosticTargets += @{
+                ResourceId = $Target.WorkspaceId
+                Settings = @($workspaceSettings.Settings)
+                Sources = @()
+                Location = $location
+            }
+        }
+        foreach ($diagnostic in $diagnosticTargets) {
+            if ($diagnostic.ResourceId -ne $Target.WorkspaceId -and $diagnostic.Sources.Count -ne 1) {
                 throw "対象の旧診断設定が複数あります: $($diagnostic.ResourceId)"
+            }
+            # 保存先として再利用するStorage自身のログは、同じStorageへ送れない。
+            if ($Target.LogDestination -eq 'Storage') {
+                $destination = @($discovery.Storages | Where-Object Location -eq $diagnostic.Location)[0]
+                if ($diagnostic.ResourceId -eq $destination.Id -or $diagnostic.ResourceId -like "$($destination.Id)/*") {
+                    throw "Storage自身の診断ログを同じStorageへ送信できません: $($diagnostic.ResourceId)"
+                }
             }
             $newId = "$($diagnostic.ResourceId)$diagnosticPath/$([Uri]::EscapeDataString($newDiagnosticSettingName))"
             if ($newId -in $plan.OldSettings.Id) {
@@ -822,7 +865,11 @@ function Get-MigrationPlan {
             if ($existing.Count -eq 0 -and $diagnostic.Settings.Count -ge 5) {
                 throw "診断設定を追加する空き枠がありません: $($diagnostic.ResourceId)"
             }
-            $oldId = "$($diagnostic.ResourceId)$diagnosticPath/$([Uri]::EscapeDataString($diagnostic.Sources[0].name))"
+            # 新LAW自身は旧設定をコピーせず、allLogsを有効にする。OldIdは複製元がある対象だけに入れる。
+            $oldId = $null
+            if ($diagnostic.ResourceId -ne $Target.WorkspaceId) {
+                $oldId = "$($diagnostic.ResourceId)$diagnosticPath/$([Uri]::EscapeDataString($diagnostic.Sources[0].name))"
+            }
             $discovery.Diagnostics += @{
                 Id = $newId
                 OldId = $oldId

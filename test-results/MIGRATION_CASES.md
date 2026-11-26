@@ -1,24 +1,24 @@
-# 移行スクリプトの再生試験：91ケース
+# 移行スクリプトの再生試験：96ケース
 
-日本語JSONの受信を修正した`migration/`をPowerShell 7.5.4で実行し、91ケース・1,341判定が成功しました。Azureへの通信は試験用の応答に置き換えています。1,329判定が各ケースの確認で、12判定が構文と実行前後のコード不変の確認です。
+自己診断と既存保存先の再利用を追加した`migration/`をPowerShell 7.5.4で実行し、96ケース・1,542判定が成功しました。Azureへの通信は試験用の応答に置き換えています。1,530判定が各ケースの確認で、残り12判定が構文と実行前後のコード不変の確認です。
 
-異常ケースのPASSは、指定した異常を検出し、削除や上書きを止められたことを表します。IDは過去の一覧と同じケースに同じ番号を使い、追加ケースを末尾に載せています。実行順を示す番号ではありません。
+異常ケースのPASSは、指定した異常を検出し、削除や上書きを止められたことを表します。既存ケースのIDを引き継ぎ、追加ケースを末尾に載せています。実行順を示す番号ではありません。
 
 |ID|ケース|判定数|結果|
 |---|---|---:|---|
-|PROC-001|StorageとVM: 全工程・再実行・切戻し|108|PASS|
-|PROC-002|LogとVM: 全工程・再実行・切戻し|108|PASS|
-|PROC-003|Storageのみ: 全工程・再実行・切戻し|104|PASS|
-|PROC-004|Logのみ: 全工程・再実行・切戻し|104|PASS|
-|PROC-005|VMのみ: 全工程・再実行・切戻し|106|PASS|
-|PROC-006|両方None: 全工程・再実行・切戻し|102|PASS|
-|PROC-007|両方空欄: 全工程・再実行・切戻し|102|PASS|
+|PROC-001|StorageとVM: 全工程・再実行・切戻し|122|PASS|
+|PROC-002|LogとVM: 全工程・再実行・切戻し|122|PASS|
+|PROC-003|Storageのみ: 全工程・再実行・切戻し|118|PASS|
+|PROC-004|Logのみ: 全工程・再実行・切戻し|118|PASS|
+|PROC-005|VMのみ: 全工程・再実行・切戻し|108|PASS|
+|PROC-006|両方None: 全工程・再実行・切戻し|104|PASS|
+|PROC-007|両方空欄: 全工程・再実行・切戻し|104|PASS|
 |PROC-008|Storage宛GETのLAW既定方式付加を許容して再実行・削除・復元できる|14|PASS|
 |PROC-009|LAW宛の格納方式変更は許容せず既存設定を保持する|10|PASS|
 |PROC-010|CSV列欠落は空欄と区別して書込み前に停止する|24|PASS|
 |PROC-011|対象0件でも東日本StorageとLAWを準備する|10|PASS|
-|PROC-012|東日本・西日本・globalの地域別Storageへ送信する|5|PASS|
-|PROC-013|Canadaのみの旧設定を削除後もJPEを要求しない|7|PASS|
+|PROC-012|東日本・西日本・globalの地域別Storageへ送信する|6|PASS|
+|PROC-013|Canadaの旧設定と新LAW自身を地域別Storageへ送り、削除後も確認する|7|PASS|
 |PROC-014|Storage kind=StorageV2 の子スコープを探索|3|PASS|
 |PROC-015|Storage kind=BlobStorage の子スコープを探索|3|PASS|
 |PROC-016|Storage kind=BlockBlobStorage の子スコープを探索|3|PASS|
@@ -34,8 +34,8 @@
 |PROC-026|CSV入力拒否: jpeが2か所|2|PASS|
 |PROC-027|CSV入力拒否: Storage名25文字|2|PASS|
 |PROC-028|CSV入力拒否: 空Sub|2|PASS|
-|PROC-029|初回の既存RGは同地域でも別地域でも変更前に停止する|14|PASS|
-|PROC-030|初回の既存Storage名を事前停止する|2|PASS|
+|PROC-029|作業前からある同地域の保存先は、設定値を変更せず全工程で再利用する|51|PASS|
+|PROC-030|別スコープで使われているStorage名は事前停止する|2|PASS|
 |PROC-031|ZRS非対応の地域を事前停止する|2|PASS|
 |PROC-032|初回の同名新診断を再利用しない|2|PASS|
 |PROC-033|新診断を追加する空き5枠上限を事前停止する|2|PASS|
@@ -74,7 +74,7 @@
 |PROC-066|未知の地域略称は事前確認で停止する|2|PASS|
 |PROC-067|対応する既存Waiverは切戻しでも保持する|5|PASS|
 |PROC-068|内容の違う既存Waiverを上書きしない|3|PASS|
-|PROC-069|コピー途中の失敗状態から直接切り戻せる|11|PASS|
+|PROC-069|コピー途中の失敗状態から直接切り戻せる|13|PASS|
 |PROC-070|コピー完了後は旧設定を書き直さず切り戻せる|7|PASS|
 |PROC-071|旧設定を一部削除した失敗状態から直接切り戻せる|9|PASS|
 |PROC-072|DCR更新中の応答を待って完了を確認する|4|PASS|
@@ -91,11 +91,16 @@
 |PROC-083|新診断の余分なWorkspaceとEventHubを許容しない|9|PASS|
 |PROC-084|既存DCRへの余分な収集源追加を許容せず切戻しも上書きしない|6|PASS|
 |PROC-085|未選択Subの記録JSONが壊れていても指定Subだけを切り戻せる|7|PASS|
-|PROC-086|実runspaceで5件以上の診断GETとPUTを処理する|15|PASS|
+|PROC-086|実runspaceで5件以上の診断GETとPUTを処理する|16|PASS|
 |PROC-087|並列worker1件の失敗を記録し再実行で欠落だけを補う|20|PASS|
 |PROC-088|既存DCRのIdentity[SystemAssigned]を維持して全工程と切戻しを行う|12|PASS|
 |PROC-089|既存DCRのIdentity[None]を維持して全工程と切戻しを行う|12|PASS|
 |PROC-090|既存DCRのIdentity[SystemAssigned, UserAssigned]を維持して全工程と切戻しを行う|23|PASS|
 |PROC-091|旧DCR関連なしでもEvent・Syslogは1095日保持し、新DCRは作らない|37|PASS|
+|PROC-092|西日本だけに旧設定があっても、新LAW自身用の東日本Storageを事前確認して作る|27|PASS|
+|PROC-093|新LAW自身の診断の欠落は再開で補い、値の違いは削除前に停止する|33|PASS|
+|PROC-094|新LAWに旧ポリシーの診断が追加されても、自身の新診断を二重に作らない|15|PASS|
+|PROC-095|既存RG・LAW・Storageの地域が違う場合は、Azure変更前に停止する|15|PASS|
+|PROC-096|再利用Storage本体と子サービスの診断を同じStorage自身へ送る指定は事前停止する|8|PASS|
 
-[全結果と実行コードのSHA](JSON_ENCODING_FIX.json) / [検証結果の概要](REPORT.md)
+[全結果と実行コードのSHA](WORKSPACE_DIAGNOSTIC_REUSE.json) / [検証結果の概要](REPORT.md)

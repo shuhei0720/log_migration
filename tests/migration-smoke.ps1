@@ -639,7 +639,24 @@ try {
                 }
                 $diagnosticCount = @($record.NewSettings | Where-Object Kind -eq 'Diagnostic').Count
                 $associationCount = @($record.NewSettings | Where-Object Kind -eq 'Association').Count
-                Assert-Replay (($diagnosticCount -eq 1) -eq ($mode.Diagnostic -in @('Storage', 'Log'))) '新診断は選択した側だけ'
+                $diagnosticsEnabled = $mode.Diagnostic -in @('Storage', 'Log')
+                $expectedDiagnosticCount = if ($diagnosticsEnabled) { 2 } else { 0 }
+                Assert-Replay ($diagnosticCount -eq $expectedDiagnosticCount) '送信有効時は旧診断のコピーと新LAW自身、None・空欄では両方0件'
+                $selfId = "$($workspace.Id)/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)"
+                $self = @($record.NewSettings | Where-Object Id -eq $selfId)
+                Assert-Replay ($self.Count -eq [int]$diagnosticsEnabled) '新LAW自身も診断ログの送信フラグに従う'
+                if ($diagnosticsEnabled) {
+                    $properties = $self[0].Body.properties
+                    Assert-Replay (@($properties.logs | Where-Object enabled).Count -eq 1 -and $properties.logs[0].categoryGroup -eq 'allLogs' -and $properties.logs[0].enabled -eq $true) '新LAW自身はallLogsだけを有効にする'
+                    Assert-Replay (@($properties.metrics | Where-Object enabled).Count -eq 0 -and @($properties.metrics | Where-Object { $_.category -eq 'AllMetrics' -and $_.enabled -eq $false }).Count -eq 1) '新LAW自身のAllMetricsは無効で保存し、メトリックを送信しない'
+                    $expectedDestination = if ($mode.Diagnostic -eq 'Storage') { $storage.Id } else { $workspace.Id }
+                    $actualDestination = if ($mode.Diagnostic -eq 'Storage') { $properties.storageAccountId } else { $properties.workspaceId }
+                    Assert-Replay ($actualDestination -eq $expectedDestination) '新LAW自身もCSVで指定した種類の保存先へ送る'
+                    $copy = @($record.NewSettings | Where-Object { $_.Kind -eq 'Diagnostic' -and $_.Id -ne $selfId })[0]
+                    $oldDiagnostic = @($record.OldSettings | Where-Object Kind -eq 'Diagnostic')[0]
+                    Assert-Replay ((ConvertTo-Json $copy.Body.properties.logs -Depth 20 -Compress) -ceq (ConvertTo-Json $oldDiagnostic.Body.properties.logs -Depth 20 -Compress)) '既存リソースのログ設定は旧診断から変えない'
+                    Assert-Replay ((ConvertTo-Json $copy.Body.properties.metrics -Depth 20 -Compress) -ceq (ConvertTo-Json $oldDiagnostic.Body.properties.metrics -Depth 20 -Compress)) '既存リソースのメトリック設定は旧診断から変えない'
+                }
                 Assert-Replay (($associationCount -eq 1) -eq ($mode.Vm -eq 'Log')) '新DCR関連は選択した側だけ'
                 foreach ($destination in $record.Destinations) {
                     Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($destination.Id)) '保存先の存在を確認'
@@ -814,7 +831,7 @@ try {
             }
         }
     }
-    Invoke-ReplayCase 'Canadaのみの旧設定を削除後もJPEを要求しない' {
+    Invoke-ReplayCase 'Canadaの旧設定と新LAW自身を地域別Storageへ送り、削除後も確認する' {
         foreach ($item in $global:ProceduralFixture.Inventory) {
             $item.location = 'canadacentral'
         }
@@ -823,7 +840,7 @@ try {
         Reset-Observation
         Invoke-ReplayStep verify
         Invoke-ReplayStep delete
-        Assert-Replay (@($global:ProceduralFixture.Reads | Where-Object { $_ -like '*/storageAccounts/stjpe*' }).Count -eq 0) 'JPEへの不要なGETなし'
+        Assert-Replay (@($global:ProceduralFixture.Reads | Where-Object { $_ -like '*/storageAccounts/stjpe*' }).Count -gt 0) '新LAW自身のための東日本Storageも確認する'
         Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '削除後再確認は変更0'
         Invoke-ReplayStep rollback
     }
@@ -868,7 +885,7 @@ try {
         Invoke-ReplayStep copy
         $record = @(Get-FixtureRecords | Where-Object { $_.Target.SubscriptionId -eq $subscription })[0]
         $old = @($record.OldSettings | Where-Object Kind -eq 'Diagnostic')
-        $new = @($record.NewSettings | Where-Object Kind -eq 'Diagnostic')
+        $new = @($record.NewSettings | Where-Object { $_.Kind -eq 'Diagnostic' -and $_.Id -eq $newId })
         Assert-Replay ($old.Count -eq 1 -and $old[0].Id -eq $oldId) '通常一覧にない実在の子診断を保存'
         Assert-Replay ($new.Count -eq 1 -and $new[0].Id -eq $newId) '子DBへ新診断を追加'
         $storageId = "/subscriptions/$subscription/resourceGroups/rg-target/providers/Microsoft.Storage/storageAccounts/stcac1111"
@@ -894,7 +911,7 @@ try {
         Invoke-ReplayStep copy
         $record = @(Get-FixtureRecords | Where-Object { $_.Target.SubscriptionId -eq $subscription })[0]
         Assert-Replay ($record.OldSettings.Count -eq 0) '空のDB一覧から旧設定を捏造しない'
-        Assert-Replay (@($record.NewSettings | Where-Object Kind -eq 'Diagnostic').Count -eq 0) '対象のない新診断を作らない'
+        Assert-Replay (@($record.NewSettings | Where-Object Kind -eq 'Diagnostic').Count -eq 1) '旧対象がなくても新LAW自身の診断だけを作る'
         Assert-Replay (@($global:ProceduralFixture.Reads | Where-Object { $_ -like "$parent/databases/*/providers/Microsoft.Insights/diagnosticSettings" }).Count -eq 0) '存在しない子への照会なし'
     }
     Invoke-ReplayCase 'Redis子DBと通常一覧の次ページを両方移行・復元する' -Vm 'None' -NoSources -Body {
@@ -927,7 +944,7 @@ try {
         Invoke-ReplayStep copy
         $record = @(Get-FixtureRecords | Where-Object { $_.Target.SubscriptionId -eq $subscription })[0]
         Assert-Replay (@($record.OldSettings | Where-Object Kind -eq 'Diagnostic').Count -eq 3) 'DB両ページと通常の次ページを保存'
-        Assert-Replay (@($record.NewSettings | Where-Object Kind -eq 'Diagnostic').Count -eq 3) '3対象すべてへ新診断を追加'
+        Assert-Replay (@($record.NewSettings | Where-Object Kind -eq 'Diagnostic').Count -eq 4) '旧3対象と新LAW自身へ新診断を追加'
         foreach ($resourceId in @($archive, $second, $other)) {
             $new = @($record.NewSettings | Where-Object Id -eq "$resourceId/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)")[0]
             $storageName = 'stcac1111'
@@ -961,31 +978,73 @@ try {
             Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '入力異常は変更前に停止'
         }
     }
-    Invoke-ReplayCase '初回の既存RGは同地域でも別地域でも変更前に停止する' {
-        $configuration = & {
-            . (Join-Path $global:ProceduralFixture.Repository 'common.ps1') -SkipCsv
-            $location
+    Invoke-ReplayCase '作業前からある同地域の保存先は、設定値を変更せず全工程で再利用する' -Vm 'None' -Body {
+        $snapshots = @{}
+        $global:ProceduralFixture.ZrsLocations = @()
+        foreach ($subscription in $global:ProceduralFixture.Subscriptions) {
+            $ids = Get-FixtureIds $subscription
+            Add-FixtureResource $ids.Group @{ location = 'japaneast'; tags = @{ keep = 'existing-group' }; properties = @{} }
+            Add-FixtureResource $ids.Workspace @{
+                location = 'japaneast'
+                properties = @{ retentionInDays = 30; publicNetworkAccessForIngestion = 'Disabled'; publicNetworkAccessForQuery = 'Disabled'; features = @{ enableLogAccessUsingOnlyResourcePermissions = $false } }
+            }
+            Add-FixtureResource $ids.Storage @{
+                location = 'japaneast'; kind = 'StorageV2'; sku = @{ name = 'Standard_LRS' }
+                properties = @{ publicNetworkAccess = 'Enabled'; allowSharedKeyAccess = $true; networkAcls = @{ defaultAction = 'Allow' }; encryption = @{ requireInfrastructureEncryption = $false } }
+            }
+            Add-FixtureResource "$($ids.Storage)/blobServices/default" @{ properties = @{ isVersioningEnabled = $false } }
+            Add-FixtureResource "$($ids.Storage)/managementPolicies/default" @{ properties = @{ policy = @{ rules = @(@{ name = 'keep-existing'; enabled = $true; definition = @{ actions = @{ baseBlob = @{ delete = @{ daysAfterModificationGreaterThan = 7 } } } } }) } } }
+            Add-FixtureResource "$($ids.Storage)/providers/Microsoft.Security/defenderForStorageSettings/current" @{ properties = @{ isEnabled = $true; overrideSubscriptionLevelSettings = $false } }
+            foreach ($tableName in @('Event', 'Syslog')) {
+                if ($subscription -eq $global:ProceduralFixture.Subscriptions[1] -and $tableName -eq 'Syslog') {
+                    continue
+                }
+                Add-FixtureResource "$($ids.Workspace)/tables/$tableName" @{ properties = @{ totalRetentionInDays = 30; totalRetentionInDaysAsDefault = $true; retentionInDays = 30; schema = @{ name = $tableName; columns = @(@{ name = 'KeepColumn'; type = 'string' }) } } }
+            }
+            foreach ($id in @($global:ProceduralFixture.Resources.Keys | Where-Object { $_ -eq $ids.Group -or $_ -eq $ids.Workspace -or $_ -eq $ids.Storage -or $_ -like "$($ids.Storage)/*" -or $_ -like "$($ids.Workspace)/tables/*" })) {
+                $snapshots[$id] = ConvertTo-Json $global:ProceduralFixture.Resources[$id] -Depth 30 -Compress
+            }
         }
-        $otherLocation = if ($configuration -eq 'japaneast') { 'japanwest' } else { 'japaneast' }
-        foreach ($existingLocation in @($configuration, $otherLocation)) {
-            $beforeGroups = @{}
-            foreach ($subscription in $global:ProceduralFixture.Subscriptions) {
-                $ids = Get-FixtureIds $subscription
-                Add-FixtureResource $ids.Group @{ location = $existingLocation; properties = @{} }
-                $beforeGroups[$ids.Group] = ConvertTo-Json $global:ProceduralFixture.Resources[$ids.Group] -Depth 20
+        $global:ProceduralFixture.UnavailableNames = @('stjpe1111', 'stjpe2222')
+        Invoke-ReplayStep precheck
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '既存保存先の確認は読取りだけ'
+        Invoke-ReplayStep copy
+        foreach ($record in @(Get-FixtureRecords)) {
+            Assert-Replay (@($record.Destinations | Where-Object Reuse).Count -eq 3) '既存RG・LAW・Storageを再利用として記録する'
+            Assert-Replay (@($record.Destinations | Where-Object Kind -in @('Blob', 'Lifecycle', 'Defender')).Count -eq 0) '既存Storageの子設定を更新計画へ入れない'
+            $tables = @($record.Destinations | Where-Object Kind -eq 'Table')
+            if ($record.Target.SubscriptionId -eq $global:ProceduralFixture.Subscriptions[1]) {
+                Assert-Replay ($tables.Count -eq 1 -and $tables[0].Id -like '*/tables/Syslog') '既存LAWでは不足しているSyslogテーブルだけを計画へ入れる'
+                Assert-Replay ($global:ProceduralFixture.Resources[$tables[0].Id].properties.totalRetentionInDays -eq 1095) '今回作成したテーブルだけ1095日を設定する'
             }
-            Invoke-ReplayStep precheck -ExpectFailure
-            Invoke-ReplayStep copy -ExpectFailure
-            Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '両Subとも既存RGへ書込みなし'
-            Assert-Replay (@(Get-ChildItem (Join-Path $global:ProceduralFixture.Repository 'records/dev') -Filter '*.json' -ErrorAction SilentlyContinue).Count -eq 0) '既存RGで作業記録を保存しない'
-            $failures = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'copy_failures.csv'))
-            Assert-Replay ($failures.Count -eq 2 -and @($failures | Where-Object { $_.Reason -notmatch 'リソースグループ' }).Count -eq 0) '両SubのRG衝突を報告'
-            foreach ($id in $beforeGroups.Keys) {
-                Assert-Replay ($beforeGroups[$id] -ceq (ConvertTo-Json $global:ProceduralFixture.Resources[$id] -Depth 20)) '既存RGの本文を保持'
+            else {
+                Assert-Replay ($tables.Count -eq 0) '両テーブルが既存なら更新計画へ入れない'
             }
+        }
+        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Id -in @($snapshots.Keys) }).Count -eq 0) '初回の作業でも既存保存先と子設定へ書き込まない'
+        Assert-Replay (@($global:ProceduralFixture.Reads | Where-Object { $_ -like '*/Microsoft.Storage/skus' }).Count -eq 0) '既存Storageには新設用のZRS要件を要求しない'
+        Reset-Observation
+        Invoke-ReplayStep copy
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '再利用の再実行でも保存先を変更しない'
+        $secondRecord = @(Get-FixtureRecords | Where-Object { $_.Target.SubscriptionId -eq $global:ProceduralFixture.Subscriptions[1] })[0]
+        $createdTable = @($secondRecord.Destinations | Where-Object Kind -eq 'Table')[0]
+        $global:ProceduralFixture.Resources[$createdTable.Id].properties.totalRetentionInDays = 365
+        Reset-Observation
+        Invoke-ReplayStep copy
+        Assert-Replay ($global:ProceduralFixture.Resources[$createdTable.Id].properties.totalRetentionInDays -eq 1095) '再利用LAWでも今回新設したテーブルは指定日数へ補修する'
+        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Id -eq $createdTable.Id -and $_.Method -eq 'PATCH' }).Count -eq 1) '新設テーブルの補修はPATCHを1回送る'
+        $savedTable = @((Get-FixtureRecords).Destinations | Where-Object Id -eq $createdTable.Id)[0]
+        Assert-Replay (-not $savedTable.Reuse) '今回新設したテーブルを再実行時に再利用へ変更しない'
+        Invoke-ReplayStep verify
+        Invoke-ReplayStep delete
+        Invoke-ReplayStep rollback
+        foreach ($id in $snapshots.Keys) {
+            Assert-Replay ($snapshots[$id] -ceq (ConvertTo-Json $global:ProceduralFixture.Resources[$id] -Depth 30 -Compress)) '切り戻し後も既存保存先の全設定値が変わらない'
+            Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object Id -eq $id).Count -eq 0) '再利用した保存先と子設定に書き込まない'
         }
     }
-    Invoke-ReplayCase '初回の既存Storage名を事前停止する' {
+    Invoke-ReplayCase '別スコープで使われているStorage名は事前停止する' {
+        Add-FixtureResource '/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-other/providers/Microsoft.Storage/storageAccounts/stjpe1111' @{ location = 'japaneast'; properties = @{} }
         $global:ProceduralFixture.UnavailableNames = @('stjpe1111')
         Invoke-ReplayStep precheck -ExpectFailure
         Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '名前衝突の変更0'
@@ -1694,7 +1753,7 @@ try {
         Invoke-ReplayStep copy
         $record = @(Get-FixtureRecords | Where-Object { $_.Target.SubscriptionId -eq $subscription })[0]
         $diagnostics = @($record.NewSettings | Where-Object Kind -eq 'Diagnostic')
-        Assert-Replay ($diagnostics.Count -eq 9) '全9診断の新設定を記録'
+        Assert-Replay ($diagnostics.Count -eq 10) '旧9対象と新LAW自身の診断を記録'
         foreach ($setting in $diagnostics) {
             Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($setting.Id)) '並列処理に欠落なし'
         }
@@ -1794,6 +1853,172 @@ try {
             }
         }
     }
+    Invoke-ReplayCase '西日本だけに旧設定があっても、新LAW自身用の東日本Storageを事前確認して作る' {
+        foreach ($item in $global:ProceduralFixture.Inventory) {
+            $item.location = 'japanwest'
+        }
+        $global:ProceduralFixture.UnavailableNames = @('stjpe1111')
+        Invoke-ReplayStep precheck -ExpectFailure
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '新LAW用のStorage名が使用済みなら変更を始めない'
+        $results = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'precheck_results.csv'))
+        Assert-Replay (@($results | Where-Object { $_.Result -eq 'NG' -and $_.Reason -like '*stjpe1111*' }).Count -eq 1) '旧対象がない東日本の名前も事前確認する'
+        $global:ProceduralFixture.UnavailableNames = @()
+        Invoke-ReplayStep copy
+        $records = @(Get-FixtureRecords)
+        foreach ($record in $records) {
+            $subscription = $record.Target.SubscriptionId
+            $ids = Get-FixtureIds $subscription
+            $storages = @($record.Destinations | Where-Object Kind -eq 'Storage')
+            Assert-Replay ($storages.Count -eq 2 -and (($storages.Body.location | Sort-Object) -join ',') -eq 'japaneast,japanwest') '旧対象用の西日本と新LAW用の東日本のStorageを用意する'
+            $selfId = "$($ids.Workspace)/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)"
+            $self = @($record.NewSettings | Where-Object Id -eq $selfId)
+            Assert-Replay ($self.Count -eq 1 -and $self[0].Body.properties.storageAccountId -eq $ids.Storage) '新LAW自身は東日本のStorageへ送る'
+            $properties = $self[0].Body.properties
+            $audit = @($properties.logs | Where-Object categoryGroup -eq 'audit')
+            Assert-Replay (@($properties.logs).Count -eq 2 -and $audit.Count -eq 1 -and $audit[0].enabled -eq $false) 'Azureが返す無効のauditも作成値へ明示する'
+            Assert-Replay (@($properties.logs | Where-Object { 'category' -notin $_.PSObject.Properties.Name -or $null -ne $_.category }).Count -eq 0) 'グループ指定のログはcategoryをnullで明示する'
+            Assert-Replay (@((@($properties.logs) + @($properties.metrics)) | Where-Object { $_.retentionPolicy.enabled -ne $false -or $_.retentionPolicy.days -ne 0 }).Count -eq 0) 'ログとメトリックのretentionPolicyは無効・0日で明示する'
+            $ordinary = @($record.NewSettings | Where-Object { $_.Kind -eq 'Diagnostic' -and $_.Id -ne $selfId })
+            Assert-Replay ($ordinary.Count -eq 1 -and $ordinary[0].Body.properties.storageAccountId -like '*/stjpw*') '西日本の旧対象は西日本のStorageへ送る'
+            $firstBackup = @($global:ProceduralFixture.BackupWitnesses | Where-Object { $_.Target.SubscriptionId -eq $subscription })[0]
+            Assert-Replay (@($firstBackup.NewSettings | Where-Object Id -eq $selfId).Count -eq 1) '最初のAzure変更前に新LAW自身の診断もJSONへ保存する'
+            $writes = @($global:ProceduralFixture.Writes | Where-Object { $_.Id -like "/subscriptions/$subscription/*" })
+            Assert-Replay (@($writes | Select-Object -First 3 | Where-Object { $_.Id -like '*/policyExemptions/*' }).Count -eq 3) '保存先の作成前に3つのポリシー適用除外を作る'
+        }
+        Invoke-ReplayStep verify
+        Invoke-ReplayStep delete
+        Invoke-ReplayStep rollback
+        foreach ($record in $records) {
+            $selfId = "$($record.Target.WorkspaceId)/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)"
+            Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($selfId)) '切り戻しで新LAW自身の診断を削除する'
+            Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($record.Target.WorkspaceId)) '切り戻しでも新LAWを残す'
+        }
+    }
+    Invoke-ReplayCase '新LAW自身の診断の欠落は再開で補い、値の違いは削除前に停止する' -Diagnostic 'Log' -Vm 'None' -Body {
+        Invoke-ReplayStep copy
+        $records = @(Get-FixtureRecords)
+        $record = $records[0]
+        $selfId = "$($record.Target.WorkspaceId)/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)"
+        $self = @($record.NewSettings | Where-Object Id -eq $selfId)[0]
+        Assert-Replay ($self.Body.properties.workspaceId -eq $record.Target.WorkspaceId) 'Log指定なら新LAW自身へ送る'
+        $recordPath = Join-Path $global:ProceduralFixture.Repository "records/dev/$($record.Target.SubscriptionId).json"
+        $recordHash = (Get-FileHash $recordPath).Hash
+        $recordBytes = [IO.File]::ReadAllBytes($recordPath)
+        $global:ProceduralFixture.Inventory += [pscustomobject]@{ id = $record.Target.WorkspaceId; type = 'Microsoft.OperationalInsights/workspaces'; location = 'japaneast' }
+        $withoutSelf = Copy-FixtureValue $record
+        $withoutSelf.NewSettings = @($withoutSelf.NewSettings | Where-Object Id -ne $selfId)
+        $withoutSelf | ConvertTo-Json -Depth 40 | Set-Content $recordPath -Encoding UTF8
+        Reset-Observation
+        Invoke-ReplayStep copy -ExpectFailure
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '記録にない自身と同名の診断設定を上書きしない'
+        $failures = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'copy_failures.csv'))
+        Assert-Replay (@($failures | Where-Object { $_.Reason -like '*診断設定名が使用済み*' }).Count -eq 1) '新LAWに旧送信設定がなくても同名を確認する'
+        [IO.File]::WriteAllBytes($recordPath, $recordBytes)
+        $global:ProceduralFixture.Resources.Remove($selfId)
+        foreach ($number in 1..5) {
+            Add-FixtureDiagnostic $record.Target.WorkspaceId "occupied-$number" '/unrelated-workspace'
+        }
+        Reset-Observation
+        Invoke-ReplayStep copy -ExpectFailure
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '新LAWの診断設定が5件あれば作成を始めない'
+        $failures = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'copy_failures.csv'))
+        Assert-Replay (@($failures | Where-Object { $_.Reason -like '*空き枠*' }).Count -eq 1) '新LAWに旧送信設定がなくても診断設定の枠を確認する'
+        foreach ($number in 1..5) {
+            $global:ProceduralFixture.Resources.Remove("$($record.Target.WorkspaceId)/providers/Microsoft.Insights/diagnosticSettings/occupied-$number")
+        }
+        $global:ProceduralFixture.Failures["PUT $selfId"] = 4
+        Reset-Observation
+        Invoke-ReplayStep copy -ExpectFailure
+        Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($selfId)) '自身の診断の作成失敗を未完了のまま残す'
+        Reset-Observation
+        Invoke-ReplayStep verify -ExpectFailure
+        Invoke-ReplayStep delete -ExpectFailure
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '自身の診断がなければ旧設定の削除を始めない'
+        Invoke-ReplayStep copy
+        $puts = @($global:ProceduralFixture.Writes | Where-Object Method -eq 'PUT')
+        Assert-Replay ($puts.Count -eq 1 -and $puts[0].Id -eq $selfId) '再実行では不足した自身の診断だけを作る'
+        Assert-Replay ((Get-FileHash $recordPath).Hash -eq $recordHash) '不足を補っても最初の作業記録を変えない'
+        $global:ProceduralFixture.Resources[$selfId].properties.logs[0].enabled = $false
+        Reset-Observation
+        Invoke-ReplayStep copy -ExpectFailure
+        Invoke-ReplayStep verify -ExpectFailure
+        Invoke-ReplayStep delete -ExpectFailure
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '自身の診断の値が違う場合は上書きも旧設定の削除もしない'
+        foreach ($old in $records.OldSettings) {
+            Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id)) '自身の診断の不一致でも旧設定を残す'
+        }
+        Add-FixtureResource $selfId $self.Body
+        Invoke-ReplayStep delete
+        Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($selfId)) '旧設定の削除後も新LAW自身の診断を残す'
+        Invoke-ReplayStep rollback
+        Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($selfId)) '切り戻しで自身の診断を削除する'
+        Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($record.Target.WorkspaceId)) '自身の診断を戻しても新LAW本体は残す'
+        foreach ($old in $records.OldSettings) {
+            Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id)) '削除済みの旧設定も切り戻しで復元する'
+        }
+    }
+    Invoke-ReplayCase '新LAWに旧ポリシーの診断が追加されても、自身の新診断を二重に作らない' -NoSources -Vm 'None' -Body {
+        Invoke-ReplayStep copy
+        $record = @(Get-FixtureRecords)[0]
+        $workspaceId = $record.Target.WorkspaceId
+        $selfId = "$workspaceId/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)"
+        $policyId = "$workspaceId/providers/Microsoft.Insights/diagnosticSettings/old-policy"
+        $unrelatedId = "$workspaceId/providers/Microsoft.Insights/diagnosticSettings/unrelated"
+        $global:ProceduralFixture.Inventory += [pscustomobject]@{ id = $workspaceId; type = 'Microsoft.OperationalInsights/workspaces'; location = 'japaneast' }
+        Add-FixtureDiagnostic $workspaceId 'old-policy'
+        Add-FixtureDiagnostic $workspaceId 'unrelated' '/unrelated-workspace'
+        $unrelatedBefore = ConvertTo-Json $global:ProceduralFixture.Resources[$unrelatedId] -Depth 30 -Compress
+        Reset-Observation
+        Invoke-ReplayStep copy
+        $updated = @(Get-FixtureRecords | Where-Object { $_.Target.SubscriptionId -eq $record.Target.SubscriptionId })[0]
+        Assert-Replay (@($updated.NewSettings | Where-Object Id -eq $selfId).Count -eq 1) '旧診断の複製候補と自身の候補が重なっても1件だけ記録する'
+        Assert-Replay (@($updated.OldSettings | Where-Object Id -eq $policyId).Count -eq 1) '追加された旧ポリシーの診断は復元用に保存する'
+        $properties = $global:ProceduralFixture.Resources[$selfId].properties
+        Assert-Replay ($properties.logs[0].categoryGroup -eq 'allLogs' -and @($properties.metrics | Where-Object enabled).Count -eq 0) '新LAW自身は旧ポリシーの収集項目に置き換えずallLogsを使う'
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '一致済みの自身の診断を再作成しない'
+        Invoke-ReplayStep verify
+        Invoke-ReplayStep delete
+        Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($policyId)) '指定ワークスペース宛ての旧ポリシー診断を削除する'
+        Invoke-ReplayStep rollback
+        Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($policyId)) '切り戻しで旧ポリシーの診断を復元する'
+        Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($selfId)) '切り戻しで今回作った自身の診断を解除する'
+        Assert-Replay ((ConvertTo-Json $global:ProceduralFixture.Resources[$unrelatedId] -Depth 30 -Compress) -ceq $unrelatedBefore) '指定外の診断設定は収集項目も送信先も変更しない'
+        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object Id -eq $unrelatedId).Count -eq 0) '指定外の診断設定へ書き込まない'
+        Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($workspaceId)) '保存先の新LAWは残す'
+    }
+    Invoke-ReplayCase '既存RG・LAW・Storageの地域が違う場合は、Azure変更前に停止する' {
+        foreach ($kind in @('Group', 'Workspace', 'Storage')) {
+            Reset-Fixture
+            foreach ($subscription in $global:ProceduralFixture.Subscriptions) {
+                $ids = Get-FixtureIds $subscription
+                Add-FixtureResource $ids.Group @{ location = 'japaneast'; properties = @{} }
+                Add-FixtureResource $ids.$kind @{ location = 'japanwest'; properties = @{} }
+            }
+            $beforeResources = ConvertTo-Json $global:ProceduralFixture.Resources -Depth 30 -Compress
+            Invoke-ReplayStep precheck -ExpectFailure
+            Invoke-ReplayStep copy -ExpectFailure
+            Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) "$kind の地域相違なら全Subで書込み0"
+            Assert-Replay ((ConvertTo-Json $global:ProceduralFixture.Resources -Depth 30 -Compress) -ceq $beforeResources) "$kind の既存設定を保持する"
+            Assert-Replay (@(Get-ChildItem (Join-Path $global:ProceduralFixture.Repository 'records/dev') -Filter '*.json' -ErrorAction SilentlyContinue).Count -eq 0) "$kind の地域相違なら変更前記録を保存しない"
+        }
+    }
+    Invoke-ReplayCase '再利用Storage本体と子サービスの診断を同じStorage自身へ送る指定は事前停止する' -NoSources -Vm 'None' -Body {
+        foreach ($scope in @('', '/blobServices/default')) {
+            Reset-Fixture -NoSources -Vm 'None'
+            foreach ($subscription in $global:ProceduralFixture.Subscriptions) {
+                $ids = Get-FixtureIds $subscription
+                Add-FixtureResource $ids.Group @{ location = 'japaneast'; properties = @{} }
+                Add-FixtureResource $ids.Storage @{ location = 'japaneast'; kind = 'StorageV2'; properties = @{} }
+                $global:ProceduralFixture.Inventory += [pscustomobject]@{ id = $ids.Storage; type = 'Microsoft.Storage/storageAccounts'; kind = 'StorageV2'; location = 'japaneast' }
+                Add-FixtureDiagnostic "$($ids.Storage)$scope"
+            }
+            Invoke-ReplayStep precheck -ExpectFailure
+            Invoke-ReplayStep copy -ExpectFailure
+            Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) 'Storage自身へ戻る診断設定は1件も作らない'
+            $failures = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'copy_failures.csv'))
+            Assert-Replay ($failures.Count -eq 2 -and @($failures | Where-Object { $_.Reason -notlike '*同じStorageへ送信できません*' }).Count -eq 0) 'Storage本体と子サービスの両方で理由を報告する'
+        }
+    }
     # --------------------------------------------------
     # 全ファイルの構文と、試験の前後でコードが変わっていないことを確かめる。
     # 実行したケースと判定数を、結果ファイルへまとめる。
@@ -1833,6 +2058,7 @@ catch {
             Error = $_.Exception.Message
             Position = $_.InvocationInfo.PositionMessage
             Writes = @($global:ProceduralFixture.Writes)
+            CopyFailures = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'copy_failures.csv') -Encoding UTF8 -ErrorAction SilentlyContinue)
         } | ConvertTo-Json -Depth 30 | Set-Content ($ReportPath + '.failure.json') -Encoding UTF8
     }
     throw

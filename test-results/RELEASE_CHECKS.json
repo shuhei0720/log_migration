@@ -795,18 +795,18 @@
     "ReplaySuitesRerun": false
   },
   "CurrentRuntimeCodeHashes": {
-    "migration/common.ps1": "d088414e3ec92bb52fc74f1f0ed793da5253ea17f620ac63e7553f67e6691ac9",
+    "migration/common.ps1": "f46e647aef25a1a038eb3426fe654d1f792dd83be19ad7d2beb0b3f7f2fc349c",
     "migration/precheck.ps1": "56c53301dedf238e8c164d2a32637f0c8d8eb7e94f4fb6cba584da1c4817030f",
     "migration/rollback.ps1": "103f7b83d800514ec78bb22197ce2daef0e16455b131c920b866962f8a880398",
-    "migration/step1_copy.ps1": "341959275fb165e25a359e3743a5ba425817956c7f71e6f2c91656dcb66fc58e",
-    "migration/step2_verify.ps1": "62b4eb95fb8258b180d512743158e569080bdc0e221a4f94c71fa15b9a9003a4",
+    "migration/step1_copy.ps1": "4e462154b1ac0840d66a99793b67e2eb329631b946d8553fe20ecb6cafa0bca3",
+    "migration/step2_verify.ps1": "14117514f586342c28e34981fead9c6d22c96cbffb3250ae13e2236b7395a105",
     "migration/step3_delete.ps1": "e0c40b1ab8cf9aef1b4f8200cad6714552cf5c444e08d667d491428a448716bb",
     "test-environment/resource_types_fixture.ps1": "4a30b3b970e1f69250de1135bcda66c91188b6b1a93cf081895e201831c94709",
     "tests/create-targets-smoke.ps1": "a57433c9eb3cf92bd36cf4472e90be6d55f3e87e7e720fbe232e2a7c135358fd",
-    "tests/migration-smoke.ps1": "032bee0664fd352c542bb8ca47ca6d1c9853567e9a08cba4973f2248a92cc977",
+    "tests/migration-smoke.ps1": "c9823d2548d021c68472f5c18d9adeb8badc13b4728f89d554b9612904ea1599",
     "tools/create_targets.ps1": "98ff5240397cc612d3dfdc72e62cff7cacbd7eae582423d185d72df7b2edadc4"
   },
-  "CodeHashNotes": "MigrationReplay・CsvGenerator・PromotionEquivalence・RuntimeCodeHashes・ShippingLayout・Documents・CommentReviewは各確認時点の記録。最新の実行コードSHAはCurrentRuntimeCodeHashes、日本語JSON修正後の再試験はJSON_ENCODING_FIX.jsonを参照。過去のSHAは保持している。",
+  "CodeHashNotes": "MigrationReplay・CsvGenerator・PromotionEquivalence・RuntimeCodeHashes・ShippingLayout・Documents・CommentReviewは各確認時点の記録。最新の実行コードSHAはCurrentRuntimeCodeHashes、日本語JSON修正後の再試験はJSON_ENCODING_FIX.jsonを参照。過去のSHAは保持している。 最新の自己診断・既存保存先再利用の試験はWORKSPACE_DIAGNOSTIC_REUSE.jsonを参照。",
   "ExampleCsvReview": {
     "Status": "PASS",
     "Path": "migration/targets.example.csv",
@@ -826,5 +826,14 @@
     "CsvAssertions": 54,
     "OnlyExecutableChanges": "3コマンドのJSON出力をASCIIエスケープ表記へ変更",
     "NativeWindowsRun": false
+  },
+  "WorkspaceDiagnosticAndReuse": {
+    "Status": "PASS",
+    "Details": "WORKSPACE_DIAGNOSTIC_REUSE.json",
+    "MigrationCases": 96,
+    "MigrationAssertions": 1542,
+    "AzureSelfAndStoragePutGet": "PASS",
+    "ExistingSettingsPreserved": true,
+    "IndependentAzureCleanup": "PASS"
   }
 }
