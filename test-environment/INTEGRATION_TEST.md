@@ -154,16 +154,7 @@ Import-Csv "$casePath/verify_results.csv" | Format-Table
 & "$casePath/rollback.ps1"
 ```
 
-同じ確認を行い、[T04](INTEGRATION_TEST_CASES.md#t04)を判定します。その後、rb1用の保存先グループだけを削除します。テスト用リソースは残します。
-
-```powershell
-az group delete --subscription $subscription1 --name "rg-lm-$run-rb1-a" --yes
-az group delete --subscription $subscription2 --name "rg-lm-$run-rb1-b" --yes
-az group exists --subscription $subscription1 --name "rg-lm-$run-rb1-a"
-az group exists --subscription $subscription2 --name "rg-lm-$run-rb1-b"
-```
-
-両方`false`になってから次へ進みます。Azure CLIの各実行後は`$LASTEXITCODE`が0であることも確認します。
+同じ確認を行い、[T04](INTEGRATION_TEST_CASES.md#t04)を判定します。rb1用の保存先とテスト用リソースは、最後の片付けまで残します。次のn01は別名の保存先を使います。
 
 <a id="run-t05"></a>
 ### T05：正常移行する
@@ -250,7 +241,16 @@ $oldCheck | Format-Table サブスクリプション, 存在, 記録との比較
 
 ## 6. 片付ける
 
-T06がOKになったら、n01用保存先グループ2個と、テスト用の`fx-$run-a`・`fx-$run-b`を削除します。グループ名と、テスト用グループの`fixtureRun`タグが今回の`$run`かを確認します。削除はT04と同じコマンドで名前を置き換えます。
+T06がOKになったら、rb1・n01用保存先グループ各2個と、テスト用の`fx-$run-a`・`fx-$run-b`を削除します。グループ名と、テスト用グループの`fixtureRun`タグが今回の`$run`かを確認します。次のコマンドを、今回のグループ名に置き換えて実行します。
+
+```powershell
+az group delete --subscription $subscription1 --name "rg-lm-$run-rb1-a" --yes
+az group exists --subscription $subscription1 --name "rg-lm-$run-rb1-a"
+```
+
+Azure CLIの各実行後に`$LASTEXITCODE`が0、削除後の`group exists`が`false`であることを確認します。
+
+保存先Storageはバージョン単位の不変性を有効にするため、コンテナーが残るとグループ削除が`AccountProtectedFromDeletion`で失敗する場合があります。削除を禁止する保持ポリシーや法的保留がないことを確認し、承認済みのプライベート接続から、今回のテストデータの全Blob・全バージョン・スナップショット、次にコンテナーを削除してから再実行します。公開アクセス・共有キーを有効にしたり、不変ポリシーを変更したりしません。
 
 既存VNetとそのグループ、会社の旧DCR・旧Log Analytics・管理グループ・ポリシーは残します。
 

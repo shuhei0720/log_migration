@@ -94,3 +94,5 @@ API通信は1回につき最大5分待ちます。作成状態を返すリソー
 削除用スクリプトはありません。Firewallを作った場合は、`ownedExternalResources`にある今回の3件を、Firewall本体→Public IP→Firewall Policyの順で個別に削除します。削除前にIDと`fixtureRunId`タグが今回のRunIdに一致することを確認します。外部deploymentの履歴は`deployments`の`external=true`のIDで確認できます。**既存VNetのグループ全体は削除しません。** その後、専用リソースグループと、残った管理用グループを削除します。AKSで使うマネージドIDへ付けたPrivateSubnetのNetwork Contributorロールは、グループ削除後も残ります。
 
 Azureサービスの利用登録は戻しません。過去版で作った環境は、その作成記録とPS1・ARMテンプレートで扱います。確認済みの範囲は[検証結果](../test-results/REPORT.md)を参照してください。
+
+移行テストで作った保存先Storageにコンテナーが残ると、不変性の機能によりグループ削除が拒否される場合があります。保存先を含む片付けは、[総合テスト手順の「片付ける」](INTEGRATION_TEST.md#6-片付ける)を参照してください。
