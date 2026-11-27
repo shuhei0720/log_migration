@@ -862,20 +862,27 @@ function Get-MigrationPlan {
         }
     }
     # 診断ログの送信を続ける行だけ、新診断設定のID・元の設定ID・送信先の地域を決める。
-    # 新LAW自身も対象に加える。再実行で既に存在する場合は、調査済みの全診断設定で名前と件数を確認する。
+    # 新LAWと今回の移行先DCR自身も対象に加える。既に存在する場合は、全診断設定で名前と件数を確認する。
     if ($Target.LogDestination -in @('Storage', 'Log')) {
         $diagnosticTargets = @($diagnosticSources)
-        if ($Target.WorkspaceId -notin $diagnosticTargets.ResourceId) {
-            $workspaceSettings = @($listedSettings | Where-Object ResourceId -eq $Target.WorkspaceId)
+        $selfDiagnosticIds = @($Target.WorkspaceId)
+        if ($discovery.Dcr) {
+            $selfDiagnosticIds += $discovery.Dcr.Id
+        }
+        foreach ($selfId in $selfDiagnosticIds) {
+            if ($selfId -in $diagnosticTargets.ResourceId) {
+                continue
+            }
+            $selfSettings = @($listedSettings | Where-Object ResourceId -eq $selfId)
             $diagnosticTargets += @{
-                ResourceId = $Target.WorkspaceId
-                Settings = @($workspaceSettings.Settings)
+                ResourceId = $selfId
+                Settings = @($selfSettings.Settings)
                 Sources = @()
                 Location = $location
             }
         }
         foreach ($diagnostic in $diagnosticTargets) {
-            if ($diagnostic.ResourceId -ne $Target.WorkspaceId -and $diagnostic.Sources.Count -ne 1) {
+            if ($diagnostic.ResourceId -notin $selfDiagnosticIds -and $diagnostic.Sources.Count -ne 1) {
                 throw "対象の旧診断設定が複数あります: $($diagnostic.ResourceId)"
             }
             # 保存先として再利用するStorage自身のログは、同じStorageへ送れない。
@@ -898,15 +905,15 @@ function Get-MigrationPlan {
             if ($existing.Count -eq 0 -and $diagnostic.Settings.Count -ge 5) {
                 throw "診断設定を追加する空き枠がありません: $($diagnostic.ResourceId)"
             }
-            # 新LAW自身は旧設定をコピーせず、allLogsを有効にする。OldIdは複製元がある対象だけに入れる。
+            # 新LAW・移行先DCR自身は旧設定をコピーせず、allLogsを有効にする。OldIdは複製元がある対象だけに入れる。
             $oldId = $null
-            if ($diagnostic.ResourceId -ne $Target.WorkspaceId) {
+            if ($diagnostic.ResourceId -notin $selfDiagnosticIds) {
                 $oldId = "$($diagnostic.ResourceId)$diagnosticPath/$([Uri]::EscapeDataString($diagnostic.Sources[0].name))"
             }
             $discovery.Diagnostics += @{
                 Id = $newId
                 OldId = $oldId
-                Location = $diagnostic.Location
+                Location = if ($oldId) { $diagnostic.Location } else { $location }
             }
         }
     }

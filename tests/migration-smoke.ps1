@@ -330,6 +330,15 @@ function Invoke-RestMethod {
         if ($path -like '*/managementPolicies/*' -and $payload -and @($payload.properties.policy.rules | Where-Object { $null -eq $_ }).Count -gt 0) {
             throw (New-Object ProceduralReplay.HttpFailure 400, 'TEST_INVALID_LIFECYCLE_NULL_RULE')
         }
+        if ($methodName -eq 'PUT' -and $path -like '*/Microsoft.Insights/dataCollectionRules/*/providers/Microsoft.Insights/diagnosticSettings/*') {
+            $dcrParent = $path -replace '/providers/Microsoft.Insights/diagnosticSettings/[^/]+$', ''
+            if (-not $fixture.Resources.ContainsKey($dcrParent)) {
+                throw (New-Object ProceduralReplay.HttpFailure 404, 'TEST_DCR_PARENT_MISSING')
+            }
+            if (@($payload.properties.logs | Where-Object categoryGroup -eq 'audit').Count -gt 0) {
+                throw (New-Object ProceduralReplay.HttpFailure 400, 'TEST_DCR_AUDIT_NOT_SUPPORTED')
+            }
+        }
         if ($methodName -eq 'DELETE' -and -not $fixture.Resources.ContainsKey($path)) {
             throw (New-Object ProceduralReplay.HttpFailure 404, "TEST_NOT_FOUND: $path")
         }
@@ -610,6 +619,7 @@ try {
         @{ Name = 'Storageのみ'; Diagnostic = 'Storage'; Vm = 'None' },
         @{ Name = 'Logのみ'; Diagnostic = 'Log'; Vm = 'None' },
         @{ Name = 'VMのみ'; Diagnostic = 'None'; Vm = 'Log' },
+        @{ Name = '診断空欄とVM'; Diagnostic = ''; Vm = 'Log' },
         @{ Name = '両方None'; Diagnostic = 'None'; Vm = 'None' },
         @{ Name = '両方空欄'; Diagnostic = ''; Vm = '' }
     )) {
@@ -651,10 +661,26 @@ try {
                 $diagnosticCount = @($record.NewSettings | Where-Object Kind -eq 'Diagnostic').Count
                 $associationCount = @($record.NewSettings | Where-Object Kind -eq 'Association').Count
                 $diagnosticsEnabled = $mode.Diagnostic -in @('Storage', 'Log')
-                $expectedDiagnosticCount = if ($diagnosticsEnabled) { 2 } else { 0 }
-                Assert-Replay ($diagnosticCount -eq $expectedDiagnosticCount) '送信有効時は旧診断のコピーと新LAW自身、None・空欄では両方0件'
+                $expectedDiagnosticCount = if ($diagnosticsEnabled) { 2 + [int]($mode.Vm -eq 'Log') } else { 0 }
+                Assert-Replay ($diagnosticCount -eq $expectedDiagnosticCount) '送信有効時は旧診断のコピーとLAW・作成対象DCR自身、None・空欄では0件'
                 $selfId = "$($workspace.Id)/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)"
                 $self = @($record.NewSettings | Where-Object Id -eq $selfId)
+                $dcrId = (Get-FixtureIds $record.Target.SubscriptionId).Dcr
+                $dcrSelfId = "$dcrId/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)"
+                $dcrSelf = @($record.NewSettings | Where-Object Id -eq $dcrSelfId)
+                Assert-Replay ($dcrSelf.Count -eq [int]($diagnosticsEnabled -and $mode.Vm -eq 'Log')) '移行先DCR自身の診断は両方の送信フラグに従う'
+                if ($dcrSelf.Count) {
+                    $properties = $dcrSelf[0].Body.properties
+                    Assert-Replay (@($properties.logs).Count -eq 1 -and $properties.logs[0].categoryGroup -eq 'allLogs' -and $properties.logs[0].enabled -eq $true) 'DCR自身はallLogs1件だけを指定し、auditは送らない'
+                    Assert-Replay (@($properties.metrics).Count -eq 1 -and $properties.metrics[0].category -eq 'AllMetrics' -and $properties.metrics[0].enabled -eq $false) 'DCR自身のAllMetricsは無効'
+                    $destination = if ($mode.Diagnostic -eq 'Storage') { $properties.storageAccountId } else { $properties.workspaceId }
+                    Assert-Replay ($destination -eq $(if ($mode.Diagnostic -eq 'Storage') { $storage.Id } else { $workspace.Id })) 'DCR自身もCSVの診断送信先を使う'
+                    $dcrWrite = @($global:ProceduralFixture.Writes | Where-Object { $_.Id -eq $dcrId -and $_.Method -eq 'PUT' })[0]
+                    $selfWrite = @($global:ProceduralFixture.Writes | Where-Object { $_.Id -eq $dcrSelfId -and $_.Method -eq 'PUT' })[0]
+                    Assert-Replay ($global:ProceduralFixture.Writes.IndexOf($dcrWrite) -lt $global:ProceduralFixture.Writes.IndexOf($selfWrite)) 'DCR本体の作成後に自身の診断を作る'
+                    $backup = @($global:ProceduralFixture.BackupWitnesses | Where-Object { $_.Target.SubscriptionId -eq $record.Target.SubscriptionId })[0]
+                    Assert-Replay (@($backup.NewSettings | Where-Object Id -eq $dcrSelfId).Count -eq 1) '最初の変更前記録にDCR自身の診断も保存する'
+                }
                 Assert-Replay ($self.Count -eq [int]$diagnosticsEnabled) '新LAW自身も診断ログの送信フラグに従う'
                 if ($diagnosticsEnabled) {
                     $properties = $self[0].Body.properties
@@ -663,7 +689,7 @@ try {
                     $expectedDestination = if ($mode.Diagnostic -eq 'Storage') { $storage.Id } else { $workspace.Id }
                     $actualDestination = if ($mode.Diagnostic -eq 'Storage') { $properties.storageAccountId } else { $properties.workspaceId }
                     Assert-Replay ($actualDestination -eq $expectedDestination) '新LAW自身もCSVで指定した種類の保存先へ送る'
-                    $copy = @($record.NewSettings | Where-Object { $_.Kind -eq 'Diagnostic' -and $_.Id -ne $selfId })[0]
+                    $copy = @($record.NewSettings | Where-Object { $_.Kind -eq 'Diagnostic' -and $_.Id -notin @($selfId, $dcrSelfId) })[0]
                     $oldDiagnostic = @($record.OldSettings | Where-Object Kind -eq 'Diagnostic')[0]
                     Assert-Replay ((ConvertTo-Json $copy.Body.properties.logs -Depth 20 -Compress) -ceq (ConvertTo-Json $oldDiagnostic.Body.properties.logs -Depth 20 -Compress)) '既存リソースのログ設定は旧診断から変えない'
                     Assert-Replay ((ConvertTo-Json $copy.Body.properties.metrics -Depth 20 -Compress) -ceq (ConvertTo-Json $oldDiagnostic.Body.properties.metrics -Depth 20 -Compress)) '既存リソースのメトリック設定は旧診断から変えない'
@@ -817,7 +843,7 @@ try {
             Invoke-ReplayStep verify
         }
         # VM送信をLogにしても、旧関連付けがなければDCRは作らず、両テーブルだけを設定する。
-        Reset-Fixture -NoSources -Diagnostic 'None' -Vm 'Log'
+        Reset-Fixture -NoSources -Diagnostic 'Log' -Vm 'Log'
         Invoke-ReplayStep copy
         foreach ($record in Get-FixtureRecords) {
             Assert-Replay ($record.OldSettings.Count -eq 0 -and $record.Target.VmLogDestination -eq 'Log') '旧関連付けなしでVM送信Logを指定'
@@ -825,6 +851,8 @@ try {
             Assert-Replay (@($record.Destinations | Where-Object Kind -eq 'Table').Count -eq 2) 'VM送信Logでも両テーブルを設定'
         }
         Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Id -match '/Microsoft.Insights/dataCollection(Rules|RuleAssociations)/' }).Count -eq 0) 'DCRと関連付けへの書込み0'
+        Assert-Replay (@((Get-FixtureRecords).NewSettings | Where-Object { $_.Kind -eq 'Diagnostic' -and $_.Id -like '*/dataCollectionRules/*' }).Count -eq 0) '旧関連付けがなければ診断LogでもDCR自身の診断は作らない'
+        Assert-Replay (@((Get-FixtureRecords).NewSettings | Where-Object Kind -eq 'Diagnostic').Count -eq 2) '旧関連付けがなくても2SubのLAW自身の診断は作る'
         Invoke-ReplayStep verify
     }
     Invoke-ReplayCase '東日本・西日本・globalの地域別Storageへ送信する' {
@@ -2022,7 +2050,7 @@ try {
         Invoke-ReplayStep copy
         $record = @(Get-FixtureRecords | Where-Object { $_.Target.SubscriptionId -eq $subscription })[0]
         $diagnostics = @($record.NewSettings | Where-Object Kind -eq 'Diagnostic')
-        Assert-Replay ($diagnostics.Count -eq 10) '旧9対象と新LAW自身の診断を記録'
+        Assert-Replay ($diagnostics.Count -eq 11) '旧9対象と新LAW・移行先DCR自身の診断を記録'
         foreach ($setting in $diagnostics) {
             Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($setting.Id)) '並列処理に欠落なし'
         }
@@ -2147,7 +2175,7 @@ try {
             Assert-Replay (@($properties.logs).Count -eq 2 -and $audit.Count -eq 1 -and $audit[0].enabled -eq $false) 'Azureが返す無効のauditも作成値へ明示する'
             Assert-Replay (@($properties.logs | Where-Object { 'category' -notin $_.PSObject.Properties.Name -or $null -ne $_.category }).Count -eq 0) 'グループ指定のログはcategoryをnullで明示する'
             Assert-Replay (@((@($properties.logs) + @($properties.metrics)) | Where-Object { $_.retentionPolicy.enabled -ne $false -or $_.retentionPolicy.days -ne 0 }).Count -eq 0) 'ログとメトリックのretentionPolicyは無効・0日で明示する'
-            $ordinary = @($record.NewSettings | Where-Object { $_.Kind -eq 'Diagnostic' -and $_.Id -ne $selfId })
+            $ordinary = @($record.NewSettings | Where-Object { $_.Kind -eq 'Diagnostic' -and $_.Id -ne $selfId -and $_.Id -notlike "$($ids.Dcr)/*" })
             Assert-Replay ($ordinary.Count -eq 1 -and $ordinary[0].Body.properties.storageAccountId -like '*/stjpw*') '西日本の旧対象は西日本のStorageへ送る'
             $firstBackup = @($global:ProceduralFixture.BackupWitnesses | Where-Object { $_.Target.SubscriptionId -eq $subscription })[0]
             Assert-Replay (@($firstBackup.NewSettings | Where-Object Id -eq $selfId).Count -eq 1) '最初のAzure変更前に新LAW自身の診断もJSONへ保存する'
@@ -2163,97 +2191,113 @@ try {
             Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($record.Target.WorkspaceId)) '切り戻しでも新LAWを残す'
         }
     }
-    Invoke-ReplayCase '新LAW自身の診断の欠落は再開で補い、値の違いは削除前に停止する' -Diagnostic 'Log' -Vm 'None' -Body {
-        Invoke-ReplayStep copy
-        $records = @(Get-FixtureRecords)
-        $record = $records[0]
-        $selfId = "$($record.Target.WorkspaceId)/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)"
-        $self = @($record.NewSettings | Where-Object Id -eq $selfId)[0]
-        Assert-Replay ($self.Body.properties.workspaceId -eq $record.Target.WorkspaceId) 'Log指定なら新LAW自身へ送る'
-        $recordPath = Join-Path $global:ProceduralFixture.Repository "records/dev/$($record.Target.SubscriptionId).json"
-        $recordHash = (Get-FileHash $recordPath).Hash
-        $recordBytes = [IO.File]::ReadAllBytes($recordPath)
-        $global:ProceduralFixture.Inventory += [pscustomobject]@{ id = $record.Target.WorkspaceId; type = 'Microsoft.OperationalInsights/workspaces'; location = 'japaneast' }
-        $withoutSelf = Copy-FixtureValue $record
-        $withoutSelf.NewSettings = @($withoutSelf.NewSettings | Where-Object Id -ne $selfId)
-        $withoutSelf | ConvertTo-Json -Depth 40 | Set-Content $recordPath -Encoding UTF8
-        Reset-Observation
-        Invoke-ReplayStep copy -ExpectFailure
-        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '記録にない自身と同名の診断設定を上書きしない'
-        $failures = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'copy_failures.csv'))
-        Assert-Replay (@($failures | Where-Object { $_.Reason -like '*診断設定名が使用済み*' }).Count -eq 1) '新LAWに旧送信設定がなくても同名を確認する'
-        [IO.File]::WriteAllBytes($recordPath, $recordBytes)
-        $global:ProceduralFixture.Resources.Remove($selfId)
-        foreach ($number in 1..5) {
-            Add-FixtureDiagnostic $record.Target.WorkspaceId "occupied-$number" '/unrelated-workspace'
-        }
-        Reset-Observation
-        Invoke-ReplayStep copy -ExpectFailure
-        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '新LAWの診断設定が5件あれば作成を始めない'
-        $failures = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'copy_failures.csv'))
-        Assert-Replay (@($failures | Where-Object { $_.Reason -like '*空き枠*' }).Count -eq 1) '新LAWに旧送信設定がなくても診断設定の枠を確認する'
-        foreach ($number in 1..5) {
-            $global:ProceduralFixture.Resources.Remove("$($record.Target.WorkspaceId)/providers/Microsoft.Insights/diagnosticSettings/occupied-$number")
-        }
-        $global:ProceduralFixture.Failures["PUT $selfId"] = 4
-        Reset-Observation
-        Invoke-ReplayStep copy -ExpectFailure
-        Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($selfId)) '自身の診断の作成失敗を未完了のまま残す'
-        Reset-Observation
-        Invoke-ReplayStep verify -ExpectFailure
-        Invoke-ReplayStep delete -ExpectFailure
-        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '自身の診断がなければ旧設定の削除を始めない'
-        Invoke-ReplayStep copy
-        $puts = @($global:ProceduralFixture.Writes | Where-Object Method -eq 'PUT')
-        Assert-Replay ($puts.Count -eq 1 -and $puts[0].Id -eq $selfId) '再実行では不足した自身の診断だけを作る'
-        Assert-Replay ((Get-FileHash $recordPath).Hash -eq $recordHash) '不足を補っても最初の作業記録を変えない'
-        $global:ProceduralFixture.Resources[$selfId].properties.logs[0].enabled = $false
-        Reset-Observation
-        Invoke-ReplayStep copy -ExpectFailure
-        Invoke-ReplayStep verify -ExpectFailure
-        Invoke-ReplayStep delete -ExpectFailure
-        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '自身の診断の値が違う場合は上書きも旧設定の削除もしない'
-        foreach ($old in $records.OldSettings) {
-            Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id)) '自身の診断の不一致でも旧設定を残す'
-        }
-        Add-FixtureResource $selfId $self.Body
-        Invoke-ReplayStep delete
-        Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($selfId)) '旧設定の削除後も新LAW自身の診断を残す'
-        Invoke-ReplayStep rollback
-        Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($selfId)) '切り戻しで自身の診断を削除する'
-        Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($record.Target.WorkspaceId)) '自身の診断を戻しても新LAW本体は残す'
-        foreach ($old in $records.OldSettings) {
-            Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id)) '削除済みの旧設定も切り戻しで復元する'
+    foreach ($selfKind in @('LAW', 'DCR')) {
+        $vmDestination = if ($selfKind -eq 'DCR') { 'Log' } else { 'None' }
+        Invoke-ReplayCase "$selfKind 自身の診断の欠落は再開で補い、値の違いは削除前に停止する" -Diagnostic 'Log' -Vm $vmDestination -Body {
+            Invoke-ReplayStep copy
+            $records = @(Get-FixtureRecords)
+            $record = $records[0]
+            $selfParent = if ($selfKind -eq 'DCR') { (Get-FixtureIds $record.Target.SubscriptionId).Dcr } else { $record.Target.WorkspaceId }
+            $selfType = if ($selfKind -eq 'DCR') { 'Microsoft.Insights/dataCollectionRules' } else { 'Microsoft.OperationalInsights/workspaces' }
+            $selfId = "$selfParent/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)"
+            $self = @($record.NewSettings | Where-Object Id -eq $selfId)[0]
+            Assert-Replay ($self.Body.properties.workspaceId -eq $record.Target.WorkspaceId) 'Log指定なら新LAWへ送る'
+            $recordPath = Join-Path $global:ProceduralFixture.Repository "records/dev/$($record.Target.SubscriptionId).json"
+            $recordHash = (Get-FileHash $recordPath).Hash
+            $recordBytes = [IO.File]::ReadAllBytes($recordPath)
+            $global:ProceduralFixture.Inventory += [pscustomobject]@{ id = $selfParent; type = $selfType; location = 'japaneast' }
+            $withoutSelf = Copy-FixtureValue $record
+            $withoutSelf.NewSettings = @($withoutSelf.NewSettings | Where-Object Id -ne $selfId)
+            $withoutSelf | ConvertTo-Json -Depth 40 | Set-Content $recordPath -Encoding UTF8
+            Reset-Observation
+            Invoke-ReplayStep copy -ExpectFailure
+            Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '記録にない自身と同名の診断設定を上書きしない'
+            $failures = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'copy_failures.csv'))
+            Assert-Replay (@($failures | Where-Object { $_.Reason -like '*診断設定名が使用済み*' }).Count -eq 1) '対象リソースに旧送信設定がなくても同名を確認する'
+            [IO.File]::WriteAllBytes($recordPath, $recordBytes)
+            $global:ProceduralFixture.Resources.Remove($selfId)
+            foreach ($number in 1..5) {
+                Add-FixtureDiagnostic $selfParent "occupied-$number" '/unrelated-workspace'
+            }
+            Reset-Observation
+            Invoke-ReplayStep copy -ExpectFailure
+            Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '対象リソースの診断設定が5件あれば作成を始めない'
+            $failures = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'copy_failures.csv'))
+            Assert-Replay (@($failures | Where-Object { $_.Reason -like '*空き枠*' }).Count -eq 1) '対象リソースに旧送信設定がなくても診断設定の枠を確認する'
+            foreach ($number in 1..5) {
+                $global:ProceduralFixture.Resources.Remove("$selfParent/providers/Microsoft.Insights/diagnosticSettings/occupied-$number")
+            }
+            $global:ProceduralFixture.Failures["PUT $selfId"] = 4
+            Reset-Observation
+            Invoke-ReplayStep copy -ExpectFailure
+            Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($selfId)) '自身の診断の作成失敗を未完了のまま残す'
+            Reset-Observation
+            Invoke-ReplayStep verify -ExpectFailure
+            Invoke-ReplayStep delete -ExpectFailure
+            Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '自身の診断がなければ旧設定の削除を始めない'
+            Invoke-ReplayStep copy
+            $puts = @($global:ProceduralFixture.Writes | Where-Object Method -eq 'PUT')
+            Assert-Replay ($puts.Count -eq 1 -and $puts[0].Id -eq $selfId) '再実行では不足した自身の診断だけを作る'
+            Assert-Replay ((Get-FileHash $recordPath).Hash -eq $recordHash) '不足を補っても最初の作業記録を変えない'
+            $global:ProceduralFixture.Resources[$selfId].properties.logs[0].enabled = $false
+            Reset-Observation
+            Invoke-ReplayStep copy -ExpectFailure
+            Invoke-ReplayStep verify -ExpectFailure
+            Invoke-ReplayStep delete -ExpectFailure
+            Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '自身の診断の値が違う場合は上書きも旧設定の削除もしない'
+            foreach ($old in $records.OldSettings) {
+                Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id)) '自身の診断の不一致でも旧設定を残す'
+            }
+            Add-FixtureResource $selfId $self.Body
+            Invoke-ReplayStep delete
+            Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($selfId)) '旧設定の削除後も対象リソース自身の診断を残す'
+            Invoke-ReplayStep rollback
+            Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($selfId)) '切り戻しで自身の診断を削除する'
+            Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($selfParent)) '自身の診断を戻しても対象リソース本体は残す'
+            foreach ($old in $records.OldSettings) {
+                Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id)) '削除済みの旧設定も切り戻しで復元する'
+            }
         }
     }
-    Invoke-ReplayCase '新LAWに旧ポリシーの診断が追加されても、自身の新診断を二重に作らない' -NoSources -Vm 'None' -Body {
-        Invoke-ReplayStep copy
-        $record = @(Get-FixtureRecords)[0]
-        $workspaceId = $record.Target.WorkspaceId
-        $selfId = "$workspaceId/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)"
-        $policyId = "$workspaceId/providers/Microsoft.Insights/diagnosticSettings/old-policy"
-        $unrelatedId = "$workspaceId/providers/Microsoft.Insights/diagnosticSettings/unrelated"
-        $global:ProceduralFixture.Inventory += [pscustomobject]@{ id = $workspaceId; type = 'Microsoft.OperationalInsights/workspaces'; location = 'japaneast' }
-        Add-FixtureDiagnostic $workspaceId 'old-policy'
-        Add-FixtureDiagnostic $workspaceId 'unrelated' '/unrelated-workspace'
-        $unrelatedBefore = ConvertTo-Json $global:ProceduralFixture.Resources[$unrelatedId] -Depth 30 -Compress
-        Reset-Observation
-        Invoke-ReplayStep copy
-        $updated = @(Get-FixtureRecords | Where-Object { $_.Target.SubscriptionId -eq $record.Target.SubscriptionId })[0]
-        Assert-Replay (@($updated.NewSettings | Where-Object Id -eq $selfId).Count -eq 1) '旧診断の複製候補と自身の候補が重なっても1件だけ記録する'
-        Assert-Replay (@($updated.OldSettings | Where-Object Id -eq $policyId).Count -eq 1) '追加された旧ポリシーの診断は復元用に保存する'
-        $properties = $global:ProceduralFixture.Resources[$selfId].properties
-        Assert-Replay ($properties.logs[0].categoryGroup -eq 'allLogs' -and @($properties.metrics | Where-Object enabled).Count -eq 0) '新LAW自身は旧ポリシーの収集項目に置き換えずallLogsを使う'
-        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '一致済みの自身の診断を再作成しない'
-        Invoke-ReplayStep verify
-        Invoke-ReplayStep delete
-        Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($policyId)) '指定ワークスペース宛ての旧ポリシー診断を削除する'
-        Invoke-ReplayStep rollback
-        Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($policyId)) '切り戻しで旧ポリシーの診断を復元する'
-        Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($selfId)) '切り戻しで今回作った自身の診断を解除する'
-        Assert-Replay ((ConvertTo-Json $global:ProceduralFixture.Resources[$unrelatedId] -Depth 30 -Compress) -ceq $unrelatedBefore) '指定外の診断設定は収集項目も送信先も変更しない'
-        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object Id -eq $unrelatedId).Count -eq 0) '指定外の診断設定へ書き込まない'
-        Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($workspaceId)) '保存先の新LAWは残す'
+    foreach ($selfKind in @('LAW', 'DCR')) {
+        $vmDestination = if ($selfKind -eq 'DCR') { 'Log' } else { 'None' }
+        Invoke-ReplayCase "$selfKind に旧ポリシーの診断が追加されても、自身の新診断を二重に作らない" -NoSources:($selfKind -eq 'LAW') -Vm $vmDestination -Body {
+            $oldDcrId = $global:ProceduralFixture.OldDcrIds[0]
+            Add-FixtureDiagnostic $oldDcrId 'kept-old-dcr' '/unrelated-workspace'
+            $oldDcrSelfId = "$oldDcrId/providers/Microsoft.Insights/diagnosticSettings/kept-old-dcr"
+            $oldDcrBefore = ConvertTo-Json $global:ProceduralFixture.Resources[$oldDcrSelfId] -Depth 30 -Compress
+            Invoke-ReplayStep copy
+            Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Id -like "$oldDcrId/*" }).Count -eq 0) '初回作成でも旧DCR配下へ診断は追加しない'
+            $record = @(Get-FixtureRecords)[0]
+            $selfParent = if ($selfKind -eq 'DCR') { (Get-FixtureIds $record.Target.SubscriptionId).Dcr } else { $record.Target.WorkspaceId }
+            $selfType = if ($selfKind -eq 'DCR') { 'Microsoft.Insights/dataCollectionRules' } else { 'Microsoft.OperationalInsights/workspaces' }
+            $selfId = "$selfParent/providers/Microsoft.Insights/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)"
+            $policyId = "$selfParent/providers/Microsoft.Insights/diagnosticSettings/old-policy"
+            $unrelatedId = "$selfParent/providers/Microsoft.Insights/diagnosticSettings/unrelated"
+            $global:ProceduralFixture.Inventory += [pscustomobject]@{ id = $selfParent; type = $selfType; location = 'japaneast' }
+            Add-FixtureDiagnostic $selfParent 'old-policy'
+            Add-FixtureDiagnostic $selfParent 'unrelated' '/unrelated-workspace'
+            $unrelatedBefore = ConvertTo-Json $global:ProceduralFixture.Resources[$unrelatedId] -Depth 30 -Compress
+            Reset-Observation
+            Invoke-ReplayStep copy
+            $updated = @(Get-FixtureRecords | Where-Object { $_.Target.SubscriptionId -eq $record.Target.SubscriptionId })[0]
+            Assert-Replay (@($updated.NewSettings | Where-Object Id -eq $selfId).Count -eq 1) '旧診断の複製候補と自身の候補が重なっても1件だけ記録する'
+            Assert-Replay (@($updated.OldSettings | Where-Object Id -eq $policyId).Count -eq 1) '追加された旧ポリシーの診断は復元用に保存する'
+            $properties = $global:ProceduralFixture.Resources[$selfId].properties
+            Assert-Replay ($properties.logs[0].categoryGroup -eq 'allLogs' -and @($properties.metrics | Where-Object enabled).Count -eq 0) '対象リソース自身は旧ポリシーの収集項目に置き換えずallLogsを使う'
+            Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '一致済みの自身の診断を再作成しない'
+            Invoke-ReplayStep verify
+            Invoke-ReplayStep delete
+            Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($policyId)) '指定ワークスペース宛ての旧ポリシー診断を削除する'
+            Invoke-ReplayStep rollback
+            Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($policyId)) '切り戻しで旧ポリシーの診断を復元する'
+            Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($selfId)) '切り戻しで今回作った自身の診断を解除する'
+            Assert-Replay ((ConvertTo-Json $global:ProceduralFixture.Resources[$unrelatedId] -Depth 30 -Compress) -ceq $unrelatedBefore) '指定外の診断設定は収集項目も送信先も変更しない'
+            Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object Id -eq $unrelatedId).Count -eq 0) '指定外の診断設定へ書き込まない'
+            Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($selfParent)) '保存先の新LAWは残す'
+            Assert-Replay ((ConvertTo-Json $global:ProceduralFixture.Resources[$oldDcrSelfId] -Depth 30 -Compress) -ceq $oldDcrBefore) '旧DCR自身の診断は変更しない'
+            Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Id -like "$oldDcrId/*" }).Count -eq 0) '旧DCRへ自身の新診断は作らない'
+        }
     }
     Invoke-ReplayCase '既存RG・LAW・Storageの地域が違う場合は、Azure変更前に停止する' {
         foreach ($kind in @('Group', 'Workspace', 'Storage')) {

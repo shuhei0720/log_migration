@@ -53,33 +53,33 @@ DCR（データ収集ルール）は、VM・VMSSから集めるログと保存�
 
 既存ストレージの子設定と、既存Log Analyticsの作成済みEvent・Syslogテーブルは、一覧から外して変更しません。未作成のテーブルだけを残します。このスクリプトが前回作成した保存先は再利用扱いにせず、引き続き作成時の設定値で確認します。
 
-**[218～266行](step1_copy.ps1#L218)｜`$diagnosticBody = @{`、`$storageIds[$diagnostic.Location]`**
+**[218～270行](step1_copy.ps1#L218)｜`$diagnosticBody = @{`、`$storageIds[$diagnostic.Location]`**
 
-`OldId`がある対象では、旧診断設定のログとメトリックをコピーします。移行先のLog Analytics自身は`OldId`が空で、`allLogs`だけを有効にする設定値を作ります。`audit`と`AllMetrics`も指定していますが、Azureが返す項目と比較するためで、どちらも無効です。
+`OldId`がある対象では、旧診断設定のログとメトリックをコピーします。移行先のLog AnalyticsとDCR自身は`OldId`が空で、`allLogs`だけを有効にする設定値を作ります。Log AnalyticsはAzureが返す無効の`audit`も指定します。DCRは`audit`に対応しないため指定しません。どちらも`AllMetrics`は無効です。
 
-`Storage`なら同じ地域のストレージID、`Log`なら移行先のLog AnalyticsのIDを指定します。後者では、Log Analytics自身も自分へ送信します。旧設定からコピーする場合は格納方式も引き継ぎます。どちらも`NewSettings`へ加えるため、後の確認と切り戻しの対象になります。
+`Storage`なら同じ地域のストレージID、`Log`なら移行先のLog AnalyticsのIDを指定します。後者では、Log Analytics自身もDCR自身も新しいLog Analyticsへ送信します。旧設定からコピーする場合は格納方式も引き継ぎます。どちらも`NewSettings`へ加えるため、後の確認と切り戻しの対象になります。
 
 `LogDestination`が`None`・空欄なら、`Discovery.Diagnostics`は空です。新しい診断設定は作りません。
 
-**[269～293行](step1_copy.ps1#L269)｜`$setting.Before =`、`$plan.Remove('Discovery')`**
+**[273～297行](step1_copy.ps1#L273)｜`$setting.Before =`、`$plan.Remove('Discovery')`**
 
 適用除外・DCR・関連付けの現在値を、切り戻し用の`Before`へ入れます。まだ存在しなければ`$null`です。再実行しても最初の値を残します。
 
 変更前の値があれば、DCRのタグや関連付けの説明など、今回変更しない項目を新設定にも残します。作成先を決めるために使った`Discovery`は、計画から外します。
 
-**[299～335行](step1_copy.ps1#L299)｜`$recordChanged = -not $record`、`[IO.File]::WriteAllText`**
+**[303～339行](step1_copy.ps1#L303)｜`$recordChanged = -not $record`、`[IO.File]::WriteAllText`**
 
 前回の記録と、今回調べたID・設定値を比べます。記録した旧設定が消えた、または値が変わった場合は、そのサブスクリプションの作業を止めます。同じIDに作成する設定値が前回と違う場合も止め、新しく見つかったIDだけを追記します。初回は`$plan`をそのまま記録にします。
 
 JSONを一時ファイルに書き終えてから、作業記録のファイルと置き換えます。書込みに失敗しても前回の記録を残すためです。保存後に適用除外や保存先の変更へ進みます。
 
-**[341～364行](step1_copy.ps1#L341)｜`$resources = @($record.NewSettings`、`$providersReady`**
+**[345～368行](step1_copy.ps1#L345)｜`$resources = @($record.NewSettings`、`$providersReady`**
 
 `$resources`へ、適用除外、保存先と保持期間、DCRと関連付けの順に設定を並べます。適用除外3件を作成・照合してから保存先へ進みます。新診断設定は、この一覧の処理後に作成します。
 
 保存先とDCRに必要なサービスの登録状態を確認します。Storage以外の未登録サービスは、この段階で登録して完了を待ちます。`$providersReady`は、同じサブスクリプションでこの確認を繰り返さないための印です。
 
-**[365～397行](step1_copy.ps1#L365)｜`$currentBody = Get-WritableBody`、`$matched = Test-Configuration`**
+**[369～401行](step1_copy.ps1#L369)｜`$currentBody = Get-WritableBody`、`$matched = Test-Configuration`**
 
 `Reuse=true`なら存在と地域だけを確認し、書き込まず次へ進みます。それ以外は、Azureの現在値を作業記録の`Body`と比べます。同じなら`continue`で次へ進みます。今回作成したリソースグループは存在を、テーブルは日数とテーブル単位での保持期間指定を確認します。
 
@@ -87,25 +87,25 @@ JSONを一時ファイルに書き終えてから、作業記録のファイル�
 
 更新が必要なら、`Body`をコピーして`$body`へ入れます。送信するコピーを加工し、作業記録の値は変えません。
 
-**[401～437行](step1_copy.ps1#L401)｜`$body.properties.networkAcls =`、`$method = 'Patch'`**
+**[405～441行](step1_copy.ps1#L405)｜`$body.properties.networkAcls =`、`$method = 'Patch'`**
 
 このスクリプトが作成した保存先を再実行で補修する際は、IP・VNetの許可規則やLog Analyticsの他の`features`を残します。ストレージの冗長性が記録と違えば、変更せず停止します。ログ削除ルールは`log-append-1095`だけを入れ替え、他のルールは残します。
 
 既存のLog Analyticsとテーブルには、変更する項目だけを送る`PATCH`を使います。保持期間の変更で、テーブルの列定義まで置き換えないためです。
 
-**[440～464行](step1_copy.ps1#L440)｜`while ($true)`、`-Method $method -Body $body`**
+**[444～468行](step1_copy.ps1#L444)｜`while ($true)`、`-Method $method -Body $body`**
 
 設定値を`PUT`または`PATCH`で送り、Azureから読み直して作業記録の値と比べます。Event・Syslogテーブルの反映待ちでDCRを作れない場合は、10秒待って再送します。
 
 このループが待つのは、その反映遅れだけです。他の失敗は外側の`catch`へ渡し、そのサブスクリプションの残りの処理を止めます。
 
-**[470～508行](step1_copy.ps1#L470)｜`$diagnostics | ForEach-Object -Parallel`、`return $result`**
+**[474～512行](step1_copy.ps1#L474)｜`$diagnostics | ForEach-Object -Parallel`、`return $result`**
 
 保存先を作成した後、新診断設定を最大5件同時に作ります。同じID・設定値なら作成を省き、設定がなければ作って読み直します。同名で値が異なる設定は変更せず、失敗として扱います。
 
 並列処理へは共通ファイルと認証情報を渡します。結果を`$copied`へ集め、失敗したID・理由・作成したい設定値を`$failures`へ加えます。
 
-**[510～532行](step1_copy.ps1#L510)｜`$failurePath = Join-Path $PSScriptRoot`、`Export-Csv`**
+**[514～536行](step1_copy.ps1#L514)｜`$failurePath = Join-Path $PSScriptRoot`、`Export-Csv`**
 
 調査や記録の保存で止まった理由も`$failures`へ加えます。失敗があれば`copy_failures.csv`へ出してエラーで終了し、すべて成功すれば前回の失敗CSVを削除します。
 

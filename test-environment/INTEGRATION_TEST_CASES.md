@@ -4,7 +4,9 @@
 
 診断設定名は`setByAzurePlatformTeam`と表記します。common.ps1の`$newDiagnosticSettingName`を変更した場合は、その名前に読み替えます。`<run>`は手順の`$run`です。
 
-新DCR名は、CSVのWorkspaceNameの先頭`log`を`dcr`へ置き換えた名前です。rb1は`dcr-<run>-rb1-a`（Sub1）・`dcr-<run>-rb1-b`（Sub2）、n01は`dcr-<run>-n01-a`・`dcr-<run>-n01-b`です。旧DCR関連付けが0件のSubでは新DCR・新関連付けも0件が正解です。旧関連のないVMSSは未検証と記録します。DCR本体・新関連付けを作成しなかった場合は、その部分だけ対象なしとし、診断設定と適用除外は判定します。
+新DCR名は、CSVのWorkspaceNameの先頭`log`を`dcr`へ置き換えた名前です。rb1は`dcr-<run>-rb1-a`（Sub1）・`dcr-<run>-rb1-b`（Sub2）、n01は`dcr-<run>-n01-a`・`dcr-<run>-n01-b`です。旧DCR関連付けが1件以上あり、CSVのVmLogDestinationがLogのSubだけ、新DCR・新関連付けを作成します。旧関連が0件、またはVmLogDestinationがNone・空欄のSubでは、新DCR・新関連付け・DCR自身の新診断設定も0件が正解です。旧関連のないVMSSは未検証と記録します。新DCRが対象にならないSubは、DCR本体・新関連付け・DCR自身の診断設定の行を対象なしとし、その他の診断設定と適用除外は判定します。
+
+DCR自身の診断設定は、Log Analytics自身の診断設定とは別に確認します。診断設定IDは`<新DCRのID>/providers/Microsoft.Insights/diagnosticSettings/setByAzurePlatformTeam`です。CSVのLogDestinationがStorageならDCRと同地域のStorage IDへ、LogならCSVのWorkspaceNameのLog Analytics IDへ送ります。allLogsだけ有効、メトリックは無効で、Logの格納方式はAzureDiagnosticsです。None・空欄ならDCR自身の新診断設定を作りません。
 
 適用除外はrecordsに保存された3つのIDを確認します。名前は`log-migration-<環境>-<割り当てIDの末尾>`です。
 
@@ -32,7 +34,9 @@
 |[旧DCR関連付け](INTEGRATION_TEST.md#check-old)|各VM・VMSSのID、関連付け名、参照先DCR IDがrecordsの移行前の値と一致する|未実施|
 |setByAzurePlatformTeam|各対象リソースに存在し、ログカテゴリ、ログ・メトリックの有効／無効は旧診断と一致する。Sub1はCSVのWorkspaceNameのLog Analytics ID、Sub2は同地域のStorage IDへ送る。Log Analyticsの格納方式は旧値、未指定ならAzureDiagnostics|未実施|
 |移行先Log AnalyticsのsetByAzurePlatformTeam|CSVのWorkspaceNameのLog Analyticsに存在し、allLogsだけ有効、メトリックは無効。Sub1は自身のID、Sub2は同地域のStorage IDへ送る|未実施|
-|rb1の新DCR・関連付け|旧関連があるSubでは、上記rb1のDCR IDを各VM・VMSSが参照し、Application・Security・SystemとSyslogをCSVのLog Analytics IDへ送る。同じVM・VMSSへの旧関連は1つにまとめる（旧7件・対象5つなら新5件）|未実施|
+|DCR自身の診断設定を作る指定|新DCRが対象になるSubでは、CSVのLogDestinationがStorage・Logのときだけ自身のsetByAzurePlatformTeamを作る。None・空欄なら作らず、recordsのNewSettingsにその診断設定IDがない|未実施|
+|rb1の新DCR自身のsetByAzurePlatformTeam|`dcr-<run>-rb1-a`・`dcr-<run>-rb1-b`の各DCR ID配下に存在し、allLogsだけ有効、メトリックは無効。Sub1はCSVのLog Analytics IDへAzureDiagnostics形式で、Sub2はDCRと同地域のStorage IDへ送る|未実施|
+|rb1の新DCR・関連付け|旧関連があり、CSVのVmLogDestinationがLogのSubでは、上記rb1のDCR IDを各VM・VMSSが参照し、Application・Security・SystemとSyslogをCSVのLog Analytics IDへ送る。同じVM・VMSSへの旧関連は1つにまとめる（旧7件・対象5つなら新5件）|未実施|
 |保存先と適用除外|[保存先の表](#destination-details)がすべてOK。指定の適用除外3件が存在し期限なし。最初の2件は割り当て全体、3件目は指定12項目が対象|未実施|
 
 <a id="t03"></a>
@@ -45,11 +49,13 @@
 |[両Subの旧診断設定](INTEGRATION_TEST.md#check-old)|各旧設定IDが存在し、ログカテゴリ、ログ・メトリックの有効／無効、送信先ID、格納方式がrecordsの移行前の値と一致する|未実施|
 |[両Subの旧DCR関連付け](INTEGRATION_TEST.md#check-old)|各VM・VMSSのID、関連付け名、参照先DCR IDがrecordsの移行前の値と一致する|未実施|
 |Sub1の診断設定|各対象リソースとCSVのLog Analyticsの診断設定一覧にsetByAzurePlatformTeamが存在しない|未実施|
+|Sub1のDCR自身の診断設定|`dcr-<run>-rb1-a`のID配下にsetByAzurePlatformTeamが存在しない。DCR本体は残る|未実施|
 |Sub1の新DCR関連付け|VM・VMSSに`dcr-<run>-rb1-a`を参照する関連付けが存在しない|未実施|
-|Sub1の新DCR本体|作成した`dcr-<run>-rb1-a`がCSVのResourceGroup内に存在する|未実施|
+|Sub1の新DCR本体|`dcr-<run>-rb1-a`がCSVのResourceGroup内に存在する。今回作成した本体はrecordsのBody、作業前からあった本体はBeforeの内容と一致する|未実施|
 |Sub1の適用除外|今回作った指定名の適用除外が存在しない。作業前からあったものは適用先ID・除外ポリシー・期限が作業前の画面と一致する|未実施|
 |Sub2の診断設定|各対象のsetByAzurePlatformTeamが存在し、ログカテゴリ、ログ・メトリックの有効／無効、送信先ID、格納方式がrecordsの移行後の値と一致する|未実施|
 |Sub2のLog Analytics自身の診断設定|setByAzurePlatformTeamが存在し、allLogsだけ有効、メトリックは無効。同地域のStorage IDへ送る|未実施|
+|Sub2のDCR自身の診断設定|`dcr-<run>-rb1-b`のID配下にsetByAzurePlatformTeamが存在し、allLogsだけ有効、メトリックは無効。DCRと同地域のStorage IDへ送る|未実施|
 |Sub2の新DCRと関連付け|作成した`dcr-<run>-rb1-b`がCSVのResourceGroup内に存在し、そのIDを各VM・VMSSが参照する|未実施|
 |Sub2の適用除外|recordsにある3つの適用除外IDが存在し、適用先ID・除外ポリシー・期限がrecordsの移行後の値と一致する|未実施|
 |両Subの保存先|CSVのResourceGroup内にWorkspaceNameのLog Analyticsが存在し、Event・Syslogテーブルも存在する。地域別のStorageAccount名が存在する|未実施|
@@ -64,8 +70,9 @@
 |[旧診断設定](INTEGRATION_TEST.md#check-old)|各旧設定IDが存在し、ログカテゴリ、ログ・メトリックの有効／無効、送信先ID、格納方式がrecordsの移行前の値と一致する|未実施|
 |[旧DCR関連付け](INTEGRATION_TEST.md#check-old)|各VM・VMSSのID、関連付け名、参照先DCR IDがrecordsの移行前の値と一致する|未実施|
 |追加した診断設定|両Subの各対象リソースとCSVのLog AnalyticsにsetByAzurePlatformTeamが存在しない|未実施|
+|rb1のDCR自身の診断設定|`dcr-<run>-rb1-a`・`dcr-<run>-rb1-b`の各DCR ID配下にsetByAzurePlatformTeamが存在しない。DCR本体は残る|未実施|
 |追加したDCR関連付け|VM・VMSSに`dcr-<run>-rb1-a`・`dcr-<run>-rb1-b`を参照する関連付けが存在しない|未実施|
-|作成したDCR本体|作成した`dcr-<run>-rb1-a`・`dcr-<run>-rb1-b`がCSVのResourceGroup内に存在する|未実施|
+|移行先DCR本体|`dcr-<run>-rb1-a`・`dcr-<run>-rb1-b`がCSVのResourceGroup内に存在する。今回作成した本体はrecordsのBody、作業前からあった本体はBeforeの内容と一致する|未実施|
 |適用除外|今回作った指定名の適用除外が存在しない。作業前からあったものは適用先ID・除外ポリシー・期限が作業前の画面と一致する|未実施|
 |保存先|CSVのResourceGroup内にWorkspaceNameのLog Analytics、Event・Syslogテーブル、地域別のStorageAccount名が存在する|未実施|
 
@@ -91,7 +98,8 @@
 |[旧DCR関連付け](INTEGRATION_TEST.md#check-old)|各VM・VMSSのID、関連付け名、参照先DCR IDがrecordsの移行前の値と一致する|未実施|
 |setByAzurePlatformTeam|各対象リソースに存在し、ログカテゴリ、ログ・メトリックの有効／無効は旧診断と一致する。Sub1は同地域のStorage ID、Sub2はCSVのWorkspaceNameのLog Analytics IDへ送る。Log Analyticsの格納方式は旧値、未指定ならAzureDiagnostics|未実施|
 |移行先Log AnalyticsのsetByAzurePlatformTeam|CSVのWorkspaceNameのLog Analyticsに存在し、allLogsだけ有効、メトリックは無効。Sub1は同地域のStorage ID、Sub2は自身のIDへ送る|未実施|
-|n01の新DCR・関連付け|旧関連があるSubでは、上記n01のDCR IDを各VM・VMSSが参照し、Application・Security・SystemとSyslogをCSVのLog Analytics IDへ送る。同じVM・VMSSへの関連は1件。旧関連0件のSubは新DCR・新関連も0件|未実施|
+|n01の新DCR自身のsetByAzurePlatformTeam|`dcr-<run>-n01-a`・`dcr-<run>-n01-b`の各DCR ID配下に存在し、allLogsだけ有効、メトリックは無効。Sub1はDCRと同地域のStorage ID、Sub2はCSVのLog Analytics IDへAzureDiagnostics形式で送る|未実施|
+|n01の新DCR・関連付け|旧関連があり、CSVのVmLogDestinationがLogのSubでは、上記n01のDCR IDを各VM・VMSSが参照し、Application・Security・SystemとSyslogをCSVのLog Analytics IDへ送る。同じVM・VMSSへの関連は1件。旧関連0件、またはVmLogDestinationがNone・空欄のSubは新DCR・新関連も0件|未実施|
 |保存先と適用除外|[保存先の表](#destination-details)をもう1枚使い、すべてOK。指定の適用除外3件が存在し期限なし。最初の2件は割り当て全体、3件目は指定12項目が対象|未実施|
 
 <a id="t05-after"></a>
@@ -102,6 +110,7 @@
 |step2の結果CSV|Result列がすべてOK|未実施|
 |[削除した旧設定](INTEGRATION_TEST.md#check-old)|recordsに記録した旧診断設定IDと旧DCR関連付けIDが、すべて存在しない|未実施|
 |移行後の診断設定・DCR関連付け|各対象とCSVのLog AnalyticsにsetByAzurePlatformTeamが存在する。送信先はSub1が同地域のStorage ID、Sub2がCSVのLog Analytics ID。作成した`dcr-<run>-n01-a`・`dcr-<run>-n01-b`を各VM・VMSSが参照する|未実施|
+|n01のDCR自身の診断設定|`dcr-<run>-n01-a`・`dcr-<run>-n01-b`の各DCR ID配下にsetByAzurePlatformTeamが残り、allLogsだけ有効、メトリックは無効。Sub1はDCRと同地域のStorage ID、Sub2はCSVのLog Analytics IDへAzureDiagnostics形式で送る|未実施|
 |保存先と適用除外|CSVのLog Analytics、Event・Syslog、地域別Storage、指定名の適用除外3件が存在する|未実施|
 |旧DCR本体|指定した2本のIDが存在し、収集条件と送信先IDが作業前の画面と一致する|未実施|
 
@@ -115,8 +124,9 @@
 |[旧診断設定](INTEGRATION_TEST.md#check-old)|各旧設定IDが存在し、ログカテゴリ、ログ・メトリックの有効／無効、送信先ID、格納方式がrecordsの移行前の値と一致する|未実施|
 |[旧DCR関連付け](INTEGRATION_TEST.md#check-old)|各VM・VMSSのID、関連付け名、参照先DCR IDがrecordsの移行前の値と一致する|未実施|
 |追加した診断設定|各対象リソースとCSVのLog Analyticsの診断設定一覧にsetByAzurePlatformTeamが存在しない|未実施|
+|n01のDCR自身の診断設定|`dcr-<run>-n01-a`・`dcr-<run>-n01-b`の各DCR ID配下にsetByAzurePlatformTeamが存在しない。DCR本体は残る|未実施|
 |追加したDCR関連付け|VM・VMSSに`dcr-<run>-n01-a`・`dcr-<run>-n01-b`を参照する関連付けが存在しない|未実施|
-|作成したDCR本体|作成した`dcr-<run>-n01-a`・`dcr-<run>-n01-b`が、CSVのResourceGroup内に存在する。作成しなかったSubは対象なし|未実施|
+|移行先DCR本体|`dcr-<run>-n01-a`・`dcr-<run>-n01-b`がCSVのResourceGroup内に存在する。今回作成した本体はrecordsのBody、作業前からあった本体はBeforeの内容と一致する|未実施|
 |適用除外|今回作った指定名の適用除外が存在しない。作業前からあったものは適用先ID・除外ポリシー・期限が作業前の画面と一致する|未実施|
 |保存先と旧DCR本体|CSVのLog Analytics、Event・Syslog、地域別Storageが存在する。旧DCR2本のID・収集条件・送信先IDが作業前の画面と一致する|未実施|
 |既存VNetとサブネット|アドレス空間・サブネット範囲・委任・NSG・ルートテーブルが作業前の画面と一致する|未実施|

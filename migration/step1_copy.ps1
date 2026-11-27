@@ -213,7 +213,7 @@ foreach ($target in $targets) {
         })
 
         # 旧診断設定のログ・メトリックをコピーし、同じ地域のストレージまたは新しいLog Analyticsへ送る設定値を作る。
-        # 新LAW自身はallLogsだけを有効にし、CSVがLogなら自身へ、Storageなら同じ地域のストレージへ送る。
+        # 新LAW・移行先DCR自身はallLogsだけを有効にし、CSVがLogなら新LAWへ、Storageなら同じ地域のストレージへ送る。
         # LogDestinationがNone・空欄なら新診断設定は作らない。旧診断設定は、後で削除するため作業記録に残す。
         foreach ($diagnostic in $plan.Discovery.Diagnostics) {
             $source = $null
@@ -228,12 +228,16 @@ foreach ($target in $targets) {
                 }
             }
             else {
-                # Azureが返す無効のaudit・AllMetricsも指定し、作成後に全項目を比較できるようにする。
+                # LAWが返す無効のauditも指定する。移行先DCRはallLogsだけにし、未対応のauditは送らない。
                 # 有効にするのはallLogsだけ。retentionPolicyは無効とし、保存期間は保存先の設定に従う。
+                $groups = @('allLogs')
+                if ($diagnostic.Id -like "$($target.WorkspaceId)/*") {
+                    $groups += 'audit'
+                }
                 $diagnosticBody = @{
                     properties = @{
                         logs = @(
-                            foreach ($group in @('allLogs', 'audit')) {
+                            foreach ($group in $groups) {
                                 @{
                                     category = $null
                                     categoryGroup = $group
