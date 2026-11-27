@@ -58,7 +58,7 @@ DCR自身の診断設定は、Log Analytics自身の診断設定とは別に確�
 |Sub2のDCR自身の診断設定|`dcr-<run>-rb1-b`のID配下にsetByAzurePlatformTeamが存在し、allLogsだけ有効、メトリックは無効。DCRと同地域のStorage IDへ送る|未実施|
 |Sub2の新DCRと関連付け|作成した`dcr-<run>-rb1-b`がCSVのResourceGroup内に存在し、そのIDを各VM・VMSSが参照する|未実施|
 |Sub2の適用除外|recordsにある3つの適用除外IDが存在し、適用先ID・除外ポリシー・期限がrecordsの移行後の値と一致する|未実施|
-|両Subの保存先|CSVのResourceGroup内にWorkspaceNameのLog Analyticsが存在し、Event・Syslogテーブルも存在する。地域別のStorageAccount名が存在する|未実施|
+|両Subの保存先|CSVのResourceGroup内にWorkspaceNameのLog AnalyticsとEvent・Syslogテーブルが存在する。StorageAccountを指定したSubでは、recordsに記録された地域別Storageも存在する|未実施|
 
 <a id="t04"></a>
 ## T04：削除前に両Subを切り戻す
@@ -74,7 +74,7 @@ DCR自身の診断設定は、Log Analytics自身の診断設定とは別に確�
 |追加したDCR関連付け|VM・VMSSに`dcr-<run>-rb1-a`・`dcr-<run>-rb1-b`を参照する関連付けが存在しない|未実施|
 |移行先DCR本体|`dcr-<run>-rb1-a`・`dcr-<run>-rb1-b`がCSVのResourceGroup内に存在する。今回作成した本体はrecordsのBody、作業前からあった本体はBeforeの内容と一致する|未実施|
 |適用除外|今回作った指定名の適用除外が存在しない。作業前からあったものは適用先ID・除外ポリシー・期限が作業前の画面と一致する|未実施|
-|保存先|CSVのResourceGroup内にWorkspaceNameのLog Analytics、Event・Syslogテーブル、地域別のStorageAccount名が存在する|未実施|
+|保存先|CSVのResourceGroup内にWorkspaceNameのLog AnalyticsとEvent・Syslogテーブルが存在する。StorageAccountを指定したSubでは、recordsに記録された地域別Storageも存在する|未実施|
 
 <a id="t05"></a>
 ## T05：正常に移行し、旧設定を削除する
@@ -110,7 +110,7 @@ DCR自身の診断設定は、Log Analytics自身の診断設定とは別に確�
 |step4のfinal_check_results.csv|Result列がすべてOK|未実施|
 |[削除した旧設定](INTEGRATION_TEST.md#check-old)|recordsに記録した旧診断設定IDと旧DCR関連付けIDが、すべて存在しない|未実施|
 |記録にない旧送信設定|現在の再調査でも、旧ワークスペース宛ての診断設定と旧2本のDCRへの関連付けが0件|未実施|
-|移行後の診断設定・DCR関連付け|各対象とCSVのLog AnalyticsにsetByAzurePlatformTeamが存在する。送信先はSub1が同地域のStorage ID、Sub2がCSVのLog Analytics ID。作成した`dcr-<run>-n01-a`・`dcr-<run>-n01-b`を各VM・VMSSが参照する|未実施|
+|移行後の診断設定・DCR関連付け|各対象とCSVのLog AnalyticsにsetByAzurePlatformTeamが存在する。送信先はSub1が同地域のStorage ID、Sub2がCSVのLog Analytics ID。新DCRを作成したSubでは、旧関連のあったVM・VMSSがその新DCRを参照する|未実施|
 |n01のDCR自身の診断設定|`dcr-<run>-n01-a`・`dcr-<run>-n01-b`の各DCR ID配下にsetByAzurePlatformTeamが残り、allLogsだけ有効、メトリックは無効。Sub1はDCRと同地域のStorage ID、Sub2はCSVのLog Analytics IDへAzureDiagnostics形式で送る|未実施|
 |保存先と適用除外|新設RGが存在する。その他の新設保存先の設定値と、適用除外3件の適用先・除外対象がrecordsのBodyと一致する。再利用した保存先は存在と地域が一致する|未実施|
 |旧DCR本体|指定した2本のIDが存在し、収集条件と送信先IDが作業前の画面と一致する|未実施|
@@ -129,13 +129,15 @@ DCR自身の診断設定は、Log Analytics自身の診断設定とは別に確�
 |追加したDCR関連付け|VM・VMSSに`dcr-<run>-n01-a`・`dcr-<run>-n01-b`を参照する関連付けが存在しない|未実施|
 |移行先DCR本体|`dcr-<run>-n01-a`・`dcr-<run>-n01-b`がCSVのResourceGroup内に存在する。今回作成した本体はrecordsのBody、作業前からあった本体はBeforeの内容と一致する|未実施|
 |適用除外|今回作った指定名の適用除外が存在しない。作業前からあったものは適用先ID・除外ポリシー・期限が作業前の画面と一致する|未実施|
-|保存先と旧DCR本体|CSVのLog Analytics、Event・Syslog、地域別Storageが存在する。旧DCR2本のID・収集条件・送信先IDが作業前の画面と一致する|未実施|
+|保存先と旧DCR本体|CSVのLog AnalyticsとEvent・Syslogが存在する。StorageAccountを指定したSubでは、recordsに記録された地域別Storageも存在する。旧DCR2本のID・収集条件・送信先IDが作業前の画面と一致する|未実施|
 |既存VNetとサブネット|アドレス空間・サブネット範囲・委任・NSG・ルートテーブルが作業前の画面と一致する|未実施|
 
 <a id="destination-details"></a>
 ## 保存先の確認
 
 T02とT05の削除前に、それぞれこの表を複写して判定します。[Azure画面の確認場所](INTEGRATION_TEST.md#check-portal)を使います。各SubのCSVにあるResourceGroup内で、WorkspaceNameのLog Analyticsを確認します。StorageはStorageAccountの`jpe`を地域略称へ置き換えた実名で、recordsに保存されたIDが存在することを確認します。
+
+Storageの項目は、CSVのStorageAccountを指定したSubだけ判定します。空欄のSubは対象なしとします。
 
 |確認項目|合格条件|判定|
 |---|---|---|
