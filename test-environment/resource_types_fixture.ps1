@@ -228,7 +228,8 @@ function Wait-Resource {
     .DESCRIPTION
     10秒間隔で取得し直す。作成状態を返すリソースはSucceededになるまで待つ。
     作成状態を返さないリソースは、取得できたら完了と判定する。
-    Failed・Canceledを受け取った場合や、90分以内に完了を確認できない場合はエラーにする。
+    作成に必要な時間はリソースごとに違うため、経過時間だけでは失敗にしない。
+    Failed・Canceledを受け取った場合はエラーにする。
     .PARAMETER Id
     作成完了を確認するリソースID。
     .PARAMETER ApiVersion
@@ -237,7 +238,6 @@ function Wait-Resource {
     完了と判定したAzureの応答を持つ辞書。
     #>
     param($Id, $ApiVersion)
-    $limit = [DateTimeOffset]::UtcNow.AddMinutes(90)
     do {
         $current = Invoke-Arm GET $Id $ApiVersion -Optional
         if ($current) {
@@ -250,16 +250,14 @@ function Wait-Resource {
                 return $current
             }
         }
-        if ([DateTimeOffset]::UtcNow -ge $limit){
-            throw ('Completion wait exceeded: ' + $Id)
-        }
         Start-Sleep -Seconds 10
     } while ($true)
 }
 
 # ---
 # 1. Plan・Deploy：作成するリソースを選び、名前・ID・配置先を決める。
-# サブスクリプションごとに1つのグループを使う。配置先の一覧（bundles）は、サブスクリプションと地域の組。
+# サブスクリプションごとに1つのグループを使い、Firewallの3リソースだけは既存VNetと同じグループへ配置する。
+# 配置先の一覧（bundles）は、サブスクリプションと地域の組。
 # ---
 if ($Action -in @('Plan', 'Deploy')){
     $keys = @()
@@ -330,6 +328,9 @@ if ($Action -in @('Plan', 'Deploy')){
         }
         $bundle = @($bundles | Where-Object key -EQ $meta.bundle)[0]
         $group = '/subscriptions/' + $bundle.subscriptionId + '/resourceGroups/' + $bundle.resourceGroup
+        if ($meta.key -eq 'networkFirewall') {
+            $group = @($networks | Where-Object role -EQ 'B')[0].rgId
+        }
         $name = $meta.nameTemplate.Replace('{runId}', $RunId)
         $types = $resource.type.Split('/')
         $names = $name.Split('/')
@@ -438,6 +439,7 @@ if ($Action -in @('Plan', 'Deploy')){
         inventory = @()
         managedGroups = @()
         ownedExternalRoles = @()
+        ownedExternalResources = @()
         scopes = @()
     }
     Save-State
@@ -454,9 +456,13 @@ if ($Action -in @('Plan', 'Deploy')){
 
 # ---
 # 2. Deploy：作成先のグループ名と、既存VNet・サブネットの設定を確認する。
-# 同名グループや必要なネットワーク設定の不足があれば、Azureを変更する前に止める。
+# 同名グループ・Firewall名の重複や必要なネットワーク設定の不足があれば、Azureを変更する前に止める。
 # ---
 $groups = @($state.plan.bundles | Group-Object subscriptionId | ForEach-Object { $_.Group[0] })
+$firewallResources = @($state.resources | Where-Object key -EQ 'networkFirewall')
+$firewallDeploymentId = if ($firewallResources.Count) {
+    @($state.plan.existingNetworks | Where-Object role -EQ 'B')[0].rgId + '/providers/Microsoft.Resources/deployments/fx-' + $RunId + '-firewall'
+}
 if ($Action -eq 'Deploy'){
     foreach ($bundle in $groups){
         if (Invoke-Arm GET ('/subscriptions/' + $bundle.subscriptionId + '/resourceGroups/' + $bundle.resourceGroup) '2022-09-01' -Optional){
@@ -501,6 +507,21 @@ if ($Action -eq 'Deploy'){
             location = $body.location
             subnets = $subnets
         }
+    }
+    # 既存VNetのグループでは、今回作る3リソースとdeploymentの名前だけを確認する。
+    # 同名が1つでもあれば、利用登録や作成を始めずに止める。
+    foreach ($resource in $firewallResources) {
+        if (Invoke-Arm GET $resource.id $resource.apiVersion -Optional) {
+            throw ('A planned Firewall resource already exists: ' + $resource.id)
+        }
+        $state.ownedExternalResources += @{id = $resource.id;apiVersion = $resource.apiVersion;beforeAbsent = $true}
+    }
+    if ($firewallResources.Count) {
+        if (Invoke-Arm GET $firewallDeploymentId '2022-09-01' -Optional) {
+            throw ('A planned Firewall deployment already exists: ' + $firewallDeploymentId)
+        }
+        $state.deployments += @{id = $firewallDeploymentId;resourceIds = @($firewallResources.id);state = 'CHECKED_ABSENT';external = $true;beforeAbsent = $true}
+        Save-State
     }
     foreach ($resource in @($state.resources | Where-Object managedName)) {
         $groupId = '/subscriptions/' + $resource.id.Split('/')[2] + '/resourceGroups/' + $resource.managedName.Replace('{runId}', $RunId)
@@ -571,7 +592,7 @@ if ($Action -eq 'Deploy'){
         $tickets = @()
         foreach ($bundle in $state.plan.bundles){
             $selected = @($state.resources | Where-Object {
-                    $_.bundle -eq $bundle.key -and -not $_.load -and ($phase -eq 'resources' -or $_.phase -eq 'foundation')
+                    $_.bundle -eq $bundle.key -and $_.key -ne 'networkFirewall' -and -not $_.load -and ($phase -eq 'resources' -or $_.phase -eq 'foundation')
             })
             if (-not $selected.Count) {
                 continue
@@ -600,12 +621,43 @@ if ($Action -eq 'Deploy'){
             $tickets += $deploymentId
         }
         if ($phase -eq 'resources') {
+            # Firewall・専用Public IP・Policyだけを、VNetと同じ既存グループへ作る。
+            # テンプレートは共通のまま、作成するキーをnetworkFirewallに限定する。
+            if ($firewallResources.Count) {
+                foreach ($resource in $firewallResources) {
+                    if (Invoke-Arm GET $resource.id $resource.apiVersion -Optional) {
+                        throw ('A Firewall resource name collided before creation: ' + $resource.id)
+                    }
+                }
+                if (Invoke-Arm GET $firewallDeploymentId '2022-09-01' -Optional) {
+                    throw ('A Firewall deployment name collided before creation: ' + $firewallDeploymentId)
+                }
+                $firewallParameters = @{
+                    runId = @{value = $RunId}
+                    bundle = @{value = 'B-R2'}
+                    location = @{value = $Locations['B-R2']}
+                    enabledKeys = @{value = @('networkFirewall')}
+                    networkRefs = @{value = $networkRefs}
+                    tenantId = @{value = $tenantId}
+                    adminPassword = @{value = $password}
+                }
+                @($state.deployments | Where-Object id -EQ $firewallDeploymentId)[0].state = 'INTENT'
+                Save-State
+                $null = Invoke-Arm PUT $firewallDeploymentId '2022-09-01' @{
+                    tags = @{fixtureRunId = $RunId}
+                    properties = @{mode = 'Incremental';template = $Template;parameters = $firewallParameters}
+                }
+                $tickets += $firewallDeploymentId
+            }
             foreach ($resource in @($state.resources | Where-Object load)) {
                 $null = Invoke-Arm PUT $resource.id $resource.apiVersion @{location = $resource.location;tags = @{fixtureRunId = $RunId;fixtureBundle = $resource.bundle};properties = @{securityRules = @()}}
             }
         }
         foreach ($id in $tickets){
             $deployment = Wait-Resource $id '2022-09-01'
+            if ($id -eq $firewallDeploymentId -and $deployment.tags.fixtureRunId -cne $RunId) {
+                throw 'Firewall deployment ownership tag changed.'
+            }
             @($state.deployments | Where-Object id -EQ $id)[0].state = $deployment.properties.provisioningState
             Save-State
         }
@@ -633,6 +685,7 @@ if ($Action -eq 'Deploy'){
     $password = $null
     $parameters = $null
     $parameterValues = $null
+    $firewallParameters = $null
     $state.status = 'DEPLOYED'
     Save-State
 }
@@ -656,6 +709,19 @@ if ($Action -in @('Deploy', 'Capture')) {
             if ($item.id -notin $state.inventory.id) {
                 $state.inventory += $item
             }
+        }
+    }
+    # 既存VNetのグループ全体は一覧にせず、今回作ったFirewallの3件だけを記録する。
+    foreach ($resource in @($state.ownedExternalResources)) {
+        $body = Invoke-Arm GET $resource.id $resource.apiVersion -Optional
+        if (-not $body) {
+            continue
+        }
+        if ($body.tags.fixtureRunId -cne $RunId) {
+            throw ('Owned Firewall resource tag changed: ' + $resource.id)
+        }
+        if ($body.id -notin $state.inventory.id) {
+            $state.inventory += $body
         }
     }
     # Azure Monitorの管理用グループは、既定DCRのIDから読み取る。

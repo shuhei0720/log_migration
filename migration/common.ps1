@@ -807,10 +807,10 @@ function Get-MigrationPlan {
                     $provider = Invoke-ArmRequest $providerId -ApiVersion '2021-04-01'
                     $registrationRequested = $false
                     while ($provider.registrationState -ne 'Registered') {
-                        if ($provider.registrationState -notin @('NotRegistered', 'Registering')) {
+                        if ($provider.registrationState -notin @('NotRegistered', 'Unregistered', 'Registering')) {
                             throw "Microsoft.Storageの利用登録状態を確認してください: $($provider.registrationState)"
                         }
-                        if ($provider.registrationState -eq 'NotRegistered' -and -not $registrationRequested) {
+                        if ($provider.registrationState -in @('NotRegistered', 'Unregistered') -and -not $registrationRequested) {
                             $null = Invoke-ArmRequest "$providerId/register" -Method Post -ApiVersion '2021-04-01'
                             $registrationRequested = $true
                         }

@@ -16,7 +16,7 @@ PowerShell 7と、Ownerとしてログイン済みのAzure CLIを使います。
 |`$ExistingVnetIds`|同じ順序で、それぞれの既存VNetのリソースID|
 |`$Locations`|4つの配置先地域。A-R1とB-R2は対応するVNetの地域|
 
-1つ目のサブスクリプションに`fx-<RunId>-a`、2つ目に`fx-<RunId>-b`を作り、リソースを4地域に分けて配置します。AKSなどの管理用リソースグループは別に記録します。
+1つ目のサブスクリプションに`fx-<RunId>-a`、2つ目に`fx-<RunId>-b`を作り、リソースを4地域に分けて配置します。Firewall本体・専用Public IP・Firewall Policyの3件だけは、Azureの配置条件に合わせて2つ目の既存VNetと同じグループへ作ります。AKSなどの管理用リソースグループは別に記録します。
 
 各VNetには次のサブネットが必要です。IPアドレスは実際のVNetから取得します。
 
@@ -69,7 +69,7 @@ $options = @{
 |Action|実行すること|結果を見る場所|
 |---|---|---|
 |Plan|名前・ID・地域を組み立てる。Azureへは接続しない|`runs/<RunId>/plan.json`の`resources`・`skipped`|
-|Deploy|作成先グループの不存在と既存サブネットを確認し、利用登録・リソース作成を行う|`run-ledger.json`の`deployments`・`inventory`・`managedGroups`|
+|Deploy|新規グループとFirewall3件の名前、既存サブネットを確認し、利用登録・作成を行う。同名Firewallリソースや同名deploymentがあれば作成前に停止する|`run-ledger.json`の`deployments`・`inventory`・`managedGroups`・`ownedExternalResources`|
 |Capture|リソース・子リソース・ログ項目・診断設定を取得する|同じ記録の`scopes`|
 
 PlanとDeployは、同じ設定・PS1・ARMテンプレートで実行します。作成記録は`runs/<RunId>/run-ledger.json`へ出ます。
@@ -89,8 +89,8 @@ Captureの結果を読み、会社ポリシーで旧診断設定が付いたこ�
 
 ## 途中で失敗した場合と後片付け
 
-API通信は1回につき最大5分待ちます。作成開始から6時間後は新しい変更を始めません。途中で止まったらリソースと作成記録を確認し、再作成には別のRunIdを使います。
+API通信は1回につき最大5分待ちます。作成状態を返すリソースは経過時間で打ち切らず、AzureがSucceeded・Failed・Canceledを返すまで状態を調べます。作成開始から6時間後は新しい変更を始めません。途中で止まったらリソースと作成記録を確認し、再作成には別のRunIdを使います。
 
-削除用スクリプトはありません。終了後に専用リソースグループと、残った管理用グループを削除します。AKSで使うマネージドIDへ付けたPrivateSubnetのNetwork Contributorロールは、グループ削除後も残ります。
+削除用スクリプトはありません。Firewallを作った場合は、`ownedExternalResources`にある今回の3件を、Firewall本体→Public IP→Firewall Policyの順で個別に削除します。削除前にIDと`fixtureRunId`タグが今回のRunIdに一致することを確認します。外部deploymentの履歴は`deployments`の`external=true`のIDで確認できます。**既存VNetのグループ全体は削除しません。** その後、専用リソースグループと、残った管理用グループを削除します。AKSで使うマネージドIDへ付けたPrivateSubnetのNetwork Contributorロールは、グループ削除後も残ります。
 
 Azureサービスの利用登録は戻しません。過去版で作った環境は、その作成記録とPS1・ARMテンプレートで扱います。確認済みの範囲は[検証結果](../test-results/REPORT.md)を参照してください。

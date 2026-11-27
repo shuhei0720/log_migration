@@ -225,6 +225,8 @@ $casePath = Join-Path $workRoot 'n01'
 
 切り戻し②の成功後、n01用に新規作成した保存先グループと、テスト用リソースを作ったグループを削除します。**作業前からある保存先グループ、既存VNetとそのグループは削除しません。**
 
+Firewall本体・専用Public IP・Firewall Policyだけは、2つ目の既存VNetと同じグループにあります。`run-ledger.json`の`ownedExternalResources`で今回作った3件のIDを確認し、各リソースの`fixtureRunId`タグが`$run`と一致することを確かめます。Firewall本体の削除完了を待ち、Public IP、Firewall Policyの順で個別に削除します。`deployments`で`external=true`となっている今回のdeployment履歴も削除します。**これらを消すためにVNetのグループを削除しないでください。**
+
 ```powershell
 az group delete --subscription $subscription1 --name "rg-lm-$run-n01-a" --yes
 az group delete --subscription $subscription2 --name "rg-lm-$run-n01-b" --yes
