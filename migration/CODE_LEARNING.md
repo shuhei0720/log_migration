@@ -133,21 +133,21 @@ JSONを一時ファイルに書き終えてから、作業記録のファイル�
 
 ## step3_delete.ps1：旧診断設定と旧DCR関連付けを削除する
 
-**[7～18行](step3_delete.ps1#L7)｜`$records = @(& (Join-Path`、`-PassThru`**
+**[7～22行](step3_delete.ps1#L7)｜`$records = @(& (Join-Path`、`-PassThru`**
 
 step2が全件OKの場合だけ、作業記録を`$records`へ受け取って削除へ進みます。削除側でも`common.ps1`から設定値と関数を読み、`-SkipCsv`でCSVの再読込みは省きます。
 
 外側の`$kind`が削除順を決めています。全サブスクリプションの旧DCR関連付けを削除した後で、全サブスクリプションの旧診断設定を削除します。
 
-**[21～51行](step3_delete.ps1#L21)｜`$current = Invoke-ArmRequest`、`$newId = ''`**
+**[25～55行](step3_delete.ps1#L25)｜`$current = Invoke-ArmRequest`、`$newId = ''`**
 
 削除直前に旧設定を読み直し、作業記録と値が違えば停止します。送信を続ける指定なら、旧設定が付いているリソースのIDから新設定のIDを作り、その設定値も確認します。
 
 `None`・空欄は送信を終了する指定です。新設定の存在は確認せず、旧設定を削除します。
 
-**[52～68行](step3_delete.ps1#L52)｜`-Method Delete`、`catch`**
+**[56～78行](step3_delete.ps1#L56)｜`-Method Delete`、`catch`**
 
-旧設定を`DELETE`します。失敗した場合はID・理由・元の設定値を`delete_failures.csv`へ出し、他のサブスクリプションも含めて残りの削除を止めます。保存先・保存済みログ・新設定・適用除外は残します。
+旧設定を`DELETE`します。失敗した場合はID・理由・元の設定値を`delete_failures.csv`へ出し、そのサブスクリプションの残りの削除を止めます。他のサブスクリプションは順次処理を続け、全対象の処理後にエラーで終了します。保存先・保存済みログ・新設定・適用除外は残します。全件の削除に成功した場合は、前回の失敗CSVを削除します。
 
 ## 必要時：rollback.ps1で切り戻す
 
@@ -155,21 +155,21 @@ step2が全件OKの場合だけ、作業記録を`$records`へ受け取って削
 
 `records/<環境>/`のJSONから、切り戻すサブスクリプションを選びます。`-SubscriptionIds`を省略すると全件、指定するとそのIDの記録だけを使います。CSVは読みません。[Read-MigrationRecordのDESCRIPTION](common.ps1#L433)
 
-**[38～51行](rollback.ps1#L38)｜`$matchesBody`、`$matchesBefore`**
+**[40～53行](rollback.ps1#L40)｜`$matchesBody`、`$matchesBefore`**
 
 旧設定の`Body`は削除前の値です。新設定では、`Body`が今回の作成値、`Before`が作業開始前の値です。現在値が`Body`・`Before`のどちらとも違えば、復元前に止めます。設定が消えている場合は、後で作り直せるため許可します。
 
 今回作成したDCR本体と、元からあった適用除外は切り戻しでも残すため、この比較から外します。サービスの利用登録も解除しません。
 
-**[57～107行](rollback.ps1#L57)｜`foreach ($phase in @('Old', 'New'))`、`$expectedBody = $setting.Body`**
+**[59～128行](rollback.ps1#L59)｜`foreach ($phase in @('Old', 'New'))`、`$expectedBody = $setting.Body`**
 
-`$phase`はOld→Newの順です。全対象の旧診断設定・旧DCR関連付けを`Body`で復元してから、新設定を`Before`へ戻します。旧設定の復元で失敗したら、新設定の削除へは進みません。
+`$phase`はOld→Newの順です。全対象の旧診断設定・旧DCR関連付けを`Body`で復元してから、新設定を`Before`へ戻します。失敗したSubは`$failedSubscriptions`へ入れて残りを止め、ほかのSubは続けます。旧設定の復元で失敗したSubは、新設定の削除へ進みません。
 
 すでに戻っている設定は変更しません。戻す値があれば`PUT`し、元は設定がなかった場合は`DELETE`します。今回作成したDCR本体、元からある適用除外、保存先は残します。
 
-**[113～125行](rollback.ps1#L113)｜`catch`、`Remove-Item $failurePath`**
+**[130～146行](rollback.ps1#L130)｜`catch`、`Remove-Item $failurePath`**
 
-失敗したIDと理由を`rollback_failures.csv`へ出して停止します。同じ記録でもう一度実行すると、すでに戻っている設定は変更せず、残りを戻せます。すべて成功した場合は、前回の失敗CSVを削除します。
+書き込み前の全件確認で失敗した場合は、そのIDと理由を`rollback_failures.csv`へ出して全体を止めます。作業中の失敗はSubごとに集め、ほかのSubの処理を終えてから同じCSVへまとめ、エラーを返します。同じ記録でもう一度実行すると、すでに戻っている設定は変更せず、残りを戻せます。すべて成功した場合は、前回の失敗CSVを削除します。
 
 ## 任意：precheck.ps1で事前確認する
 

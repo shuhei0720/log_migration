@@ -315,7 +315,7 @@ function Invoke-RestMethod {
                 Get-Content $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
             })
             $ownedNew = @($activeRecords.NewSettings | Where-Object { $_.Id -eq $path -and $_.Kind -eq 'Diagnostic' })
-            foreach ($record in @($activeRecords | Where-Object { $ownedNew.Count -gt 0 })) {
+            foreach ($record in @($activeRecords | Where-Object { $ownedNew.Count -gt 0 -and $_.Target.SubscriptionId -eq $subscription })) {
                 foreach ($old in $record.OldSettings) {
                     if (-not $fixture.Resources.ContainsKey($old.Id)) {
                         $fixture.UnsafeNewDelete = $true
@@ -714,7 +714,11 @@ try {
                     }
                 }
             }
-            Assert-Replay (-not $global:ProceduralFixture.UnsafeNewDelete) '旧全復元より前に新診断を削除しない'
+            $oldWrites = @($global:ProceduralFixture.Writes | Where-Object { $_.Id -in @($records.OldSettings.Id) })
+            $firstNewWrite = @($global:ProceduralFixture.Writes | Where-Object { $_.Id -in @($records.NewSettings.Id) })[0]
+            Assert-Replay ($oldWrites.Count -eq @($records.OldSettings).Count -and
+                $global:ProceduralFixture.Writes.IndexOf($oldWrites[-1]) -lt $global:ProceduralFixture.Writes.IndexOf($firstNewWrite)) '全Subの旧復元が済んでから最初の新設定取消へ進む'
+            Assert-Replay (-not $global:ProceduralFixture.UnsafeNewDelete) '同じSubの旧復元より前に新診断を削除しない'
             Reset-Observation
             Invoke-ReplayStep rollback
             Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '切戻し再実行は変更0'
@@ -1239,27 +1243,140 @@ try {
         $record = @($records | Where-Object { $_.Target.SubscriptionId -eq $second })[0]
         $missing = @($record.NewSettings | Where-Object Kind -eq 'Diagnostic')[0]
         $global:ProceduralFixture.Resources.Remove($missing.Id)
+        $failurePath = Join-Path $global:ProceduralFixture.Repository 'delete_failures.csv'
+        [pscustomobject]@{ SubscriptionId = $second; ResourceId = '/previous-failure'; Reason = 'previous'; Expected = '{}' } | Export-Csv $failurePath
+        $failureHash = (Get-FileHash $failurePath).Hash
         Reset-Observation
         Invoke-ReplayStep delete -ExpectFailure
         Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '最初のDELETEも実行しない'
+        Assert-Replay ((Get-FileHash $failurePath).Hash -eq $failureHash) '全件確認NGでは前回の削除失敗CSVを変更しない'
         foreach ($old in $records.OldSettings) {
             Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id)) '全Subの旧を保持'
         }
     }
-    Invoke-ReplayCase '旧削除の途中失敗は後続を止め再実行できる' {
+    Invoke-ReplayCase '旧削除の途中失敗は失敗Subの後続だけを止め再実行できる' {
         Invoke-ReplayStep copy
         $records = @(Get-FixtureRecords)
         $firstOld = @($records.OldSettings | Where-Object Kind -eq 'Association')[0]
+        $csvHash = (Get-FileHash (Join-Path $global:ProceduralFixture.Repository 'targets.csv')).Hash
+        $recordHashes = @{}
+        foreach ($file in Get-ChildItem (Join-Path $global:ProceduralFixture.Repository 'records/dev')) {
+            $recordHashes[$file.Name] = (Get-FileHash $file.FullName).Hash
+        }
         $global:ProceduralFixture.Failures["DELETE $($firstOld.Id)"] = 4
         Reset-Observation
         Invoke-ReplayStep delete -ExpectFailure
-        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object Method -eq 'DELETE').Count -eq 0) '最初の削除失敗後はDELETEなし'
+        $failedSub = ($firstOld.Id -split '/')[2]
+        foreach ($record in $records) {
+            foreach ($old in $record.OldSettings) {
+                Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id) -eq ($record.Target.SubscriptionId -eq $failedSub)) '失敗Subの旧設定は残し、ほかのSubは削除する'
+            }
+        }
+        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object Method -eq 'DELETE').Count -eq 2) '正常Subの関連と診断だけを削除する'
+        Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object { $_.Method -eq 'DELETE' -and $_.Id -like "/subscriptions/$failedSub/*/diagnosticSettings/*" }).Count -eq 0) '失敗Subの診断削除へ進まない'
+        $report = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'delete_failures.csv'))
+        Assert-Replay ($report.Count -eq 1 -and $report[0].SubscriptionId -eq $failedSub -and $report[0].ResourceId -eq $firstOld.Id) '停止したSubと設定IDをCSVへ記録する'
+        Assert-Replay ($report[0].Reason -like '*TEST_FAILURE*' -and $report[0].Expected -like '*dataCollectionRuleId*') '原因と元の設定値をCSVへ記録する'
+        Assert-Replay ($global:ProceduralFixture.LastError.Exception.Message -like '*delete_failures.csv*') '正常Subの完了後も工程全体は失敗にする'
         Reset-Observation
         Invoke-ReplayStep delete
+        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object Method -eq 'DELETE').Count -eq 2) '再実行は失敗Subの未削除だけを処理する'
+        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Id -notlike "/subscriptions/$failedSub/*" }).Count -eq 0) '再実行で正常Subを書き直さない'
         foreach ($old in $records.OldSettings) {
             Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($old.Id)) '再開後は旧を全削除'
         }
+        Assert-Replay ((Get-FileHash (Join-Path $global:ProceduralFixture.Repository 'targets.csv')).Hash -eq $csvHash) '同じCSVで削除を再開する'
+        foreach ($file in Get-ChildItem (Join-Path $global:ProceduralFixture.Repository 'records/dev')) {
+            Assert-Replay ((Get-FileHash $file.FullName).Hash -eq $recordHashes[$file.Name]) '削除再開で作業記録を変更しない'
+        }
+        Assert-Replay (-not (Test-Path (Join-Path $global:ProceduralFixture.Repository 'delete_failures.csv'))) '削除成功後は前回の失敗CSVを除く'
+        Reset-Observation
+        Invoke-ReplayStep delete
+        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '復旧後の削除再実行は変更0'
+        Assert-Replay (-not (Test-Path (Join-Path $global:ProceduralFixture.Repository 'delete_failures.csv'))) '復旧後の再実行でも失敗CSVを残さない'
         Invoke-ReplayStep rollback
+    }
+    Invoke-ReplayCase '診断削除の失敗では同じSubの後続を止め、ほかのSubの診断は削除する' {
+        $firstSub = $global:ProceduralFixture.Subscriptions[0]
+        $parent = "/subscriptions/$firstSub/resourceGroups/rg-source/providers/Microsoft.Test/widgets/source-second"
+        $global:ProceduralFixture.Inventory += [pscustomobject]@{
+            id = $parent
+            type = 'Microsoft.Test/widgets'
+            location = 'japaneast'
+        }
+        Add-FixtureDiagnostic $parent
+        Invoke-ReplayStep copy
+        $records = @(Get-FixtureRecords)
+        $failedRecord = @($records | Where-Object { $_.Target.SubscriptionId -eq $firstSub })[0]
+        $first = @($failedRecord.OldSettings | Where-Object Kind -eq 'Diagnostic')[0]
+        $global:ProceduralFixture.Failures["DELETE $($first.Id)"] = 4
+        Reset-Observation
+        Invoke-ReplayStep delete -ExpectFailure
+        foreach ($record in $records) {
+            foreach ($old in $record.OldSettings) {
+                $retain = $record.Target.SubscriptionId -eq $firstSub -and $old.Kind -eq 'Diagnostic'
+                Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id) -eq $retain) '関連は全Subで削除し、診断は失敗Subだけ残す'
+            }
+        }
+        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object Method -eq 'DELETE').Count -eq 3) '正常な2関連と別Subの診断だけを削除する'
+        $remaining = @($failedRecord.OldSettings | Where-Object { $_.Kind -eq 'Diagnostic' -and $_.Id -ne $first.Id })[0]
+        Assert-Replay (@($global:ProceduralFixture.Requests | Where-Object { $_.Method -eq 'DELETE' -and $_.Id -eq $remaining.Id }).Count -eq 0) '失敗Subの次の診断へDELETEを送らない'
+        Invoke-ReplayStep rollback
+    }
+    Invoke-ReplayCase '複数Subで削除が失敗しても各Subを一度だけ記録し、残りの診断は削除しない' {
+        Invoke-ReplayStep copy
+        $records = @(Get-FixtureRecords)
+        foreach ($old in @($records.OldSettings | Where-Object Kind -eq 'Association')) {
+            $global:ProceduralFixture.Failures["DELETE $($old.Id)"] = 4
+        }
+        Reset-Observation
+        Invoke-ReplayStep delete -ExpectFailure
+        $report = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'delete_failures.csv'))
+        Assert-Replay ($report.Count -eq 2 -and @($report.SubscriptionId | Select-Object -Unique).Count -eq 2) '最初の失敗を上書きせず2Subの失敗を残す'
+        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object Method -eq 'DELETE').Count -eq 0) '失敗Subの診断はどちらも削除しない'
+        foreach ($old in $records.OldSettings) {
+            Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id)) '2Subとも旧設定を残す'
+        }
+        Invoke-ReplayStep delete
+    }
+    Invoke-ReplayCase '全件確認を通過した直後の旧設定変更でも失敗Subの残りだけを止める' {
+        Invoke-ReplayStep copy
+        $records = @(Get-FixtureRecords)
+        $first = @($records.OldSettings | Where-Object Kind -eq 'Association')[0]
+        $failedSub = ($first.Id -split '/')[2]
+        $verifyPath = Join-Path $global:ProceduralFixture.Repository 'step2_verify.ps1'
+        Add-Content $verifyPath "`n`$global:ProceduralFixture.Resources['$($first.Id)'].properties.description = 'changed-after-global-verify'"
+        Reset-Observation
+        Invoke-ReplayStep delete -ExpectFailure
+        $verification = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'verify_results.csv'))
+        Assert-Replay ($verification.Count -gt 0 -and $verification.Result -notcontains 'NG') '全Subの事前確認を通過してから旧設定を変更する'
+        foreach ($record in $records) {
+            foreach ($old in $record.OldSettings) {
+                Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id) -eq ($record.Target.SubscriptionId -eq $failedSub)) '直前変更のSubを止め、正常Subは完了する'
+            }
+        }
+        $report = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'delete_failures.csv'))
+        Assert-Replay ($report.Count -eq 1 -and $report[0].Reason -eq '削除直前に旧設定が変更されています。') '直前の旧設定変更理由を残す'
+    }
+    Invoke-ReplayCase '全件確認を通過した直後の新設定欠落でも失敗Subの旧設定を保持する' {
+        Invoke-ReplayStep copy
+        $records = @(Get-FixtureRecords)
+        $firstRecord = $records[0]
+        $failedSub = $firstRecord.Target.SubscriptionId
+        $replacement = @($firstRecord.NewSettings | Where-Object Kind -eq 'Association')[0]
+        $verifyPath = Join-Path $global:ProceduralFixture.Repository 'step2_verify.ps1'
+        Add-Content $verifyPath "`n`$null = `$global:ProceduralFixture.Resources.Remove('$($replacement.Id)')"
+        Reset-Observation
+        Invoke-ReplayStep delete -ExpectFailure
+        $verification = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'verify_results.csv'))
+        Assert-Replay ($verification.Count -gt 0 -and $verification.Result -notcontains 'NG') '全Subの事前確認を通過してから新設定をなくす'
+        foreach ($record in $records) {
+            foreach ($old in $record.OldSettings) {
+                Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id) -eq ($record.Target.SubscriptionId -eq $failedSub)) '新設定のないSubの旧設定を残し、正常Subは完了する'
+            }
+        }
+        $report = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'delete_failures.csv'))
+        Assert-Replay ($report.Count -eq 1 -and $report[0].Reason -eq '削除直前の新設定が記録と一致しません。') '直前の新設定欠落理由を残す'
     }
     Invoke-ReplayCase 'copy後に増えた旧対象をverify/deleteが無視しない' {
         Invoke-ReplayStep copy
@@ -1279,7 +1396,12 @@ try {
         $global:ProceduralFixture.Resources[$first.Id].properties.dataCollectionRuleId = '/externally-changed-rule'
         Reset-Observation
         Invoke-ReplayStep delete -ExpectFailure
-        Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '別の旧関連も削除しない'
+        $failedSub = ($first.Id -split '/')[2]
+        foreach ($record in $records) {
+            foreach ($old in $record.OldSettings) {
+                Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id) -eq ($record.Target.SubscriptionId -eq $failedSub)) '旧関連の直前変更では失敗Subの残りだけを止める'
+            }
+        }
     }
     Invoke-ReplayCase '指定Subだけを切り戻し、他Subはそのまま残す' {
         Invoke-ReplayStep copy
@@ -1304,16 +1426,151 @@ try {
         Invoke-ReplayStep rollback -SubscriptionIds @('33333333-3333-3333-3333-333333333333') -ExpectFailure
         Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '不明Subで変更0'
     }
-    Invoke-ReplayCase '旧復元失敗時は新診断設定を残す' {
+    foreach ($failureKind in @('Association', 'Diagnostic')) {
+        Invoke-ReplayCase "旧$failureKind 復元失敗はそのSubの新設定を残し、他Sub完了後に再実行できる" {
+            $failedSub = $global:ProceduralFixture.Subscriptions[0]
+            $healthySub = $global:ProceduralFixture.Subscriptions[1]
+            if ($failureKind -eq 'Diagnostic') {
+                $parent = "/subscriptions/$failedSub/resourceGroups/rg-source/providers/Microsoft.Test/widgets/remaining"
+                $global:ProceduralFixture.Inventory += [pscustomobject]@{ id = $parent; type = 'Microsoft.Test/widgets'; location = 'japaneast' }
+                Add-FixtureDiagnostic $parent
+            }
+            Invoke-ReplayStep copy
+            Invoke-ReplayStep delete
+            $records = @(Get-FixtureRecords)
+            $failed = @($records | Where-Object { $_.Target.SubscriptionId -eq $failedSub })[0]
+            $healthy = @($records | Where-Object { $_.Target.SubscriptionId -eq $healthySub })[0]
+            $old = @($failed.OldSettings | Where-Object Kind -eq $failureKind)[0]
+            $recordPath = Join-Path $global:ProceduralFixture.Repository "records/dev/$failedSub.json"
+            $recordHash = (Get-FileHash $recordPath).Hash
+            $global:ProceduralFixture.Failures["PUT $($old.Id)"] = 4
+            Reset-Observation
+            Invoke-ReplayStep rollback -ExpectFailure
+            $failures = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'rollback_failures.csv'))
+            Assert-Replay ($failures.Count -eq 1 -and $failures[0].SubscriptionId -eq $failedSub -and $failures[0].ResourceId -eq $old.Id) '失敗Subと復元できなかったIDを1行記録'
+            $failedNewIds = @($failed.NewSettings.Id)
+            Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Id -in $failedNewIds }).Count -eq 0) '旧復元失敗Subの新設定は一つも取り消さない'
+            foreach ($setting in $failed.NewSettings) {
+                Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($setting.Id)) '失敗Subの新設定を保持'
+            }
+            foreach ($setting in @($failed.OldSettings | Where-Object Kind -eq 'Diagnostic')) {
+                Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($setting.Id)) '失敗Subの残り旧診断設定は復元しない'
+            }
+            foreach ($setting in $healthy.OldSettings) {
+                Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($setting.Id)) '健康Subの旧設定はすべて復元'
+            }
+            foreach ($setting in @($healthy.NewSettings | Where-Object { -not $_.KeepOnRollback })) {
+                Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($setting.Id)) '健康Subの新設定取消は完了'
+            }
+            Assert-Replay (-not $global:ProceduralFixture.UnsafeNewDelete) '新設定の取消前に同じSubの旧設定は復元済み'
+            Reset-Observation
+            Invoke-ReplayStep rollback
+            Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Id -like "/subscriptions/$healthySub/*" }).Count -eq 0) '再実行で健康Subを書き直さない'
+            foreach ($setting in $records.OldSettings) {
+                Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($setting.Id)) '原因解消後は全旧設定が復元済み'
+            }
+            Assert-Replay ((Get-FileHash $recordPath).Hash -eq $recordHash) '失敗後の再実行もBodyとBeforeの記録を変更しない'
+            Assert-Replay (-not (Test-Path (Join-Path $global:ProceduralFixture.Repository 'rollback_failures.csv'))) '成功した再実行で失敗CSVを除く'
+            Reset-Observation
+            Invoke-ReplayStep rollback
+            Assert-Replay ($global:ProceduralFixture.Writes.Count -eq 0) '復旧後の再実行は変更0'
+        }
+    }
+    Invoke-ReplayCase '新設定の取消失敗はそのSubだけ停止し、他Sub完了後に未完了だけ再実行する' {
         Invoke-ReplayStep copy
         Invoke-ReplayStep delete
-        $old = @((Get-FixtureRecords).OldSettings | Where-Object Kind -eq 'Association')[0]
-        $global:ProceduralFixture.Failures["PUT $($old.Id)"] = 4
+        $records = @(Get-FixtureRecords)
+        $failedSub = $global:ProceduralFixture.Subscriptions[0]
+        $healthySub = $global:ProceduralFixture.Subscriptions[1]
+        $failed = @($records | Where-Object { $_.Target.SubscriptionId -eq $failedSub })[0]
+        $setting = @($failed.NewSettings | Where-Object Kind -eq 'Association')[0]
+        $global:ProceduralFixture.Failures["DELETE $($setting.Id)"] = 4
         Reset-Observation
         Invoke-ReplayStep rollback -ExpectFailure
-        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Method -eq 'DELETE' -and $_.Id -like "*/diagnosticSettings/$($global:ProceduralFixture.DiagnosticName)" }).Count -eq 0) '旧復元失敗で新診断DELETE0'
-        Assert-Replay (-not $global:ProceduralFixture.UnsafeNewDelete) '旧未復元の新設定は保持'
+        foreach ($old in $records.OldSettings) {
+            Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id)) '新取消失敗でも全Subの旧復元は完了'
+        }
+        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Id -in @($failed.NewSettings.Id) }).Count -eq 0) '失敗Subは残りの新設定取消を開始しない'
+        $failures = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'rollback_failures.csv'))
+        Assert-Replay ($failures.Count -eq 1 -and $failures[0].ResourceId -eq $setting.Id) '取消失敗のIDを記録'
+        $healthy = @($records | Where-Object { $_.Target.SubscriptionId -eq $healthySub })[0]
+        foreach ($new in @($healthy.NewSettings | Where-Object { -not $_.KeepOnRollback })) {
+            Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($new.Id)) '新取消失敗でも健康Subの新取消は完了'
+        }
+        Reset-Observation
         Invoke-ReplayStep rollback
+        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Id -like "/subscriptions/$healthySub/*" }).Count -eq 0) '取消再実行で健康Subの変更0'
+        Assert-Replay (-not $global:ProceduralFixture.Resources.ContainsKey($setting.Id)) '再実行で未完了の新設定取消が完了'
+        Assert-Replay (-not $global:ProceduralFixture.UnsafeNewDelete) '取消再実行も旧復元済み'
+    }
+    Invoke-ReplayCase '既存DCRのBefore復元失敗後も他Subを戻し、再実行で元のDCRと関連へ戻る' {
+        foreach ($sub in $global:ProceduralFixture.Subscriptions) {
+            $ids = Get-FixtureIds $sub
+            Add-FixtureResource $ids.Dcr @{
+                location = 'japaneast'; kind = 'Windows'; tags = @{ keep = 'before' }
+                properties = @{
+                    description = '元のDCR'
+                    dataSources = @{ windowsEventLogs = @(@{ name = 'before'; streams = @('Microsoft-Event'); xPathQueries = @('Application!*') }) }
+                    destinations = @{ logAnalytics = @(@{ name = 'before'; workspaceResourceId = '/old-workspace'; workspaceId = 'readonly-guid' }) }
+                    dataFlows = @(@{ streams = @('Microsoft-Event'); destinations = @('before') })
+                    immutableId = 'readonly'; provisioningState = 'Succeeded'
+                }
+            }
+            $machine = @($global:ProceduralFixture.Inventory | Where-Object { $_.id -like "/subscriptions/$sub/*/old-related" })[0].id
+            Add-FixtureResource "$machine/providers/Microsoft.Insights/dataCollectionRuleAssociations/dcr-new" @{
+                properties = @{ description = '元の新側関連'; dataCollectionRuleId = '/legacy-other-dcr'; dataCollectionEndpointId = '/legacy-dce'; provisioningState = 'Succeeded' }
+            }
+        }
+        Invoke-ReplayStep copy
+        Invoke-ReplayStep delete
+        $records = @(Get-FixtureRecords)
+        $failedSub = $global:ProceduralFixture.Subscriptions[0]
+        $healthySub = $global:ProceduralFixture.Subscriptions[1]
+        $failedIds = Get-FixtureIds $failedSub
+        $healthyIds = Get-FixtureIds $healthySub
+        $recordPath = Join-Path $global:ProceduralFixture.Repository "records/dev/$failedSub.json"
+        $recordHash = (Get-FileHash $recordPath).Hash
+        $global:ProceduralFixture.Failures["PUT $($failedIds.Dcr)"] = 4
+        Reset-Observation
+        Invoke-ReplayStep rollback -ExpectFailure
+        $failures = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'rollback_failures.csv'))
+        Assert-Replay ($failures.Count -eq 1 -and $failures[0].ResourceId -eq $failedIds.Dcr) 'Before復元失敗のIDを記録'
+        Assert-Replay ($global:ProceduralFixture.Resources[$healthyIds.Dcr].properties.description -eq '元のDCR') '健康Subの既存DCRはBeforeへ復元済み'
+        foreach ($old in $records.OldSettings) {
+            Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id)) 'Before復元失敗でも全旧設定は復元済み'
+        }
+        Reset-Observation
+        Invoke-ReplayStep rollback
+        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object { $_.Id -like "/subscriptions/$healthySub/*" }).Count -eq 0) 'Before再実行でも健康Subは変更0'
+        foreach ($sub in $global:ProceduralFixture.Subscriptions) {
+            $ids = Get-FixtureIds $sub
+            $record = @($records | Where-Object { $_.Target.SubscriptionId -eq $sub })[0]
+            $association = @($record.NewSettings | Where-Object Kind -eq 'Association')[0]
+            Assert-Replay ($global:ProceduralFixture.Resources[$ids.Dcr].properties.description -eq '元のDCR') '再実行後DCRをBeforeへ復元'
+            Assert-Replay ($global:ProceduralFixture.Resources[$association.Id].properties.dataCollectionRuleId -eq '/legacy-other-dcr') '再実行後関連をBeforeへ復元'
+        }
+        Assert-Replay ((Get-FileHash $recordPath).Hash -eq $recordHash) '失敗と再実行でBefore記録は不変'
+    }
+    Invoke-ReplayCase '複数Subの復元失敗を全件CSVへ記録し、原因解消後に再実行できる' {
+        Invoke-ReplayStep copy
+        Invoke-ReplayStep delete
+        $records = @(Get-FixtureRecords)
+        foreach ($record in $records) {
+            $old = @($record.OldSettings | Where-Object Kind -eq 'Association')[0]
+            $global:ProceduralFixture.Failures["PUT $($old.Id)"] = 4
+        }
+        Reset-Observation
+        Invoke-ReplayStep rollback -ExpectFailure
+        $failures = @(Import-Csv (Join-Path $global:ProceduralFixture.Repository 'rollback_failures.csv'))
+        Assert-Replay ($failures.Count -eq $records.Count) '各失敗Subの理由を漏れなくCSVへ残す'
+        Assert-Replay (@($failures.SubscriptionId | Sort-Object -Unique).Count -eq $records.Count) 'Subごとに失敗1行'
+        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object Method -eq 'DELETE').Count -eq 0) '両Sub旧復元失敗中は新取消0'
+        Reset-Observation
+        Invoke-ReplayStep rollback
+        foreach ($old in $records.OldSettings) {
+            Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id)) '複数失敗後も全旧設定を復元できる'
+        }
+        Assert-Replay (-not (Test-Path (Join-Path $global:ProceduralFixture.Repository 'rollback_failures.csv'))) '全件成功後は失敗CSVを残さない'
     }
     Invoke-ReplayCase '切戻し対象が外部変更されたら上書きしない' {
         Invoke-ReplayStep copy
@@ -1561,7 +1818,7 @@ try {
         $global:ProceduralFixture.Failures["DELETE $($second.Id)"] = 4
         Reset-Observation
         Invoke-ReplayStep delete -ExpectFailure
-        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object Method -eq 'DELETE').Count -eq 1) '最初の旧関連だけ削除して停止'
+        Assert-Replay (@($global:ProceduralFixture.Writes | Where-Object Method -eq 'DELETE').Count -eq 2) '失敗Subの残りを止め、正常Subの関連と診断を削除する'
         Invoke-ReplayStep rollback
         foreach ($old in $records.OldSettings) {
             Assert-Replay ($global:ProceduralFixture.Resources.ContainsKey($old.Id)) '一部削除した旧設定を全て戻す'

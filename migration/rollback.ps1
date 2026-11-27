@@ -29,6 +29,8 @@ if (-not $records.Count) {
     throw '切り戻す記録がありません。'
 }
 $failurePath = Join-Path $PSScriptRoot 'rollback_failures.csv'
+$failures = @()
+$failedSubscriptions = @()
 try {
     # ---
     # 2. 切り戻す設定の現在値を調べ、記録後に別の変更が入っていないか確認する。
@@ -52,7 +54,7 @@ try {
 
     # ---
     # 3. 全対象の旧DCR関連付けと旧診断設定を復元してから、新設定を作業前の状態へ戻す。
-    # 旧設定の復元に失敗したら、新設定を残して止める。保存先と保存済みログも残す。
+    # 旧設定の復元に失敗したSubは新設定を残して止め、ほかのSubは続ける。保存先と保存済みログも残す。
     # ---
     foreach ($phase in @('Old', 'New')) {
         $kinds = @('Association', 'Diagnostic')
@@ -62,49 +64,64 @@ try {
         foreach ($kind in $kinds) {
             foreach ($record in $records) {
                 $subscriptionId = $record.Target.SubscriptionId
-                $settings = $record.OldSettings
-                if ($phase -eq 'New') {
-                    $settings = $record.NewSettings
+                if ($subscriptionId -in $failedSubscriptions) {
+                    continue
                 }
-                foreach ($setting in @($settings | Where-Object Kind -eq $kind)) {
-                    if ($setting.KeepOnRollback -or ($kind -eq 'Exemption' -and $setting.Before)) {
-                        continue
-                    }
-                    # 旧設定は削除前のBody、新設定は作業前のBeforeへ戻す。すでに同じ値なら変更しない。
-                    $expectedBody = $setting.Body
+                $setting = $null
+                try {
+                    $settings = $record.OldSettings
                     if ($phase -eq 'New') {
-                        $expectedBody = $setting.Before
+                        $settings = $record.NewSettings
                     }
-                    $current = Get-WritableBody (Invoke-ArmRequest -Resource $setting -Optional) $kind
-                    if (Test-Configuration $current $expectedBody -Exact) {
-                        continue
-                    }
-                    # 旧設定が別の値に変わっていたら止める。新設定も、今回作成した値と同じ場合だけ戻す。
-                    if ($current -and ($phase -eq 'Old' -or
-                        -not (Test-Configuration $current $setting.Body -Exact))) {
-                        throw "切り戻し直前に設定が変わっています: $($setting.Id)"
-                    }
-                    # 診断設定が上限5件に達していたら、ほかの設定を消さずに止める。旧設定を追加できないため。
-                    if ($kind -eq 'Diagnostic' -and $expectedBody -and -not $current) {
-                        $listId = $setting.Id -replace '/diagnosticSettings/[^/]+$', '/diagnosticSettings'
-                        $existing = Invoke-ArmRequest -ResourceId $listId -ApiVersion $apiVersions.Diagnostic
-                        if (@($existing.value).Count -ge 5) {
-                            throw "旧設定を戻す空きがありません: $($setting.Id)"
+                    foreach ($setting in @($settings | Where-Object Kind -eq $kind)) {
+                        if ($setting.KeepOnRollback -or ($kind -eq 'Exemption' -and $setting.Before)) {
+                            continue
+                        }
+                        # 旧設定は削除前のBody、新設定は作業前のBeforeへ戻す。すでに同じ値なら変更しない。
+                        $expectedBody = $setting.Body
+                        if ($phase -eq 'New') {
+                            $expectedBody = $setting.Before
+                        }
+                        $current = Get-WritableBody (Invoke-ArmRequest -Resource $setting -Optional) $kind
+                        if (Test-Configuration $current $expectedBody -Exact) {
+                            continue
+                        }
+                        # 旧設定が別の値に変わっていたら止める。新設定も、今回作成した値と同じ場合だけ戻す。
+                        if ($current -and ($phase -eq 'Old' -or
+                            -not (Test-Configuration $current $setting.Body -Exact))) {
+                            throw "切り戻し直前に設定が変わっています: $($setting.Id)"
+                        }
+                        # 診断設定が上限5件に達していたら、ほかの設定を消さずに止める。旧設定を追加できないため。
+                        if ($kind -eq 'Diagnostic' -and $expectedBody -and -not $current) {
+                            $listId = $setting.Id -replace '/diagnosticSettings/[^/]+$', '/diagnosticSettings'
+                            $existing = Invoke-ArmRequest -ResourceId $listId -ApiVersion $apiVersions.Diagnostic
+                            if (@($existing.value).Count -ge 5) {
+                                throw "旧設定を戻す空きがありません: $($setting.Id)"
+                            }
+                        }
+                        # 作業開始前に存在しなかった新設定は削除する。もともとあった設定は、記録した値で作成・更新する。
+                        # Azureから読み直して戻すはずの値と比べ、違っていればこのSubの残りの切り戻しを止める。
+                        if ($null -eq $expectedBody) {
+                            $null = Invoke-ArmRequest -Resource $setting -Method Delete
+                        }
+                        else {
+                            $null = Invoke-ArmRequest -Resource $setting -Method Put -Body $expectedBody
+                        }
+                        $current = Invoke-ArmRequest -Resource $setting -Optional -Wait
+                        $current = Get-WritableBody $current $kind
+                        if (-not (Test-Configuration $current $expectedBody -Exact)) {
+                            throw "復元後の値を確認できません: $($setting.Id)"
                         }
                     }
-                    # 作業開始前に存在しなかった新設定は削除する。もともとあった設定は、記録した値で作成・更新する。
-                    # Azureから読み直して戻すはずの値と比べ、違っていれば残りの切り戻しを止める。
-                    if ($null -eq $expectedBody) {
-                        $null = Invoke-ArmRequest -Resource $setting -Method Delete
+                }
+                catch {
+                    # このSubの残りの復元と新設定の処理を止め、ほかのSubへ進む。
+                    $failures += [pscustomobject]@{
+                        SubscriptionId = $subscriptionId
+                        ResourceId = $setting.Id
+                        Reason = $_.Exception.Message
                     }
-                    else {
-                        $null = Invoke-ArmRequest -Resource $setting -Method Put -Body $expectedBody
-                    }
-                    $current = Invoke-ArmRequest -Resource $setting -Optional -Wait
-                    $current = Get-WritableBody $current $kind
-                    if (-not (Test-Configuration $current $expectedBody -Exact)) {
-                        throw "復元後の値を確認できません: $($setting.Id)"
-                    }
+                    $failedSubscriptions += $subscriptionId
                 }
             }
         }
@@ -118,6 +135,10 @@ catch {
         Reason = $_.Exception.Message
     } | Export-Csv $failurePath -Encoding utf8BOM
     throw
+}
+if ($failures.Count) {
+    $failures | Export-Csv $failurePath -Encoding utf8BOM
+    throw "未完了のSubがあります。$failurePath を確認して再実行してください。"
 }
 if (Test-Path $failurePath) {
     Remove-Item $failurePath

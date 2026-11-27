@@ -7,17 +7,21 @@
 $records = @(& (Join-Path $PSScriptRoot 'step2_verify.ps1') -PassThru)
 . (Join-Path $PSScriptRoot 'common.ps1') -SkipCsv
 $resource = $null
+$failures = @()
 # ---
 # 2. 全サブスクリプションの旧DCR関連付けを削除し、その後に旧診断設定を削除する。
 # 各設定の削除直前にも、旧設定と新設定が作業記録の値と同じか確認する。
 # ---
-try {
-    foreach ($kind in @('Association', 'Diagnostic')) {
-        foreach ($record in $records) {
-            $subscriptionId = $record.Target.SubscriptionId
+foreach ($kind in @('Association', 'Diagnostic')) {
+    foreach ($record in $records) {
+        $subscriptionId = $record.Target.SubscriptionId
+        if ($subscriptionId -in $failures.SubscriptionId) {
+            continue
+        }
+        try {
             foreach ($resource in @($record.OldSettings | Where-Object Kind -eq $kind)) {
                 # 削除する旧設定を読み直し、作業記録と同じ値か確認する。削除済みなら次へ進む。
-                # 値が変わっていたら、ほかのサブスクリプションも含めて以降の削除を止める。
+                # 値が変わっていたら、このサブスクリプションの残りの削除を止める。
                 $current = Invoke-ArmRequest -Resource $resource -Optional
                 if (-not $current) {
                     continue
@@ -52,17 +56,23 @@ try {
                 $null = Invoke-ArmRequest -Resource $resource -Method Delete
             }
         }
+        catch {
+            # 失敗したSubの残りを止め、ほかのSubの削除は続ける。
+            # 削除を止めた旧設定のID・理由・保存した設定値をdelete_failures.csvへ残す。
+            $failures += [pscustomobject]@{
+                SubscriptionId = $subscriptionId
+                ResourceId = $resource.Id
+                Reason = $_.Exception.Message
+                Expected = ConvertTo-Json $resource.Body -Depth 40 -Compress
+            }
+            $failures | Export-Csv (Join-Path $PSScriptRoot 'delete_failures.csv') -Encoding utf8BOM
+        }
     }
 }
-catch {
-    # 削除を止めた旧設定のID・理由・保存した設定値をdelete_failures.csvへ残す。
-    # ほかのサブスクリプションも含め、残りの削除は実行しない。
-    [pscustomobject]@{
-        SubscriptionId = $subscriptionId
-        ResourceId = $resource.Id
-        Reason = $_.Exception.Message
-        Expected = ConvertTo-Json $resource.Body -Depth 40 -Compress
-    } | Export-Csv (Join-Path $PSScriptRoot 'delete_failures.csv') -Encoding utf8BOM
-    throw
+if ($failures.Count -gt 0) {
+    throw '旧設定を削除できなかったサブスクリプションがあります。delete_failures.csvを確認してください。'
+}
+if (Test-Path (Join-Path $PSScriptRoot 'delete_failures.csv')) {
+    Remove-Item (Join-Path $PSScriptRoot 'delete_failures.csv')
 }
 Write-Host '旧設定を削除しました。保存先と新設定は残しています。'
