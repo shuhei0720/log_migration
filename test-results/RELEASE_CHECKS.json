@@ -1,6 +1,6 @@
 {
   "StatusMeaning": "冒頭のStatus・RecordedAt・Scopeなど元の項目は2026-11-26時点の記録です。今回の最終確認はFinalVerificationを参照してください。過去のPASSを今回の出荷判定へ読み替えません。",
-  "LatestVerificationStatus": "PENDING_CLEANUP_AND_FINAL_COST",
+  "LatestVerificationStatus": "FUNCTIONAL_TESTS_AND_BASELINE_PASS_ONE_PROVIDER_PENDING",
   "Status": "PASS",
   "RecordedAt": "2026-11-26T13:42:45+09:00",
   "Scope": "reading-versionをmigrationへ昇格した出荷構成の確認。Azureへの通信は試験用の応答に置き換えている。",
@@ -866,7 +866,7 @@
     "IndependentCleanup": "PASS"
   },
   "FinalVerification": {
-    "Status": "IN_PROGRESS_DRAFT_NOT_RELEASED",
+    "Status": "FUNCTIONAL_TESTS_PASS_RESOURCES_REMOVED_PROVIDER_PENDING",
     "DraftAtUtc": "2026-11-27T17:50:17.318148+00:00",
     "SourceUnderTest": {
       "Commit": "88677401dd8eb7d2ad06206b8a92a2d460a142ae",
@@ -975,7 +975,7 @@
         "TemporaryDiagnosticsRestored": 3,
         "FixtureResourcesRetainedForFinalCleanup": 6,
         "Evidence": "Guards13",
-        "Meaning": "13ケースは正常許容1件と指定理由による拒否12件。製品書込み0件。fixtureの準備・復元は別に記録し、残る所有6件の全環境撤去は未完了。Windows実行とは扱わない。"
+        "Meaning": "13ケースは正常許容1件と指定理由による拒否12件。製品書込み0件。fixtureの準備・復元と所有6件の最終撤去は別に記録。Windows実行とは扱わない。"
       },
       {
         "Id": "ALL_LOG",
@@ -1037,7 +1037,7 @@
         "CountsAndTimingsEvidence": "LastNormalCountsAndTimings",
         "ColdRegistrationEvidence": "LastNormalColdSub2Registration",
         "IndependentReviewEvidence": "LastNormalIndependentReview",
-        "Meaning": "新規8親・Fresh12旧診断を含む3Subの最後の正常通し4工程が完了。旧387件の削除後不在と保護35件＋既知KV別枠の不変を独立GETで確認。Normalでは切り戻しを行っておらず、新step4と全環境撤去は未完了。",
+        "Meaning": "新規8親・Fresh12旧診断を含む3Subの最後の正常通し4工程が完了。旧387件の削除後不在と保護35件＋既知KV別枠の不変を独立GETで確認。Normal自身では切り戻しを行っていない。後続の追加step4の結果はSTEP4_FINAL_CHECK_WINDOWS_AZUREを参照。",
         "IndependentReviewResult": "PASS",
         "IndependentReviewUnknownFailures": 0
       },
@@ -1069,9 +1069,11 @@
     ],
     "PendingGroups": [
       {
-        "Id": "CLEANUP",
-        "State": "PENDING",
-        "Meaning": "作成したAzureリソース等の全撤去と、記録のある利用登録の復元。"
+        "Id": "SUB3_MICROSOFT_NETWORK_UNREGISTRATION",
+        "State": "UNREGISTERING",
+        "Meaning": "全3SubのRG・リソース0件と元の管理構造・権限・ポリシー復元を確認済み。元が未登録と確認できた37件中36件は復元済みで、残るSub3のMicrosoft.Network1件だけ解除完了を待っている。",
+        "SubscriptionId": "77041c75-af20-40df-a399-e0b3ce0611c9",
+        "Namespace": "Microsoft.Network"
       }
     ],
     "Evidence": {
@@ -1194,20 +1196,104 @@
         "PrivatePath": "/tmp/log-migration-final3-20261127/windows/STEP4_EXECUTE_REJECTION_CAUSE.json",
         "Sha256": "da46a089967e443f6f87c0a76e6de0124ba9339432e688269ade5bfa3d18133c",
         "ActualResult": "CAUSE_IDENTIFIED_READ_ONLY"
+      },
+      "CleanupBaselineIndependentReview": {
+        "PrivatePath": "/tmp/log-migration-final3-20261127/cleanup/final-baseline-review-20261127T231059Z/FINAL_BASELINE_INDEPENDENT_REVIEW.json",
+        "Sha256": "39aa6a1edd88e23eff62f7936972124e4e293f9f06d7da22cdec68d8eb38fc13"
+      },
+      "NetworkUnregisterDiagnosis": {
+        "PrivatePath": "/tmp/log-migration-final3-20261127/cleanup/network-unregister-diagnosis-20261127T232200Z/NETWORK_UNREGISTER_DIAGNOSIS.json",
+        "Sha256": "5344a137a0546dc59012e778d7587e694aecabc8f35135a214ba53c7151c71d9"
+      },
+      "FinalCostOwnedGroups": {
+        "PrivatePath": "/tmp/log-migration-final3-20261127/cost-snapshots/FINAL_COST_RECEIPT_OWNED_GROUPS.json",
+        "Sha256": "aaeed567a08e8466e34a9ab1466f0ea72bb6c47526f2236bfc5d298ba2f5fa2b"
+      },
+      "FinalCostIndependentReview": {
+        "PrivatePath": "/tmp/log-migration-final3-20261127/cost-snapshots/FINAL_COST_INDEPENDENT_REVIEW_PINNED.json",
+        "Sha256": "3f1ae5cb754c328c176b91e9acafda74935b3479dce3e368526b75b5c66c1a20"
       }
     },
     "CostSnapshot": {
-      "AsOfJst": "2026-11-28 01:25 JST",
-      "CurrentRunIdentifiedReflectedPreTaxJPY": 3217.9288206875035,
-      "MonthIncludingEarlierTestsReflectedPreTaxJPY": 11999.63920870121,
+      "AsOfUtc": "2026-11-27T23:07:36.192352+00:00",
+      "AsOfJst": "2026-11-28 08:07:36 JST",
+      "CurrentRunIdentifiedReflectedPreTaxJPY": 7354.958105588195,
+      "MonthIncludingEarlierTestsReflectedPreTaxJPY": 16136.665756222903,
       "FinalBill": false,
       "UnreflectedAmount": "UNKNOWN",
-      "PlanningEstimateAsOfJst": "2026-11-28T01:27:43.151834+09:00",
-      "PlanningKnownComponentsPreTaxJPY": 8967.32,
-      "PlanningWithReservesAndIllustrative10PercentTaxJPY": 12170.7,
+      "AllRunChargesHaveReflected": false,
+      "FreshRowsNotReflectedDoNotMeanFree": true,
+      "CostQueries": 3,
+      "AllResponses200JPYAndNoNextLink": true,
+      "RunClassificationPrefixes": [
+        "final3",
+        "f3a261127",
+        "f3fix1127",
+        "rg-lm-f3",
+        "f3n261127"
+      ],
+      "RunRowsCount": 19,
+      "DuplicateRunRows": 0,
+      "PlanningEstimateStoppedAtActualAbsence": true,
+      "PlanningKnownComponentsIncludingTemporaryCleanupPreTaxJPY": 11119.81,
+      "PlanningWithReservesPreTaxJPY": 13344.32,
+      "PlanningWithReservesAndIllustrative10PercentTaxJPY": 14678.75,
+      "KnownTemporaryCleanupReferenceIncludedOnceJPY": 41.04,
+      "ProviderWaitAddedToHoldingSeconds": 0,
       "DoNotAddReflectedCostToEstimate": true,
-      "FinalCostRefresh": "PENDING_AFTER_CLEANUP",
-      "SnapshotIsHistoricalNotFinal": true
+      "Idle146MinutesAddedAgainJPY": 0,
+      "NewPriceApiCalls": 0,
+      "FinalCostRefresh": "COMPLETE_REFLECTED_ACTUAL_AS_OF_QUERY_NOT_FINAL_BILL",
+      "SnapshotIsHistoricalNotFinal": false,
+      "Receipt": {
+        "PrivatePath": "/tmp/log-migration-final3-20261127/cost-snapshots/FINAL_COST_RECEIPT_OWNED_GROUPS.json",
+        "Sha256": "aaeed567a08e8466e34a9ab1466f0ea72bb6c47526f2236bfc5d298ba2f5fa2b"
+      },
+      "Raw": {
+        "PrivatePath": "/tmp/log-migration-final3-20261127/cost-snapshots/20261127T230736Z.json",
+        "Sha256": "bf6a0f22d14a3895fdd0f6c9f0b1b0b0bf63e4698e2f13f9b6d40be257708e77"
+      },
+      "HoldingEstimate": {
+        "PrivatePath": "/tmp/log-migration-final3-20261127/cost-snapshots/FINAL_HOLDING_ESTIMATE_STOPPED.json",
+        "Sha256": "5775a99b3d95ae356f0c1ae561ee642930b50257d401a5edd8c1faf806a496d5"
+      },
+      "PriorPublishedSnapshotPreserved": {
+        "AsOfJst": "2026-11-28 01:25 JST",
+        "CurrentRunIdentifiedReflectedPreTaxJPY": 3217.9288206875035,
+        "MonthIncludingEarlierTestsReflectedPreTaxJPY": 11999.63920870121,
+        "FinalBill": false,
+        "UnreflectedAmount": "UNKNOWN",
+        "PlanningEstimateAsOfJst": "2026-11-28T01:27:43.151834+09:00",
+        "PlanningKnownComponentsPreTaxJPY": 8967.32,
+        "PlanningWithReservesAndIllustrative10PercentTaxJPY": 12170.7,
+        "DoNotAddReflectedCostToEstimate": true,
+        "FinalCostRefresh": "PENDING_AFTER_CLEANUP",
+        "SnapshotIsHistoricalNotFinal": true
+      },
+      "PreviousReceiptPreserved": {
+        "PrivatePath": "/tmp/log-migration-final3-20261127/cost-snapshots/FINAL_COST_RECEIPT.json",
+        "Sha256": "1118c436deb5f0fb50949c0e6fd60faa0c691c161e786298b3afc48838734eff"
+      },
+      "ExactOwnedGroupUnion": {
+        "ApprovedCleanupPlanGroups": 48,
+        "IncludeTemporaryCleanupGroup": true,
+        "Key": "case-insensitive (SubscriptionId, ResourceGroupName)",
+        "UsageDateFromBaselineDay": 20261127,
+        "AddedRows": [
+          {
+            "SubscriptionId": "77041c75-af20-40df-a399-e0b3ce0611c9",
+            "Group": "rg-f3c-dev-monitor-01",
+            "UsageDate": 20261127,
+            "PreTaxJPY": 0.002737379
+          }
+        ],
+        "AddedReflectedPreTaxJPY": 0.002737379
+      },
+      "IndependentReview": {
+        "PrivatePath": "/tmp/log-migration-final3-20261127/cost-snapshots/FINAL_COST_INDEPENDENT_REVIEW_PINNED.json",
+        "Sha256": "3f1ae5cb754c328c176b91e9acafda74935b3479dce3e368526b75b5c66c1a20",
+        "Result": "PASS"
+      }
     },
     "LastNormalStepTimes": {
       "PrecheckSeconds": 191.831019,
@@ -1224,7 +1310,90 @@
       "FinalCheckTimingScope": "SEPARATE_STEP4_WRAPPER_INCLUDING_CLONE_CSV_AND_HASH_VERIFICATION",
       "FinalCheckEvidence": "Step4C1"
     },
-    "CleanupResult": "PENDING",
+    "CleanupResult": {
+      "Result": "RESOURCES_AND_BASELINE_PASS_ONE_PROVIDER_PENDING",
+      "AsOfUtc": "2026-11-27T23:12:51.733496+00:00",
+      "SubscriptionsEnabled": 3,
+      "ResourceGroupsBySubscription": [
+        0,
+        0,
+        0
+      ],
+      "ResourcesBySubscription": [
+        0,
+        0,
+        0
+      ],
+      "OriginalSubscriptionParentsRestored": true,
+      "OriginalUniqueRbacAssignments": 5,
+      "OriginalRbacValuesUnchanged": true,
+      "OriginalManagementGroupSetUnchanged": true,
+      "OriginalRootPolicies": 3,
+      "OriginalRootPolicyValuesUnchanged": true,
+      "ExemptionsReturnedToOriginalEmptySets": true,
+      "OwnManagementGroupAndOwnerRoleAbsent": true,
+      "KnownSoftDeletionCandidatesConfirmedAbsent": 34,
+      "CoreIndependentChecksPassed": 33,
+      "ProviderRestoration": {
+        "Planned": 37,
+        "Restored": 36,
+        "Pending": [
+          {
+            "SubscriptionId": "77041c75-af20-40df-a399-e0b3ce0611c9",
+            "Namespace": "Microsoft.Network",
+            "Before": "NotRegistered",
+            "Observed": "Unregistering",
+            "Restored": false
+          }
+        ],
+        "OriginallyUnregisteringSub2NetworkAndComputeNotTouched": true,
+        "UnknownInitialStatesNotUnregistered": true
+      },
+      "NetworkDiagnosis": {
+        "ResourceListsCompleteAndEmpty": [
+          "virtualNetworks",
+          "networkInterfaces",
+          "publicIPAddresses",
+          "privateEndpoints",
+          "networkWatchers"
+        ],
+        "RegionalUsageQueries": 4,
+        "RegionalUsageHttpStatus": 409,
+        "RegionalUsageErrorCode": "SubscriptionHasNoUsages",
+        "NoAdditionalRegistrationRequests": true,
+        "Evidence": {
+          "PrivatePath": "/tmp/log-migration-final3-20261127/cleanup/network-unregister-diagnosis-20261127T232200Z/NETWORK_UNREGISTER_DIAGNOSIS.json",
+          "Sha256": "5344a137a0546dc59012e778d7587e694aecabc8f35135a214ba53c7151c71d9"
+        }
+      },
+      "CoreBaselineIndependentReview": {
+        "PrivatePath": "/tmp/log-migration-final3-20261127/cleanup/final-baseline-review-20261127T231059Z/FINAL_BASELINE_INDEPENDENT_REVIEW.json",
+        "Sha256": "39aa6a1edd88e23eff62f7936972124e4e293f9f06d7da22cdec68d8eb38fc13"
+      },
+      "TemporaryConnectivity": {
+        "Result": "PASS",
+        "VmResourceGroupAbsent": true,
+        "PrivateEndpointsAbsent": 13,
+        "TemporaryDataOwnerRolesAbsent": 13,
+        "TemporaryDataContributorRolesAbsent": 13,
+        "OriginalFiveSubnetsAndVnetConfigurationUnchanged": true,
+        "ActualGroupGet404Utc": "2026-11-27T23:00:47.189888+00:00",
+        "Evidence": {
+          "PrivatePath": "/tmp/log-migration-final3-20261127/cleanup/private-blob-cleanup/PRIVATE_CONNECTIVITY_TEARDOWN_RESULT.json",
+          "Sha256": "382250df8734f3ba555ff7a9c0bcfad11d13715bfba2466f8c39e5c85c8ef95a"
+        },
+        "FinalGetEvidence": {
+          "PrivatePath": "/tmp/log-migration-final3-20261127/cleanup/private-blob-cleanup/TEARDOWN_CONFIRMED.json",
+          "Sha256": "bc9b67102f01725408b14fa1c96d5c64efaceceab5259ba822438a3c0edd5a22"
+        },
+        "IndependentReview": {
+          "PrivatePath": "/tmp/log-migration-final3-20261127/cleanup/private-blob-cleanup/TEMP_INFRA_TEARDOWN_INDEPENDENT_REVIEW.json",
+          "Sha256": "e2adbec0de3305debcd12e6fe4318b1a959619dee55a2549fad3cb79a2c0998f",
+          "Result": "PASS"
+        }
+      },
+      "DoesNotClaimAllProvidersRestored": true
+    },
     "AdditionalScriptUnderTest": {
       "Path": "migration/step4_final_check.ps1",
       "Commit": "c1c9dc892646fce64a842bc369174ffb7dc34448",
@@ -1333,7 +1502,7 @@
     },
     "EvidenceDraftAsOfUtc": "2026-11-27T21:01:30.408881+00:00",
     "OverallFinalComplete": false,
-    "ReleaseDecision": "PENDING_CLEANUP_AND_FINAL_COST",
+    "ReleaseDecision": "FUNCTIONAL_TESTS_PASS_ONE_PROVIDER_RESTORATION_PENDING",
     "AllLogMeasuredStepTimes": {
       "State": "CLOSED_ACTUAL_ALL_LOG_NOT_LAST_NORMAL",
       "Evidence": "AllLog",
@@ -1371,12 +1540,12 @@
       "SeedEvidence": "FreshSeedReview",
       "NormalMigrationResult": "PASS: 後続のLAST_NORMALの独立した完了結果を参照。準備処理自体を完了移行へ重ねて加算しない。",
       "NewStep4AzureResult": "PASS: 後続の追加C1実機結果Step4C1を参照。準備処理自体を製品実行へ加算しない。",
-      "CleanupResult": "PENDING",
+      "CleanupResult": "RESOURCES_REMOVED_ONE_PROVIDER_RESTORATION_PENDING",
       "CountedAsCompletedMigration": false,
       "NormalMigrationEvidence": "LastNormal"
     },
     "CompletedCaseRecords": {
-      "Status": "COMPLETED_THROUGH_LAST_NORMAL_AND_STEP4_CLEANUP_PENDING",
+      "Status": "ALL_94_TEST_RECORDS_COMPLETE_ONE_PROVIDER_CLEANUP_PENDING",
       "SourceDraftJsonSha256": "51e21dd8b0e86352f5b1791f8d90e8f37f6b5ce2258fd145edd3613af39c429b",
       "Counting": {
         "ProductPhaseLaunches": 60,
@@ -4246,7 +4415,7 @@
       "NormalAndStep4Live": "PASS"
     },
     "ResourceTypeCoverage": {
-      "Status": "NATIVE_AND_FRESH_LAST_NORMAL_AND_STEP4_COMPLETED_CLEANUP_PENDING",
+      "Status": "NATIVE_AND_FRESH_LAST_NORMAL_AND_STEP4_COMPLETED_ONE_PROVIDER_CLEANUP_PENDING",
       "RequestedResourceTypes": 56,
       "Counts": {
         "診断移行を実証": 49,
@@ -5484,7 +5653,56 @@
       ],
       "StorageLocation": "japaneast",
       "Meaning": "CodeSigningのStorage宛診断をCopied/Deletedの実GET200で確認。japaneastのStorageを使用し、旧logs/metricsの値を保持。旧診断は削除後404。新step4の実行結果ではない。"
+    },
+    "CleanupProgress": {
+      "Status": "RESOURCES_AND_BASELINE_PASS_ONE_PROVIDER_PENDING",
+      "AsOfUtc": "2026-11-27T23:04:41.723253+00:00",
+      "MigrationTestRecordsAdded": 0,
+      "Reason": "Version-level immutable test Storage needed deletion of recorded Blob versions before account removal. Azure Monitor delayed writes were stopped only for the owned test destinations.",
+      "StorageBypassTightening": {
+        "Accounts": 13,
+        "Before": "AzureServices",
+        "After": "None",
+        "OnlyForDisposal": true,
+        "PublicNetworkAccessRemainedDisabled": true,
+        "SharedKeyAccessRemainedFalse": true,
+        "BlobPoliciesAndRetentionChanged": false,
+        "ProductCodeChanged": false,
+        "Evidence": {
+          "PrivatePath": "/tmp/log-migration-final3-20261127/cleanup/private-blob-cleanup/BYPASS_CLOSE_EXECUTION.json",
+          "Sha256": "d71dba2be0f50b45168017133f510965cd5d8e2e8ef1038d11587a94bf7e1c30"
+        }
+      },
+      "OwnedContainersConfirmed404": 72,
+      "ContainersEvidence": {
+        "PrivatePath": "/tmp/log-migration-final3-20261127/cleanup/private-access/CONTAINERS_DELETED_RESUME.json",
+        "Sha256": "6139cee42a95a168c712411182a787ad0b6c782e38223b45be2c1985c7c9931c"
+      },
+      "TemporaryConnectivity": {
+        "Result": "PASS",
+        "VmResourceGroupAbsent": true,
+        "PrivateEndpointsAbsent": 13,
+        "TemporaryDataOwnerRolesAbsent": 13,
+        "TemporaryDataContributorRolesAbsent": 13,
+        "OriginalFiveSubnetsAndVnetConfigurationUnchanged": true,
+        "ActualGroupGet404Utc": "2026-11-27T23:00:47.189888+00:00",
+        "Evidence": {
+          "PrivatePath": "/tmp/log-migration-final3-20261127/cleanup/private-blob-cleanup/PRIVATE_CONNECTIVITY_TEARDOWN_RESULT.json",
+          "Sha256": "382250df8734f3ba555ff7a9c0bcfad11d13715bfba2466f8c39e5c85c8ef95a"
+        },
+        "FinalGetEvidence": {
+          "PrivatePath": "/tmp/log-migration-final3-20261127/cleanup/private-blob-cleanup/TEARDOWN_CONFIRMED.json",
+          "Sha256": "bc9b67102f01725408b14fa1c96d5c64efaceceab5259ba822438a3c0edd5a22"
+        },
+        "IndependentReview": {
+          "PrivatePath": "/tmp/log-migration-final3-20261127/cleanup/private-blob-cleanup/TEMP_INFRA_TEARDOWN_INDEPENDENT_REVIEW.json",
+          "Sha256": "e2adbec0de3305debcd12e6fe4318b1a959619dee55a2549fad3cb79a2c0998f",
+          "Result": "PASS"
+        }
+      },
+      "OriginalCleanupAndProviderRestoration": "3Sub RG/resource0 and original parents/RBAC/policies PASS; 36/37 providers restored, Sub3 Microsoft.Network Unregistering.",
+      "FinalCostRefresh": "COMPLETE_AS_OF_2026_11_27_230736_UTC_NOT_FINAL_BILL"
     }
   },
-  "HistoricalCodeHashNote": "従来のCurrentRuntimeCodeHashes等は、それぞれの確認時点の値。今回実機試験した正本のcommit・SHA・結果はFinalVerificationを参照。 CurrentRuntimeCodeHashesとCodeHashNotes内の「最新」は当時の記録であり、今回の出荷対象全体を示さない。最新の検証集約はFinalVerificationだが、Statusは未完了の下書き。V4の既存6本はSourceUnderTest、新step4のC1/local QAと未実施の実機結果はAdditionalScriptUnderTestを分けて参照する。"
+  "HistoricalCodeHashNote": "従来のCurrentRuntimeCodeHashes等は、それぞれの確認時点の値。今回実機試験した正本のcommit・SHA・結果はFinalVerificationを参照。CurrentRuntimeCodeHashesとCodeHashNotes内の「最新」は当時の記録であり、今回の出荷対象全体を示さない。既存6本はSourceUnderTest、新step4のコード・ローカル試験・Windows/Azure実機結果はAdditionalScriptUnderTestへ分けて記録している。"
 }
