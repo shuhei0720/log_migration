@@ -186,11 +186,11 @@ Import-Csv "$casePath/verify_results.csv" | Format-Table
 
 ```powershell
 & "$casePath/step3_delete.ps1"
-& "$casePath/step2_verify.ps1"
-Import-Csv "$casePath/verify_results.csv" | Format-Table
+& "$casePath/step4_final_check.ps1"
+Import-Csv "$casePath/final_check_results.csv" | Format-Table
 ```
 
-同じ旧設定確認を実行し、[T05の削除後](INTEGRATION_TEST_CASES.md#t05-after)を判定します。
+最終確認のCSVとAzure画面で、[T05の移行後](INTEGRATION_TEST_CASES.md#t05-after)を判定します。
 
 <a id="run-t06"></a>
 ### T06：削除した旧設定を戻す
@@ -199,7 +199,7 @@ Import-Csv "$casePath/verify_results.csv" | Format-Table
 & "$casePath/rollback.ps1"
 ```
 
-[旧設定の確認](#check-old)と[画面の確認](#check-portal)を行い、[T06](INTEGRATION_TEST_CASES.md#t06)を判定します。切り戻し後にstep2は実行しません。
+[旧設定の確認](#check-old)と[画面の確認](#check-portal)を行い、[T06](INTEGRATION_TEST_CASES.md#t06)を判定します。切り戻し後はstep2・step4を実行しません。
 
 ## 5. 確認に使う操作
 
@@ -244,7 +244,7 @@ $oldCheck | Format-Table サブスクリプション, 存在, 記録との比較
 <a id="check-portal"></a>
 ### Azure画面で確認する
 
-診断設定は各リソースの「診断設定」、VM・VMSSの関連付けは「データ収集ルール」、適用除外は「ポリシー > 適用除外」で確認します。対象IDは作業フォルダの`records`に記録されています。step2は移行後の設定を全件確認します。切り戻し時も、エラーなく終了したことと、ケース表の項目を確認します。
+診断設定は各リソースの「診断設定」、VM・VMSSの関連付けは「データ収集ルール」、適用除外は「ポリシー > 適用除外」で確認します。対象IDは作業フォルダの`records`に記録されています。削除前はstep2、移行後はstep4で設定を照合します。切り戻し時は、エラーなく終了したことと、ケース表の項目を確認します。
 
 保存先はLog Analyticsの「プロパティ」「テーブル」、Storageの「構成」「ネットワーク」「データ保護」「ライフサイクル管理」で確認します。画面にない項目はリソースの「JSONビュー」で確認します。旧DCRは「データソース」「送信先」、VNetは「アドレス空間」「サブネット」を作業前に保存した画面と比べます。
 

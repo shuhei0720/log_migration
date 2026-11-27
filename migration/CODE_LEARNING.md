@@ -149,6 +149,26 @@ step2が全件OKの場合だけ、作業記録を`$records`へ受け取って削
 
 旧設定を`DELETE`します。失敗した場合はID・理由・元の設定値を`delete_failures.csv`へ出し、そのサブスクリプションの残りの削除を止めます。他のサブスクリプションは順次処理を続け、全対象の処理後にエラーで終了します。保存先・保存済みログ・新設定・適用除外は残します。全件の削除に成功した場合は、前回の失敗CSVを削除します。
 
+## step4_final_check.ps1：移行後の設定全体を確かめる
+
+**[1～25行](step4_final_check.ps1#L1)｜`$targets`、`Read-MigrationRecord`**
+
+`common.ps1`から設定値・関数・CSVの対象一覧を読みます。サブスクリプションごとに記録を取得し、環境とCSVが保存時と同じか確認します。使える記録がなければNGを残し、次のサブスクリプションへ進みます。[Read-MigrationRecordのDESCRIPTION](common.ps1#L433)
+
+**[28～52行](step4_final_check.ps1#L28)｜`$currentPlan`、`-notin $record.OldSettings.Id`**
+
+旧ワークスペース宛ての診断設定と旧DCR関連付けを探し直します。記録にないIDが見つかったら、移行後に残っている旧送信としてNGにします。調査に失敗した場合もNGを残し、そのサブスクリプションの次の確認は続けます。[Get-MigrationPlanのDESCRIPTION](common.ps1#L535)
+
+**[54～98行](step4_final_check.ps1#L54)｜`$isOldSetting`、`Test-Configuration`**
+
+旧設定と、保存先・新送信設定・適用除外の現在値をAzureから読みます。`$isOldSetting`は、そのIDが旧設定の一覧にあるかを表します。旧設定は存在すればNGです。新設RGは存在だけ、再利用した保存先は存在と地域、それ以外は`Body`の設定値を確認します。[Test-ConfigurationのDESCRIPTION](common.ps1#L258)
+
+1件の取得失敗や不一致でループを止めず、`$result`と`$reason`へ結果を入れます。`$expectedText`には、旧設定なら「存在しない」、それ以外なら予定の設定値を入れ、CSVの1行にします。
+
+**[101～109行](step4_final_check.ps1#L101)｜`Export-Csv`、`$results.Result -contains 'NG'`**
+
+全件の結果を`final_check_results.csv`へ保存します。NGが1件でもあればエラーで終了します。Azureと作業記録は変更しないため、問題を直した後も同じ入力で確認できます。
+
 ## 必要時：rollback.ps1で切り戻す
 
 **[1～31行](rollback.ps1#L1)｜`$PSBoundParameters.ContainsKey`、`Read-MigrationRecord`**
@@ -179,7 +199,7 @@ CSVに書いたサブスクリプションごとに、旧設定と新設定の�
 
 **[19～34行](precheck.ps1#L19)｜`catch`、`$results | Export-Csv`**
 
-調べられなかったサブスクリプションも理由付きでNGにし、`precheck_results.csv`へ出します。NGでも利用登録は解除しません。保存先・送信設定の作成や作業記録の保存はせず、step1は実行時点のAzureを調べ直します。step2・step3・rollbackでは利用登録を行いません。
+調べられなかったサブスクリプションも理由付きでNGにし、`precheck_results.csv`へ出します。NGでも利用登録は解除しません。保存先・送信設定の作成や作業記録の保存はせず、step1は実行時点のAzureを調べ直します。step2・step3・step4・rollbackでは利用登録を行いません。
 
 ## 補足：関数の説明とPowerShellの読み方
 

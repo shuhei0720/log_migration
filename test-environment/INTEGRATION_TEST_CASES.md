@@ -103,15 +103,16 @@ DCR自身の診断設定は、Log Analytics自身の診断設定とは別に確�
 |保存先と適用除外|[保存先の表](#destination-details)をもう1枚使い、すべてOK。指定の適用除外3件が存在し期限なし。最初の2件は割り当て全体、3件目は指定12項目が対象|未実施|
 
 <a id="t05-after"></a>
-### 削除後
+### 移行後の最終確認
 
 |確認項目|合格条件|判定|
 |---|---|---|
-|step2の結果CSV|Result列がすべてOK|未実施|
+|step4のfinal_check_results.csv|Result列がすべてOK|未実施|
 |[削除した旧設定](INTEGRATION_TEST.md#check-old)|recordsに記録した旧診断設定IDと旧DCR関連付けIDが、すべて存在しない|未実施|
+|記録にない旧送信設定|現在の再調査でも、旧ワークスペース宛ての診断設定と旧2本のDCRへの関連付けが0件|未実施|
 |移行後の診断設定・DCR関連付け|各対象とCSVのLog AnalyticsにsetByAzurePlatformTeamが存在する。送信先はSub1が同地域のStorage ID、Sub2がCSVのLog Analytics ID。作成した`dcr-<run>-n01-a`・`dcr-<run>-n01-b`を各VM・VMSSが参照する|未実施|
 |n01のDCR自身の診断設定|`dcr-<run>-n01-a`・`dcr-<run>-n01-b`の各DCR ID配下にsetByAzurePlatformTeamが残り、allLogsだけ有効、メトリックは無効。Sub1はDCRと同地域のStorage ID、Sub2はCSVのLog Analytics IDへAzureDiagnostics形式で送る|未実施|
-|保存先と適用除外|CSVのLog Analytics、Event・Syslog、地域別Storage、指定名の適用除外3件が存在する|未実施|
+|保存先と適用除外|新設RGが存在する。その他の新設保存先の設定値と、適用除外3件の適用先・除外対象がrecordsのBodyと一致する。再利用した保存先は存在と地域が一致する|未実施|
 |旧DCR本体|指定した2本のIDが存在し、収集条件と送信先IDが作業前の画面と一致する|未実施|
 
 <a id="t06"></a>
