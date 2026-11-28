@@ -1,8 +1,8 @@
 {
   "StatusMeaning": "元のStatus・FinalVerificationなどは以前の実行時点の履歴。今回2Subの最新結果はLatestIntegrationVerification20261128を参照する。過去の3Sub試験や費用を今回へ合算しない。",
-  "LatestVerificationStatus": "TWO_SUB_FUNCTIONAL_PASS_INITIAL_CLEANUP_PASS_STORAGE_ERASE_VERIFY_PASS_EXPORT_AND_FINAL_RESTORATION_PENDING",
+  "LatestVerificationStatus": "TWO_SUB_FUNCTIONAL_PASS_PHYSICAL_AND_ORIGINAL_STRUCTURE_RESTORED_27_OF_28_PROVIDERS_RESTORED_ONE_NETWORK_PENDING_COST_PARTIAL",
   "Status": "PASS",
-  "RecordedAt": "2026-11-28T10:50:19.617683+00:00",
+  "RecordedAt": "2026-11-28T12:39:51.867330+00:00",
   "Scope": "reading-versionをmigrationへ昇格した出荷構成の確認。Azureへの通信は試験用の応答に置き換えている。",
   "MigrationReplay": {
     "Result": "PASS",
@@ -5728,8 +5728,8 @@
   },
   "PreviousLatestVerificationStatus": "FUNCTIONAL_TESTS_AND_BASELINE_PASS_ONE_PROVIDER_PENDING",
   "LatestIntegrationVerification20261128": {
-    "Status": "FUNCTIONAL_PASS_INITIAL_CLEANUP_PASS_STORAGE_ERASE_VERIFY_PASS_FINAL_RESTORATION_PENDING_COST_UNQUERIED",
-    "RecordedUtc": "2026-11-28T10:50:19.617683+00:00",
+    "Status": "FUNCTIONAL_PASS_PHYSICAL_AND_ORIGINAL_STRUCTURE_PASS_ONE_NETWORK_PROVIDER_PENDING",
+    "RecordedUtc": "2026-11-28T12:39:51.867330+00:00",
     "Scope": "2 approved subscriptions, run it281128b; separate from prior three-subscription campaign",
     "SourceCommit": "f7a44a99c7ecd41137295f31e8af9bccf3374f8a",
     "Runtime": "Windows上のPowerShell 7.5.4",
@@ -5753,7 +5753,49 @@
       "OldDiagnostic": 146,
       "OldAssociation": 4,
       "OldTotal": 150,
-      "Historical49NotAdded": true
+      "Historical49NotAdded": true,
+      "PositiveExactResourceTypeNames": [
+        "microsoft.automation/automationaccounts",
+        "microsoft.botservice/botservices",
+        "microsoft.cache/redisenterprise",
+        "microsoft.cache/redisenterprise/databases",
+        "microsoft.cognitiveservices/accounts",
+        "microsoft.cognitiveservices/accounts/projects",
+        "microsoft.communication/communicationservices",
+        "microsoft.compute/disks",
+        "microsoft.compute/virtualmachines",
+        "microsoft.compute/virtualmachinescalesets",
+        "microsoft.containerregistry/registries",
+        "microsoft.documentdb/databaseaccounts",
+        "microsoft.eventgrid/systemtopics",
+        "microsoft.insights/components",
+        "microsoft.insights/datacollectionrules",
+        "microsoft.keyvault/vaults",
+        "microsoft.logic/workflows",
+        "microsoft.machinelearningservices/workspaces",
+        "microsoft.monitor/accounts",
+        "microsoft.network/dnsresolverpolicies",
+        "microsoft.network/networkinterfaces",
+        "microsoft.network/networksecuritygroups",
+        "microsoft.network/privateendpoints",
+        "microsoft.network/virtualnetworks",
+        "microsoft.operationalinsights/workspaces",
+        "microsoft.recoveryservices/vaults",
+        "microsoft.relay/namespaces",
+        "microsoft.search/searchservices",
+        "microsoft.servicebus/namespaces",
+        "microsoft.sql/servers",
+        "microsoft.sql/servers/databases",
+        "microsoft.storage/storageaccounts",
+        "microsoft.storage/storageaccounts/blobservices",
+        "microsoft.storage/storageaccounts/fileservices",
+        "microsoft.storage/storageaccounts/queueservices",
+        "microsoft.storage/storageaccounts/tableservices",
+        "microsoft.web/connections",
+        "microsoft.web/serverfarms",
+        "microsoft.web/sites",
+        "microsoft.web/sites/slots"
+      ]
     },
     "NormalRecords": {
       "NewDiagnostic": 150,
@@ -5788,14 +5830,158 @@
       "OwnedKeyVaultAndCognitiveDeletedScopesAbsent": true,
       "OriginalRolesPreserved": 4,
       "OriginalDeletedWorkspacesPreserved": 3,
-      "StorageBlobEraseAndVerify": "PASS_ROOT_CONFIRMED",
-      "StorageFullRawOffhost": "COLLECTION_IN_PROGRESS",
-      "RemainingHostVnetsDestinationGroups": "NOT_YET_REMOVED",
-      "OriginalManagementAndProviderRestoration": "PENDING",
-      "AllCleanupComplete": false
+      "StorageBlobEraseAndVerify": "PASS",
+      "StorageFullRawOffhost": "COLLECTED_ALL_BYTES_VERIFIED",
+      "RemainingHostVnetsDestinationGroups": "REMOVED",
+      "OriginalManagementAndProviderRestoration": "ORIGINAL_STRUCTURE_RESTORED_PROVIDER_RESTORE_PENDING",
+      "AllCleanupComplete": false,
+      "SubscriptionResourceGroups": {
+        "A": 0,
+        "B": 0
+      },
+      "SubscriptionResources": {
+        "A": 0,
+        "B": 0
+      },
+      "OriginalRoleAssignmentsMatched": 4,
+      "OriginalRootPolicyAssignmentsMatched": 3,
+      "OriginalSubBPolicyAssignmentsMatched": 1,
+      "OriginalParentsMatched": 2,
+      "OriginalManagementGroupListMatched": 3,
+      "OriginalDeletedWorkspacesMatched": 3,
+      "PrivateStorageCleanupOffhostEvidence": [
+        {
+          "Path": "/tmp/log-migration-integration-20261128/cleanup-b/ROOT_ERASE_V3_OFFHOST_REVIEW.json",
+          "Sha256": "d7d899bdeb0acc6d5733ff471cc4063ebf92f08d48487fb38c42cfadf6143b58"
+        },
+        {
+          "Path": "/tmp/log-migration-integration-20261128/cleanup-b/ROOT_VERIFY_V3_OFFHOST_REVIEW.json",
+          "Sha256": "48ddd3c8ff3394a45cefce5bbba0c0053ad6cf7e00ebe1de72147c21183fb74e"
+        },
+        {
+          "Path": "/tmp/log-migration-integration-20261128/cleanup-b/ROOT_TEARDOWN_V3_OFFHOST_REVIEW.json",
+          "Sha256": "e9ae3bfda9e5aefc872924d86cb98698fa42f6bd8335eb480bacdcad871d3049"
+        }
+      ],
+      "TailPhaseEvidence": [
+        {
+          "Path": "/tmp/log-migration-integration-20261128/cleanup-b/tail/execute-destinations-r1/RESULT.json",
+          "Sha256": "de4c4482594c3e017d5f8eaae1d8868170549f0e1f881f5be50f242945f92eb9"
+        },
+        {
+          "Path": "/tmp/log-migration-integration-20261128/cleanup-b/tail/execute-hub-r1/RESULT.json",
+          "Sha256": "d028aae27667f862a6c2dab27616dacc97ce51b772692dde5d83b3f9c30ff5e9"
+        },
+        {
+          "Path": "/tmp/log-migration-integration-20261128/cleanup-b/tail/execute-host-roles-r1/RESULT.json",
+          "Sha256": "d0449d7b109dd6ed601fe8962f3b1718cfd22b1e4aef2175b2db5645b13cb818"
+        },
+        {
+          "Path": "/tmp/log-migration-integration-20261128/cleanup-b/tail/execute-host-r1/RESULT.json",
+          "Sha256": "c39bbb502de54f9172724c9353e076e263ad49a2a8e750965c4303d690283d8d"
+        },
+        {
+          "Path": "/tmp/log-migration-integration-20261128/cleanup-b/tail/execute-networks-r1/RESULT.json",
+          "Sha256": "cbd1dae0c095e0535a10d093183a5fb30691c2ac35d241e27c3f794ee1d85119"
+        },
+        {
+          "Path": "/tmp/log-migration-integration-20261128/cleanup-b/tail/execute-watchers-r1/RESULT.json",
+          "Sha256": "47b428b64ee8f7f697bfef2557187b00eae39f4ea692b270c4c5178e83bfd015"
+        },
+        {
+          "Path": "/tmp/log-migration-integration-20261128/cleanup-b/tail/execute-parents-r1/RESULT.json",
+          "Sha256": "e174fa46621cba0a72f727f1a82db3f2fc4f0d4add4165c708456d1764b1d815"
+        },
+        {
+          "Path": "/tmp/log-migration-integration-20261128/cleanup-b/tail/execute-policies-r2/RESULT.json",
+          "Sha256": "a27e82b269323933bbd7b32d4d88686fa6dd7c07408cee5c1f3280a82e58ec0a"
+        },
+        {
+          "Path": "/tmp/log-migration-integration-20261128/cleanup-b/tail/execute-mg-owner-r1/RESULT.json",
+          "Sha256": "81a012e58033fcfe87f3ce04f5cf2eeee7d96af3d53c103186d57119e67d2b5f"
+        },
+        {
+          "Path": "/tmp/log-migration-integration-20261128/cleanup-b/tail/execute-mg-r1/RESULT.json",
+          "Sha256": "d17bb5030f7dc6924bed7445f783669f2b4ace95d7d9722848acc64956b9b3fc"
+        },
+        {
+          "Path": "/tmp/log-migration-integration-20261128/cleanup-b/tail/execute-providers-plan-r1/RESULT.json",
+          "Sha256": "27f4c056e0c11a8af6ea2c7c4e93f921a32ccb8d6341800faeb227ff7f4db201"
+        }
+      ],
+      "PhysicalAndOriginalStructureProof": {
+        "Path": "/tmp/log-migration-integration-20261128/cleanup-b/tail/execute-providers-plan-r1/RESULT.json",
+        "Sha256": "27f4c056e0c11a8af6ea2c7c4e93f921a32ccb8d6341800faeb227ff7f4db201"
+      },
+      "ProviderRestoration": {
+        "Status": "ONE_PROVIDER_UNREGISTERING",
+        "KnownRestoreTargets": 28,
+        "OriginallyRegisteredProtected": 46,
+        "AllTargetsTerminalVerified": false,
+        "AzureExtraQueriesByDocPreparation": 0,
+        "RestoredTerminalVerified": 27,
+        "PendingCount": 1,
+        "PendingProvider": {
+          "SubscriptionLabel": "B",
+          "Namespace": "Microsoft.Network",
+          "CurrentRawState": "Unregistering",
+          "RawStateAtCurrentCampaignStart": "Unregistering",
+          "PreviouslyProvenOriginalState": "NotRegistered",
+          "FinalTargetState": "NotRegistered",
+          "UnregisterPostRequests": 1,
+          "Reposts": 0,
+          "RequestAcceptedUtc": "2026-11-28T11:48:53.230604+00:00"
+        },
+        "ProgressEvidence": {
+          "Path": "/tmp/log-migration-integration-20261128/review/public-three-provider-pending/provider-progress-snapshot.json",
+          "Sha256": "f7c108660f13252d08606aad40c51ab38774295364d4f66e82c1735067933db8"
+        },
+        "PendingStateEvidence": {
+          "Path": "/tmp/log-migration-integration-20261128/review/public-three-provider-pending/network-state-snapshot.json",
+          "Sha256": "abea1d25ff68b3c2cc4ad8d5541828dcb626ea0999bfac7f44be1fab31227c58"
+        },
+        "ExecutionEvidence": [
+          {
+            "Path": "/tmp/log-migration-integration-20261128/review/public-three-provider-pending/provider-execution-r1-snapshot.json",
+            "Sha256": "e9c94df2b9fc850044d29870af5a932b65cad7b92a1fe34b5abef13aac880edc"
+          },
+          {
+            "Path": "/tmp/log-migration-integration-20261128/review/public-three-provider-pending/provider-execution-r2-snapshot.json",
+            "Sha256": "44ecbee43eebbaf3551b761a2a81151051b77e39ae348e059709892f76619c6c"
+          }
+        ],
+        "DirectNetworkAbsenceEvidence": {
+          "Path": "/tmp/log-migration-integration-20261128/cleanup-b/tail/network-diagnosis-20261128T120848536936Z/RESULT.json",
+          "Sha256": "cc1fc38b15b3a29366be3fdb8ae7bb3960bc74f7ef8038362f3e25b94775ee86"
+        },
+        "OriginalStateEvidence": {
+          "Path": "/tmp/log-migration-integration-20261128/cleanup-b/readiness/KNOWN_OWNED_AND_BASELINE_V5.json",
+          "Sha256": "6b069e734ebaafb1cbf06108cd91f93187e4cff3dff1b3343d622ef0ffde6fca"
+        }
+      }
     },
-    "CurrentRunCost": "FINAL_QUERY_NOT_YET_RUN_PREVIOUS_0459_DATA_UNREFLECTED_NOT_ZERO",
-    "CostQueryUtc": "2026-11-28T04:59:19Z",
+    "CurrentRunCost": {
+      "Status": "REFLECTED_PARTIAL_NOT_FINAL_INVOICE",
+      "Currency": "JPY",
+      "ExactPreTaxTotal": "131.75910464768482",
+      "DisplayPreTaxTotal": "131.76",
+      "ReflectedRows": 7,
+      "ApprovedSubscriptions": 2,
+      "OwnedGroupPairs": 17,
+      "UsageDates": [
+        "2026-11-28"
+      ],
+      "ThroughUtc": "2026-11-28T11:38:29Z",
+      "QueriedUtc": "2026-11-28T11:41:16.523684+00:00",
+      "FinalInvoice": false,
+      "DataMayBeDelayed": true,
+      "MonthAndPreviousRunAmountsAdded": false,
+      "Receipt": {
+        "Path": "/tmp/log-migration-integration-20261128/cost/final-owned-through-20261128T113829Z/FINAL_OWNED_COST.json",
+        "Sha256": "c0a53069e369f2c9666677ae3065830fa58788a813e0e81a949f0d7041c896e1"
+      }
+    },
+    "CostQueryUtc": "2026-11-28T11:41:16.523684+00:00",
     "PlanningBudgetJpy": 2000,
     "Evidence": [
       {
@@ -5855,9 +6041,11 @@
     "OverallFinalComplete": false,
     "PrivateCleanupOnlyFixes": [
       "Wait for DNS resource to become readable after creation instead of failing on immediate404",
-      "Handle the byte-order mark at the start of Blob list XML"
+      "Handle the byte-order mark at the start of Blob list XML",
+      "Compare only the Azure-added default definitionVersion=1.*.* on the exact owned initiative references; keep IDs and parameters strict"
     ],
-    "PrivateCleanupFixesAreDistributedCodeChanges": false
+    "PrivateCleanupFixesAreDistributedCodeChanges": false,
+    "PreviousCostQueryUtc": "2026-11-28T04:59:19Z"
   },
   "PreviousStatusMeaning": "冒頭のStatus・RecordedAt・Scopeなど元の項目は2026-11-26時点の記録です。今回の最終確認はFinalVerificationを参照してください。過去のPASSを今回の出荷判定へ読み替えません。"
 }
