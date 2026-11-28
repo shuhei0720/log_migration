@@ -19,7 +19,7 @@
 
 ## 1. 実行環境と入力を用意する
 
-PowerShell 7とAzure CLIを使います。対象サブスクリプションのOwnerとして`az login`を済ませてください。Windows PowerShell 5.1では実行できません。
+PowerShell 7とAzure CLIを使います。対象サブスクリプションのOwnerとして`az login`を済ませてください。対象サブスクリプションを、管理グループで割り当てたポリシーから適用除外にできる権限も必要です。Windows PowerShell 5.1では実行できません。
 
 ### common.ps1に移行元と環境を指定する
 

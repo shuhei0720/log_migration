@@ -4,7 +4,7 @@
 
 ## 1. 入力を用意する
 
-PowerShell 7とAzure CLIを使い、両サブスクリプションのOwnerでログインします。2つとも同じ環境（prod・stg・dev）で使えることを確認します。
+PowerShell 7とAzure CLIを使い、両サブスクリプションのOwnerでログインします。対象サブスクリプションを、管理グループで割り当てたポリシーから適用除外にできる権限も必要です。2つとも同じ環境（prod・stg・dev）で使えることを確認します。
 
 **移行はサブスクリプション全体が対象です。テスト用リソースグループだけには絞りません。** 会社の既存ポリシーが付けた旧診断設定と旧DCR関連付けを使います。
 
@@ -30,7 +30,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Azureへログインできませんでした�
 
 `resource_types_fixture.ps1`先頭の`$SubscriptionIds`と`$ExistingVnetIds`にも、上のIDを同じ順で転記します。`$Locations`は、A-R1をVNet1、B-R2をVNet2の地域に合わせます。A-R3・B-R4も、サービスを作れる既存VNetの地域にまとめられます。
 
-両VNetに[指定の5サブネット](README.md#1-作成先を指定する)が必要です。この構成ではASE・Container Apps用の委任は不要です。作成前に、旧DCR2本、既存のポリシー適用除外、VNetのサブネット設定を画面で保存します。
+両VNetに[指定の5サブネット](README.md#1-作成先を指定する)が必要です。この構成ではASE・Container Apps用の委任は不要です。作成前に、旧DCR2本、既存のポリシー適用除外、VNetのサブネット設定を、画面またはAPIのJSONで保存します。
 
 ## 2. テスト用リソースを1回作る
 
@@ -87,7 +87,7 @@ $ledger = Get-Content $ledgerPath -Raw | ConvertFrom-Json
 $ledger.scopes | Group-Object actualStatus | Select-Object Name, Count
 ```
 
-[Captureの結果](README.md#4-旧設定を確認して移行テストへ進む)を確認します。旧設定がない種類は未検証と記録します。VM・VMSSの旧DCR関連付けは、Azure画面の「データ収集ルール」でも確認します。旧関連が0件のSubでは、新DCR・新関連を作らないことが正解です。
+[Captureの結果](README.md#4-旧設定を確認して移行テストへ進む)を確認します。旧設定がない種類は未検証と記録します。VM・VMSSの旧DCR関連付けは、Azure画面の「データ収集ルール」またはAPIのJSONで確認します。旧関連が0件のSubでは、新DCR・新関連を作らないことが正解です。
 
 ## 3. 作業フォルダを2つ用意する
 
@@ -145,7 +145,7 @@ Import-Csv "$casePath/verify_results.csv" | Format-Table
 & "$casePath/rollback.ps1" -SubscriptionIds $subscription1
 ```
 
-[旧設定の確認](#check-old)と[画面の確認](#check-portal)を行い、[T03](INTEGRATION_TEST_CASES.md#t03)を判定します。
+[旧設定の確認](#check-old)と[Azure設定の確認](#check-portal)を行い、[T03](INTEGRATION_TEST_CASES.md#t03)を判定します。
 
 <a id="run-t04"></a>
 ### T04：両Subを戻す
@@ -181,7 +181,7 @@ Import-Csv "$casePath/verify_results.csv" | Format-Table
 Import-Csv "$casePath/final_check_results.csv" | Format-Table
 ```
 
-最終確認のCSVとAzure画面で、[T05の移行後](INTEGRATION_TEST_CASES.md#t05-after)を判定します。
+最終確認のCSVと[Azure設定の確認](#check-portal)で、[T05の移行後](INTEGRATION_TEST_CASES.md#t05-after)を判定します。
 
 <a id="run-t06"></a>
 ### T06：削除した旧設定を戻す
@@ -190,7 +190,7 @@ Import-Csv "$casePath/final_check_results.csv" | Format-Table
 & "$casePath/rollback.ps1"
 ```
 
-[旧設定の確認](#check-old)と[画面の確認](#check-portal)を行い、[T06](INTEGRATION_TEST_CASES.md#t06)を判定します。切り戻し後はstep2・step4を実行しません。
+[旧設定の確認](#check-old)と[Azure設定の確認](#check-portal)を行い、[T06](INTEGRATION_TEST_CASES.md#t06)を判定します。切り戻し後はstep2・step4を実行しません。
 
 ## 5. 確認に使う操作
 
@@ -233,15 +233,28 @@ $oldCheck | Format-Table サブスクリプション, 存在, 記録との比較
 ```
 
 <a id="check-portal"></a>
-### Azure画面で確認する
+### Azureの設定を確認する
 
 診断設定は各リソースの「診断設定」、VM・VMSSの関連付けは「データ収集ルール」、適用除外は「ポリシー > 適用除外」で確認します。対象IDは作業フォルダの`records`に記録されています。削除前はstep2、移行後はstep4で設定を照合します。切り戻し時は、エラーなく終了したことと、ケース表の項目を確認します。
 
-保存先はLog Analyticsの「プロパティ」「テーブル」、Storageの「構成」「ネットワーク」「データ保護」「ライフサイクル管理」で確認します。画面にない項目はリソースの「JSONビュー」で確認します。旧DCRは「データソース」「送信先」、VNetは「アドレス空間」「サブネット」を作業前に保存した画面と比べます。
+保存先はLog Analyticsの「プロパティ」「テーブル」、Storageの「構成」「ネットワーク」「データ保護」「ライフサイクル管理」で確認します。画面にない項目はリソースの「JSONビュー」で確認します。旧DCRは「データソース」「送信先」、VNetは「アドレス空間」「サブネット」を作業前に保存した値と比べます。APIのJSONを使う場合も、同じ項目を比べます。
 
 ## 6. 片付ける
 
-T06がOKになったら、先にテスト用の`fx-$run-a`・`fx-$run-b`を削除し、その後でrb1・n01用保存先グループ各2個を削除します。グループ名と、テスト用グループの`fixtureRun`タグが今回の`$run`かを確認します。次のコマンドを、今回のグループ名に置き換えて実行します。
+T06がOKになったら、グループを削除する前に、今回新しく作ったLog Analyticsを完全削除します。作成用の`run-ledger.json`と、rb1・n01の`records`にある保存先IDで対象を確認します。このテストを始める前からあった保存先と会社の旧Log Analyticsは対象外です。
+
+対象ごとに `az monitor log-analytics workspace delete --subscription <Sub ID> --resource-group <今回のRG> --workspace-name <今回新設したLAW> --force true --yes` を実行します。各実行後に`$LASTEXITCODE`が0、対象のリソースIDへのGETが404であることを確認します。`az monitor log-analytics workspace list-deleted-workspaces --subscription <Sub ID> --output json` にも対象がないことを確認します。
+
+続いて、今回作成したテスト用の`fx-$run-a`・`fx-$run-b`を先に削除し、ログ送信を止めます。削除するのは、このテストで新しく作ったグループだけです。作業前からあったグループは残します。
+
+保存先Storageは版単位の不変性サポートを有効にしているため、ログのBlobやコンテナーが残ると、RG削除が`AccountProtectedFromDeletion`で失敗することがあります。保存先RGを削除する前に、次の順で片付けます。
+
+1. Storageへプライベート接続できる端末と、対象Storageへの`Storage Blob Data Owner`権限を用意する。
+2. 削除を禁止する保持ポリシーや法的保留があれば、解除せずに停止する。
+3. 遅延書込みを防ぐため、今回廃棄するテスト用Storageに限り、信頼されたAzureサービスの例外を解除する。
+4. 今回のBlob・全バージョン・スナップショットを削除し、続けてコンテナーを削除する。空であることを確認してから、今回新設したrb1・n01の保存先グループ各2個を削除する。
+
+公開アクセス・共有キーを有効にしたり、保持ポリシーを緩和したりしません。次のコマンドは、Storageの片付けが終わった後に使う例です。今回新設したグループ名へ置き換えて実行します。
 
 ```powershell
 az group delete --subscription $subscription1 --name "rg-lm-$run-rb1-a" --yes
@@ -249,15 +262,6 @@ az group exists --subscription $subscription1 --name "rg-lm-$run-rb1-a"
 ```
 
 Azure CLIの各実行後に`$LASTEXITCODE`が0、削除後の`group exists`が`false`であることを確認します。
-
-保存先Storageはバージョン単位の不変性を有効にするため、コンテナーが残るとグループ削除が`AccountProtectedFromDeletion`で失敗する場合があります。その場合は、次の順で片付けます。
-
-1. Storageへプライベート接続できる端末と、対象Storageへの`Storage Blob Data Owner`権限を用意する。
-2. 削除を禁止する保持ポリシーや法的保留がないことを確認する。
-3. 今回のテストデータの全Blob・全バージョン・スナップショットを削除し、続けてコンテナーを削除する。
-4. グループ削除を再実行し、`group exists`が`false`になることを確認する。
-
-公開アクセス・共有キーを有効にしたり、不変ポリシーを変更したりしません。
 
 既存VNetとそのグループ、会社の旧DCR・旧Log Analytics・管理グループ・ポリシーは残します。
 
