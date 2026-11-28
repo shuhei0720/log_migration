@@ -38,7 +38,7 @@ Code Signing・Bing・ExpressRouteは提供条件により省略します。Data
 
 |引数|指定する内容|
 |---|---|
-|`SkipTypes`|作らない種類。作成に必要な依存先を省くと停止する|
+|`SkipTypes`|指定した種類の単独リソースを省く。VM用NIC・OSディスクなどの付随リソースは作る。必要な依存先を省くと停止する|
 |`IncludeConditional`|有料・配置条件のあるリソースも含める|
 |`IncludeAse`|App Service Environment（ASE）を含める|
 |`LoadCount`|負荷テスト用NSGの追加数。サブネットには関連付けない|
