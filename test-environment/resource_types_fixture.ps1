@@ -534,11 +534,19 @@ if ($Action -eq 'Deploy'){
     # 3. Deploy：必要なAzureサービスを利用登録し、テスト用リソースグループを作る。
     # ---
     foreach ($subscription in $SubscriptionIds){
-        $needed = @('Microsoft.Insights', 'Microsoft.OperationalInsights', 'Microsoft.Resources') + @($state.resources | Where-Object {
+        $subscriptionResources = @($state.resources | Where-Object {
                 $_.id.StartsWith('/subscriptions/' + $subscription + '/')
-            } | ForEach-Object {
+        })
+        $needed = @('Microsoft.Insights', 'Microsoft.OperationalInsights', 'Microsoft.Resources') + @($subscriptionResources | ForEach-Object {
                 $_.resourceType.Split('/')[0]
         })
+        # マネージドIDを使うリソースがあるSubでは、IDの作成に必要なサービスも登録する。
+        if (@($Template.resources | Where-Object {
+                $_.metadata.fixture.key -in $subscriptionResources.key -and
+                $_.identity.type -match 'SystemAssigned|UserAssigned'
+        }).Count) {
+            $needed += 'Microsoft.ManagedIdentity'
+        }
         foreach ($provider in @($needed | Sort-Object -Unique)){
             $id = '/subscriptions/' + $subscription + '/providers/' + $provider
             $registered = Invoke-Arm GET $id '2021-04-01'
