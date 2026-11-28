@@ -764,9 +764,14 @@ if ($Action -in @('Deploy', 'Capture')) {
         }
     }
     $state.scopes = @()
+    # 親の追加スコープと子リソースの定義が同じIDを指す場合は、最初の1件だけ取得する。
+    $capturedIds = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     foreach ($resource in $candidates) {
         foreach ($suffix in @('') + @($resource.scopeSuffixes)) {
             $id = $resource.id + $suffix
+            if (-not $capturedIds.Add($id)) {
+                continue
+            }
             $api = if ($suffix) {
                 $resource.childApiVersion
             } else {
@@ -779,12 +784,16 @@ if ($Action -in @('Deploy', 'Capture')) {
             $settings = if ($body) {
                 Invoke-Arm GET ($id + '/providers/Microsoft.Insights/diagnosticSettings') '2021-05-01-preview' -AllowError
             }
+            # 非対応とは別の取得エラーがあれば、その失敗と理由を優先して記録する。
+            $otherError = @($categories.error, $settings.error) |
+                Where-Object { $null -ne $_ -and $_.code -notin @('ResourceTypeNotSupported', 'UnsupportedResourceType', 'DiagnosticSettingsNotSupported') } |
+                Select-Object -First 1
             $status = if (-not $body) {
                 'UNRESOLVED'
-            } elseif (@($categories.error.code, $settings.error.code) | Where-Object { $_ -in @('ResourceTypeNotSupported', 'UnsupportedResourceType', 'DiagnosticSettingsNotSupported') }) {
-                'EXPECTED_UNSUPPORTED'
-            } elseif ($categories.error -or $settings.error) {
+            } elseif ($otherError) {
                 'FAILED'
+            } elseif ($categories.error -or $settings.error) {
+                'EXPECTED_UNSUPPORTED'
             } elseif ($categories.value -isnot [array] -or $settings.value -isnot [array]) {
                 'UNRESOLVED'
             } elseif (-not $categories.value.Count) {
@@ -801,7 +810,11 @@ if ($Action -in @('Deploy', 'Capture')) {
                 categoryResponse = $categories
                 diagnosticSettings = $settings
                 actualStatus = $status
-                actualErrorCode = ($categories.error.code ?? $settings.error.code)
+                actualErrorCode = if ($otherError) {
+                    $otherError.code
+                } else {
+                    $categories.error.code ?? $settings.error.code
+                }
                 existing = [bool]$resource.existing
             }
         }
