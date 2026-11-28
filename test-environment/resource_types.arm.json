@@ -1395,6 +1395,9 @@
           "key": "appInsights",
           "bundle": "A-R3",
           "nameTemplate": "fx{runId}-insights",
+          "requiredProviders": [
+            "Microsoft.AlertsManagement"
+          ],
           "phase": "foundation",
           "dependsOnKeys": [
             "logAnalytics"

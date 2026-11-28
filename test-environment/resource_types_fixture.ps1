@@ -540,9 +540,12 @@ if ($Action -eq 'Deploy'){
         $needed = @('Microsoft.Insights', 'Microsoft.OperationalInsights', 'Microsoft.Resources') + @($subscriptionResources | ForEach-Object {
                 $_.resourceType.Split('/')[0]
         })
-        # マネージドIDを使うリソースがあるSubでは、IDの作成に必要なサービスも登録する。
-        if (@($Template.resources | Where-Object {
-                $_.metadata.fixture.key -in $subscriptionResources.key -and
+        $selectedTemplateResources = @($Template.resources | Where-Object {
+                $_.metadata.fixture.key -in $subscriptionResources.key
+        })
+        # リソース本体のほかに、作成時に使うサービスとマネージドIDも登録する。
+        $needed += @($selectedTemplateResources.metadata.fixture.requiredProviders | Where-Object { $_ })
+        if (@($selectedTemplateResources | Where-Object {
                 $_.identity.type -match 'SystemAssigned|UserAssigned'
         }).Count) {
             $needed += 'Microsoft.ManagedIdentity'
